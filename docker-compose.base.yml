@@ -1,0 +1,45 @@
+services:
+  server_base:
+    build:
+      context: .
+      dockerfile: ./apps/server/Dockerfile
+    volumes:
+      - ./apps/server:/app
+      - cargo_cache:/usr/local/cargo/registry
+      - server_target:/app/target
+    ports:
+      - "8000:8000"
+    networks:
+      - my_networks
+
+  web_base:
+    build:
+      context: .
+      dockerfile: ./apps/web/Dockerfile
+    volumes:
+      - ./apps/web:/app
+      - /app/node_modules
+    networks:
+      - my_networks
+
+  nginx_base:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    networks:
+      - my_networks
+
+  postgres_base:
+    image: postgres:15
+    healthcheck:
+      test: [
+          "CMD-SHELL",
+          "sh -c 'pg_isready -U ${POSTGRES_USER} -d
+          ${POSTGRES_DB_NAME}'",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - my_networks

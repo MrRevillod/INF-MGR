@@ -1,0 +1,10 @@
+**/*.rs.bk
+target/
+**/target
+**/.git
+**/.idea
+**/node_modules
+
+**/.react-router
+**/build
+**/README.md

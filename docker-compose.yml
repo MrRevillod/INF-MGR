@@ -1,0 +1,68 @@
+services:
+  server_dev:
+    container_name: inf_mgr_server_dev
+    extends:
+      file: docker-compose.base.yml
+      service: server_base
+    build:
+      target: dev
+    env_file:
+      - .env
+    depends_on:
+      - postgres_dev
+
+  web_dev:
+    container_name: inf_mgr_web_dev
+    extends:
+      file: docker-compose.base.yml
+      service: web_base
+    env_file:
+      - .env
+    build:
+      target: dev
+    ports:
+      - "5173:5173"
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+
+  nginx_dev:
+    container_name: inf_mgr_nginx_dev
+    extends:
+      file: docker-compose.base.yml
+      service: nginx_base
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - server_dev
+      - web_dev
+    networks:
+      - my_networks
+
+  postgres_dev:
+    container_name: inf_mgr_postgres_dev
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB_NAME}
+    extends:
+      file: docker-compose.base.yml
+      service: postgres_base
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    env_file:
+      - .env
+    networks:
+      - my_networks
+
+networks:
+  my_networks:
+    driver: bridge
+
+volumes:
+  postgres_data_dev:
+  server_target:
+  cargo_cache:
+  web_node_modules:

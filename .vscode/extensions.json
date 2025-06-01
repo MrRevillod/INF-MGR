@@ -1,0 +1,13 @@
+{
+    "recommendations": [
+        "vivaxy.vscode-conventional-commits",
+        "mikestead.dotenv",
+        "usernamehw.errorlens",
+        "tamasfe.even-better-toml",
+        "ionutvmi.path-autocomplete",
+        "esbenp.prettier-vscode",
+        "YoavBls.pretty-ts-errors",
+        "rust-lang.rust-analyzer",
+        "dbaeumer.vscode-eslint",
+    ]
+}
