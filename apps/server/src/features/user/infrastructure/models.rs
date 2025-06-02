@@ -12,11 +12,9 @@
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use sqlx::{prelude::FromRow, types::Json};
 
-use sqlx::prelude::FromRow;
-use uuid::Uuid;
-
-use crate::features::user::domain::User;
+use crate::features::user::domain::{Role, User};
 
 // The `UserModel` struct represents the user model in the database.
 // Implements the `FromRow` trait from the `sqlx` crate.
@@ -27,10 +25,11 @@ use crate::features::user::domain::User;
 
 #[derive(Serialize, Deserialize, FromRow, Debug, Clone)]
 pub struct UserModel {
-    pub id: Uuid,
-    pub username: String,
+    pub id: String,
+    pub name: String,
     pub email: String,
     pub password: String,
+    pub roles: Json<Vec<String>>,
     pub validated: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -47,10 +46,16 @@ impl From<UserModel> for User {
     fn from(user_model: UserModel) -> Self {
         User {
             id: user_model.id,
-            username: user_model.username,
+            name: user_model.name,
             email: user_model.email,
             password: user_model.password,
             validated: user_model.validated,
+            roles: user_model
+                .roles
+                .0
+                .into_iter()
+                .filter_map(|role| Role::try_from(role).ok())
+                .collect(),
             created_at: user_model.created_at,
             updated_at: user_model.updated_at,
         }
@@ -67,35 +72,13 @@ impl From<User> for UserModel {
     fn from(user: User) -> Self {
         UserModel {
             id: user.id,
-            username: user.username,
+            name: user.name,
             email: user.email,
             password: user.password,
             validated: user.validated,
+            roles: Json(user.roles.into_iter().map(String::from).collect()),
             created_at: user.created_at,
             updated_at: user.updated_at,
-        }
-    }
-}
-
-#[derive(Serialize)]
-pub struct UserResponseDTO {
-    pub id: Uuid,
-    pub username: String,
-    pub email: String,
-    pub validated: bool,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-}
-
-impl From<User> for UserResponseDTO {
-    fn from(user_model: User) -> Self {
-        UserResponseDTO {
-            id: user_model.id,
-            username: user_model.username,
-            email: user_model.email,
-            validated: user_model.validated,
-            created_at: user_model.created_at,
-            updated_at: user_model.updated_at,
         }
     }
 }

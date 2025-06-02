@@ -2,8 +2,8 @@
 pub enum UserError {
     NotFound,
     EmailAlreadyExists,
-    UsernameAlreadyExists,
-    UnexpectedError,
     InvalidEmail,
-    InvalidId,
+    IdAlreadyExists,
+    UnexpectedError(String),
+    InvalidRole,
 }

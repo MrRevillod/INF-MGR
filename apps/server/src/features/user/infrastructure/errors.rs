@@ -24,13 +24,6 @@ use crate::features::user::domain::UserError;
 impl From<UserError> for HttpResponse {
     fn from(value: UserError) -> Self {
         match value {
-            UserError::UsernameAlreadyExists => HttpResponse::build()
-                .status(StatusCode::CONFLICT)
-                .body(json!({
-                    "field": "username",
-                    "message": "Username already exists",
-                })),
-
             UserError::EmailAlreadyExists => HttpResponse::build()
                 .status(StatusCode::CONFLICT)
                 .body(json!({
@@ -44,11 +37,15 @@ impl From<UserError> for HttpResponse {
                     "message": "User not found",
                 })),
 
-            UserError::UnexpectedError => HttpResponse::build()
-                .status(StatusCode::INTERNAL_SERVER_ERROR)
-                .body(json!({
-                    "message": "Unexpected error",
-                })),
+            UserError::UnexpectedError(error) => {
+                eprintln!("| USER ERROR | - Unexpected error: {}", error);
+
+                HttpResponse::build()
+                    .status(StatusCode::INTERNAL_SERVER_ERROR)
+                    .body(json!({
+                        "message": "Unexpected error",
+                    }))
+            }
 
             UserError::InvalidEmail => HttpResponse::build()
                 .status(StatusCode::BAD_REQUEST)
@@ -57,11 +54,18 @@ impl From<UserError> for HttpResponse {
                     "message": "The provided email is not valid to register",
                 })),
 
-            UserError::InvalidId => HttpResponse::build()
+            UserError::IdAlreadyExists => HttpResponse::build()
                 .status(StatusCode::BAD_REQUEST)
                 .body(json!({
                     "field": "id",
-                    "message": "The provided id is not valid",
+                    "message": "User ID already exists",
+                })),
+
+            UserError::InvalidRole => HttpResponse::build()
+                .status(StatusCode::BAD_REQUEST)
+                .body(json!({
+                    "field": "roles",
+                    "message": "Invalid role provided",
                 })),
         }
     }

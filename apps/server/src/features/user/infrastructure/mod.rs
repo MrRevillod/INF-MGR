@@ -6,9 +6,11 @@ mod routes;
 
 mod dtos {
     mod body;
+    mod response;
     mod validators;
 
     pub use body::*;
+    pub use response::*;
 }
 
 pub use repository::*;

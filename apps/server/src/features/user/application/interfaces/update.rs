@@ -19,9 +19,9 @@ use crate::features::user::domain::{User, UserError};
 // This input DTO represents the required data to update an existing user.
 
 pub struct UpdateUserInput {
-    pub username: Option<String>,
     pub email: Option<String>,
     pub password: Option<String>,
+    pub roles: Option<Vec<String>>,
 }
 
 // Use case definition for updating an existing user.
@@ -31,7 +31,7 @@ pub struct UpdateUserInput {
 pub trait UpdateUserCase: Interface {
     async fn execute(
         &self,
-        id: String,
+        user_id: &str,
         input: UpdateUserInput,
     ) -> Result<User, UserError>;
 }

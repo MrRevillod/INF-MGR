@@ -1,7 +1,15 @@
+use lazy_static::lazy_static;
 use regex::Regex;
 use validator::ValidationError;
 
 use super::body::{CreateUserDto, UpdateUserDto};
+use crate::features::user::domain::Role;
+
+lazy_static! {
+    static ref RUT_REGEX: Regex = Regex::new(r"^\d{7,8}-[0-9Kk]$").unwrap();
+    static ref SPECIAL_CHAR_REGEX: Regex =
+        Regex::new(r#"[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]"#).unwrap();
+}
 
 pub fn validate_password_pairs(dto: &CreateUserDto) -> Result<(), ValidationError> {
     if dto.password != dto.confirm_password {
@@ -36,9 +44,7 @@ pub fn password_schema(password: &str) -> Result<(), ValidationError> {
     let has_lowercase = password.chars().any(|c| c.is_ascii_lowercase());
     let has_digit = password.chars().any(|c| c.is_ascii_digit());
 
-    let special_chars_pattern = r#"[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]"#;
-    let special_chars_regex = Regex::new(special_chars_pattern).unwrap();
-    let has_special = special_chars_regex.is_match(password);
+    let has_special = SPECIAL_CHAR_REGEX.is_match(password);
 
     if !has_uppercase {
         return Err(ValidationError::new(
@@ -62,6 +68,64 @@ pub fn password_schema(password: &str) -> Result<(), ValidationError> {
         return Err(ValidationError::new(
             "Password must contain at least one special character (e.g., !@#$%^&*)",
         ));
+    }
+
+    Ok(())
+}
+
+/// Valida si el RUT es válido.
+/// Formato esperado: "12345678-5" (con guion y dígito verificador)
+pub fn validate_rut_id(rut: &str) -> Result<(), ValidationError> {
+    let Some((number_part, dv_part)) = rut.split_once('-') else {
+        return Err(ValidationError::new("invalid_rut_format")); // no contiene guion
+    };
+
+    let number: u32 = match number_part.parse() {
+        Ok(n) => n,
+        Err(_) => return Err(ValidationError::new("invalid_rut_number")),
+    };
+
+    let expected_dv = compute_rut_dv(number);
+    if expected_dv != dv_part.to_uppercase() {
+        return Err(ValidationError::new("invalid_rut_dv"));
+    }
+
+    Ok(())
+}
+
+/// Calcula el dígito verificador (DV) de un RUT chileno.
+fn compute_rut_dv(mut rut: u32) -> String {
+    let mut sum = 0;
+    let mut multiplier = 2;
+
+    while rut > 0 {
+        let digit = rut % 10;
+        sum += digit * multiplier;
+        rut /= 10;
+        multiplier = if multiplier == 7 { 2 } else { multiplier + 1 };
+    }
+
+    let remainder = 11 - (sum % 11);
+    match remainder {
+        11 => "0".to_string(),
+        10 => "K".to_string(),
+        n => n.to_string(),
+    }
+}
+
+pub fn role_validator(role: &Vec<String>) -> Result<(), ValidationError> {
+    if role.is_empty() {
+        return Err(ValidationError::new("roles_required"));
+    }
+
+    let mut seen = std::collections::HashSet::new();
+    for r in role {
+        Role::try_from(r.clone())
+            .map_err(|_| ValidationError::new("invalid_role"))?;
+
+        if !seen.insert(r) {
+            return Err(ValidationError::new("duplicate_role"));
+        }
     }
 
     Ok(())

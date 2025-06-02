@@ -1,30 +1,21 @@
 // This module defines the CreateUserCase Trait/Interface and its
 // corresponding Input DTO CreateUserInput.
 
-// |----------------------------------------------------------------|
-// |                 Input entities between layers                  |
-// |----------------------------------------------------------------|
-// | User Infrastructure Layer (CreateUserDto) |     Controller     |
-// |------------------------------------------ |--------------------|
-// | User Application Layer (CreateUserInput)  |      Use Case      |
-// |------------------------------------------ |--------------------|
-// |         User Domain Layer (User)          |     Repository     |
-// |----------------------------------------------------------------|
-
 use async_trait::async_trait;
 use shaku::Interface;
-use uuid::Uuid;
 
-use crate::features::user::domain::{User, UserError};
+use crate::features::user::domain::{Role, User, UserError};
 
 /// Datos requeridos para crear un nuevo usuario.
 /// Este DTO representa la entrada cruda recibida desde
 /// la capa de infraestructura (por ejemplo, desde un controller).
 
 pub struct CreateUserInput {
-    pub username: String,
+    pub id: String,
+    pub name: String,
     pub email: String,
     pub password: String,
+    pub roles: Vec<String>,
 }
 
 /// Caso de uso para crear un nuevo usuario.
@@ -46,10 +37,15 @@ impl From<CreateUserInput> for User {
         let now = chrono::Utc::now();
 
         User {
-            id: Uuid::new_v4(),
-            username: input.username,
+            id: input.id,
+            name: input.name,
             email: input.email,
             validated: false,
+            roles: input
+                .roles
+                .into_iter()
+                .filter_map(|role| Role::try_from(role).ok())
+                .collect(),
             password: input.password,
             created_at: now,
             updated_at: now,

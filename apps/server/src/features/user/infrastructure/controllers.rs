@@ -12,7 +12,7 @@ use crate::{
     shared::infrastructure::{extractors::BodyValidator, Inject},
 };
 
-use super::models::{UserModel, UserResponseDTO};
+use super::{dtos::UserResponseDTO, models::UserModel};
 
 pub async fn get_users(use_case: Inject<dyn GetUsersCase>) -> ControllerResult {
     let data = use_case.execute().await?;
@@ -42,7 +42,7 @@ pub async fn update_user(
     Path(id): Path<String>,
     BodyValidator(user_data): BodyValidator<UpdateUserDto>,
 ) -> ControllerResult {
-    let user = use_case.execute(id, user_data.into()).await?;
+    let user = use_case.execute(&id, user_data.into()).await?;
     HttpResponse::build()
         .status(StatusCode::OK)
         .body(json!({ "data": UserModel::from(user) }))
@@ -53,7 +53,7 @@ pub async fn delete_user(
     use_case: Inject<dyn DeleteUserCase>,
     Path(id): Path<String>,
 ) -> ControllerResult {
-    use_case.execute(id).await?;
+    use_case.execute(&id).await?;
     HttpResponse::build()
         .status(StatusCode::OK)
         .body(json!({ "message": "User deleted successfully" }))

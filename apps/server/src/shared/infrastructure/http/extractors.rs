@@ -1,10 +1,10 @@
-use std::ops::Deref;
+use std::{fmt::Debug, ops::Deref};
 
 use axum::extract::{FromRequest, Json, Query, Request};
-
 use axum_responses::http::HttpResponse;
-use serde_json::json;
-use validator::Validate;
+
+use serde_json::{json, Map, Value};
+use validator::{Validate, ValidationErrors};
 
 pub struct BodyValidator<T>(pub T);
 
@@ -24,10 +24,10 @@ where
                     .body(json!({ "error": "Invalid request body" }))
             })?;
 
-        data.validate().map_err(|e| {
+        data.validate().map_err(|errors| {
             HttpResponse::build().code(400).body(json!({
                 "message": "Invalid request body",
-                "errors": e.to_string()
+                "errors": map_validation_errors(&errors)
             }))
         })?;
 
@@ -61,13 +61,34 @@ where
                     .body(json!({ "error": "Invalid Query format" }))
             })?;
 
-        value.validate().map_err(|err| {
+        value.validate().map_err(|errors| {
             HttpResponse::build().code(400).body(json!({
                 "error": "Invalid Query format",
-                "errors": err.to_string()
+                "errors": map_validation_errors(&errors)
             }))
         })?;
 
         Ok(Self(value))
     }
+}
+
+pub fn map_validation_errors(e: &ValidationErrors) -> Value {
+    let mut map = Map::new();
+
+    for (field, errs) in e.field_errors() {
+        let msgs = errs
+            .iter()
+            .map(|err| {
+                err.message
+                    .as_ref()
+                    .map(ToString::to_string)
+                    .unwrap_or_else(|| err.code.to_string())
+            })
+            .map(Value::String)
+            .collect();
+
+        map.insert(field.to_string(), Value::Array(msgs));
+    }
+
+    Value::Object(map)
 }

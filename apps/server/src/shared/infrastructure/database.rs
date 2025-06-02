@@ -28,11 +28,9 @@ impl PostgresDatabase {
     }
 
     pub async fn migrate(&self) -> Result<(), sqlx::Error> {
-        sqlx::migrate!("./config/migrations")
-            .run(&self.pool)
-            .await?;
-
-        println!("Database migrations completed successfully.");
+        if let Err(e) = sqlx::migrate!("./config/migrations").run(&self.pool).await {
+            eprintln!("Error running migrations: {}", e);
+        };
 
         Ok(())
     }

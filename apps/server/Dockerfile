@@ -29,6 +29,7 @@ RUN cargo install cargo-watch
 
 WORKDIR /app
 
+COPY apps/server/config ./config
 COPY apps/server/Cargo.toml apps/server/Cargo.lock ./
 COPY apps/server/src ./src/
 COPY apps/server/tools ./tools/

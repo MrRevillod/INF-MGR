@@ -11,5 +11,5 @@ use crate::features::user::domain::UserError;
 
 #[async_trait]
 pub trait DeleteUserCase: Interface {
-    async fn execute(&self, user_id: String) -> Result<(), UserError>;
+    async fn execute(&self, user_id: &str) -> Result<(), UserError>;
 }

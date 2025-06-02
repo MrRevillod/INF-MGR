@@ -1629,6 +1629,7 @@ dependencies = [
  "jsonwebtoken",
  "lazy_static",
  "mailchecker",
+ "rand 0.9.1",
  "regex",
  "serde",
  "serde_json",

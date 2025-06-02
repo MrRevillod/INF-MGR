@@ -15,6 +15,6 @@ pub struct BcryptPasswordHasher;
 impl PasswordHasher for BcryptPasswordHasher {
     fn hash(&self, password: &str) -> Result<String, UserError> {
         bcrypt::hash(password, PASSWORD_HASH_COST)
-            .map_err(|_| UserError::UnexpectedError)
+            .map_err(|e| UserError::UnexpectedError(e.to_string()))
     }
 }

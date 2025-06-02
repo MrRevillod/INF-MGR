@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use shaku::Component;
+use sqlx::types::Json;
 use std::sync::Arc;
-use uuid::Uuid;
 
 use crate::shared::infrastructure::DatabaseConnection;
 
@@ -21,17 +21,17 @@ pub struct PostgresUserRepository {
 impl UserRepository for PostgresUserRepository {
     async fn find_all(&self) -> Result<Vec<User>, UserError> {
         let pool = self.database_connection.get_pool();
-        let users = sqlx::query_as::<_, UserModel>(r#"SELECT * FROM users"#)
+        let users = sqlx::query_as::<_, UserModel>("SELECT * FROM users")
             .fetch_all(pool)
             .await
-            .map_err(|_| UserError::UnexpectedError)?;
+            .map_err(|e| UserError::UnexpectedError(e.to_string()))?;
 
         let entity_vec = users.into_iter().map(|model| User::from(model)).collect();
 
         Ok(entity_vec)
     }
 
-    async fn find_by_id(&self, user_id: Uuid) -> Result<Option<User>, UserError> {
+    async fn find_by_id(&self, user_id: &str) -> Result<Option<User>, UserError> {
         let pool = self.database_connection.get_pool();
         let query = r#"SELECT * FROM users WHERE id = $1"#;
 
@@ -39,7 +39,7 @@ impl UserRepository for PostgresUserRepository {
             .bind(user_id)
             .fetch_optional(pool)
             .await
-            .map_err(|_| UserError::UnexpectedError)?;
+            .map_err(|e| UserError::UnexpectedError(e.to_string()))?;
 
         Ok(user.map(|model| User::from(model)))
     }
@@ -52,20 +52,7 @@ impl UserRepository for PostgresUserRepository {
             .bind(email)
             .fetch_optional(pool)
             .await
-            .map_err(|_| UserError::UnexpectedError)?;
-
-        Ok(user.map(|model| User::from(model)))
-    }
-
-    async fn find_by_username(&self, name: &str) -> Result<Option<User>, UserError> {
-        let pool = self.database_connection.get_pool();
-        let query = r#"SELECT * FROM users WHERE username = $1"#;
-
-        let user = sqlx::query_as::<_, UserModel>(query)
-            .bind(name)
-            .fetch_optional(pool)
-            .await
-            .map_err(|_| UserError::UnexpectedError)?;
+            .map_err(|e| UserError::UnexpectedError(e.to_string()))?;
 
         Ok(user.map(|model| User::from(model)))
     }
@@ -74,16 +61,16 @@ impl UserRepository for PostgresUserRepository {
         let pool = self.database_connection.get_pool();
         let query = r#"
             INSERT INTO users (
-                id, username, email, password, validated, created_at, updated_at
+                id, name, email, password, validated, created_at, updated_at
             ) VALUES (
                 $1, $2, $3, $4, $5, $6, $7
             )
-            RETURNING id, username, email, password, validated, created_at, updated_at
+            RETURNING id, name, email, password, validated, created_at, updated_at
         "#;
 
         let model = sqlx::query_as::<_, UserModel>(query)
             .bind(user.id)
-            .bind(user.username)
+            .bind(user.name)
             .bind(user.email)
             .bind(user.password)
             .bind(user.validated)
@@ -91,7 +78,7 @@ impl UserRepository for PostgresUserRepository {
             .bind(user.updated_at)
             .fetch_one(pool)
             .await
-            .map_err(|_| UserError::UnexpectedError)?;
+            .map_err(|e| UserError::UnexpectedError(e.to_string()))?;
 
         Ok(User::from(model))
     }
@@ -100,31 +87,38 @@ impl UserRepository for PostgresUserRepository {
         let pool = self.database_connection.get_pool();
         let query = r#"
             UPDATE users 
-            SET username = $1, email = $2, password = $3, updated_at = $4
+            SET email = $1, password = $2, role = $3, updated_at = $4
             WHERE id = $5
         "#;
 
+        let roles = user
+            .clone()
+            .roles
+            .into_iter()
+            .map(String::from)
+            .collect::<Vec<String>>();
+
         sqlx::query(query)
-            .bind(&user.username)
             .bind(&user.email)
             .bind(&user.password)
+            .bind(Json(roles))
             .bind(user.updated_at)
-            .bind(user.id)
+            .bind(&user.id)
             .execute(pool)
             .await
-            .map_err(|_| UserError::UnexpectedError)?;
+            .map_err(|e| UserError::UnexpectedError(e.to_string()))?;
 
         Ok(user)
     }
 
-    async fn delete(&self, user_id: Uuid) -> Result<(), UserError> {
+    async fn delete(&self, user_id: &str) -> Result<(), UserError> {
         let pool = self.database_connection.get_pool();
 
         sqlx::query("DELETE FROM users WHERE id = $1")
             .bind(user_id)
             .execute(pool)
             .await
-            .map_err(|_| UserError::UnexpectedError)?;
+            .map_err(|e| UserError::UnexpectedError(e.to_string()))?;
 
         Ok(())
     }

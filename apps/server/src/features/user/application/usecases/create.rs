@@ -25,26 +25,22 @@ impl CreateUserCase for CreateUserCaseImpl {
         // Convert the input dto format to the domain entity
         let mut user = User::from(input);
 
-        // Check if the user already exists by username or email
-        // in database, this tasks is done in parallel
-
-        let (username, email) = tokio::try_join!(
-            self.repository.find_by_username(&user.username),
+        let (id, email) = tokio::try_join!(
+            self.repository.find_by_id(&user.id),
             self.repository.find_by_email(&user.email)
         )?;
 
-        // Then check if the user already exists synchronously
-
-        if username.is_some() {
-            return Err(UserError::UsernameAlreadyExists);
+        // Check if the user already exists by ID in database
+        if id.is_some() {
+            return Err(UserError::IdAlreadyExists);
         }
 
+        // Check if the user already exists by email in database
         if email.is_some() {
             return Err(UserError::EmailAlreadyExists);
         }
 
         // check disposable/throwaway email
-
         if !mailchecker::is_valid(&user.email) {
             return Err(UserError::InvalidEmail);
         }

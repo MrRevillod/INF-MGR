@@ -2,14 +2,13 @@ use async_trait::async_trait;
 use chrono::Utc;
 use shaku::Component;
 use std::sync::Arc;
-use uuid::Uuid;
 
 use crate::features::user::{
     application::{
         interfaces::{UpdateUserCase, UpdateUserInput},
         services::PasswordHasher,
     },
-    domain::{User, UserError, UserRepository},
+    domain::{Role, User, UserError, UserRepository},
 };
 
 #[derive(Component)]
@@ -25,18 +24,12 @@ pub struct UpdateUserCaseImpl {
 impl UpdateUserCase for UpdateUserCaseImpl {
     async fn execute(
         &self,
-        id: String,
+        user_id: &str,
         input: UpdateUserInput,
     ) -> Result<User, UserError> {
-        let user_id = Uuid::parse_str(&id).map_err(|_| UserError::InvalidId)?;
-
         let Some(mut user) = self.repository.find_by_id(user_id).await? else {
             return Err(UserError::NotFound);
         };
-
-        if let Some(u) = input.username {
-            user.username = u
-        }
 
         if let Some(e) = input.email {
             user.email = e
@@ -44,6 +37,13 @@ impl UpdateUserCase for UpdateUserCaseImpl {
 
         if let Some(p) = input.password {
             user.password = self.hasher.hash(&p)?
+        }
+
+        if let Some(r) = input.roles.clone() {
+            user.roles = r
+                .into_iter()
+                .filter_map(|r| Role::try_from(r).ok())
+                .collect();
         }
 
         user.updated_at = Utc::now();
