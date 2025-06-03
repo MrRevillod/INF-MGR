@@ -1,66 +1,56 @@
-use std::sync::Arc;
+use std::collections::HashSet;
+use std::str::FromStr;
 
 use axum::Router;
 use axum_responses::{http::HttpResponse, response};
 use tokio::net::TcpListener;
 use tower_http::cors::CorsLayer;
 
+use crate::config::{Config, CorsConfig, ServerConfig};
 use crate::features::user::infrastructure::user_router;
 
-use crate::shared::infrastructure::{
-    logger::HttpLogger,
-    PostgresDatabase, {AppModule, AppState},
-};
-
-use crate::shared::constants::{
-    check_env_vars, ALLOWED_HTTP_HEADERS, ALLOWED_HTTP_METHODS,
-};
+use crate::shared::infrastructure::DependencyContainer;
+use crate::shared::infrastructure::{logger::HttpLogger, PostgresDatabase};
 
 pub struct Application {
     router: Router,
+    config: ServerConfig,
 }
 
 impl Application {
     pub async fn new() -> Self {
-        check_env_vars();
+        let config = Config::new().unwrap();
 
-        let di_state = Application::set_up_di().await;
+        dbg!(&config);
 
+        let postgres_db = PostgresDatabase::new(config.database.postgres)
+            .await
+            .expect("Failed to create database connection");
+
+        PostgresDatabase::migrate(&postgres_db.pool)
+            .await
+            .expect("Failed to create database connection");
+
+        let di_container = DependencyContainer::new(postgres_db);
         let http_logger = HttpLogger::new();
-        let cors_layer = CorsLayer::new()
-            .allow_methods(ALLOWED_HTTP_METHODS.to_owned())
-            .allow_headers(ALLOWED_HTTP_HEADERS.to_owned());
+
+        let cors_layer = Application::setup_cors(config.cors);
 
         let app_router = Router::new()
-            .merge(user_router(di_state))
+            .merge(user_router(di_container))
             .route("/health", axum::routing::get(Application::health_check))
             .layer(cors_layer)
             .layer(http_logger.layer);
 
-        Application { router: app_router }
-    }
-
-    pub async fn set_up_di() -> AppState {
-        let db_connection = PostgresDatabase::new()
-            .await
-            .expect("Failed to create database connection");
-
-        db_connection
-            .migrate()
-            .await
-            .expect("Failed to run database migrations");
-
-        let di_module = AppModule::builder()
-            .with_component_parameters::<PostgresDatabase>(db_connection.into())
-            .build();
-
-        AppState {
-            module: Arc::new(di_module),
+        Application {
+            router: app_router,
+            config: config.server,
         }
     }
 
     pub async fn run(&self) -> Result<(), Box<dyn std::error::Error>> {
-        let listener = TcpListener::bind("0.0.0.0:8000").await?;
+        let addr = format!("{}:{}", self.config.host, self.config.port);
+        let listener = TcpListener::bind(addr).await?;
 
         println!("Server listening on port 8000");
 
@@ -70,9 +60,35 @@ impl Application {
     }
 
     pub async fn health_check() -> HttpResponse {
-        let time = chrono::Utc::now();
+        let time = chrono::Utc::now().to_string();
         let status = "running";
 
-        response!(200, { "status": status, "time": time.to_string() })
+        response!(200, { "status": status, "time": time })
+    }
+
+    pub fn setup_cors(config: CorsConfig) -> CorsLayer {
+        let mut methods = HashSet::new();
+        let mut headers = HashSet::new();
+
+        for method in config.allowed_http_methods.iter() {
+            let http_method = axum::http::Method::from_str(method)
+                .expect("Invalid HTTP Method found in config");
+
+            methods.insert(http_method);
+        }
+
+        for header in config.allowed_http_headers.iter() {
+            let http_header = axum::http::header::HeaderName::from_str(header)
+                .expect("Invalid HTTP Header found in config");
+
+            headers.insert(http_header);
+        }
+
+        let methods = methods.into_iter().collect::<Vec<_>>();
+        let headers = headers.into_iter().collect::<Vec<_>>();
+
+        CorsLayer::new()
+            .allow_methods(methods)
+            .allow_headers(headers)
     }
 }

@@ -3,7 +3,7 @@ use std::time::Duration;
 use shaku::{Component, Interface};
 use sqlx::{postgres::PgPoolOptions, PgPool};
 
-use crate::shared::constants::POSTGRES_DATABASE_URL;
+use crate::config::PostgresDbConfig;
 
 pub trait DatabaseConnection: Interface {
     fn get_pool(&self) -> &PgPool;
@@ -16,19 +16,19 @@ pub struct PostgresDatabase {
 }
 
 impl PostgresDatabase {
-    pub async fn new() -> Result<Self, sqlx::Error> {
+    pub async fn new(config: PostgresDbConfig) -> Result<Self, sqlx::Error> {
         let pool = PgPoolOptions::new()
-            .min_connections(1)
-            .max_connections(10)
-            .acquire_timeout(Duration::from_secs(5))
-            .connect(&POSTGRES_DATABASE_URL)
+            .min_connections(config.min_connections.into())
+            .max_connections(config.max_connections.into())
+            .acquire_timeout(Duration::from_millis(config.acquire_timeout_ms.into()))
+            .connect(&config.url)
             .await?;
 
         Ok(Self { pool })
     }
 
-    pub async fn migrate(&self) -> Result<(), sqlx::Error> {
-        if let Err(e) = sqlx::migrate!("./config/migrations").run(&self.pool).await {
+    pub async fn migrate(pool: &PgPool) -> Result<(), sqlx::Error> {
+        if let Err(e) = sqlx::migrate!("./config/migrations").run(pool).await {
             eprintln!("Error running migrations: {}", e);
         };
 

@@ -1,9 +1,9 @@
 use axum::routing::{delete, get, patch, post, Router};
 
 use super::controllers::*;
-use crate::shared::infrastructure::AppState;
+use crate::shared::infrastructure::DependencyContainer;
 
-pub fn router(state: AppState) -> Router {
+pub fn router(state: DependencyContainer) -> Router {
     Router::new()
         .route("/users", get(get_users))
         .route("/users/", post(create_user))

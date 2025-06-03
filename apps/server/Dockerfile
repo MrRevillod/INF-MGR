@@ -42,7 +42,7 @@ CMD sh -c "echo 'INFO: Attempting to run database seeder...' && \
            cargo run --bin dev-seeder --features seeder && \
            echo 'INFO: Database seeder finished successfully.' && \
            echo 'INFO: Starting server with cargo watch...' && \
-           cargo watch -x 'run --bin server' || \
+           cargo watch -x 'run --bin server' -w src -w config || \
            (echo 'ERROR: Database seeder failed. Check logs above.' && exit 1)"
 
 # -----------------------------------------------------------------------

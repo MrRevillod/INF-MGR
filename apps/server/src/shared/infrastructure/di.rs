@@ -2,30 +2,30 @@ use axum::extract::FromRef;
 use shaku::module;
 use std::sync::Arc;
 
-use crate::{
-    features::user::{
-        application::{
-            services::BcryptPasswordHasher,
-            usecases::{
-                CreateUserCaseImpl, DeleteUserCaseImpl, GetUsersCaseImpl,
-                UpdateUserCaseImpl,
-            },
-        },
-        infrastructure::PostgresUserRepository,
-    },
-    shared::infrastructure::database::PostgresDatabase,
-};
+use crate::{features::user, shared::infrastructure::database::PostgresDatabase};
 
 pub type Inject<T> = shaku_axum::Inject<AppModule, T>;
 
 #[derive(Clone)]
-pub struct AppState {
+pub struct DependencyContainer {
     pub module: Arc<AppModule>,
 }
 
-impl FromRef<AppState> for Arc<AppModule> {
-    fn from_ref(app_state: &AppState) -> Arc<AppModule> {
-        app_state.module.clone()
+impl DependencyContainer {
+    pub fn new(postgres_conn: PostgresDatabase) -> Self {
+        let module = AppModule::builder()
+            .with_component_parameters::<PostgresDatabase>(postgres_conn.into())
+            .build();
+
+        DependencyContainer {
+            module: Arc::new(module),
+        }
+    }
+}
+
+impl FromRef<DependencyContainer> for Arc<AppModule> {
+    fn from_ref(di: &DependencyContainer) -> Arc<AppModule> {
+        di.module.clone()
     }
 }
 
@@ -34,14 +34,13 @@ module! {
     pub AppModule {
         components = [
             PostgresDatabase,
-            PostgresUserRepository,
+            user::infrastructure::PostgresUserRepository,
+            user::application::services::BcryptPasswordHasher,
 
-            BcryptPasswordHasher,
-
-            GetUsersCaseImpl,
-            CreateUserCaseImpl,
-            UpdateUserCaseImpl,
-            DeleteUserCaseImpl
+            user::application::usecases::GetUsersCaseImpl,
+            user::application::usecases::CreateUserCaseImpl,
+            user::application::usecases::UpdateUserCaseImpl,
+            user::application::usecases::DeleteUserCaseImpl
         ],
         providers = []
     }
