@@ -1,14 +1,16 @@
-use lazy_static::lazy_static;
 use regex::Regex;
+use std::sync::OnceLock;
 use validator::ValidationError;
 
 use super::body::{CreateUserDto, UpdateUserDto};
 use crate::features::user::domain::Role;
 
-lazy_static! {
-    static ref RUT_REGEX: Regex = Regex::new(r"^\d{7,8}-[0-9Kk]$").unwrap();
-    static ref SPECIAL_CHAR_REGEX: Regex =
-        Regex::new(r#"[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]"#).unwrap();
+static SPECIAL_CHAR_REGEX: OnceLock<Regex> = OnceLock::new();
+
+fn get_special_char_regex() -> &'static Regex {
+    SPECIAL_CHAR_REGEX.get_or_init(|| {
+        Regex::new(r#"[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]"#).unwrap()
+    })
 }
 
 pub fn validate_password_pairs(dto: &CreateUserDto) -> Result<(), ValidationError> {
@@ -44,7 +46,7 @@ pub fn password_schema(password: &str) -> Result<(), ValidationError> {
     let has_lowercase = password.chars().any(|c| c.is_ascii_lowercase());
     let has_digit = password.chars().any(|c| c.is_ascii_digit());
 
-    let has_special = SPECIAL_CHAR_REGEX.is_match(password);
+    let has_special = get_special_char_regex().is_match(password);
 
     if !has_uppercase {
         return Err(ValidationError::new(
