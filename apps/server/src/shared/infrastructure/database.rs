@@ -16,19 +16,22 @@ pub struct PostgresDatabase {
 }
 
 impl PostgresDatabase {
-    pub async fn new(config: PostgresDbConfig) -> Result<Self, sqlx::Error> {
+    pub async fn new(config: &PostgresDbConfig) -> Result<Self, sqlx::Error> {
         let pool = PgPoolOptions::new()
-            .min_connections(config.min_connections.into())
-            .max_connections(config.max_connections.into())
-            .acquire_timeout(Duration::from_millis(config.acquire_timeout_ms.into()))
+            .min_connections(config.min_connections)
+            .max_connections(config.max_connections)
+            .acquire_timeout(Duration::from_millis(config.acquire_timeout_ms))
             .connect(&config.url)
             .await?;
 
         Ok(Self { pool })
     }
 
-    pub async fn migrate(pool: &PgPool) -> Result<(), sqlx::Error> {
-        if let Err(e) = sqlx::migrate!("./config/migrations").run(pool).await {
+    pub async fn migrate(&self) -> Result<(), sqlx::Error> {
+        if let Err(e) = sqlx::migrate!("./config/migrations")
+            .run(self.get_pool())
+            .await
+        {
             eprintln!("Error running migrations: {}", e);
         };
 

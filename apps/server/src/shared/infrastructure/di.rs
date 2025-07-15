@@ -4,8 +4,6 @@ use std::sync::Arc;
 
 use crate::{features::user, shared::infrastructure::database::PostgresDatabase};
 
-pub type Inject<T> = shaku_axum::Inject<AppModule, T>;
-
 #[derive(Clone)]
 pub struct DependencyContainer {
     pub module: Arc<AppModule>,
@@ -30,7 +28,6 @@ impl FromRef<DependencyContainer> for Arc<AppModule> {
 }
 
 module! {
-
     pub AppModule {
         components = [
             PostgresDatabase,

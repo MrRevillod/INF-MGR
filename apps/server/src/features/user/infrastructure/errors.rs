@@ -12,9 +12,8 @@
 // |       User Domain Layer (UserError)        |   Repository   |
 // |--------------------------------------------|----------------|
 
-use axum::http::StatusCode;
-use axum_responses::http::HttpResponse;
 use serde_json::json;
+use sword::web::HttpResponse;
 
 use crate::features::user::domain::UserError;
 
@@ -24,49 +23,37 @@ use crate::features::user::domain::UserError;
 impl From<UserError> for HttpResponse {
     fn from(value: UserError) -> Self {
         match value {
-            UserError::EmailAlreadyExists => HttpResponse::build()
-                .status(StatusCode::CONFLICT)
-                .body(json!({
-                    "field": "email",
-                    "message": "Email already exists",
-                })),
+            UserError::EmailAlreadyExists => HttpResponse::Conflict().data(json!({
+                "field": "email",
+                "message": "Email already exists",
+            })),
 
-            UserError::NotFound => HttpResponse::build()
-                .status(StatusCode::NOT_FOUND)
-                .body(json!({
-                    "message": "User not found",
-                })),
+            UserError::NotFound => HttpResponse::NotFound().data(json!({
+                "message": "User not found",
+            })),
 
             UserError::UnexpectedError(error) => {
                 eprintln!("| USER ERROR | - Unexpected error: {}", error);
 
-                HttpResponse::build()
-                    .status(StatusCode::INTERNAL_SERVER_ERROR)
-                    .body(json!({
-                        "message": "Unexpected error",
-                    }))
+                HttpResponse::InternalServerError().data(json!({
+                    "message": "Unexpected error",
+                }))
             }
 
-            UserError::InvalidEmail => HttpResponse::build()
-                .status(StatusCode::BAD_REQUEST)
-                .body(json!({
-                    "field": "email",
-                    "message": "The provided email is not valid to register",
-                })),
+            UserError::InvalidEmail => HttpResponse::BadRequest().data(json!({
+                "field": "email",
+                "message": "The provided email is not valid to register",
+            })),
 
-            UserError::IdAlreadyExists => HttpResponse::build()
-                .status(StatusCode::BAD_REQUEST)
-                .body(json!({
-                    "field": "id",
-                    "message": "User ID already exists",
-                })),
+            UserError::IdAlreadyExists => HttpResponse::BadRequest().data(json!({
+                "field": "id",
+                "message": "User ID already exists",
+            })),
 
-            UserError::InvalidRole => HttpResponse::build()
-                .status(StatusCode::BAD_REQUEST)
-                .body(json!({
-                    "field": "roles",
-                    "message": "Invalid role provided",
-                })),
+            UserError::InvalidRole => HttpResponse::BadRequest().data(json!({
+                "field": "roles",
+                "message": "Invalid role provided",
+            })),
         }
     }
 }

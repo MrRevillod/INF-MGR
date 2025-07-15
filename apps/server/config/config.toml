@@ -2,15 +2,12 @@
 port = 8000
 host = "0.0.0.0"
 
-[database.postgres]
-url = "${POSTGRES_DATABASE_URL}"
+[postgres-db]
+url = "${POSTGRES_DATABASE_URL:postgres://localhost:5432/inf_mgr}"
 migration_path = "config/migrations"
 min_connections = 1
 max_connections = 10
 acquire_timeout_ms = 5000
-
-[database.sessions]
-url = "${SESSION_DATABASE_URL}"
 
 [auth]
 session_jwt_secret = "${SESSION_JWT_SECRET}"
@@ -20,5 +17,6 @@ refresh_jwt_secret = "${REFRESH_JWT_SECRET}"
 refresh_jwt_exp_ms = 604800000               # 7 days
 
 [cors]
+allow_credentials = false
 allowed_http_methods = ["GET", "POST", "PUT", "PATCH", "DELETE"]
 allowed_http_headers = ["Content-Type", "Authorization"]
