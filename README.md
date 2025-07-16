@@ -2,6 +2,8 @@
 
 Este repositorio contiene el código fuente de un sistema de gestión de prácticas y tesis universitarias. El sistema está diseñado para facilitar la administración de las prácticas y tesis de los estudiantes, permitiendo a los administradores gestionar las solicitudes, asignaciones y seguimientos de manera eficiente.
 
+[Descripción detallada del sistema](REQUIREMENTS.md)
+
 ## Diagramas del sistema
 
 ### Arquitectura del sistema

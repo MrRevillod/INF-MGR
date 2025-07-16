@@ -1,4 +1,4 @@
-run DOCKERARGS:
+run DOCKERARGS="":
     docker compose up {{DOCKERARGS}}
 
 lint:
