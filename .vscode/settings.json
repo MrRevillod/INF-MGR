@@ -88,48 +88,55 @@
         "*.ts": "$(capture).js, $(capture).d.ts.map, $(capture).*.ts, $(capture)_*.js, $(capture)_*.ts",
         "*.tsx": "$(capture).ts, $(capture).*.tsx, $(capture)_*.ts, $(capture)_*.tsx, $(capture).less, $(capture).module.less, $(capture).module.less.d.ts, $(capture).scss, $(capture).module.scss, $(capture).module.scss.d.ts, $(capture).css.ts",
     },
-    "typescript.validate.enable": true,
     "typescript.tsdk": "node_modules/typescript/lib",
+    "typescript.validate.enable": true,
     "[typescript]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode",
         "editor.formatOnSave": true,
         "editor.tabSize": 4,
-        "prettier.tabWidth": 4
+        "editor.indentSize": "tabSize"
     },
     "[javascript]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode",
         "editor.formatOnSave": true,
         "editor.tabSize": 4,
-        "prettier.tabWidth": 4
+        "editor.indentSize": "tabSize"
     },
     "[typescriptreact]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode",
         "editor.formatOnSave": true,
         "editor.tabSize": 4,
-        "prettier.tabWidth": 4
+        "editor.indentSize": "tabSize"
     },
     "[javascriptreact]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode",
         "editor.formatOnSave": true,
         "editor.tabSize": 4,
-        "prettier.tabWidth": 4
+        "editor.indentSize": "tabSize"
     },
     "[css]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode",
-        "editor.formatOnSave": true
+        "editor.formatOnSave": true,
+        "editor.indentSize": "tabSize"
+    },
+    "[html]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true,
+        "editor.tabSize": 4,
+        "editor.indentSize": "tabSize"
     },
     "[json]": {
         "editor.quickSuggestions": {
             "strings": true
         },
-        "editor.suggest.insertMode": "replace",
-        "editor.defaultFormatter": "vscode.json-language-features"
+        "editor.defaultFormatter": "vscode.json-language-features",
+        "editor.tabSize": 4,
+        "editor.indentSize": "tabSize"
     },
     "[toml]": {
         "editor.defaultFormatter": "tamasfe.even-better-toml"
     },
     "[dockercompose]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode",
         "editor.formatOnSave": true,
         "editor.insertSpaces": true,
         "editor.tabSize": 2,
@@ -143,9 +150,17 @@
     "[rust]": {
         "editor.defaultFormatter": "rust-lang.rust-analyzer",
     },
+    "[svelte]": {
+        "editor.defaultFormatter": "svelte.svelte-vscode",
+        "editor.formatOnSave": true,
+        "editor.tabSize": 4,
+        "editor.indentSize": "tabSize"
+    },
     "errorLens.enabled": true,
     "javascript.updateImportsOnFileMove.enabled": "always",
     "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "prettier.requireConfig": true,
     "eslint.validate": [
         "javascript",
         "javascriptreact",

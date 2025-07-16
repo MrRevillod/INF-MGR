@@ -6,8 +6,9 @@
         "tamasfe.even-better-toml",
         "ionutvmi.path-autocomplete",
         "esbenp.prettier-vscode",
+        "svelte.svelte-vscode",
         "YoavBls.pretty-ts-errors",
         "rust-lang.rust-analyzer",
-        "dbaeumer.vscode-eslint",
+        "dbaeumer.vscode-eslint"
     ]
 }
