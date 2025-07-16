@@ -1,4 +1,7 @@
-use std::str::FromStr;
+use std::{
+    fmt::{self, Display},
+    str::FromStr,
+};
 
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -34,15 +37,17 @@ pub enum Role {
     Coordinator,
 }
 
-impl ToString for Role {
-    fn to_string(&self) -> String {
-        match self {
-            Role::Administrator => "administrator".to_string(),
-            Role::Student => "student".to_string(),
-            Role::Teacher => "teacher".to_string(),
-            Role::Secretary => "secretary".to_string(),
-            Role::Coordinator => "coordinator".to_string(),
-        }
+impl Display for Role {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let role_str = match self {
+            Role::Administrator => "administrator",
+            Role::Student => "student",
+            Role::Teacher => "teacher",
+            Role::Secretary => "secretary",
+            Role::Coordinator => "coordinator",
+        };
+
+        write!(f, "{role_str}")
     }
 }
 

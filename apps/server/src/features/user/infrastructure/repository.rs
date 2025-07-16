@@ -25,7 +25,7 @@ impl UserRepository for PostgresUserRepository {
             .await
             .map_err(|e| UserError::UnexpectedError(e.to_string()))?;
 
-        let entity_vec = users.into_iter().map(|model| User::from(model)).collect();
+        let entity_vec = users.into_iter().map(User::from).collect();
 
         Ok(entity_vec)
     }
@@ -40,7 +40,7 @@ impl UserRepository for PostgresUserRepository {
             .await
             .map_err(|e| UserError::UnexpectedError(e.to_string()))?;
 
-        Ok(user.map(|model| User::from(model)))
+        Ok(user.map(User::from))
     }
 
     async fn find_by_rut(&self, rut: &str) -> Result<Option<User>, UserError> {
@@ -53,7 +53,7 @@ impl UserRepository for PostgresUserRepository {
             .await
             .map_err(|e| UserError::UnexpectedError(e.to_string()))?;
 
-        Ok(user.map(|model| User::from(model)))
+        Ok(user.map(User::from))
     }
 
     async fn find_by_email(&self, email: &str) -> Result<Option<User>, UserError> {
@@ -66,7 +66,7 @@ impl UserRepository for PostgresUserRepository {
             .await
             .map_err(|e| UserError::UnexpectedError(e.to_string()))?;
 
-        Ok(user.map(|model| User::from(model)))
+        Ok(user.map(User::from))
     }
 
     async fn create(&self, user: User) -> Result<User, UserError> {
@@ -102,7 +102,7 @@ impl UserRepository for PostgresUserRepository {
         sqlx::query(query)
             .bind(&user.email)
             .bind(&user.password)
-            .bind(&user.id)
+            .bind(user.id)
             .execute(pool)
             .await
             .map_err(|e| UserError::UnexpectedError(e.to_string()))?;

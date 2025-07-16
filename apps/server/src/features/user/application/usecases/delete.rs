@@ -17,10 +17,10 @@ pub struct DeleteUserCaseImpl {
 #[async_trait]
 impl DeleteUserCase for DeleteUserCaseImpl {
     async fn execute(&self, user_id: &str) -> Result<(), UserError> {
-        if self.repository.find_by_id(&user_id).await?.is_none() {
+        if self.repository.find_by_id(user_id).await?.is_none() {
             return Err(UserError::NotFound)?;
         }
 
-        self.repository.delete(&user_id).await
+        self.repository.delete(user_id).await
     }
 }

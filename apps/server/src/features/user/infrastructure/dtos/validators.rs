@@ -115,7 +115,7 @@ fn compute_rut_dv(mut rut: u32) -> String {
     }
 }
 
-pub fn role_validator(role: &String) -> Result<(), ValidationError> {
+pub fn role_validator(role: &str) -> Result<(), ValidationError> {
     match Role::from_str(role) {
         Ok(_) => Ok(()),
         Err(_) => Err(ValidationError::new("invalid_role")),

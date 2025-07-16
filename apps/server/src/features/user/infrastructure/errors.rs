@@ -33,7 +33,7 @@ impl From<UserError> for HttpResponse {
             })),
 
             UserError::UnexpectedError(error) => {
-                eprintln!("| USER ERROR | - Unexpected error: {}", error);
+                eprintln!("| USER ERROR | - Unexpected error: {error}");
 
                 HttpResponse::InternalServerError().data(json!({
                     "message": "Unexpected error",

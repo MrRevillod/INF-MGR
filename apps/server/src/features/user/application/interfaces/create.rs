@@ -10,7 +10,6 @@ use crate::features::user::domain::{User, UserError};
 /// Datos requeridos para crear un nuevo usuario.
 /// Este DTO representa la entrada cruda recibida desde
 /// la capa de infraestructura (por ejemplo, desde un controller).
-
 pub struct CreateUserInput {
     pub rut: String,
     pub name: String,
@@ -32,7 +31,6 @@ pub trait CreateUserCase: Interface {
 /// Implementación de conversión desde la entrada del caso de uso a la
 /// entidad de dominio `User`. Se utiliza `TryFrom` porque la creación
 /// de un `User` puede fallar (por ejemplo, al encriptar la contraseña).
-
 impl From<CreateUserInput> for User {
     fn from(input: CreateUserInput) -> Self {
         User {

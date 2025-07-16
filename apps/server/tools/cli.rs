@@ -38,12 +38,12 @@ async fn write_mod_rs(dir: &Path, content: &str) -> Result<()> {
 
 async fn append_feature_to_root_mod(feature_name: &str) -> Result<()> {
     let mod_file = Path::new("src/features/mod.rs");
-    let new_line = format!("pub mod {};\n", feature_name);
+    let new_line = format!("pub mod {feature_name};\n");
 
     if mod_file.exists() {
         let contents = fs::read_to_string(mod_file).await?;
         if contents.contains(&new_line)
-            || contents.contains(&format!("pub mod {}", feature_name))
+            || contents.contains(&format!("pub mod {feature_name}"))
         {
             return Ok(());
         }
@@ -87,7 +87,7 @@ async fn main() -> Result<()> {
 
     append_feature_to_root_mod(feature_name).await?;
 
-    println!("Feature `{}` creada exitosamente", feature_name);
+    println!("Feature `{feature_name}` creada exitosamente");
     Ok(())
 }
 

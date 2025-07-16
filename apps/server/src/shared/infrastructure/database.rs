@@ -32,7 +32,7 @@ impl PostgresDatabase {
             .run(self.get_pool())
             .await
         {
-            eprintln!("Error running migrations: {}", e);
+            eprintln!("Error running migrations: {e}");
         };
 
         Ok(())
@@ -45,8 +45,8 @@ impl DatabaseConnection for PostgresDatabase {
     }
 }
 
-impl Into<PostgresDatabaseParameters> for PostgresDatabase {
-    fn into(self) -> PostgresDatabaseParameters {
-        PostgresDatabaseParameters { pool: self.pool }
+impl From<PostgresDatabase> for PostgresDatabaseParameters {
+    fn from(value: PostgresDatabase) -> Self {
+        PostgresDatabaseParameters { pool: value.pool }
     }
 }

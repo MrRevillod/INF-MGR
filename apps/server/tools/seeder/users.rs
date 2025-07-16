@@ -46,7 +46,7 @@ fn generate_random_rut() -> String {
 
     let verifier = calculate_dv(number);
 
-    format!("{}-{}", number, verifier)
+    format!("{number}-{verifier}")
 }
 
 fn calculate_dv(mut number: u32) -> String {
