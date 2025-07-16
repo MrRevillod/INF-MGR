@@ -1,9 +1,9 @@
 use regex::Regex;
-use std::sync::OnceLock;
+use std::{str::FromStr, sync::OnceLock};
 use validator::ValidationError;
 
 use super::body::{CreateUserDto, UpdateUserDto};
-use crate::features::user::domain::Role;
+use crate::features::user::infrastructure::models::Role;
 
 static SPECIAL_CHAR_REGEX: OnceLock<Regex> = OnceLock::new();
 
@@ -115,20 +115,9 @@ fn compute_rut_dv(mut rut: u32) -> String {
     }
 }
 
-pub fn role_validator(role: &Vec<String>) -> Result<(), ValidationError> {
-    if role.is_empty() {
-        return Err(ValidationError::new("roles_required"));
+pub fn role_validator(role: &String) -> Result<(), ValidationError> {
+    match Role::from_str(role) {
+        Ok(_) => Ok(()),
+        Err(_) => Err(ValidationError::new("invalid_role")),
     }
-
-    let mut seen = std::collections::HashSet::new();
-    for r in role {
-        Role::try_from(r.clone())
-            .map_err(|_| ValidationError::new("invalid_role"))?;
-
-        if !seen.insert(r) {
-            return Err(ValidationError::new("duplicate_role"));
-        }
-    }
-
-    Ok(())
 }

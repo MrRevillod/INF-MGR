@@ -1,5 +1,4 @@
 use async_trait::async_trait;
-use chrono::Utc;
 use shaku::Component;
 use std::sync::Arc;
 
@@ -8,7 +7,7 @@ use crate::features::user::{
         interfaces::{UpdateUserCase, UpdateUserInput},
         services::PasswordHasher,
     },
-    domain::{Role, User, UserError, UserRepository},
+    domain::{User, UserError, UserRepository},
 };
 
 #[derive(Component)]
@@ -39,14 +38,10 @@ impl UpdateUserCase for UpdateUserCaseImpl {
             user.password = self.hasher.hash(&p)?
         }
 
-        if let Some(r) = input.roles.clone() {
-            user.roles = r
-                .into_iter()
-                .filter_map(|r| Role::try_from(r).ok())
-                .collect();
+        if let Some(role) = input.role {
+            user.role = role
         }
 
-        user.updated_at = Utc::now();
         self.repository.update(user).await
     }
 }

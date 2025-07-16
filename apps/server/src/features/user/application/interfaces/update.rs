@@ -21,7 +21,7 @@ use crate::features::user::domain::{User, UserError};
 pub struct UpdateUserInput {
     pub email: Option<String>,
     pub password: Option<String>,
-    pub roles: Option<Vec<String>>,
+    pub role: Option<String>,
 }
 
 // Use case definition for updating an existing user.

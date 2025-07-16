@@ -26,7 +26,7 @@ impl CreateUserCase for CreateUserCaseImpl {
         let mut user = User::from(input);
 
         let (id, email) = tokio::try_join!(
-            self.repository.find_by_id(&user.id),
+            self.repository.find_by_rut(&user.rut),
             self.repository.find_by_email(&user.email)
         )?;
 

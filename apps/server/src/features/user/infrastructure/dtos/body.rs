@@ -13,7 +13,7 @@ use super::validators::*;
 #[validate(schema(function = "validate_password_pairs"))]
 pub struct CreateUserDto {
     #[validate(custom(function = "validate_rut_id"))]
-    pub id: String,
+    pub rut: String,
 
     #[validate(length(min = 5, max = 100))]
     pub name: String,
@@ -29,7 +29,7 @@ pub struct CreateUserDto {
     pub confirm_password: String,
 
     #[validate(custom(function = "role_validator"))]
-    pub roles: Vec<String>,
+    pub role: String,
 }
 
 // This trait implementation converts the `CreateUserDto` into the `CreateUserInput`
@@ -41,11 +41,11 @@ pub struct CreateUserDto {
 impl From<CreateUserDto> for CreateUserInput {
     fn from(dto: CreateUserDto) -> Self {
         CreateUserInput {
-            id: dto.id,
+            rut: dto.rut,
             name: dto.name,
             email: dto.email,
             password: dto.password,
-            roles: dto.roles,
+            role: dto.role,
         }
     }
 }
@@ -64,7 +64,7 @@ pub struct UpdateUserDto {
     pub confirm_password: Option<String>,
 
     #[validate(custom(function = "role_validator"))]
-    pub roles: Option<Vec<String>>,
+    pub role: Option<String>,
 }
 
 // This trait implementation converts the `UpdateUserDto` into the `UpdateUserInput`
@@ -78,7 +78,7 @@ impl From<UpdateUserDto> for UpdateUserInput {
         UpdateUserInput {
             email: dto.email,
             password: dto.password,
-            roles: dto.roles,
+            role: dto.role,
         }
     }
 }

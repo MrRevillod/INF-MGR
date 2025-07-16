@@ -3,19 +3,20 @@
 
 use async_trait::async_trait;
 use shaku::Interface;
+use uuid::Uuid;
 
-use crate::features::user::domain::{Role, User, UserError};
+use crate::features::user::domain::{User, UserError};
 
 /// Datos requeridos para crear un nuevo usuario.
 /// Este DTO representa la entrada cruda recibida desde
 /// la capa de infraestructura (por ejemplo, desde un controller).
 
 pub struct CreateUserInput {
-    pub id: String,
+    pub rut: String,
     pub name: String,
     pub email: String,
     pub password: String,
-    pub roles: Vec<String>,
+    pub role: String,
 }
 
 /// Caso de uso para crear un nuevo usuario.
@@ -34,21 +35,13 @@ pub trait CreateUserCase: Interface {
 
 impl From<CreateUserInput> for User {
     fn from(input: CreateUserInput) -> Self {
-        let now = chrono::Utc::now();
-
         User {
-            id: input.id,
+            id: Uuid::new_v4(),
+            rut: input.rut,
             name: input.name,
             email: input.email,
-            validated: false,
-            roles: input
-                .roles
-                .into_iter()
-                .filter_map(|role| Role::try_from(role).ok())
-                .collect(),
+            role: input.role,
             password: input.password,
-            created_at: now,
-            updated_at: now,
         }
     }
 }

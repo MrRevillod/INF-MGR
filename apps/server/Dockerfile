@@ -2,7 +2,7 @@
 # BUILDER STAGE ---------------------------------------------------------
 # -----------------------------------------------------------------------
 
-FROM rust:1.84-bullseye AS builder
+FROM rust:1.88-bullseye AS builder
 
 WORKDIR /app
 
@@ -23,7 +23,7 @@ RUN cargo build --release
 # DEVELOPMENT STAGE -----------------------------------------------------
 # -----------------------------------------------------------------------
 
-FROM rust:1.84-bullseye AS dev
+FROM rust:1.88-bullseye AS dev
 
 RUN cargo install cargo-watch
 
@@ -38,12 +38,7 @@ ENV CARGO_TARGET_DIR /app/target
 
 EXPOSE 8000
 
-CMD sh -c "echo 'INFO: Attempting to run database seeder...' && \
-           cargo run --bin dev-seeder --features seeder && \
-           echo 'INFO: Database seeder finished successfully.' && \
-           echo 'INFO: Starting server with cargo watch...' && \
-           cargo watch -x 'run --bin server' -w src -w config || \
-           (echo 'ERROR: Database seeder failed. Check logs above.' && exit 1)"
+CMD sh -c "cargo watch -x 'run --bin server' -w src -w config"
 
 # -----------------------------------------------------------------------
 # PRODUCTION STAGE ------------------------------------------------------

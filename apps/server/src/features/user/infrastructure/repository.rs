@@ -1,6 +1,5 @@
 use async_trait::async_trait;
 use shaku::Component;
-use sqlx::types::Json;
 use std::sync::Arc;
 
 use crate::shared::infrastructure::DatabaseConnection;
@@ -44,6 +43,19 @@ impl UserRepository for PostgresUserRepository {
         Ok(user.map(|model| User::from(model)))
     }
 
+    async fn find_by_rut(&self, rut: &str) -> Result<Option<User>, UserError> {
+        let pool = self.database_connection.get_pool();
+        let query = r#"SELECT * FROM users WHERE rut = $1"#;
+
+        let user = sqlx::query_as::<_, UserModel>(query)
+            .bind(rut)
+            .fetch_optional(pool)
+            .await
+            .map_err(|e| UserError::UnexpectedError(e.to_string()))?;
+
+        Ok(user.map(|model| User::from(model)))
+    }
+
     async fn find_by_email(&self, email: &str) -> Result<Option<User>, UserError> {
         let pool = self.database_connection.get_pool();
         let query = r#"SELECT * FROM users WHERE email = $1"#;
@@ -60,22 +72,18 @@ impl UserRepository for PostgresUserRepository {
     async fn create(&self, user: User) -> Result<User, UserError> {
         let pool = self.database_connection.get_pool();
         let query = r#"
-            INSERT INTO users (
-                id, name, email, password, validated, created_at, updated_at
-            ) VALUES (
-                $1, $2, $3, $4, $5, $6, $7
-            )
-            RETURNING id, name, email, password, validated, created_at, updated_at
+            INSERT INTO users (id, rut, name, email, password, role) 
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING id, rut, name, email, password, role
         "#;
 
         let model = sqlx::query_as::<_, UserModel>(query)
             .bind(user.id)
+            .bind(user.rut)
             .bind(user.name)
             .bind(user.email)
             .bind(user.password)
-            .bind(user.validated)
-            .bind(user.created_at)
-            .bind(user.updated_at)
+            .bind(user.role)
             .fetch_one(pool)
             .await
             .map_err(|e| UserError::UnexpectedError(e.to_string()))?;
@@ -87,22 +95,13 @@ impl UserRepository for PostgresUserRepository {
         let pool = self.database_connection.get_pool();
         let query = r#"
             UPDATE users 
-            SET email = $1, password = $2, role = $3, updated_at = $4
-            WHERE id = $5
+            SET email = $1, password = $2, role = $3
+            WHERE id = $4
         "#;
-
-        let roles = user
-            .clone()
-            .roles
-            .into_iter()
-            .map(String::from)
-            .collect::<Vec<String>>();
 
         sqlx::query(query)
             .bind(&user.email)
             .bind(&user.password)
-            .bind(Json(roles))
-            .bind(user.updated_at)
             .bind(&user.id)
             .execute(pool)
             .await

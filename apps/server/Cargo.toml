@@ -8,8 +8,8 @@ default = []
 seeder = ["dep:fake", "dep:rand"]
 
 [[bin]]
-name = "dev-seeder"
-path = "tools/seeder.rs"
+name = "seeder"
+path = "tools/seeder/main.rs"
 required-features = ["seeder"]
 
 [[bin]]
@@ -35,16 +35,15 @@ sqlx = { version = "0.8.5", features = [
 ] }
 
 tokio = { version = "1.46.1", features = ["full"] }
-
 axum = "0.8.4"
 sword = "0.1.6"
+
 tower-http = { version = "0.6.6", features = ["trace", "cors"] }
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 
 shaku = { version = "0.6.2", features = ["thread_safe"] }
 async-trait = "0.1.88"
-
-tracing = "0.1.41"
-tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 
 validator = { version = "0.20.0", features = ["derive"] }
 regex = "1.11.1"
