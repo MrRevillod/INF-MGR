@@ -126,10 +126,7 @@
         "editor.indentSize": "tabSize"
     },
     "[json]": {
-        "editor.quickSuggestions": {
-            "strings": true
-        },
-        "editor.defaultFormatter": "vscode.json-language-features",
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
         "editor.tabSize": 4,
         "editor.indentSize": "tabSize"
     },
@@ -153,6 +150,16 @@
     "[svelte]": {
         "editor.defaultFormatter": "svelte.svelte-vscode",
         "editor.formatOnSave": true,
+        "editor.tabSize": 4,
+        "editor.indentSize": "tabSize"
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.tabSize": 4,
+        "editor.indentSize": "tabSize"
+    },
+    "[jsonl]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
         "editor.tabSize": 4,
         "editor.indentSize": "tabSize"
     },
