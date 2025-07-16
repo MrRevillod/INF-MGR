@@ -18,7 +18,7 @@ services:
       dockerfile: ./apps/web/Dockerfile
     volumes:
       - ./apps/web:/app
-      - /app/node_modules
+      - web_node_modules:/app/node_modules
     networks:
       - my_networks
 
@@ -43,3 +43,12 @@ services:
       start_period: 10s
     networks:
       - my_networks
+
+volumes:
+  cargo_cache:
+  server_target:
+  web_node_modules:
+
+networks:
+  my_networks:
+    driver: bridge
