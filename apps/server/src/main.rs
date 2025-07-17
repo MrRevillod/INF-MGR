@@ -1,14 +1,10 @@
-mod config;
-mod features;
-mod shared;
-
 use sword::prelude::Application;
 
-use crate::{
+use server::{
     config::{CorsConfig, PostgresDbConfig},
-    shared::infrastructure::{
-        setup_cors, DependencyContainer, HttpLogger, PostgresDatabase,
-    },
+    shared::database::PostgresDatabase,
+    shared::di::DependencyContainer,
+    shared::layers::{setup_cors, HttpLogger},
 };
 
 #[tokio::main]

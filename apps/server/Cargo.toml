@@ -12,10 +12,6 @@ name = "seeder"
 path = "tools/seeder/main.rs"
 required-features = ["seeder"]
 
-[[bin]]
-name = "cli"
-path = "tools/cli.rs"
-
 [dependencies]
 chrono = { version = "0.4.41", features = ["serde"] }
 uuid = { version = "1.17.0", features = ["serde", "v4"] }
