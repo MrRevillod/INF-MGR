@@ -3,7 +3,8 @@ use shaku::Component;
 use std::sync::Arc;
 
 use crate::users::{
-    application::interfaces::{UpdateUserCase, UpdateUserInput},
+    application::inputs::UpdateUserInput,
+    application::interfaces::UpdateUserCase,
     domain::{User, UserError, UserRepository},
 };
 
