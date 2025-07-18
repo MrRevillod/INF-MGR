@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS students (
     user_id UUID NOT NULL REFERENCES users(id),
     practice_id UUID NOT NULL REFERENCES practices(id),
     asignature_id UUID NOT NULL REFERENCES asignatures(id),
-    evaluation_scores FLOAT[] NOT NULL,
+    evaluations student_evaluation[] NOT NULL,
     status student_status NOT NULL DEFAULT 'active'
 );
 

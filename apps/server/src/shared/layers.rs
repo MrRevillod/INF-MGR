@@ -8,6 +8,7 @@ use tower_http::cors::CorsLayer;
 use tower_http::trace::{
     MakeSpan, OnRequest, OnResponse, TraceLayer as TowerTraceLayer,
 };
+
 use tracing::Span;
 
 use crate::config::CorsConfig;
@@ -73,6 +74,12 @@ impl<B> OnResponse<B> for TraceOnResponse {
             latency.as_millis()
         );
         println!();
+    }
+}
+
+impl Default for HttpLogger {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

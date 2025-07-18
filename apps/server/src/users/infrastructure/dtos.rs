@@ -12,10 +12,14 @@ pub struct CreateUserDto {
     #[validate(custom(function = "validators::validate_rut_id"))]
     pub rut: String,
 
-    #[validate(length(min = 5, max = 100))]
+    #[validate(length(
+        min = 5,
+        max = 100,
+        message = "El nombre debe tener entre 5 y 100 caracteres."
+    ))]
     pub name: String,
 
-    #[validate(email)]
+    #[validate(email(message = "El email debe ser válido."))]
     pub email: String,
 
     #[validate(custom(function = "validators::password_schema"))]

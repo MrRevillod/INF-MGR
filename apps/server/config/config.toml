@@ -1,6 +1,7 @@
 [application]
 port = 8000
 host = "0.0.0.0"
+public_url = "${PUBLIC_URL:http://localhost:8000}"
 
 [postgres-db]
 url = "${POSTGRES_DATABASE_URL:postgres://localhost:5432/inf_mgr}"
@@ -20,3 +21,11 @@ refresh_jwt_exp_ms = 604800000               # 7 days
 allow_credentials = false
 allowed_http_methods = ["GET", "POST", "PUT", "PATCH", "DELETE"]
 allowed_http_headers = ["Content-Type", "Authorization"]
+
+[mailer]
+smtp_host = "${SMTP_HOST:localhost}"
+smtp_port = "${SMTP_PORT}"
+smtp_username = "${SMTP_USERNAME}"
+smtp_password = "${SMTP_PASSWORD}"
+public_url = "${PUBLIC_URL:http://localhost:8000}"
+templates = "html/**/*.html"

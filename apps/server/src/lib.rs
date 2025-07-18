@@ -51,10 +51,10 @@ pub mod asignatures {
             pub mod get;
             pub mod update;
 
-            // pub use create::;
-            // pub use delete::;
-            // pub use get::;
-            // pub use update::;
+            pub use create::CreateAsignatureCaseImpl;
+            pub use delete::DeleteAsignatureCaseImpl;
+            pub use get::GetAsignaturesCaseImpl;
+            pub use update::UpdateAsignatureCaseImpl;
         }
 
         pub use inputs::*;
@@ -69,10 +69,10 @@ pub mod asignatures {
         mod repository;
 
         pub mod errors;
-        // pub use controllers::
-        // pub use dtos::
-        // pub use models::
-        // pub use repository::
+        pub use controllers::AsignaturesController;
+        pub use dtos::{CreateAsignatureDto, UpdateAsignatureDto};
+        pub use models::{AsignatureModel, EvaluationType};
+        pub use repository::PostgresAsignatureRepository;
     }
 }
 
@@ -193,11 +193,15 @@ pub mod practices {
 pub mod shared {
     pub mod services {
         pub mod errors;
+        mod mailer;
         mod password;
+        pub use mailer::{MailTo, Mailer, MailerService};
         pub use password::{BcryptPasswordHasher, PasswordHasher};
     }
 
     pub mod database;
     pub mod di;
     pub mod layers;
+    pub mod smtp;
+    pub mod validators;
 }

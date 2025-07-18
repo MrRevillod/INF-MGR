@@ -1,16 +1,61 @@
+use async_trait::async_trait;
+use shaku::Interface;
 use uuid::Uuid;
 
+#[derive(Debug, Clone)]
 pub struct Evaluation {
+    pub id: Uuid,
     pub name: String,
-    pub score: f32,
     pub weight: f32,
 }
 
+#[derive(Debug, Clone)]
 pub struct Asignature {
     pub id: Uuid,
-    pub year: u16,
+    pub year: i16,
     pub code: String,
     pub name: String,
     pub evaluations: Vec<Evaluation>,
     pub teacher_id: Uuid,
+}
+
+#[derive(Debug, Clone)]
+pub struct AsignatureFilter {
+    pub year: Option<i16>,
+    pub code: Option<String>,
+    pub name: Option<String>,
+}
+
+#[async_trait]
+pub trait AsignatureRepository: Interface {
+    async fn find_all(&self) -> Result<Vec<Asignature>, AsignatureError>;
+    async fn find_by_id(
+        &self,
+        id: &Uuid,
+    ) -> Result<Option<Asignature>, AsignatureError>;
+
+    async fn find_by_filter(
+        &self,
+        filter: AsignatureFilter,
+    ) -> Result<Vec<Asignature>, AsignatureError>;
+
+    async fn create(&self, input: Asignature)
+        -> Result<Asignature, AsignatureError>;
+
+    async fn update(
+        &self,
+        id: &Uuid,
+        input: Asignature,
+    ) -> Result<Asignature, AsignatureError>;
+
+    async fn delete(&self, id: &Uuid) -> Result<(), AsignatureError>;
+}
+
+#[derive(Debug)]
+pub enum AsignatureError {
+    NotFound,
+    AlreadyExists,
+    UnexpectedError(String),
+    InvalidIdentifier,
+    DatabaseError(String),
 }

@@ -1,4 +1,5 @@
 #[derive(Debug)]
 pub enum ServiceError {
-    HasherError(String),
+    Hasher(String),
+    Mailer(String),
 }

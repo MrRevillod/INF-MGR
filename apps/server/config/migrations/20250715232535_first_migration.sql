@@ -19,7 +19,13 @@ CREATE TYPE user_role AS ENUM (
 
 DROP TYPE IF EXISTS evaluation CASCADE;
 CREATE TYPE evaluation AS (
+    id UUID,
     name TEXT,
-    score FLOAT,
     weight FLOAT
 );
+
+DROP TYPE IF EXISTS student_evaluation CASCADE;
+CREATE TYPE student_evaluation AS (
+    id UUID,
+    score FLOAT
+)

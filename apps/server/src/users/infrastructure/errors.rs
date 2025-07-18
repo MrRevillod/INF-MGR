@@ -61,10 +61,8 @@ impl From<UserError> for HttpResponse {
 impl From<ServiceError> for UserError {
     fn from(value: ServiceError) -> Self {
         match value {
-            ServiceError::HasherError(error) => {
-                eprintln!("| USER ERROR | - Hasher error: {error}");
-                UserError::UnexpectedError(error)
-            }
+            ServiceError::Hasher(error) => UserError::UnexpectedError(error),
+            ServiceError::Mailer(error) => UserError::UnexpectedError(error),
         }
     }
 }

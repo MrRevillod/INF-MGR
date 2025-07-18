@@ -1,10 +1,15 @@
 use sword::prelude::Application;
 
 use server::{
-    config::{CorsConfig, PostgresDbConfig},
-    shared::database::PostgresDatabase,
-    shared::di::DependencyContainer,
-    shared::layers::{setup_cors, HttpLogger},
+    asignatures::infrastructure::AsignaturesController,
+    config::{CorsConfig, MailerConfig, PostgresDbConfig},
+    shared::{
+        database::PostgresDatabase,
+        di::DependencyContainer,
+        layers::{setup_cors, HttpLogger},
+        smtp::LettreTransport,
+    },
+    users::infrastructure::UserController,
 };
 
 #[tokio::main]
@@ -13,6 +18,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let cors_config = app.config.get::<CorsConfig>()?;
     let pg_db_config = app.config.get::<PostgresDbConfig>()?;
+    let mailer_config = app.config.get::<MailerConfig>()?;
 
     let postgres_db = PostgresDatabase::new(&pg_db_config)
         .await
@@ -23,14 +29,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await
         .expect("Failed to create database connection");
 
-    let dependency_container = DependencyContainer::new(postgres_db);
+    let smtp_transport = LettreTransport::new(&mailer_config)
+        .await
+        .expect("Failed to create SMTP transport");
+
+    let dependency_container = DependencyContainer::new(postgres_db, smtp_transport);
 
     let http_logger = HttpLogger::new();
     let cors_layer = setup_cors(&cors_config);
 
-    app.layer(http_logger.layer)
+    app.di_module(dependency_container.module)?
+        .controller::<UserController>()
+        .controller::<AsignaturesController>()
         .layer(cors_layer)
-        .di_module(dependency_container.module)?
+        .layer(http_logger.layer)
         .run()
         .await?;
 
