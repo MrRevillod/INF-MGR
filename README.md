@@ -10,7 +10,7 @@ Este repositorio contiene el código fuente de un sistema de gestión de prácti
 ![Diagrama ERD](.diagrams/sad.png)
 
 ### Entidad relación (ERD)
-![Diagrama ERD](.diagrams/erd.png)
+![Diagrama ERD](https://raw.githubusercontent.com/MrRevillod/INF-MGR/refs/heads/master/.diagrams/erd.png)
 
 ## Instalación y ejecución
 
