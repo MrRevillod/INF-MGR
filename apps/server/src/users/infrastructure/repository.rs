@@ -1,9 +1,12 @@
 use async_trait::async_trait;
 use shaku::Component;
+use std::str::FromStr;
 use std::sync::Arc;
+use uuid::Uuid;
 
 use crate::shared::database::DatabaseConnection;
 
+use crate::users::infrastructure::Role;
 use crate::users::{
     domain::{User, UserError, UserRepository},
     infrastructure::models::UserModel,
@@ -30,7 +33,7 @@ impl UserRepository for PostgresUserRepository {
         Ok(entity_vec)
     }
 
-    async fn find_by_id(&self, user_id: &str) -> Result<Option<User>, UserError> {
+    async fn find_by_id(&self, user_id: &Uuid) -> Result<Option<User>, UserError> {
         let pool = self.database_connection.get_pool();
         let query = r#"SELECT * FROM users WHERE id = $1"#;
 
@@ -83,7 +86,7 @@ impl UserRepository for PostgresUserRepository {
             .bind(user.name)
             .bind(user.email)
             .bind(user.password)
-            .bind(user.role)
+            .bind(Role::from_str(&user.role).unwrap_or(Role::Student))
             .fetch_one(pool)
             .await
             .map_err(|e| UserError::UnexpectedError(e.to_string()))?;
@@ -102,6 +105,7 @@ impl UserRepository for PostgresUserRepository {
         sqlx::query(query)
             .bind(&user.email)
             .bind(&user.password)
+            .bind(Role::from_str(&user.role).unwrap_or(Role::Student))
             .bind(user.id)
             .execute(pool)
             .await
@@ -110,7 +114,7 @@ impl UserRepository for PostgresUserRepository {
         Ok(user)
     }
 
-    async fn delete(&self, user_id: &str) -> Result<(), UserError> {
+    async fn delete(&self, user_id: &Uuid) -> Result<(), UserError> {
         let pool = self.database_connection.get_pool();
 
         sqlx::query("DELETE FROM users WHERE id = $1")

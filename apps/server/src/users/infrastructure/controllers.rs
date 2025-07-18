@@ -1,15 +1,11 @@
 use crate::users::{
     application::{CreateUserCase, DeleteUserCase, GetUsersCase, UpdateUserCase},
-    infrastructure::{
-        dtos::{CreateUserDto, UpdateUserDto, UserResponseDTO},
-        models::UserModel,
-    },
+    infrastructure::dtos::{CreateUserDto, UpdateUserDto, UserResponseDTO},
 };
 
 use crate::shared::di::AppModule;
-
-use serde_json::json;
 use sword::{prelude::*, web::HttpResult};
+use uuid::Uuid;
 
 #[controller("/users")]
 pub struct UserController;
@@ -24,32 +20,33 @@ impl UserController {
         let users: Vec<UserResponseDTO> =
             data.into_iter().map(UserResponseDTO::from).collect();
 
-        Ok(HttpResponse::Ok().data(json!({ "data": users })))
+        Ok(HttpResponse::Ok().data(users))
     }
 
     #[post("/")]
     async fn create_user(ctx: Context) -> HttpResult<HttpResponse> {
         let use_case = ctx.get_dependency::<AppModule, dyn CreateUserCase>()?;
         let user_data: CreateUserDto = ctx.validated_body()?;
+
         let user = use_case.execute(user_data.into()).await?;
 
-        Ok(HttpResponse::Created().data(json!({ "data": UserModel::from(user) })))
+        Ok(HttpResponse::Created().data(UserResponseDTO::from(user)))
     }
 
     #[put("/{id}")]
     pub async fn update_user(ctx: Context) -> HttpResult<HttpResponse> {
-        let id = ctx.param::<String>("id")?;
+        let id = ctx.param::<Uuid>("id")?;
         let user_data: UpdateUserDto = ctx.validated_body()?;
 
         let use_case = ctx.get_dependency::<AppModule, dyn UpdateUserCase>()?;
         let user = use_case.execute(&id, user_data.into()).await?;
 
-        Ok(HttpResponse::Ok().data(json!({ "data": UserModel::from(user) })))
+        Ok(HttpResponse::Ok().data(UserResponseDTO::from(user)))
     }
 
     #[delete("/{id}")]
     async fn delete_user(ctx: Context) -> HttpResult<HttpResponse> {
-        let id = ctx.param::<String>("id")?;
+        let id = ctx.param::<Uuid>("id")?;
         let use_case = ctx.get_dependency::<AppModule, dyn DeleteUserCase>()?;
         use_case.execute(&id).await?;
 

@@ -13,6 +13,13 @@ path = "tools/seeder/main.rs"
 required-features = ["seeder"]
 
 [dependencies]
+tokio = { version = "1.46.1", features = ["full"] }
+axum = "0.8.4"
+sword = "0.1.6"
+
+lettre = "0.11.17"
+tera = "1.20.0"
+
 chrono = { version = "0.4.41", features = ["serde"] }
 uuid = { version = "1.17.0", features = ["serde", "v4"] }
 
@@ -30,9 +37,6 @@ sqlx = { version = "0.8.5", features = [
     "migrate",
 ] }
 
-tokio = { version = "1.46.1", features = ["full"] }
-axum = "0.8.4"
-sword = "0.1.6"
 
 tower-http = { version = "0.6.6", features = ["trace", "cors"] }
 tracing = "0.1.41"
@@ -48,5 +52,6 @@ mailchecker = "6.0.17"
 
 fake = { version = "4.3.0", optional = true }
 rand = { version = "0.9.1", optional = true }
-lettre = "0.11.17"
-tera = "1.20.0"
+
+[dev-dependencies]
+axum-test = "17.3.0"

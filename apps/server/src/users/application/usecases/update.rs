@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 use shaku::Component;
 use std::sync::Arc;
+use uuid::Uuid;
 
 use crate::users::{
     application::inputs::UpdateUserInput,
@@ -23,7 +24,7 @@ pub struct UpdateUserCaseImpl {
 impl UpdateUserCase for UpdateUserCaseImpl {
     async fn execute(
         &self,
-        user_id: &str,
+        user_id: &Uuid,
         input: UpdateUserInput,
     ) -> Result<User, UserError> {
         let Some(mut user) = self.repository.find_by_id(user_id).await? else {
@@ -31,6 +32,12 @@ impl UpdateUserCase for UpdateUserCaseImpl {
         };
 
         if let Some(e) = input.email {
+            let email_exists = self.repository.find_by_email(&e).await?.is_some();
+
+            if email_exists && user.email != e {
+                return Err(UserError::EmailAlreadyExists);
+            }
+
             user.email = e
         }
 

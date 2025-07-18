@@ -1,6 +1,4 @@
-use axum::extract::FromRef;
 use shaku::module;
-use std::sync::Arc;
 
 use crate::{
     asignatures,
@@ -12,9 +10,8 @@ use crate::{
     users,
 };
 
-#[derive(Clone)]
 pub struct DependencyContainer {
-    pub module: Arc<AppModule>,
+    pub module: AppModule,
 }
 
 impl DependencyContainer {
@@ -27,15 +24,7 @@ impl DependencyContainer {
             .with_component_parameters::<LettreTransport>(lettre_transport.into())
             .build();
 
-        DependencyContainer {
-            module: Arc::new(module),
-        }
-    }
-}
-
-impl FromRef<DependencyContainer> for Arc<AppModule> {
-    fn from_ref(di: &DependencyContainer) -> Arc<AppModule> {
-        di.module.clone()
+        DependencyContainer { module }
     }
 }
 

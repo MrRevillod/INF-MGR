@@ -6,7 +6,7 @@ use crate::users::{
     domain::User,
 };
 
-#[derive(Deserialize, Validate)]
+#[derive(Deserialize, Validate, Debug)]
 #[validate(schema(function = "validators::validate_password_pairs"))]
 pub struct CreateUserDto {
     #[validate(custom(function = "validators::validate_rut_id"))]

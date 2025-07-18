@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 use shaku::Component;
 use std::sync::Arc;
+use uuid::Uuid;
 
 use crate::users::{
     application::interfaces::DeleteUserCase,
@@ -16,7 +17,7 @@ pub struct DeleteUserCaseImpl {
 
 #[async_trait]
 impl DeleteUserCase for DeleteUserCaseImpl {
-    async fn execute(&self, user_id: &str) -> Result<(), UserError> {
+    async fn execute(&self, user_id: &Uuid) -> Result<(), UserError> {
         if self.repository.find_by_id(user_id).await?.is_none() {
             return Err(UserError::NotFound)?;
         }

@@ -25,34 +25,34 @@ impl From<UserError> for HttpResponse {
         match value {
             UserError::EmailAlreadyExists => HttpResponse::Conflict().data(json!({
                 "field": "email",
-                "message": "Email already exists",
+                "message": "Este correo electrónico ya está en uso",
             })),
 
             UserError::NotFound => HttpResponse::NotFound().data(json!({
-                "message": "User not found",
+                "message": "Usuario no encontrado",
             })),
 
             UserError::UnexpectedError(error) => {
                 eprintln!("| USER ERROR | - Unexpected error: {error}");
 
                 HttpResponse::InternalServerError().data(json!({
-                    "message": "Unexpected error",
+                    "message": "Error inesperado",
                 }))
             }
 
             UserError::InvalidEmail => HttpResponse::BadRequest().data(json!({
                 "field": "email",
-                "message": "The provided email is not valid to register",
+                "message": "El correo electrónico proporcionado no es válido",
             })),
 
             UserError::IdAlreadyExists => HttpResponse::BadRequest().data(json!({
-                "field": "id",
-                "message": "User ID already exists",
+                "field": "rut",
+                "message": "La identificación de usuario ya está en uso",
             })),
 
             UserError::InvalidRole => HttpResponse::BadRequest().data(json!({
-                "field": "roles",
-                "message": "Invalid role provided",
+                "field": "role",
+                "message": "El rol proporcionado no es válido",
             })),
         }
     }

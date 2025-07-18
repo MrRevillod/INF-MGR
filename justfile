@@ -22,3 +22,6 @@ web-install package:
 web-install-dev package:
     cd apps/web && npm install --save-dev {{package}}
     docker exec web_dev npm install --save-dev {{package}}
+
+test DOCKERARGS="":
+    docker compose -f docker-compose.test.yml up {{DOCKERARGS}}

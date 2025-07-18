@@ -3,6 +3,7 @@
 
 use async_trait::async_trait;
 use shaku::Interface;
+use uuid::Uuid;
 
 use crate::users::{
     application::{CreateUserInput, UpdateUserInput},
@@ -29,7 +30,7 @@ pub trait CreateUserCase: Interface {
 pub trait UpdateUserCase: Interface {
     async fn execute(
         &self,
-        user_id: &str,
+        user_id: &Uuid,
         input: UpdateUserInput,
     ) -> Result<User, UserError>;
 }
@@ -38,5 +39,5 @@ pub trait UpdateUserCase: Interface {
 /// implementación: users/application/use_cases/delete.rs
 #[async_trait]
 pub trait DeleteUserCase: Interface {
-    async fn execute(&self, user_id: &str) -> Result<(), UserError>;
+    async fn execute(&self, user_id: &Uuid) -> Result<(), UserError>;
 }

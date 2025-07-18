@@ -50,11 +50,13 @@ impl Mailer for MailerService {
         let email_from = self.mailer.get_config().smtp_username.clone();
         let email_from_fmt = format!("Prácticas y Tesis <{email_from}>");
 
-        let mut context = Context::new();
+        let context = Context::new();
 
-        context.insert("subject", &mail_to.subject);
-        context.insert("email", &mail_to.email);
-        context.insert("public_url", &self.mailer.get_config().public_url);
+        // context.insert("subject", &mail_to.subject);
+        // context.insert("email", &mail_to.email);
+        // context.insert("username", &mail_to.email);
+        // context.insert("password", &mail_to.email);
+        // context.insert("public_url", &self.mailer.get_config().public_url);
 
         let template_name = format!("{}.html", mail_to.template);
         let template = self
@@ -76,14 +78,10 @@ impl Mailer for MailerService {
             })?;
 
         let transport = self.mailer.get_transtport();
-        let message_ref = Arc::new(message);
 
-        tokio::spawn(async move {
-            if transport.send(message_ref.as_ref()).is_err() {
-                #[allow(unused_must_use)] // just retry sending
-                transport.send(message_ref.as_ref());
-            }
-        });
+        if transport.send(&message).is_err() {
+            return Err(ServiceError::Mailer("Failed to send email".to_string()));
+        }
 
         Ok(())
     }

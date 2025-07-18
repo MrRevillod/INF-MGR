@@ -41,8 +41,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     app.di_module(dependency_container.module)?
         .controller::<UserController>()
         .controller::<AsignaturesController>()
-        .layer(cors_layer)
         .layer(http_logger.layer)
+        .layer(cors_layer)
         .run()
         .await?;
 
