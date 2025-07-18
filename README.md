@@ -31,7 +31,7 @@ Para instalar y ejecutar el sistema, sigue estos pasos:
    ```bash
    cp .env.example .env
    ```
-   Asegúrate de configurar las variables de entorno en el archivo `.env` según tus necesidades.
+   Asegúrate de configurar las variables de entorno en el archivo `.env` según tus necesidades y preferencias.
 
 5. Construye y levanta los contenedores:
    ```bash
