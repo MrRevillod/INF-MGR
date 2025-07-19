@@ -77,7 +77,7 @@ impl From<StudentEvaluationDto> for StudentEvaluation {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Validate)]
+#[derive(Debug, Clone, Serialize, Deserialize, Validate, Default)]
 pub struct InscriptionQueryDto {
     #[validate(custom(function = validate_uuid, message = "Identificador de usuario inválido"))]
     pub user_id: Option<String>,

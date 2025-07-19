@@ -22,6 +22,12 @@ impl From<AsignatureError> for HttpResponse {
                 eprintln!("AsignatureError Database error (HTTP 500): {message}");
                 HttpResponse::InternalServerError()
             }
+            AsignatureError::TeacherNotFound => {
+                HttpResponse::BadRequest().message("Profesor no encontrado")
+            }
+            AsignatureError::UserIsNotTeacher => HttpResponse::BadRequest().message(
+                "El profesor seleccionado no se encuentra registrado como docente",
+            ),
         }
     }
 }

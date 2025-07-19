@@ -21,6 +21,13 @@ impl From<InscriptionError> for HttpResponse {
                 .message(
                     "El estudiante ya se encuentra inscrito en esta asignatura",
                 ),
+
+            InscriptionError::StudentNotFound => {
+                HttpResponse::BadRequest().message("Estudiante no encontrado")
+            }
+
+            InscriptionError::InvalidStudentRole => HttpResponse::Forbidden()
+                .message("Estudiante inválido, intente más tarde"),
         }
     }
 }

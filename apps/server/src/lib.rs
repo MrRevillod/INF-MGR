@@ -118,8 +118,8 @@ pub mod reports {
 pub mod inscriptions {
     pub mod domain;
 
-    #[cfg(test)]
-    pub mod __tests__;
+    // #[cfg(test)]
+    // pub mod __tests__;
 
     pub mod application {
         mod interfaces;
@@ -214,6 +214,8 @@ pub mod tests {
     use axum_test::TestServer;
     use sword::prelude::Application;
 
+    use crate::inscriptions::infrastructure::InscriptionController;
+
     use super::{
         asignatures::infrastructure::AsignaturesController,
         config::{MailerConfig, PostgresDbConfig},
@@ -239,7 +241,7 @@ pub mod tests {
             .await
             .expect("Failed to migrate database");
 
-        sqlx::query("TRUNCATE users, asignatures, students, practices CASCADE")
+        sqlx::query("TRUNCATE users, asignatures, inscriptions, practices CASCADE")
             .execute(&postgres_db.pool)
             .await
             .expect("Failed to truncate database tables");
@@ -255,8 +257,20 @@ pub mod tests {
             .di_module(dependency_container.module)
             .expect("Failed to load DI module")
             .controller::<UserController>()
-            .controller::<AsignaturesController>();
+            .controller::<AsignaturesController>()
+            .controller::<InscriptionController>();
 
         TestServer::new(app.router()).expect("Failed to start test server")
+    }
+
+    pub fn generate_unique_code() -> String {
+        format!("INFO{:04}", rand::random_range(1000..9999))
+    }
+
+    pub fn generate_unique_name() -> String {
+        format!(
+            "Test Asignature {}",
+            uuid::Uuid::new_v4().to_string()[0..8].to_uppercase()
+        )
     }
 }

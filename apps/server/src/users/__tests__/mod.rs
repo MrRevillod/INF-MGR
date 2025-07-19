@@ -23,8 +23,6 @@ async fn test_create_user_should_work() {
     let response = app.post("/users").json(&new_user).await;
     let body = response.json::<ResponseBody>();
 
-    dbg!(&body);
-
     assert_eq!(response.status_code(), 201);
 
     let user_id = body
@@ -457,6 +455,7 @@ async fn test_update_user_invalid_password_format() {
 
     let create_response = app.post("/users").json(&new_user).await;
     let body = create_response.json::<ResponseBody>();
+
     let user_id = body.data.get("id").and_then(|id| id.as_str()).unwrap();
 
     // Try to update with invalid password (too short)

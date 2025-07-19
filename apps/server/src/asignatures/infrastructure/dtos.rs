@@ -106,7 +106,7 @@ pub struct UpdateAsignatureDto {
     pub year: Option<i32>,
 
     #[validate(
-        length(equal = 7, message = "El código debe tener 7 caracteres."),
+        length(equal = 8, message = "El código debe tener 8 caracteres."),
         regex(
             path = *ASIGNATURE_CODE_REGEX,
             message = "El código debe seguir el formato INFO{NNNN}."
@@ -163,7 +163,7 @@ mod validators {
             total_weight += evaluation.weight;
         }
 
-        if !(0.99..=1.0).contains(&total_weight) {
+        if total_weight * 100_f64 != 100_f64 {
             return Err(ValidationError::new(
                 "El porcentaje de la evaluación debe estar entre 1 y 100%.",
             ));

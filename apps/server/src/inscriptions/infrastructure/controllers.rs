@@ -21,10 +21,12 @@ pub struct InscriptionController {}
 impl InscriptionController {
     #[get("/")]
     async fn find_all(ctx: Context) -> HttpResult<HttpResponse> {
-        let filter = ctx.validated_query::<InscriptionQueryDto>()?;
+        let filter = ctx.validated_query_optional::<InscriptionQueryDto>()?;
         let use_case = ctx.get_dependency::<AppModule, dyn GetInscriptionsCase>()?;
 
-        let inscriptions = use_case.execute(filter.into()).await?;
+        let inscriptions =
+            use_case.execute(filter.unwrap_or_default().into()).await?;
+
         let models: Vec<InscriptionModel> =
             inscriptions.into_iter().map(Into::into).collect();
 

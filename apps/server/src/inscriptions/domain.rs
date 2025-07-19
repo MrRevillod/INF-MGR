@@ -23,6 +23,8 @@ pub enum InscriptionError {
     NotFound,
     InvalidStudentState,
     InscriptionAlreadyExists,
+    StudentNotFound,
+    InvalidStudentRole,
 }
 
 pub struct InscriptionFilter {

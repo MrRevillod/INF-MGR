@@ -2645,8 +2645,7 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 [[package]]
 name = "sword"
 version = "0.1.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "73c26c63e065f2aebce9d35db52bffe47760da3dc71b66c9635d5e964e202bd2"
+source = "git+https://github.com/MrRevillod/sword?branch=dev#3c1a0983cfd5e4bbc64be4dffb6142c6a74124fe"
 dependencies = [
  "axum",
  "axum_responses",
@@ -2668,8 +2667,7 @@ dependencies = [
 [[package]]
 name = "sword-macros"
 version = "0.1.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1c9ab9e9f6d42ece0ffaacd076f3cd8dbf03f57c8739825ddf88d18237c38bbb"
+source = "git+https://github.com/MrRevillod/sword?branch=dev#3c1a0983cfd5e4bbc64be4dffb6142c6a74124fe"
 dependencies = [
  "proc-macro-error",
  "proc-macro2",

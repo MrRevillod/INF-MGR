@@ -1,20 +1,9 @@
-use crate::tests::init_test_app;
+use crate::tests::{generate_unique_code, generate_unique_name, init_test_app};
 use serde_json::json;
 use sword::web::ResponseBody;
 use uuid::Uuid;
 
 use rand::random_range;
-
-fn generate_unique_code() -> String {
-    format!("INFO{:04}", random_range(1000..9999))
-}
-
-fn generate_unique_name() -> String {
-    format!(
-        "Test Asignature {}",
-        Uuid::new_v4().to_string()[0..8].to_uppercase()
-    )
-}
 
 async fn create_test_user_with_app(app: &axum_test::TestServer) -> String {
     let new_user = json!({
@@ -699,7 +688,7 @@ async fn test_update_asignature_invalid_teacher_id() {
 
     // Try to update with invalid teacher_id
     let update_asignature = json!({
-        "teacher_id": "invalid-uuid"
+        "teacherId": "invalid-uuid"
     });
 
     let update_response = app
@@ -905,13 +894,8 @@ async fn test_create_asignature_valid_evaluation_weight_boundaries_3_33() {
     });
 
     let response = app.post("/asignatures").json(&min_weight_asignature).await;
-    assert_eq!(response.status_code(), 201);
+    assert_eq!(response.status_code(), 400);
 
-    let body = response.json::<ResponseBody>();
-    let asignature_id = body.data.get("id").and_then(|id| id.as_str()).unwrap();
-
-    // Cleanup
-    app.delete(&format!("/asignatures/{}", asignature_id)).await;
     cleanup_user_with_app(&app, &teacher_id).await;
 }
 

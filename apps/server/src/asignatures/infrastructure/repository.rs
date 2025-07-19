@@ -105,10 +105,7 @@ impl AsignatureRepository for PostgresAsignatureRepository {
             .bind(input.teacher_id)
             .fetch_one(self.db_connection.get_pool())
             .await
-            .map_err(|e| {
-                dbg!(&e);
-                AsignatureError::DatabaseError(e.to_string())
-            })?;
+            .map_err(|e| AsignatureError::DatabaseError(e.to_string()))?;
 
         Ok(Asignature::from(model))
     }

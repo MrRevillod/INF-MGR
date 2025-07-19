@@ -3,6 +3,7 @@ use sword::prelude::Application;
 use server::{
     asignatures::infrastructure::AsignaturesController,
     config::{CorsConfig, MailerConfig, PostgresDbConfig},
+    inscriptions::infrastructure::InscriptionController,
     shared::{
         database::PostgresDatabase,
         di::DependencyContainer,
@@ -41,6 +42,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     app.di_module(dependency_container.module)?
         .controller::<UserController>()
         .controller::<AsignaturesController>()
+        .controller::<InscriptionController>()
         .layer(http_logger.layer)
         .layer(cors_layer)
         .run()

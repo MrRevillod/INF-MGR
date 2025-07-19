@@ -15,7 +15,7 @@ required-features = ["seeder"]
 [dependencies]
 tokio = { version = "1.46.1", features = ["full"] }
 axum = "0.8.4"
-sword = "0.1.6"
+sword = { git = "https://github.com/MrRevillod/sword", branch = "dev" }
 
 lettre = "0.11.17"
 tera = "1.20.0"

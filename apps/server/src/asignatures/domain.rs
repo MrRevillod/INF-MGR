@@ -58,4 +58,6 @@ pub enum AsignatureError {
     UnexpectedError(String),
     InvalidIdentifier,
     DatabaseError(String),
+    UserIsNotTeacher,
+    TeacherNotFound,
 }
