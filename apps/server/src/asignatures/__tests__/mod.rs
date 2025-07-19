@@ -3,14 +3,12 @@ use serde_json::json;
 use sword::web::ResponseBody;
 use uuid::Uuid;
 
-use rand::random_range;
-
 async fn create_test_user_with_app(app: &axum_test::TestServer) -> String {
     let new_user = json!({
         "rut": "34108499-7",
         "name": "Test Teacher",
         "email": format!("teacher{}@example.com", Uuid::new_v4()),
-        "role": "teacher",
+        "roles": ["teacher"],
         "password": "TestPassword123!",
         "confirmPassword": "TestPassword123!"
     });

@@ -44,8 +44,8 @@ impl UpdateUserCase for UpdateUserCaseImpl {
             user.password = self.hasher.hash(&p)?
         }
 
-        if let Some(role) = input.role {
-            user.role = role
+        if let Some(roles) = input.roles {
+            user.roles = roles
         }
 
         self.repository.update(user).await

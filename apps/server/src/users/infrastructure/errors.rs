@@ -51,7 +51,7 @@ impl From<UserError> for HttpResponse {
             })),
 
             UserError::InvalidRole => HttpResponse::BadRequest().data(json!({
-                "field": "role",
+                "field": "roles",
                 "message": "El rol proporcionado no es válido",
             })),
         }

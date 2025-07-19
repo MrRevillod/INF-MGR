@@ -23,7 +23,7 @@ pub struct UserModel {
     pub name: String,
     pub email: String,
     pub password: String,
-    pub role: Role,
+    pub roles: Vec<Role>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, sqlx::Type)]
@@ -81,7 +81,11 @@ impl From<UserModel> for User {
             name: user_model.name,
             email: user_model.email,
             password: user_model.password,
-            role: user_model.role.to_string(),
+            roles: user_model
+                .roles
+                .iter()
+                .map(|role| role.to_string())
+                .collect(),
         }
     }
 }
@@ -100,7 +104,11 @@ impl From<User> for UserModel {
             name: user.name,
             email: user.email,
             password: user.password,
-            role: user.role.parse().unwrap_or(Role::Student),
+            roles: user
+                .roles
+                .iter()
+                .map(|role| Role::from_str(role).unwrap_or(Role::Student))
+                .collect(),
         }
     }
 }

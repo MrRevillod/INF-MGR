@@ -15,7 +15,7 @@ async fn test_create_user_should_work() {
         "rut": "34108499-7",
         "name": "Test User",
         "email": generate_unique_email(),
-        "role": "administrator",
+        "roles": ["administrator"],
         "password": "TestPassword123!",
         "confirmPassword": "TestPassword123!"
     });
@@ -51,7 +51,7 @@ async fn test_update_user() {
         "rut": "34108499-7",
         "name": "Test User",
         "email": generate_unique_email(),
-        "role": "administrator",
+        "roles": ["administrator"],
         "password": "TestPassword123!",
         "confirmPassword": "TestPassword123!"
     });
@@ -104,7 +104,7 @@ async fn test_create_user_invalid_rut_format() {
         "rut": "34108499", // Missing dash and verification digit
         "name": "Test User",
         "email": generate_unique_email(),
-        "role": "administrator",
+        "roles": ["administrator"],
         "password": "TestPassword123!",
         "confirmPassword": "TestPassword123!"
     });
@@ -121,7 +121,7 @@ async fn test_create_user_invalid_rut_verification_digit() {
         "rut": "34108499-9", // Wrong verification digit (should be 7)
         "name": "Test User",
         "email": generate_unique_email(),
-        "role": "administrator",
+        "roles": ["administrator"],
         "password": "TestPassword123!",
         "confirmPassword": "TestPassword123!"
     });
@@ -138,7 +138,7 @@ async fn test_create_user_name_too_short() {
         "rut": "34108499-7",
         "name": "Test", // Only 4 characters, minimum is 5
         "email": generate_unique_email(),
-        "role": "administrator",
+        "roles": ["administrator"],
         "password": "TestPassword123!",
         "confirmPassword": "TestPassword123!"
     });
@@ -157,7 +157,7 @@ async fn test_create_user_name_too_long() {
         "rut": "34108499-7",
         "name": long_name,
         "email": generate_unique_email(),
-        "role": "administrator",
+        "roles": ["administrator"],
         "password": "TestPassword123!",
         "confirmPassword": "TestPassword123!"
     });
@@ -174,7 +174,7 @@ async fn test_create_user_invalid_email() {
         "rut": "34108499-7",
         "name": "Test User",
         "email": "invalid-email", // Invalid email format
-        "role": "administrator",
+        "roles": ["administrator"],
         "password": "TestPassword123!",
         "confirmPassword": "TestPassword123!"
     });
@@ -191,7 +191,7 @@ async fn test_create_user_password_too_short() {
         "rut": "34108499-7",
         "name": "Test User",
         "email": generate_unique_email(),
-        "role": "administrator",
+        "roles": ["administrator"],
         "password": "Test1!", // Only 6 characters, minimum is 8
         "confirmPassword": "Test1!"
     });
@@ -208,7 +208,7 @@ async fn test_create_user_password_missing_uppercase() {
         "rut": "34108499-7",
         "name": "Test User",
         "email": generate_unique_email(),
-        "role": "administrator",
+        "roles": ["administrator"],
         "password": "testpassword123!", // Missing uppercase
         "confirmPassword": "testpassword123!"
     });
@@ -225,7 +225,7 @@ async fn test_create_user_password_missing_lowercase() {
         "rut": "34108499-7",
         "name": "Test User",
         "email": generate_unique_email(),
-        "role": "administrator",
+        "roles": ["administrator"],
         "password": "TESTPASSWORD123!", // Missing lowercase
         "confirmPassword": "TESTPASSWORD123!"
     });
@@ -242,7 +242,7 @@ async fn test_create_user_password_missing_digit() {
         "rut": "34108499-7",
         "name": "Test User",
         "email": generate_unique_email(),
-        "role": "administrator",
+        "roles": ["administrator"],
         "password": "TestPassword!", // Missing digit
         "confirmPassword": "TestPassword!"
     });
@@ -259,7 +259,7 @@ async fn test_create_user_password_missing_special_char() {
         "rut": "34108499-7",
         "name": "Test User",
         "email": generate_unique_email(),
-        "role": "administrator",
+        "roles": ["administrator"],
         "password": "TestPassword123", // Missing special character
         "confirmPassword": "TestPassword123"
     });
@@ -276,7 +276,7 @@ async fn test_create_user_passwords_dont_match() {
         "rut": "34108499-7",
         "name": "Test User",
         "email": generate_unique_email(),
-        "role": "administrator",
+        "roles": ["administrator"],
         "password": "TestPassword123!",
         "confirmPassword": "DifferentPassword123!" // Passwords don't match
     });
@@ -293,7 +293,7 @@ async fn test_create_user_invalid_role() {
         "rut": "34108499-7",
         "name": "Test User",
         "email": generate_unique_email(),
-        "role": "invalid_role", // Invalid role
+        "roles": ["invalid_role"],
         "password": "TestPassword123!",
         "confirmPassword": "TestPassword123!"
     });
@@ -318,7 +318,7 @@ async fn test_create_user_valid_roles() {
             "rut": "34108499-7",
             "name": "Test User",
             "email": generate_unique_email(),
-            "role": role,
+            "roles": [role],
             "password": "TestPassword123!",
             "confirmPassword": "TestPassword123!"
         });
@@ -345,7 +345,7 @@ async fn test_update_user_invalid_email() {
         "rut": "34108499-7",
         "name": "Test User",
         "email": generate_unique_email(),
-        "role": "administrator",
+        "roles": ["administrator"],
         "password": "TestPassword123!",
         "confirmPassword": "TestPassword123!"
     });
@@ -379,7 +379,7 @@ async fn test_update_user_password_only_one_field() {
         "rut": "34108499-7",
         "name": "Test User",
         "email": generate_unique_email(),
-        "role": "administrator",
+        "roles": ["administrator"],
         "password": "TestPassword123!",
         "confirmPassword": "TestPassword123!"
     });
@@ -413,7 +413,7 @@ async fn test_update_user_passwords_dont_match() {
         "rut": "34108499-7",
         "name": "Test User",
         "email": generate_unique_email(),
-        "role": "administrator",
+        "roles": ["administrator"],
         "password": "TestPassword123!",
         "confirmPassword": "TestPassword123!"
     });
@@ -448,7 +448,7 @@ async fn test_update_user_invalid_password_format() {
         "rut": "34108499-7",
         "name": "Test User",
         "email": generate_unique_email(),
-        "role": "administrator",
+        "roles": ["administrator"],
         "password": "TestPassword123!",
         "confirmPassword": "TestPassword123!"
     });
@@ -484,7 +484,7 @@ async fn test_update_user_invalid_role() {
         "rut": "34108499-7",
         "name": "Test User",
         "email": generate_unique_email(),
-        "role": "administrator",
+        "roles": ["administrator"],
         "password": "TestPassword123!",
         "confirmPassword": "TestPassword123!"
     });
@@ -495,7 +495,7 @@ async fn test_update_user_invalid_role() {
 
     // Try to update with invalid role
     let update_user = json!({
-        "role": "invalid_role"
+        "roles": ["invalid_role"]
     });
 
     let update_response = app
@@ -518,7 +518,7 @@ async fn test_update_user_valid_password_change() {
         "rut": "34108499-7",
         "name": "Test User",
         "email": generate_unique_email(),
-        "role": "administrator",
+        "roles": ["administrator"],
         "password": "TestPassword123!",
         "confirmPassword": "TestPassword123!"
     });
@@ -553,7 +553,7 @@ async fn test_update_user_valid_role_change() {
         "rut": "34108499-7",
         "name": "Test User",
         "email": generate_unique_email(),
-        "role": "administrator",
+        "roles": ["administrator"],
         "password": "TestPassword123!",
         "confirmPassword": "TestPassword123!"
     });
@@ -564,7 +564,7 @@ async fn test_update_user_valid_role_change() {
 
     // Update with valid role
     let update_user = json!({
-        "role": "teacher"
+        "roles": ["teacher", "administrator"]
     });
 
     let update_response = app
@@ -577,11 +577,16 @@ async fn test_update_user_valid_role_change() {
     let updated_body = update_response.json::<ResponseBody>();
     let updated_role = updated_body
         .data
-        .get("role")
-        .and_then(|role| role.as_str())
+        .get("roles")
+        .and_then(|roles| roles.as_array())
         .expect("Updated role should be present");
 
-    assert_eq!(updated_role, "teacher");
+    let roles = updated_role
+        .iter()
+        .map(|role| role.as_str().unwrap_or(""))
+        .collect::<Vec<&str>>();
+
+    assert_eq!(roles, ["teacher", "administrator"]);
 
     // Clean up
     app.delete(&format!("/users/{}", user_id)).await;
@@ -598,7 +603,7 @@ async fn test_create_user_name_boundary_valid() {
         "rut": "34108499-7",
         "name": "Tests", // Exactly 5 characters
         "email": generate_unique_email(),
-        "role": "administrator",
+        "roles": ["administrator"],
         "password": "TestPassword123!",
         "confirmPassword": "TestPassword123!"
     });
@@ -623,7 +628,7 @@ async fn test_create_user_name_boundary_maximum() {
         "rut": "34108499-7",
         "name": max_name,
         "email": generate_unique_email(),
-        "role": "administrator",
+        "roles": ["administrator"],
         "password": "TestPassword123!",
         "confirmPassword": "TestPassword123!"
     });
@@ -646,7 +651,7 @@ async fn test_create_user_password_boundary_minimum() {
         "rut": "34108499-7",
         "name": "Test User",
         "email": generate_unique_email(),
-        "role": "administrator",
+        "roles": ["administrator"],
         "password": "TestPa1!", // Exactly 8 characters with all requirements
         "confirmPassword": "TestPa1!"
     });
@@ -673,7 +678,7 @@ async fn test_create_user_password_boundary_maximum() {
         "rut": "34108499-7",
         "name": "Test User",
         "email": generate_unique_email(),
-        "role": "administrator",
+        "roles": ["administrator"],
         "password": password,
         "confirmPassword": password
     });

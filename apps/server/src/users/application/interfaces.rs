@@ -26,7 +26,7 @@ pub trait CreateUserCase: Interface {
 pub struct UpdateUserInput {
     pub email: Option<String>,
     pub password: Option<String>,
-    pub role: Option<String>,
+    pub roles: Option<Vec<String>>,
 }
 
 /// Caso de uso para actualizar un usuario existente.

@@ -28,7 +28,7 @@ pub struct CreateUserDto {
     pub confirm_password: String,
 
     #[validate(custom(function = "validators::role_validator"))]
-    pub role: String,
+    pub roles: Vec<String>,
 }
 
 // This trait implementation converts the `CreateUserDto` into the `CreateUserInput`
@@ -45,7 +45,7 @@ impl From<CreateUserDto> for User {
             name: dto.name,
             email: dto.email,
             password: dto.password,
-            role: dto.role,
+            roles: dto.roles,
         }
     }
 }
@@ -64,7 +64,7 @@ pub struct UpdateUserDto {
     pub confirm_password: Option<String>,
 
     #[validate(custom(function = "validators::role_validator"))]
-    pub role: Option<String>,
+    pub roles: Option<Vec<String>>,
 }
 
 // This trait implementation converts the `UpdateUserDto` into the `UpdateUserInput`
@@ -78,7 +78,7 @@ impl From<UpdateUserDto> for UpdateUserInput {
         UpdateUserInput {
             email: dto.email,
             password: dto.password,
-            role: dto.role,
+            roles: dto.roles,
         }
     }
 }
@@ -94,7 +94,7 @@ pub struct UserResponseDTO {
     pub rut: String,
     pub name: String,
     pub email: String,
-    pub role: String,
+    pub roles: Vec<String>,
 }
 
 impl From<User> for UserResponseDTO {
@@ -104,7 +104,7 @@ impl From<User> for UserResponseDTO {
             rut: user_model.rut,
             name: user_model.name,
             email: user_model.email,
-            role: user_model.role.to_string(),
+            roles: user_model.roles.clone(),
         }
     }
 }
@@ -229,10 +229,26 @@ mod validators {
         }
     }
 
-    pub fn role_validator(role: &str) -> Result<(), ValidationError> {
-        match Role::from_str(role) {
-            Ok(_) => Ok(()),
-            Err(_) => Err(ValidationError::new("invalid_role")),
+    pub fn role_validator(roles: &Vec<String>) -> Result<(), ValidationError> {
+        if roles.is_empty() {
+            return Err(ValidationError::new(
+                "La lista de roles no pueden estar vacía",
+            ));
         }
+
+        for role in roles {
+            if role.is_empty() {
+                return Err(ValidationError::new(
+                    "Rol invalido: no puede estar vacío",
+                ));
+            }
+
+            match Role::from_str(role) {
+                Ok(_) => continue,
+                Err(_) => return Err(ValidationError::new("Rol invalido")),
+            }
+        }
+
+        Ok(())
     }
 }

@@ -43,16 +43,14 @@ impl CreateAsignatureCase for CreateAsignatureCaseImpl {
             .find_by_id(&input.teacher_id)
             .await
             .map_err(|_| {
-            AsignatureError::UnexpectedError(
-                "Error interno del servidor".to_string(),
-            )
+            AsignatureError::UnexpectedError("Error interno del servidor".into())
         })?;
 
         let Some(user) = user_exists else {
             return Err(AsignatureError::TeacherNotFound);
         };
 
-        if user.role.as_str() != "teacher" {
+        if !user.roles.contains(&"teacher".to_string()) {
             return Err(AsignatureError::UserIsNotTeacher);
         }
 

@@ -75,10 +75,16 @@ impl UserRepository for PostgresUserRepository {
     async fn create(&self, user: User) -> Result<User, UserError> {
         let pool = self.database_connection.get_pool();
         let query = r#"
-            INSERT INTO users (id, rut, name, email, password, role) 
+            INSERT INTO users (id, rut, name, email, password, roles) 
             VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING id, rut, name, email, password, role
+            RETURNING id, rut, name, email, password, roles
         "#;
+
+        let roles = user
+            .roles
+            .iter()
+            .map(|r| Role::from_str(r).unwrap_or(Role::Student))
+            .collect::<Vec<_>>();
 
         let model = sqlx::query_as::<_, UserModel>(query)
             .bind(user.id)
@@ -86,7 +92,7 @@ impl UserRepository for PostgresUserRepository {
             .bind(user.name)
             .bind(user.email)
             .bind(user.password)
-            .bind(Role::from_str(&user.role).unwrap_or(Role::Student))
+            .bind(roles)
             .fetch_one(pool)
             .await
             .map_err(|e| UserError::UnexpectedError(e.to_string()))?;
@@ -98,14 +104,20 @@ impl UserRepository for PostgresUserRepository {
         let pool = self.database_connection.get_pool();
         let query = r#"
             UPDATE users 
-            SET email = $1, password = $2, role = $3
+            SET email = $1, password = $2, roles = $3
             WHERE id = $4
         "#;
+
+        let roles = user
+            .roles
+            .iter()
+            .map(|r| Role::from_str(r).unwrap_or(Role::Student))
+            .collect::<Vec<_>>();
 
         sqlx::query(query)
             .bind(&user.email)
             .bind(&user.password)
-            .bind(Role::from_str(&user.role).unwrap_or(Role::Student))
+            .bind(roles)
             .bind(user.id)
             .execute(pool)
             .await

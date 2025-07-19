@@ -52,7 +52,7 @@ impl CreateInscriptionCase for CreateInscriptionCaseImpl {
             return Err(InscriptionError::StudentNotFound);
         };
 
-        if user.role.as_str() != "student" {
+        if !user.roles.contains(&"student".to_string()) {
             return Err(InscriptionError::InvalidStudentRole);
         }
 

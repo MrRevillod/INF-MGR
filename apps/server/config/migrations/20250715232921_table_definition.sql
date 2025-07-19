@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS users (
     name TEXT NOT NULL,
     email TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
-    role user_role NOT NULL
+    roles user_role[] NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS practices (
