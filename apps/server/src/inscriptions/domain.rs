@@ -22,6 +22,7 @@ pub enum InscriptionError {
     UnexpectedError(String),
     NotFound,
     InvalidStudentState,
+    InscriptionAlreadyExists,
 }
 
 pub struct InscriptionFilter {

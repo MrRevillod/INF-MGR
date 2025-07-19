@@ -1,12 +1,18 @@
 use sword::prelude::*;
+use uuid::Uuid;
 
-use crate::{
-    inscriptions::{
-        application::GetInscriptionsCase,
-        infrastructure::{dtos::InscriptionQueryDto, InscriptionModel},
+use crate::inscriptions::{
+    application::{
+        CreateInscriptionCase, DeleteInscriptionCase, GetInscriptionsCase,
+        UpdateInscriptionCase,
     },
-    shared::di::AppModule,
+    infrastructure::{
+        dtos::InscriptionQueryDto, CreateInscriptionDto, InscriptionModel,
+        UpdateInscriptionDto,
+    },
 };
+
+use crate::shared::di::AppModule;
 
 #[controller("/inscriptions")]
 pub struct InscriptionController {}
@@ -27,16 +33,36 @@ impl InscriptionController {
 
     #[post("/")]
     async fn create(ctx: Context) -> HttpResult<HttpResponse> {
-        Ok(HttpResponse::Ok())
+        let input = ctx.validated_body::<CreateInscriptionDto>()?;
+        let use_case =
+            ctx.get_dependency::<AppModule, dyn CreateInscriptionCase>()?;
+
+        let inscription = use_case.execute(input.into()).await?;
+
+        Ok(HttpResponse::Created().data(InscriptionModel::from(inscription)))
     }
 
     #[patch("/{id}")]
     async fn update(ctx: Context) -> HttpResult<HttpResponse> {
-        Ok(HttpResponse::Ok())
+        let id = ctx.param::<Uuid>("id")?;
+        let input = ctx.validated_body::<UpdateInscriptionDto>()?;
+
+        let use_case =
+            ctx.get_dependency::<AppModule, dyn UpdateInscriptionCase>()?;
+
+        let updated = use_case.execute(&id, input.into()).await?;
+
+        Ok(HttpResponse::Ok().data(InscriptionModel::from(updated)))
     }
 
     #[delete("/{id}")]
     async fn delete(ctx: Context) -> HttpResult<HttpResponse> {
+        let id = ctx.param::<Uuid>("id")?;
+        let use_case =
+            ctx.get_dependency::<AppModule, dyn DeleteInscriptionCase>()?;
+
+        use_case.execute(&id).await?;
+
         Ok(HttpResponse::Ok())
     }
 }

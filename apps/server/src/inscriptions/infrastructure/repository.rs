@@ -1,19 +1,16 @@
-use std::sync::Arc;
-
 use async_trait::async_trait;
 use shaku::Component;
 use sqlx::Postgres;
+use std::sync::Arc;
 use uuid::Uuid;
 
-use crate::{
-    inscriptions::{
-        domain::{
-            Inscription, InscriptionError, InscriptionFilter, InscriptionRepository,
-        },
-        infrastructure::models::{InscriptionModel, StudentEvaluationModel},
+use crate::inscriptions::{
+    domain::{
+        Inscription, InscriptionError, InscriptionFilter, InscriptionRepository,
     },
-    shared::database::DatabaseConnection,
+    infrastructure::models::{InscriptionModel, StudentEvaluationModel},
 };
+use crate::shared::database::DatabaseConnection;
 
 #[derive(Component)]
 #[shaku(interface = InscriptionRepository)]
@@ -28,7 +25,6 @@ impl InscriptionRepository for PostgresInscriptionRepository {
         &self,
         filter: InscriptionFilter,
     ) -> Result<Vec<Inscription>, InscriptionError> {
-        let pool = self.db_connection.get_pool();
         let mut builder = sqlx::QueryBuilder::<Postgres>::new(
             "SELECT * FROM inscriptions WHERE 1=1",
         );
@@ -50,7 +46,7 @@ impl InscriptionRepository for PostgresInscriptionRepository {
         let query = builder.build_query_as::<InscriptionModel>();
 
         let result = query
-            .fetch_all(pool)
+            .fetch_all(self.db_connection.get_pool())
             .await
             .map_err(|e| InscriptionError::UnexpectedError(e.to_string()))?;
 
@@ -61,12 +57,11 @@ impl InscriptionRepository for PostgresInscriptionRepository {
         &self,
         id: &Uuid,
     ) -> Result<Option<Inscription>, InscriptionError> {
-        let pool = self.db_connection.get_pool();
         let query = r#"SELECT * FROM inscriptions WHERE id = $1"#;
 
         let model = sqlx::query_as::<_, InscriptionModel>(query)
             .bind(id)
-            .fetch_optional(pool)
+            .fetch_optional(self.db_connection.get_pool())
             .await
             .map_err(|e| InscriptionError::UnexpectedError(e.to_string()))?;
 
@@ -77,8 +72,6 @@ impl InscriptionRepository for PostgresInscriptionRepository {
         &self,
         inscription: Inscription,
     ) -> Result<Inscription, InscriptionError> {
-        let pool = self.db_connection.get_pool();
-
         let query = r#"
             INSERT INTO inscriptions (id, user_id, asignature_id, practice_id, evaluation_scores, status)
             VALUES ($1, $2, $3, $4, $5, $6)
@@ -98,7 +91,7 @@ impl InscriptionRepository for PostgresInscriptionRepository {
             .bind(inscription.practice_id)
             .bind(scores)
             .bind(inscription.status)
-            .fetch_one(pool)
+            .fetch_one(self.db_connection.get_pool())
             .await
             .map_err(|e| InscriptionError::UnexpectedError(e.to_string()))?;
 
@@ -110,7 +103,6 @@ impl InscriptionRepository for PostgresInscriptionRepository {
         id: &Uuid,
         inscription: Inscription,
     ) -> Result<Inscription, InscriptionError> {
-        let pool = self.db_connection.get_pool();
         let query = r#"
             UPDATE inscriptions SET evaluation_scores = $1, status = $2
             WHERE id = $3
@@ -127,7 +119,7 @@ impl InscriptionRepository for PostgresInscriptionRepository {
             .bind(scores)
             .bind(inscription.status)
             .bind(id)
-            .fetch_one(pool)
+            .fetch_one(self.db_connection.get_pool())
             .await
             .map_err(|e| InscriptionError::UnexpectedError(e.to_string()))?;
 
@@ -135,12 +127,9 @@ impl InscriptionRepository for PostgresInscriptionRepository {
     }
 
     async fn delete(&self, id: &Uuid) -> Result<(), InscriptionError> {
-        let pool = self.db_connection.get_pool();
-        let query = r#"DELETE FROM inscriptions WHERE id = $1"#;
-
-        sqlx::query(query)
+        sqlx::query("DELETE FROM inscriptions WHERE id = $1")
             .bind(id)
-            .execute(pool)
+            .execute(self.db_connection.get_pool())
             .await
             .map_err(|e| InscriptionError::UnexpectedError(e.to_string()))?;
 

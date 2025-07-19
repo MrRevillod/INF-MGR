@@ -27,11 +27,37 @@ pub struct InscriptionModel {
     pub status: String,
 }
 
+impl From<InscriptionModel> for Inscription {
+    fn from(value: InscriptionModel) -> Self {
+        Inscription {
+            id: value.id,
+            user_id: value.user_id,
+            asignature_id: value.asignature_id,
+            practice_id: value.practice_id,
+            evaluation_scores: value
+                .evaluation_scores
+                .into_iter()
+                .map(Into::into)
+                .collect(),
+            status: value.status,
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Type)]
 #[sqlx(type_name = "student_evaluation")]
 pub struct StudentEvaluationModel {
     pub id: Uuid,
     pub score: f64,
+}
+
+impl From<StudentEvaluationModel> for StudentEvaluation {
+    fn from(value: StudentEvaluationModel) -> Self {
+        StudentEvaluation {
+            id: value.id,
+            score: value.score,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Type)]
@@ -71,23 +97,6 @@ impl FromStr for InscriptionStatus {
     }
 }
 
-impl From<InscriptionModel> for Inscription {
-    fn from(value: InscriptionModel) -> Self {
-        Inscription {
-            id: value.id,
-            user_id: value.user_id,
-            asignature_id: value.asignature_id,
-            practice_id: value.practice_id,
-            evaluation_scores: value
-                .evaluation_scores
-                .into_iter()
-                .map(Into::into)
-                .collect(),
-            status: value.status,
-        }
-    }
-}
-
 impl From<Inscription> for InscriptionModel {
     fn from(value: Inscription) -> Self {
         InscriptionModel {
@@ -101,15 +110,6 @@ impl From<Inscription> for InscriptionModel {
                 .map(Into::into)
                 .collect(),
             status: value.status,
-        }
-    }
-}
-
-impl From<StudentEvaluationModel> for StudentEvaluation {
-    fn from(value: StudentEvaluationModel) -> Self {
-        StudentEvaluation {
-            id: value.id,
-            score: value.score,
         }
     }
 }

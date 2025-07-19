@@ -4,7 +4,9 @@ use std::sync::Arc;
 
 use crate::inscriptions::{
     application::CreateInscriptionCase,
-    domain::{Inscription, InscriptionError, InscriptionRepository},
+    domain::{
+        Inscription, InscriptionError, InscriptionFilter, InscriptionRepository,
+    },
 };
 
 #[derive(Component)]
@@ -20,6 +22,16 @@ impl CreateInscriptionCase for CreateInscriptionCaseImpl {
         &self,
         inscription: Inscription,
     ) -> Result<Inscription, InscriptionError> {
+        let filter = InscriptionFilter {
+            user_id: Some(inscription.user_id),
+            asignature_id: Some(inscription.asignature_id),
+            status: None,
+        };
+
+        if self.repository.find_all(filter).await?.len() > 0 {
+            return Err(InscriptionError::InscriptionAlreadyExists);
+        }
+
         self.repository.create(inscription).await
     }
 }

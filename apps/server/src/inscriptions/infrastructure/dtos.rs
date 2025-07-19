@@ -2,11 +2,12 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use validator::Validate;
 
+use crate::shared::validators::validate_uuid;
 use validators::validate_student_state;
 
-use crate::{
-    inscriptions::domain::{Inscription, InscriptionError, InscriptionFilter},
-    shared::validators::validate_uuid,
+use crate::inscriptions::{
+    application::UpdateInscriptionInput,
+    domain::{Inscription, InscriptionFilter, StudentEvaluation},
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
@@ -19,14 +20,39 @@ pub struct CreateInscriptionDto {
     pub asignature_id: String,
 }
 
+impl From<CreateInscriptionDto> for Inscription {
+    fn from(value: CreateInscriptionDto) -> Self {
+        Inscription {
+            id: Uuid::new_v4(),
+            user_id: Uuid::parse_str(&value.user_id).unwrap(),
+            asignature_id: Uuid::parse_str(&value.asignature_id).unwrap(),
+            practice_id: None,
+            evaluation_scores: vec![],
+            status: "pending".to_string(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateInscriptionDto {
     #[validate(nested)]
-    pub evaluation_scores: Vec<StudentEvaluationDto>,
+    pub evaluation_scores: Option<Vec<StudentEvaluationDto>>,
 
     #[validate(length(min = 1, message = "El estado no puede estar vacío"))]
-    pub status: String,
+    pub status: Option<String>,
+}
+
+impl From<UpdateInscriptionDto> for UpdateInscriptionInput {
+    fn from(value: UpdateInscriptionDto) -> Self {
+        UpdateInscriptionInput {
+            evaluation_scores: value
+                .evaluation_scores
+                .map(|scores| scores.into_iter().map(Into::into).collect()),
+
+            status: value.status,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
@@ -40,6 +66,15 @@ pub struct StudentEvaluationDto {
         message = "La puntuación debe estar entre 0 y 100"
     ))]
     pub score: f64,
+}
+
+impl From<StudentEvaluationDto> for StudentEvaluation {
+    fn from(dto: StudentEvaluationDto) -> Self {
+        StudentEvaluation {
+            id: Uuid::parse_str(&dto.id).unwrap(),
+            score: dto.score,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
@@ -64,29 +99,6 @@ impl From<InscriptionQueryDto> for InscriptionFilter {
             asignature_id: dto.asignature_id.map(|id| Uuid::parse_str(&id).unwrap()),
             status: dto.status,
         }
-    }
-}
-
-impl TryFrom<CreateInscriptionDto> for Inscription {
-    type Error = InscriptionError;
-
-    fn try_from(value: CreateInscriptionDto) -> Result<Self, Self::Error> {
-        let user_id = Uuid::parse_str(&value.user_id).map_err(|_| {
-            InscriptionError::UnexpectedError("Invalid user ID".to_string())
-        })?;
-
-        let asignature_id = Uuid::parse_str(&value.asignature_id).map_err(|_| {
-            InscriptionError::UnexpectedError("Invalid asignature ID".to_string())
-        })?;
-
-        Ok(Inscription {
-            id: Uuid::new_v4(),
-            user_id,
-            asignature_id,
-            practice_id: None,
-            evaluation_scores: vec![],
-            status: "pending".to_string(),
-        })
     }
 }
 

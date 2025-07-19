@@ -30,6 +30,10 @@ impl UpdateInscriptionCase for UpdateInscriptionCaseImpl {
             inscription.evaluation_scores = evaluation_scores;
         }
 
+        if let Some(status) = input.status {
+            inscription.status = status;
+        }
+
         self.repository.update(id, inscription).await
     }
 }
