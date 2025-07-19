@@ -6,7 +6,10 @@ use regex::Regex;
 use shaku::{Component, Interface};
 use tera::Context;
 
-use crate::shared::{services::errors::ServiceError, smtp::MailerTransport};
+use crate::{
+    config::MailerConfig,
+    shared::{services::errors::ServiceError, smtp::MailerTransport},
+};
 
 static EMAIL_REGEX: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").unwrap()
@@ -19,10 +22,39 @@ pub struct MailTo {
     pub template: &'static str,
 }
 
+#[derive(Debug, Clone)]
+pub struct MailContext {
+    pub data: std::collections::HashMap<String, String>,
+}
+
+impl MailContext {
+    pub fn new() -> Self {
+        Self {
+            data: std::collections::HashMap::new(),
+        }
+    }
+
+    pub fn insert(mut self, key: &str, value: &str) -> Self {
+        self.data.insert(key.to_string(), value.to_string());
+        self
+    }
+
+    pub fn apply_to_tera_context(&self, context: &mut Context) {
+        for (key, value) in &self.data {
+            context.insert(key, value);
+        }
+    }
+}
+
 #[async_trait]
 pub trait Mailer: Interface {
     fn is_valid_email(&self, email: &str) -> bool;
-    async fn send(&self, mail_to: MailTo) -> Result<(), ServiceError>;
+    async fn send(
+        &self,
+        mail_to: MailTo,
+        mail_context: MailContext,
+    ) -> Result<(), ServiceError>;
+    fn get_config(&self) -> &MailerConfig;
 }
 
 #[derive(Component)]
@@ -42,7 +74,11 @@ impl Mailer for MailerService {
         true
     }
 
-    async fn send(&self, mail_to: MailTo) -> Result<(), ServiceError> {
+    async fn send(
+        &self,
+        mail_to: MailTo,
+        mail_context: MailContext,
+    ) -> Result<(), ServiceError> {
         if !self.is_valid_email(&mail_to.email) {
             return Err(ServiceError::Mailer("Invalid email address".to_string()));
         }
@@ -50,13 +86,9 @@ impl Mailer for MailerService {
         let email_from = self.mailer.get_config().smtp_username.clone();
         let email_from_fmt = format!("Prácticas y Tesis <{email_from}>");
 
-        let context = Context::new();
+        let mut context = Context::new();
 
-        // context.insert("subject", &mail_to.subject);
-        // context.insert("email", &mail_to.email);
-        // context.insert("username", &mail_to.email);
-        // context.insert("password", &mail_to.email);
-        // context.insert("public_url", &self.mailer.get_config().public_url);
+        mail_context.apply_to_tera_context(&mut context);
 
         let template_name = format!("{}.html", mail_to.template);
         let template = self
@@ -84,5 +116,15 @@ impl Mailer for MailerService {
         }
 
         Ok(())
+    }
+
+    fn get_config(&self) -> &MailerConfig {
+        self.mailer.get_config()
+    }
+}
+
+impl Default for MailContext {
+    fn default() -> Self {
+        Self::new()
     }
 }

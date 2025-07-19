@@ -7,7 +7,7 @@ use crate::asignatures::domain::{Asignature, Evaluation};
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct AsignatureModel {
     pub id: Uuid,
-    pub year: i16,
+    pub year: i32,
     pub code: String,
     pub name: String,
     pub evaluations: Vec<EvaluationType>,
@@ -19,7 +19,7 @@ pub struct AsignatureModel {
 pub struct EvaluationType {
     pub id: Uuid,
     pub name: String,
-    pub weight: f32,
+    pub weight: f64,
 }
 
 impl From<AsignatureModel> for Asignature {

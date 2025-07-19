@@ -4,7 +4,7 @@ use crate::asignatures::domain::{Asignature, Evaluation};
 
 #[derive(Debug, Clone)]
 pub struct CreateAsignatureInput {
-    pub year: i16,
+    pub year: i32,
     pub code: String,
     pub name: String,
     pub evaluations: Vec<Evaluation>,
@@ -26,7 +26,7 @@ impl From<CreateAsignatureInput> for Asignature {
 
 #[derive(Debug, Clone)]
 pub struct UpdateAsignatureInput {
-    pub year: Option<i16>,
+    pub year: Option<i32>,
     pub code: Option<String>,
     pub name: Option<String>,
     pub evaluations: Option<Vec<Evaluation>>,

@@ -6,13 +6,13 @@ use uuid::Uuid;
 pub struct Evaluation {
     pub id: Uuid,
     pub name: String,
-    pub weight: f32,
+    pub weight: f64,
 }
 
 #[derive(Debug, Clone)]
 pub struct Asignature {
     pub id: Uuid,
-    pub year: i16,
+    pub year: i32,
     pub code: String,
     pub name: String,
     pub evaluations: Vec<Evaluation>,
@@ -21,7 +21,7 @@ pub struct Asignature {
 
 #[derive(Debug, Clone)]
 pub struct AsignatureFilter {
-    pub year: Option<i16>,
+    pub year: Option<i32>,
     pub code: Option<String>,
     pub name: Option<String>,
 }

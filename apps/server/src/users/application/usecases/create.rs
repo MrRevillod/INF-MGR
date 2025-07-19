@@ -3,7 +3,7 @@ use shaku::Component;
 use std::sync::Arc;
 
 use crate::{
-    shared::services::{MailTo, Mailer, PasswordHasher},
+    shared::services::{MailContext, MailTo, Mailer, PasswordHasher},
     users::{
         application::{inputs::CreateUserInput, interfaces::CreateUserCase},
         domain::{User, UserError, UserRepository},
@@ -53,7 +53,16 @@ impl CreateUserCase for CreateUserCaseImpl {
             template: "welcome",
         };
 
-        self.mailer.send(mail_opts).await?;
+        let public_url = self.mailer.get_config().public_url.clone();
+
+        let context = MailContext::new()
+            .insert("username", &user.name)
+            .insert("email", &user.email)
+            .insert("password", &user.password)
+            .insert("public_url", &public_url);
+
+        self.mailer.send(mail_opts, context).await?;
+
         self.repository.create(user).await
     }
 }

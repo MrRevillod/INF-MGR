@@ -3,8 +3,8 @@ pub mod config;
 pub mod users {
     pub mod domain;
 
-    #[cfg(test)]
-    pub mod __tests__;
+    // #[cfg(test)]
+    // pub mod __tests__;
 
     pub mod application {
         mod inputs;
@@ -42,6 +42,10 @@ pub mod users {
 }
 
 pub mod asignatures {
+
+    #[cfg(test)]
+    pub mod __tests__;
+
     pub mod domain;
 
     pub mod application {
@@ -198,7 +202,7 @@ pub mod shared {
         pub mod errors;
         mod mailer;
         mod password;
-        pub use mailer::{MailTo, Mailer, MailerService};
+        pub use mailer::{MailContext, MailTo, Mailer, MailerService};
         pub use password::{BcryptPasswordHasher, PasswordHasher};
     }
 
@@ -214,7 +218,6 @@ pub mod tests {
 
     use axum_test::TestServer;
     use sword::prelude::Application;
-    use tokio::sync::OnceCell;
 
     use super::{
         asignatures::infrastructure::AsignaturesController,

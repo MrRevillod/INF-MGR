@@ -96,7 +96,7 @@ impl AsignatureRepository for PostgresAsignatureRepository {
             .map(EvaluationType::from)
             .collect();
 
-        let model: AsignatureModel = sqlx::query_as(query)
+        let model = sqlx::query_as::<_, AsignatureModel>(query)
             .bind(input.id)
             .bind(input.year)
             .bind(input.code)
@@ -105,7 +105,10 @@ impl AsignatureRepository for PostgresAsignatureRepository {
             .bind(input.teacher_id)
             .fetch_one(self.db_connection.get_pool())
             .await
-            .map_err(|e| AsignatureError::DatabaseError(e.to_string()))?;
+            .map_err(|e| {
+                dbg!(&e);
+                AsignatureError::DatabaseError(e.to_string())
+            })?;
 
         Ok(Asignature::from(model))
     }

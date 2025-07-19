@@ -6,7 +6,9 @@ use validators::ASIGNATURE_CODE_REGEX;
 use crate::asignatures::{
     application::{CreateAsignatureInput, UpdateAsignatureInput},
     domain::{AsignatureError, Evaluation},
-    infrastructure::dtos::validators::validate_evaluation_weights,
+    infrastructure::dtos::validators::{
+        validate_evaluation_weights, validate_repeated_evaluation_names,
+    },
 };
 
 use crate::shared::validators::validate_uuid;
@@ -18,10 +20,10 @@ pub struct CreateAsignatureDto {
         max = 2100,
         message = "El año debe tener 4 dígitos."
     ))]
-    pub year: i16,
+    pub year: i32,
 
     #[validate(
-        length(equal = 7, message = "El código debe tener 7 caracteres."),
+        length(equal = 8, message = "El código debe tener 8 caracteres."),
         regex(
             path = *ASIGNATURE_CODE_REGEX,
             message = "El código debe seguir el formato INFO{NNNN}."
@@ -39,7 +41,8 @@ pub struct CreateAsignatureDto {
     #[validate(
         nested,
         length(min = 1, message = "Debe haber al menos una evaluación."),
-        custom(function = validate_evaluation_weights)
+        custom(function = validate_evaluation_weights),
+        custom(function = validate_repeated_evaluation_names)
     )]
     pub evaluations: Vec<EvaluationDto>,
 
@@ -61,7 +64,7 @@ pub struct EvaluationDto {
         max = 1.0,
         message = "El porcentaje de la evaluación debe estar entre 1 y 100%."
     ))]
-    pub weight: f32,
+    pub weight: f64,
 }
 
 impl TryFrom<CreateAsignatureDto> for CreateAsignatureInput {
@@ -97,7 +100,7 @@ pub struct UpdateAsignatureDto {
         max = 2100,
         message = "El año debe tener 4 dígitos."
     ))]
-    pub year: Option<i16>,
+    pub year: Option<i32>,
 
     #[validate(
         length(equal = 7, message = "El código debe tener 7 caracteres."),
@@ -115,7 +118,7 @@ pub struct UpdateAsignatureDto {
     ))]
     pub name: Option<String>,
 
-    #[validate(nested)]
+    #[validate(nested, custom(function = validate_repeated_evaluation_names))]
     pub evaluations: Option<Vec<EvaluationDto>>,
 
     #[validate(custom(function = validate_uuid))]
@@ -157,12 +160,26 @@ mod validators {
             total_weight += evaluation.weight;
         }
 
-        if total_weight != 1.0 {
+        if !(0.99..=1.0).contains(&total_weight) {
             return Err(ValidationError::new(
                 "El porcentaje de la evaluación debe estar entre 1 y 100%.",
             ));
         }
 
+        Ok(())
+    }
+
+    pub fn validate_repeated_evaluation_names(
+        evaluations: &Vec<EvaluationDto>,
+    ) -> Result<(), ValidationError> {
+        let mut names = std::collections::HashSet::new();
+        for evaluation in evaluations {
+            if !names.insert(evaluation.name.clone()) {
+                return Err(ValidationError::new(
+                    "Los nombres de las evaluaciones deben ser únicos.",
+                ));
+            }
+        }
         Ok(())
     }
 }
