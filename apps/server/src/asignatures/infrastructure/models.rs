@@ -5,21 +5,16 @@ use uuid::Uuid;
 use crate::asignatures::domain::{Asignature, Evaluation};
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[serde(rename_all = "camelCase")]
 pub struct AsignatureModel {
     pub id: Uuid,
     pub year: i32,
     pub code: String,
     pub name: String,
     pub evaluations: Vec<EvaluationType>,
-    pub teacher_id: Uuid,
-}
 
-#[derive(Debug, Clone, Serialize, Deserialize, Type)]
-#[sqlx(type_name = "evaluation")]
-pub struct EvaluationType {
-    pub id: Uuid,
-    pub name: String,
-    pub weight: f64,
+    #[sqlx(rename = "teacher_id")]
+    pub teacher_id: Uuid,
 }
 
 impl From<AsignatureModel> for Asignature {
@@ -39,6 +34,24 @@ impl From<AsignatureModel> for Asignature {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[sqlx(type_name = "evaluation")]
+pub struct EvaluationType {
+    pub id: Uuid,
+    pub name: String,
+    pub weight: f64,
+}
+
+impl From<EvaluationType> for Evaluation {
+    fn from(evaluation: EvaluationType) -> Self {
+        Evaluation {
+            id: evaluation.id,
+            name: evaluation.name,
+            weight: evaluation.weight,
+        }
+    }
+}
+
 impl From<Asignature> for AsignatureModel {
     fn from(asignature: Asignature) -> Self {
         AsignatureModel {
@@ -52,16 +65,6 @@ impl From<Asignature> for AsignatureModel {
                 .map(EvaluationType::from)
                 .collect(),
             teacher_id: asignature.teacher_id,
-        }
-    }
-}
-
-impl From<EvaluationType> for Evaluation {
-    fn from(evaluation: EvaluationType) -> Self {
-        Evaluation {
-            id: evaluation.id,
-            name: evaluation.name,
-            weight: evaluation.weight,
         }
     }
 }

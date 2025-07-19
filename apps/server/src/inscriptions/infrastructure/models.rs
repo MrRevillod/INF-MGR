@@ -79,7 +79,7 @@ impl Display for InscriptionStatus {
             InscriptionStatus::Evaluating => "evaluating",
         };
 
-        write!(f, "{}", status_str)
+        write!(f, "{status_str}")
     }
 }
 

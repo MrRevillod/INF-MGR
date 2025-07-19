@@ -28,7 +28,7 @@ impl CreateInscriptionCase for CreateInscriptionCaseImpl {
             status: None,
         };
 
-        if self.repository.find_all(filter).await?.len() > 0 {
+        if !self.repository.find_all(filter).await?.is_empty() {
             return Err(InscriptionError::InscriptionAlreadyExists);
         }
 

@@ -14,6 +14,7 @@ use crate::asignatures::{
 use crate::shared::validators::validate_uuid;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Validate)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateAsignatureDto {
     #[validate(range(
         min = 2000,
@@ -95,6 +96,7 @@ impl From<EvaluationDto> for Evaluation {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Validate)]
+#[serde(rename_all = "camelCase")]
 pub struct UpdateAsignatureDto {
     #[validate(range(
         min = 2000,

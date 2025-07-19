@@ -65,7 +65,7 @@ async fn test_create_asignature_should_work() {
                 "weight": 0.3
             }
         ],
-        "teacher_id": teacher_id
+        "teacherId": teacher_id
     });
 
     let response = app.post("/asignatures").json(&new_asignature).await;
@@ -122,7 +122,7 @@ async fn test_update_asignature() {
                 "weight": 0.5
             }
         ],
-        "teacher_id": teacher_id
+        "teacherId": teacher_id
     });
 
     let create_response = app.post("/asignatures").json(&new_asignature).await;
@@ -187,7 +187,7 @@ async fn test_delete_asignature() {
                 "weight": 1.0
             }
         ],
-        "teacher_id": teacher_id
+        "teacherId": teacher_id
     });
 
     let create_response = app.post("/asignatures").json(&new_asignature).await;
@@ -228,7 +228,7 @@ async fn test_create_asignature_invalid_year_too_low() {
                 "weight": 1.0
             }
         ],
-        "teacher_id": teacher_id
+        "teacherId": teacher_id
     });
 
     let response = app.post("/asignatures").json(&new_asignature).await;
@@ -268,7 +268,7 @@ async fn test_create_asignature_invalid_year_too_high() {
                 "weight": 1.0
             }
         ],
-        "teacher_id": teacher_id
+        "teacherId": teacher_id
     });
 
     let response = app.post("/asignatures").json(&new_asignature).await;
@@ -292,7 +292,7 @@ async fn test_create_asignature_invalid_code_format() {
                 "weight": 1.0
             }
         ],
-        "teacher_id": teacher_id
+        "teacherId": teacher_id
     });
 
     let response = app.post("/asignatures").json(&new_asignature).await;
@@ -330,7 +330,7 @@ async fn test_create_asignature_invalid_code_length() {
                 "weight": 1.0
             }
         ],
-        "teacher_id": teacher_id
+        "teacherId": teacher_id
     });
 
     let response = app.post("/asignatures").json(&new_asignature).await;
@@ -354,7 +354,7 @@ async fn test_create_asignature_name_too_short() {
                 "weight": 1.0
             }
         ],
-        "teacher_id": teacher_id
+        "teacherId": teacher_id
     });
 
     let response = app.post("/asignatures").json(&new_asignature).await;
@@ -380,7 +380,7 @@ async fn test_create_asignature_name_too_long() {
                 "weight": 1.0
             }
         ],
-        "teacher_id": teacher_id
+        "teacherId": teacher_id
     });
 
     let response = app.post("/asignatures").json(&new_asignature).await;
@@ -399,7 +399,7 @@ async fn test_create_asignature_no_evaluations() {
         "code": generate_unique_code(),
         "name": generate_unique_name(),
         "evaluations": [], // Empty evaluations array
-        "teacher_id": teacher_id
+        "teacherId": teacher_id
     });
 
     let response = app.post("/asignatures").json(&new_asignature).await;
@@ -427,7 +427,7 @@ async fn test_create_asignature_evaluation_weights_not_sum_to_one() {
                 "weight": 0.4 // Total: 0.7 (should be 1.0)
             }
         ],
-        "teacher_id": teacher_id
+        "teacherId": teacher_id
     });
 
     let response = app.post("/asignatures").json(&new_asignature).await;
@@ -451,7 +451,7 @@ async fn test_create_asignature_evaluation_name_too_short() {
                 "weight": 1.0
             }
         ],
-        "teacher_id": teacher_id
+        "teacherId": teacher_id
     });
 
     let response = app.post("/asignatures").json(&new_asignature).await;
@@ -477,7 +477,7 @@ async fn test_create_asignature_evaluation_name_too_long() {
                 "weight": 1.0
             }
         ],
-        "teacher_id": teacher_id
+        "teacherId": teacher_id
     });
 
     let response = app.post("/asignatures").json(&new_asignature).await;
@@ -501,7 +501,7 @@ async fn test_create_asignature_evaluation_weight_too_low() {
                 "weight": 0.0 // Below minimum (0.01)
             }
         ],
-        "teacher_id": teacher_id
+        "teacherId": teacher_id
     });
 
     let response = app.post("/asignatures").json(&new_asignature).await;
@@ -525,7 +525,7 @@ async fn test_create_asignature_evaluation_weight_too_high() {
                 "weight": 1.1 // Above maximum (1.0)
             }
         ],
-        "teacher_id": teacher_id
+        "teacherId": teacher_id
     });
 
     let response = app.post("/asignatures").json(&new_asignature).await;
@@ -548,7 +548,7 @@ async fn test_create_asignature_invalid_teacher_id() {
                 "weight": 1.0
             }
         ],
-        "teacher_id": "invalid-uuid"
+        "teacherId": "invalid-uuid"
     });
 
     let response = app.post("/asignatures").json(&new_asignature).await;
@@ -573,7 +573,7 @@ async fn test_create_asignature_duplicate() {
                 "weight": 1.0
             }
         ],
-        "teacher_id": teacher_id
+        "teacherId": teacher_id
     });
 
     // Create first asignature
@@ -610,7 +610,7 @@ async fn test_update_asignature_invalid_year() {
                 "weight": 1.0
             }
         ],
-        "teacher_id": teacher_id
+        "teacherId": teacher_id
     });
 
     let create_response = app.post("/asignatures").json(&new_asignature).await;
@@ -650,7 +650,7 @@ async fn test_update_asignature_invalid_code() {
                 "weight": 1.0
             }
         ],
-        "teacher_id": teacher_id
+        "teacherId": teacher_id
     });
 
     let create_response = app.post("/asignatures").json(&new_asignature).await;
@@ -690,7 +690,7 @@ async fn test_update_asignature_invalid_teacher_id() {
                 "weight": 1.0
             }
         ],
-        "teacher_id": teacher_id
+        "teacherId": teacher_id
     });
 
     let create_response = app.post("/asignatures").json(&new_asignature).await;
@@ -749,7 +749,7 @@ async fn test_create_asignature_valid_year_boundaries() {
                 "weight": 1.0
             }
         ],
-        "teacher_id": teacher_id
+        "teacherId": teacher_id
     });
 
     let response = app.post("/asignatures").json(&min_year_asignature).await;
@@ -774,7 +774,7 @@ async fn test_create_asignature_valid_year_boundaries() {
                 "weight": 1.0
             }
         ],
-        "teacher_id": teacher_id
+        "teacherId": teacher_id
     });
 
     let response = app.post("/asignatures").json(&min_year_asignature).await;
@@ -805,7 +805,7 @@ async fn test_create_asignature_valid_name_boundaries() {
                 "weight": 1.0
             }
         ],
-        "teacher_id": teacher_id
+        "teacherId": teacher_id
     });
 
     let response = app.post("/asignatures").json(&min_name_asignature).await;
@@ -826,7 +826,7 @@ async fn test_create_asignature_valid_name_boundaries() {
                 "weight": 1.0
             }
         ],
-        "teacher_id": teacher_id
+        "teacherId": teacher_id
     });
 
     let response2 = app.post("/asignatures").json(&max_name_asignature).await;
@@ -863,7 +863,7 @@ async fn test_create_asignature_valid_evaluation_weight_boundaries() {
                 "weight": 0.99
             }
         ],
-        "teacher_id": teacher_id
+        "teacherId": teacher_id
     });
 
     let response = app.post("/asignatures").json(&min_weight_asignature).await;
@@ -901,7 +901,7 @@ async fn test_create_asignature_valid_evaluation_weight_boundaries_3_33() {
                 "weight": 0.33
             }
         ],
-        "teacher_id": teacher_id
+        "teacherId": teacher_id
     });
 
     let response = app.post("/asignatures").json(&min_weight_asignature).await;
@@ -939,7 +939,7 @@ async fn test_create_asignature_valid_evaluation_but_repeated_names() {
                 "weight": 0.33
             }
         ],
-        "teacher_id": teacher_id
+        "teacherId": teacher_id
     });
 
     let response = app.post("/asignatures").json(&min_weight_asignature).await;
