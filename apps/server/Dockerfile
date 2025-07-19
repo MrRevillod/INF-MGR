@@ -40,7 +40,7 @@ ENV CARGO_TARGET_DIR /app/target
 
 EXPOSE 8000
 
-CMD sh -c "cargo watch -x 'run --bin server' -w src -w config"
+CMD sh -c "cargo watch -x 'run --bin server' -w src -w config -w html"
 
 # -----------------------------------------------------------------------
 # TEST STAGE ------------------------------------------------------------

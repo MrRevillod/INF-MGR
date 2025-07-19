@@ -5,7 +5,7 @@
     <title>Correo de bienvenida</title>
 </head>
 <body>
-    {# <h1>Hola {{ name }}!</h1> #}
+    <h1>Hola {{ name }}!</h1>
 
     <p>
         Te damos la bienvenida a la plataforma de gestión de prácticas y tesis de la carrera 
@@ -14,13 +14,13 @@
 
     <p>
         Podrás ingresar a la plataforma en: 
-        {# <a href="{{ public_url }}">{{ public_url }}</a>  #}
+        <a href="{{ public_url }}">{{ public_url }}</a> 
         con las siguientes credenciales:
     </p>
 
     <ul>
-        {# <li><strong>Usuario:</strong> {{ username }}</li> #}
-        {# <li><strong>Contraseña:</strong> {{ password }}</li> #}
+        <li><strong>Email:</strong> {{ email }}</li>
+        <li><strong>Contraseña:</strong> {{ password }}</li>
     </ul>
 
     <p>

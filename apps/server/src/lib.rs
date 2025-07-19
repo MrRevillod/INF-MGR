@@ -3,8 +3,8 @@ pub mod config;
 pub mod users {
     pub mod domain;
 
-    // #[cfg(test)]
-    // pub mod __tests__;
+    #[cfg(test)]
+    pub mod __tests__;
 
     pub mod application {
         mod inputs;

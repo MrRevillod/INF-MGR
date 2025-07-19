@@ -50,6 +50,6 @@ impl UserController {
         let use_case = ctx.get_dependency::<AppModule, dyn DeleteUserCase>()?;
         use_case.execute(&id).await?;
 
-        Ok(HttpResponse::Ok().message("User deleted successfully"))
+        Ok(HttpResponse::Ok())
     }
 }

@@ -26,7 +26,7 @@ pub struct CreateUserCaseImpl {
 #[async_trait]
 impl CreateUserCase for CreateUserCaseImpl {
     async fn execute(&self, input: CreateUserInput) -> Result<User, UserError> {
-        let mut user = User::from(input);
+        let mut user = User::from(input.clone());
 
         let (id, email) = tokio::try_join!(
             self.repository.find_by_rut(&user.rut),
@@ -56,9 +56,9 @@ impl CreateUserCase for CreateUserCaseImpl {
         let public_url = self.mailer.get_config().public_url.clone();
 
         let context = MailContext::new()
-            .insert("username", &user.name)
+            .insert("name", &user.name)
             .insert("email", &user.email)
-            .insert("password", &user.password)
+            .insert("password", &input.password)
             .insert("public_url", &public_url);
 
         self.mailer.send(mail_opts, context).await?;

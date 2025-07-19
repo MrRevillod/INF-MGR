@@ -14,6 +14,7 @@ use uuid::Uuid;
 /// Datos requeridos para crear un nuevo usuario.
 /// Este DTO representa la entrada cruda recibida desde
 /// la capa de infraestructura (por ejemplo, desde un controller).
+#[derive(Debug, Clone)]
 pub struct CreateUserInput {
     pub rut: String,
     pub name: String,
