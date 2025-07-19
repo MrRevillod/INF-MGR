@@ -3,7 +3,7 @@ use shaku::Component;
 use std::sync::Arc;
 
 use crate::asignatures::{
-    application::{CreateAsignatureCase, CreateAsignatureInput},
+    application::CreateAsignatureCase,
     domain::{Asignature, AsignatureError, AsignatureFilter, AsignatureRepository},
 };
 
@@ -18,7 +18,7 @@ pub struct CreateAsignatureCaseImpl {
 impl CreateAsignatureCase for CreateAsignatureCaseImpl {
     async fn execute(
         &self,
-        input: CreateAsignatureInput,
+        input: Asignature,
     ) -> Result<Asignature, AsignatureError> {
         let filter = AsignatureFilter {
             year: Some(input.year),
@@ -30,6 +30,6 @@ impl CreateAsignatureCase for CreateAsignatureCaseImpl {
             return Err(AsignatureError::AlreadyExists);
         }
 
-        Ok(self.repository.create(Asignature::from(input)).await?)
+        Ok(self.repository.create(input).await?)
     }
 }

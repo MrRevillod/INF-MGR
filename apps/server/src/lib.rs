@@ -7,7 +7,6 @@ pub mod users {
     pub mod __tests__;
 
     pub mod application {
-        mod inputs;
         mod interfaces;
 
         mod usecases {
@@ -22,7 +21,6 @@ pub mod users {
             pub use update::UpdateUserCaseImpl;
         }
 
-        pub use inputs::*;
         pub use interfaces::*;
         pub use usecases::*;
     }
@@ -49,7 +47,6 @@ pub mod asignatures {
     pub mod domain;
 
     pub mod application {
-        mod inputs;
         mod interfaces;
 
         mod usecases {
@@ -64,7 +61,6 @@ pub mod asignatures {
             pub use update::UpdateAsignatureCaseImpl;
         }
 
-        pub use inputs::*;
         pub use interfaces::*;
         pub use usecases::*;
     }
@@ -87,7 +83,6 @@ pub mod reports {
     pub mod domain;
 
     pub mod application {
-        mod inputs;
         mod interfaces;
 
         mod usecases {
@@ -102,7 +97,6 @@ pub mod reports {
             // pub use update::;
         }
 
-        pub use inputs::*;
         pub use interfaces::*;
         pub use usecases::*;
     }
@@ -121,11 +115,13 @@ pub mod reports {
     }
 }
 
-pub mod students {
+pub mod inscriptions {
     pub mod domain;
 
+    #[cfg(test)]
+    pub mod __tests__;
+
     pub mod application {
-        mod inputs;
         mod interfaces;
 
         mod usecases {
@@ -134,13 +130,12 @@ pub mod students {
             pub mod get;
             pub mod update;
 
-            // pub use create::;
-            // pub use delete::;
-            // pub use get::;
-            // pub use update::;
+            pub use create::CreateInscriptionCaseImpl;
+            pub use delete::DeleteInscriptionCaseImpl;
+            pub use get::GetInscriptionsCaseImpl;
+            pub use update::UpdateInscriptionCaseImpl;
         }
 
-        pub use inputs::*;
         pub use interfaces::*;
         pub use usecases::*;
     }
@@ -152,10 +147,12 @@ pub mod students {
         mod repository;
 
         pub mod errors;
-        // pub use controllers::UserController;
-        // pub use dtos::{CreateUserDto, UpdateUserDto, UserResponseDTO};
-        // pub use models::{Role, UserModel};
-        // pub use repository::PostgresUserRepository;
+        pub use controllers::InscriptionController;
+        pub use dtos::{
+            CreateInscriptionDto, StudentEvaluationDto, UpdateInscriptionDto,
+        };
+        pub use models::{InscriptionModel, StudentEvaluationModel};
+        pub use repository::PostgresInscriptionRepository;
     }
 }
 
@@ -163,7 +160,6 @@ pub mod practices {
     pub mod domain;
 
     pub mod application {
-        mod inputs;
         mod interfaces;
 
         mod usecases {
@@ -178,7 +174,6 @@ pub mod practices {
             // pub use update::;
         }
 
-        pub use inputs::*;
         pub use interfaces::*;
         pub use usecases::*;
     }

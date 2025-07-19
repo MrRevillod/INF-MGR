@@ -1,10 +1,8 @@
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 use validator::Validate;
 
-use crate::users::{
-    application::{CreateUserInput, UpdateUserInput},
-    domain::User,
-};
+use crate::users::{application::UpdateUserInput, domain::User};
 
 #[derive(Deserialize, Validate, Debug)]
 #[validate(schema(function = "validators::validate_password_pairs"))]
@@ -39,9 +37,10 @@ pub struct CreateUserDto {
 
 // | Controller (CreateUserDto) -> Use Case (CreateUserInput) |
 
-impl From<CreateUserDto> for CreateUserInput {
+impl From<CreateUserDto> for User {
     fn from(dto: CreateUserDto) -> Self {
-        CreateUserInput {
+        User {
+            id: Uuid::new_v4(),
             rut: dto.rut,
             name: dto.name,
             email: dto.email,

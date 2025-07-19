@@ -1,0 +1,102 @@
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
+use validator::Validate;
+
+use validators::validate_student_state;
+
+use crate::{
+    inscriptions::domain::{Inscription, InscriptionError, InscriptionFilter},
+    shared::validators::validate_uuid,
+};
+
+#[derive(Debug, Clone, Serialize, Deserialize, Validate)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateInscriptionDto {
+    #[validate(custom(function = validate_uuid, message = "Identificador de inscripción inválido"))]
+    pub user_id: String,
+
+    #[validate(custom(function = validate_uuid, message = "Identificador de asignatura inválido"))]
+    pub asignature_id: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Validate)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateInscriptionDto {
+    #[validate(nested)]
+    pub evaluation_scores: Vec<StudentEvaluationDto>,
+
+    #[validate(length(min = 1, message = "El estado no puede estar vacío"))]
+    pub status: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Validate)]
+pub struct StudentEvaluationDto {
+    #[validate(custom(function = validate_uuid, message = "Identificador de evaluación inválido"))]
+    pub id: String,
+
+    #[validate(range(
+        min = 1.0,
+        max = 7.0,
+        message = "La puntuación debe estar entre 0 y 100"
+    ))]
+    pub score: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Validate)]
+pub struct InscriptionQueryDto {
+    #[validate(custom(function = validate_uuid, message = "Identificador de usuario inválido"))]
+    pub user_id: Option<String>,
+
+    #[validate(custom(function = validate_uuid, message = "Identificador de asignatura inválido"))]
+    pub asignature_id: Option<String>,
+
+    #[validate(
+        custom(function = validate_student_state),
+        length(min = 1, message = "El estado no puede estar vacío")
+    )]
+    pub status: Option<String>,
+}
+
+impl From<InscriptionQueryDto> for InscriptionFilter {
+    fn from(dto: InscriptionQueryDto) -> Self {
+        InscriptionFilter {
+            user_id: dto.user_id.map(|id| Uuid::parse_str(&id).unwrap()),
+            asignature_id: dto.asignature_id.map(|id| Uuid::parse_str(&id).unwrap()),
+            status: dto.status,
+        }
+    }
+}
+
+impl TryFrom<CreateInscriptionDto> for Inscription {
+    type Error = InscriptionError;
+
+    fn try_from(value: CreateInscriptionDto) -> Result<Self, Self::Error> {
+        let user_id = Uuid::parse_str(&value.user_id).map_err(|_| {
+            InscriptionError::UnexpectedError("Invalid user ID".to_string())
+        })?;
+
+        let asignature_id = Uuid::parse_str(&value.asignature_id).map_err(|_| {
+            InscriptionError::UnexpectedError("Invalid asignature ID".to_string())
+        })?;
+
+        Ok(Inscription {
+            id: Uuid::new_v4(),
+            user_id,
+            asignature_id,
+            practice_id: None,
+            evaluation_scores: vec![],
+            status: "pending".to_string(),
+        })
+    }
+}
+
+mod validators {
+    use validator::ValidationError;
+
+    pub fn validate_student_state(state: &str) -> Result<(), ValidationError> {
+        match state.to_lowercase().as_str() {
+            "active" | "inactive" | "completed" | "evaluating" => Ok(()),
+            _ => Err(ValidationError::new("Estado de inscripción inválido")),
+        }
+    }
+}

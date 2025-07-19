@@ -2,10 +2,7 @@ use async_trait::async_trait;
 use shaku::Interface;
 use uuid::Uuid;
 
-use crate::asignatures::{
-    application::inputs::{CreateAsignatureInput, UpdateAsignatureInput},
-    domain::{Asignature, AsignatureError},
-};
+use crate::asignatures::domain::{Asignature, AsignatureError, Evaluation};
 
 #[async_trait]
 pub trait GetAsignaturesCase: Interface {
@@ -16,8 +13,17 @@ pub trait GetAsignaturesCase: Interface {
 pub trait CreateAsignatureCase: Interface {
     async fn execute(
         &self,
-        input: CreateAsignatureInput,
+        input: Asignature,
     ) -> Result<Asignature, AsignatureError>;
+}
+
+#[derive(Debug, Clone)]
+pub struct UpdateAsignatureInput {
+    pub year: Option<i32>,
+    pub code: Option<String>,
+    pub name: Option<String>,
+    pub evaluations: Option<Vec<Evaluation>>,
+    pub teacher_id: Option<Uuid>,
 }
 
 #[async_trait]

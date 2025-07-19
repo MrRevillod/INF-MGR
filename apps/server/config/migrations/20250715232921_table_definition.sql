@@ -27,18 +27,19 @@ CREATE TABLE IF NOT EXISTS asignatures (
     teacher_id UUID NOT NULL REFERENCES users(id)
 );
 
-CREATE TABLE IF NOT EXISTS students (
+CREATE TABLE IF NOT EXISTS inscriptions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id),
-    practice_id UUID NOT NULL REFERENCES practices(id),
     asignature_id UUID NOT NULL REFERENCES asignatures(id),
-    evaluations student_evaluation[] NOT NULL,
-    status student_status NOT NULL DEFAULT 'active'
+    practice_id UUID REFERENCES practices(id),
+    evaluations_scores student_evaluation[] NOT NULL,
+    status student_status NOT NULL DEFAULT 'active',
+    UNIQUE(user_id, asignature_id)
 );
 
 CREATE TABLE IF NOT EXISTS reports (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    student_id UUID NOT NULL REFERENCES students(id),
+    inscription_id UUID NOT NULL REFERENCES inscriptions(id),
     title TEXT NOT NULL,
     content TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),

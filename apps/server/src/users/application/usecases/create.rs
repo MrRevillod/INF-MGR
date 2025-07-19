@@ -5,7 +5,7 @@ use std::sync::Arc;
 use crate::{
     shared::services::{MailContext, MailTo, Mailer, PasswordHasher},
     users::{
-        application::{inputs::CreateUserInput, interfaces::CreateUserCase},
+        application::interfaces::CreateUserCase,
         domain::{User, UserError, UserRepository},
     },
 };
@@ -25,8 +25,8 @@ pub struct CreateUserCaseImpl {
 
 #[async_trait]
 impl CreateUserCase for CreateUserCaseImpl {
-    async fn execute(&self, input: CreateUserInput) -> Result<User, UserError> {
-        let mut user = User::from(input.clone());
+    async fn execute(&self, input: User) -> Result<User, UserError> {
+        let mut user = input.clone();
 
         let (id, email) = tokio::try_join!(
             self.repository.find_by_rut(&user.rut),

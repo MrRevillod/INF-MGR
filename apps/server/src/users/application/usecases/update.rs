@@ -4,8 +4,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::users::{
-    application::inputs::UpdateUserInput,
-    application::interfaces::UpdateUserCase,
+    application::{interfaces::UpdateUserCase, UpdateUserInput},
     domain::{User, UserError, UserRepository},
 };
 

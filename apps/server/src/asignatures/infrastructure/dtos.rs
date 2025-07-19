@@ -4,8 +4,8 @@ use validator::Validate;
 use validators::ASIGNATURE_CODE_REGEX;
 
 use crate::asignatures::{
-    application::{CreateAsignatureInput, UpdateAsignatureInput},
-    domain::{AsignatureError, Evaluation},
+    application::UpdateAsignatureInput,
+    domain::{Asignature, AsignatureError, Evaluation},
     infrastructure::dtos::validators::{
         validate_evaluation_weights, validate_repeated_evaluation_names,
     },
@@ -67,10 +67,11 @@ pub struct EvaluationDto {
     pub weight: f64,
 }
 
-impl TryFrom<CreateAsignatureDto> for CreateAsignatureInput {
+impl TryFrom<CreateAsignatureDto> for Asignature {
     type Error = AsignatureError;
     fn try_from(dto: CreateAsignatureDto) -> Result<Self, Self::Error> {
-        Ok(CreateAsignatureInput {
+        Ok(Asignature {
+            id: Uuid::new_v4(),
             year: dto.year,
             code: dto.code,
             name: dto.name,

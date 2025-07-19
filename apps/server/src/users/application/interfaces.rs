@@ -5,10 +5,7 @@ use async_trait::async_trait;
 use shaku::Interface;
 use uuid::Uuid;
 
-use crate::users::{
-    application::{CreateUserInput, UpdateUserInput},
-    domain::{User, UserError},
-};
+use crate::users::domain::{User, UserError};
 
 /// Caso de uso para obtener todos los usuarios.
 /// implementación: users/application/use_cases/get.rs
@@ -21,7 +18,15 @@ pub trait GetUsersCase: Interface {
 /// implementación: users/application/use_cases/create.rs
 #[async_trait]
 pub trait CreateUserCase: Interface {
-    async fn execute(&self, input: CreateUserInput) -> Result<User, UserError>;
+    async fn execute(&self, input: User) -> Result<User, UserError>;
+}
+
+// ----------
+
+pub struct UpdateUserInput {
+    pub email: Option<String>,
+    pub password: Option<String>,
+    pub role: Option<String>,
 }
 
 /// Caso de uso para actualizar un usuario existente.
