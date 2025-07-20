@@ -1,11 +1,10 @@
-use crate::tests::init_test_app;
 use serde_json::json;
 use sword::web::ResponseBody;
-use uuid::Uuid;
 
-fn generate_unique_email() -> String {
-    format!("{}@example.com", Uuid::new_v4())
-}
+use crate::tests::init_test_app;
+
+pub mod utils;
+use utils::*;
 
 #[tokio::test]
 async fn test_create_user_should_work() {

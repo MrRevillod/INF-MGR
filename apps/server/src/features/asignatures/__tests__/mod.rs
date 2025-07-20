@@ -1,7 +1,10 @@
-use crate::tests::{generate_unique_code, generate_unique_name, init_test_app};
+use crate::tests::init_test_app;
 use serde_json::json;
 use sword::web::ResponseBody;
 use uuid::Uuid;
+
+pub mod utils;
+use utils::*;
 
 async fn create_test_user_with_app(app: &axum_test::TestServer) -> String {
     let new_user = json!({
