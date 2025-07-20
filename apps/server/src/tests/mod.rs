@@ -1,8 +1,6 @@
 use axum_test::TestServer;
 use sword::prelude::Application;
 
-use uuid::Uuid;
-
 use super::{
     asignatures::infrastructure::AsignaturesController,
     config::{MailerConfig, PostgresDbConfig},

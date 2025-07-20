@@ -39,7 +39,7 @@ impl From<AsignatureModel> for Asignature {
 pub struct EvaluationType {
     pub id: Uuid,
     pub name: String,
-    pub weight: f64,
+    pub weight: i32,
 }
 
 impl From<EvaluationType> for Evaluation {

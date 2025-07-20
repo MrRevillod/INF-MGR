@@ -21,7 +21,7 @@ DROP TYPE IF EXISTS evaluation CASCADE;
 CREATE TYPE evaluation AS (
     id UUID,
     name TEXT,
-    weight FLOAT
+    weight INTEGER
 );
 
 DROP TYPE IF EXISTS student_evaluation CASCADE;

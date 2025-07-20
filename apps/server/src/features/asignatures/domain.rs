@@ -9,7 +9,7 @@ use crate::users::domain::UserError;
 pub struct Evaluation {
     pub id: Uuid,
     pub name: String,
-    pub weight: f64,
+    pub weight: i32,
 }
 
 #[derive(Debug, Clone)]

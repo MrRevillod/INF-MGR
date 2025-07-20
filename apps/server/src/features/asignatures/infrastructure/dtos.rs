@@ -61,11 +61,11 @@ pub struct EvaluationDto {
     pub name: String,
 
     #[validate(range(
-        min = 0.01,
-        max = 1.0,
+        min = 1,
+        max = 100,
         message = "El porcentaje de la evaluación debe estar entre 1 y 100%."
     ))]
-    pub weight: f64,
+    pub weight: i32,
 }
 
 impl TryFrom<CreateAsignatureDto> for Asignature {
@@ -154,16 +154,14 @@ mod validators {
     pub fn validate_evaluation_weights(
         evaluations: &Vec<EvaluationDto>,
     ) -> Result<(), ValidationError> {
-        let mut total_weight = 0.0;
+        let mut total_weight = 0;
 
         for evaluation in evaluations {
             total_weight += evaluation.weight;
         }
 
-        if total_weight * 100_f64 != 100_f64 {
-            return Err(ValidationError::new(
-                "El porcentaje de la evaluación debe estar entre 1 y 100%.",
-            ));
+        if total_weight != 100 {
+            return Err(ValidationError::new("Las evaluaciones deben sumar 100%."));
         }
 
         Ok(())

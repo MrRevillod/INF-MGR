@@ -9,29 +9,16 @@ use utils::*;
 #[tokio::test]
 async fn test_create_user_should_work() {
     let app = init_test_app().await;
+    let new_user = UserBuilder::new().build();
 
-    let new_user = json!({
-        "rut": "34108499-7",
-        "name": "Test User",
-        "email": generate_unique_email(),
-        "roles": ["administrator"],
-        "password": "TestPassword123!",
-        "confirmPassword": "TestPassword123!"
-    });
-
-    let response = app.post("/users").json(&new_user).await;
-    let body = response.json::<ResponseBody>();
-
-    assert_eq!(response.status_code(), 201);
+    let body = create_user(&app, new_user).await;
 
     let user_id = body
-        .data
         .get("id")
         .and_then(|id| id.as_str())
         .expect("User ID should be present");
 
-    let response = app.delete(&format!("/users/{}", user_id)).await;
-    assert_eq!(response.status_code(), 200);
+    delete_user(&app, user_id).await;
 }
 
 #[tokio::test]
@@ -45,32 +32,16 @@ async fn test_get_users() {
 #[tokio::test]
 async fn test_update_user() {
     let app = init_test_app().await;
-
-    let new_user = json!({
-        "rut": "34108499-7",
-        "name": "Test User",
-        "email": generate_unique_email(),
-        "roles": ["administrator"],
-        "password": "TestPassword123!",
-        "confirmPassword": "TestPassword123!"
-    });
-
-    let create_response = app.post("/users").json(&new_user).await;
-    let body = create_response.json::<ResponseBody>();
-
-    assert_eq!(create_response.status_code(), 201);
+    let new_user = UserBuilder::new().build();
+    let body = create_user(&app, new_user).await;
 
     let user_id = body
-        .data
         .get("id")
         .and_then(|id| id.as_str())
         .expect("User ID should be present");
 
     let new_email = generate_unique_email();
-
-    let update_user = json!({
-        "email": new_email
-    });
+    let update_user = json!({ "email": new_email });
 
     let update_response = app
         .put(&format!("/users/{}", user_id))
@@ -80,7 +51,6 @@ async fn test_update_user() {
     assert_eq!(update_response.status_code(), 200);
 
     let updated_body = update_response.json::<ResponseBody>();
-
     let updated_user_email = updated_body
         .data
         .get("email")
@@ -88,9 +58,7 @@ async fn test_update_user() {
         .expect("Updated user name should be present");
 
     assert_eq!(updated_user_email, new_email);
-
-    let delete_response = app.delete(&format!("/users/{}", user_id)).await;
-    assert_eq!(delete_response.status_code(), 200);
+    delete_user(&app, user_id).await;
 }
 
 // ==================== CREATE USER VALIDATION TESTS ====================
@@ -98,189 +66,116 @@ async fn test_update_user() {
 #[tokio::test]
 async fn test_create_user_invalid_rut_format() {
     let app = init_test_app().await;
-
-    let new_user = json!({
-        "rut": "34108499", // Missing dash and verification digit
-        "name": "Test User",
-        "email": generate_unique_email(),
-        "roles": ["administrator"],
-        "password": "TestPassword123!",
-        "confirmPassword": "TestPassword123!"
-    });
+    let new_user = UserBuilder::new().with_rut("34108499").build();
 
     let response = app.post("/users").json(&new_user).await;
+
     assert_eq!(response.status_code(), 400);
 }
 
 #[tokio::test]
 async fn test_create_user_invalid_rut_verification_digit() {
     let app = init_test_app().await;
-
-    let new_user = json!({
-        "rut": "34108499-9", // Wrong verification digit (should be 7)
-        "name": "Test User",
-        "email": generate_unique_email(),
-        "roles": ["administrator"],
-        "password": "TestPassword123!",
-        "confirmPassword": "TestPassword123!"
-    });
-
+    let new_user = UserBuilder::new().with_rut("34108499-9").build();
     let response = app.post("/users").json(&new_user).await;
+
     assert_eq!(response.status_code(), 400);
 }
 
 #[tokio::test]
 async fn test_create_user_name_too_short() {
     let app = init_test_app().await;
-
-    let new_user = json!({
-        "rut": "34108499-7",
-        "name": "Test", // Only 4 characters, minimum is 5
-        "email": generate_unique_email(),
-        "roles": ["administrator"],
-        "password": "TestPassword123!",
-        "confirmPassword": "TestPassword123!"
-    });
-
+    let new_user = UserBuilder::new().with_name("Test").build();
     let response = app.post("/users").json(&new_user).await;
+
     assert_eq!(response.status_code(), 400);
 }
 
 #[tokio::test]
 async fn test_create_user_name_too_long() {
     let app = init_test_app().await;
-
-    let long_name = "a".repeat(101); // 101 characters, maximum is 100
-
-    let new_user = json!({
-        "rut": "34108499-7",
-        "name": long_name,
-        "email": generate_unique_email(),
-        "roles": ["administrator"],
-        "password": "TestPassword123!",
-        "confirmPassword": "TestPassword123!"
-    });
-
+    let long_name = "a".repeat(101);
+    let new_user = UserBuilder::new().with_name(&long_name).build();
     let response = app.post("/users").json(&new_user).await;
+
     assert_eq!(response.status_code(), 400);
 }
 
 #[tokio::test]
 async fn test_create_user_invalid_email() {
     let app = init_test_app().await;
-
-    let new_user = json!({
-        "rut": "34108499-7",
-        "name": "Test User",
-        "email": "invalid-email", // Invalid email format
-        "roles": ["administrator"],
-        "password": "TestPassword123!",
-        "confirmPassword": "TestPassword123!"
-    });
-
+    let new_user = UserBuilder::new().with_email("invalid-email").build();
     let response = app.post("/users").json(&new_user).await;
+
     assert_eq!(response.status_code(), 400);
 }
 
 #[tokio::test]
 async fn test_create_user_password_too_short() {
     let app = init_test_app().await;
-
-    let new_user = json!({
-        "rut": "34108499-7",
-        "name": "Test User",
-        "email": generate_unique_email(),
-        "roles": ["administrator"],
-        "password": "Test1!", // Only 6 characters, minimum is 8
-        "confirmPassword": "Test1!"
-    });
-
+    let new_user = UserBuilder::new().with_password("Test1!", "Test1!").build();
     let response = app.post("/users").json(&new_user).await;
+
     assert_eq!(response.status_code(), 400);
 }
 
 #[tokio::test]
 async fn test_create_user_password_missing_uppercase() {
     let app = init_test_app().await;
-
-    let new_user = json!({
-        "rut": "34108499-7",
-        "name": "Test User",
-        "email": generate_unique_email(),
-        "roles": ["administrator"],
-        "password": "testpassword123!", // Missing uppercase
-        "confirmPassword": "testpassword123!"
-    });
+    let new_user = UserBuilder::new()
+        .with_password("testpassword123!", "testpassword123!")
+        .build();
 
     let response = app.post("/users").json(&new_user).await;
+
     assert_eq!(response.status_code(), 400);
 }
 
 #[tokio::test]
 async fn test_create_user_password_missing_lowercase() {
     let app = init_test_app().await;
-
-    let new_user = json!({
-        "rut": "34108499-7",
-        "name": "Test User",
-        "email": generate_unique_email(),
-        "roles": ["administrator"],
-        "password": "TESTPASSWORD123!", // Missing lowercase
-        "confirmPassword": "TESTPASSWORD123!"
-    });
+    let new_user = UserBuilder::new()
+        .with_password("TESTPASSWORD123!", "TESTPASSWORD123!")
+        .build();
 
     let response = app.post("/users").json(&new_user).await;
+
     assert_eq!(response.status_code(), 400);
 }
 
 #[tokio::test]
 async fn test_create_user_password_missing_digit() {
     let app = init_test_app().await;
-
-    let new_user = json!({
-        "rut": "34108499-7",
-        "name": "Test User",
-        "email": generate_unique_email(),
-        "roles": ["administrator"],
-        "password": "TestPassword!", // Missing digit
-        "confirmPassword": "TestPassword!"
-    });
+    let new_user = UserBuilder::new()
+        .with_password("TestPassword!", "TestPassword!")
+        .build();
 
     let response = app.post("/users").json(&new_user).await;
+
     assert_eq!(response.status_code(), 400);
 }
 
 #[tokio::test]
 async fn test_create_user_password_missing_special_char() {
     let app = init_test_app().await;
-
-    let new_user = json!({
-        "rut": "34108499-7",
-        "name": "Test User",
-        "email": generate_unique_email(),
-        "roles": ["administrator"],
-        "password": "TestPassword123", // Missing special character
-        "confirmPassword": "TestPassword123"
-    });
+    let new_user = UserBuilder::new()
+        .with_password("TestPassword123", "TestPassword123")
+        .build();
 
     let response = app.post("/users").json(&new_user).await;
+
     assert_eq!(response.status_code(), 400);
 }
 
 #[tokio::test]
 async fn test_create_user_passwords_dont_match() {
     let app = init_test_app().await;
-
-    let new_user = json!({
-        "rut": "34108499-7",
-        "name": "Test User",
-        "email": generate_unique_email(),
-        "roles": ["administrator"],
-        "password": "TestPassword123!",
-        "confirmPassword": "DifferentPassword123!" // Passwords don't match
-    });
+    let new_user = UserBuilder::new()
+        .with_password("TestPassword123!", "DifferentPassword123!")
+        .build();
 
     let response = app.post("/users").json(&new_user).await;
+
     assert_eq!(response.status_code(), 400);
 }
 
@@ -288,16 +183,9 @@ async fn test_create_user_passwords_dont_match() {
 async fn test_create_user_invalid_role() {
     let app = init_test_app().await;
 
-    let new_user = json!({
-        "rut": "34108499-7",
-        "name": "Test User",
-        "email": generate_unique_email(),
-        "roles": ["invalid_role"],
-        "password": "TestPassword123!",
-        "confirmPassword": "TestPassword123!"
-    });
-
+    let new_user = UserBuilder::new().with_roles(vec!["invalid_role"]).build();
     let response = app.post("/users").json(&new_user).await;
+
     assert_eq!(response.status_code(), 400);
 }
 
@@ -313,22 +201,11 @@ async fn test_create_user_valid_roles() {
     ];
 
     for role in valid_roles {
-        let new_user = json!({
-            "rut": "34108499-7",
-            "name": "Test User",
-            "email": generate_unique_email(),
-            "roles": [role],
-            "password": "TestPassword123!",
-            "confirmPassword": "TestPassword123!"
-        });
+        let new_user = UserBuilder::new().with_roles(vec![role]).build();
+        let body = create_user(&app, new_user).await;
 
-        let response = app.post("/users").json(&new_user).await;
-        assert_eq!(response.status_code(), 201, "Role {} should be valid", role);
-
-        // Clean up - delete the created user
-        let body = response.json::<ResponseBody>();
-        if let Some(user_id) = body.data.get("id").and_then(|id| id.as_str()) {
-            app.delete(&format!("/users/{}", user_id)).await;
+        if let Some(user_id) = body.get("id").and_then(|id| id.as_str()) {
+            delete_user(&app, user_id).await;
         }
     }
 }
@@ -338,25 +215,11 @@ async fn test_create_user_valid_roles() {
 #[tokio::test]
 async fn test_update_user_invalid_email() {
     let app = init_test_app().await;
+    let new_user = UserBuilder::new().build();
+    let body = create_user(&app, new_user).await;
 
-    // First create a user
-    let new_user = json!({
-        "rut": "34108499-7",
-        "name": "Test User",
-        "email": generate_unique_email(),
-        "roles": ["administrator"],
-        "password": "TestPassword123!",
-        "confirmPassword": "TestPassword123!"
-    });
-
-    let create_response = app.post("/users").json(&new_user).await;
-    let body = create_response.json::<ResponseBody>();
-    let user_id = body.data.get("id").and_then(|id| id.as_str()).unwrap();
-
-    // Try to update with invalid email
-    let update_user = json!({
-        "email": "invalid-email-format"
-    });
+    let user_id = body.get("id").and_then(|id| id.as_str()).unwrap();
+    let update_user = json!({ "email": "invalid-email-format" });
 
     let update_response = app
         .put(&format!("/users/{}", user_id))
@@ -364,33 +227,17 @@ async fn test_update_user_invalid_email() {
         .await;
 
     assert_eq!(update_response.status_code(), 400);
-
-    // Clean up
-    app.delete(&format!("/users/{}", user_id)).await;
+    delete_user(&app, user_id).await;
 }
 
 #[tokio::test]
 async fn test_update_user_password_only_one_field() {
     let app = init_test_app().await;
+    let new_user = UserBuilder::new().build();
 
-    // First create a user
-    let new_user = json!({
-        "rut": "34108499-7",
-        "name": "Test User",
-        "email": generate_unique_email(),
-        "roles": ["administrator"],
-        "password": "TestPassword123!",
-        "confirmPassword": "TestPassword123!"
-    });
-
-    let create_response = app.post("/users").json(&new_user).await;
-    let body = create_response.json::<ResponseBody>();
-    let user_id = body.data.get("id").and_then(|id| id.as_str()).unwrap();
-
-    // Try to update with only password (missing confirmPassword)
-    let update_user = json!({
-        "password": "NewPassword123!"
-    });
+    let body = create_user(&app, new_user).await;
+    let user_id = body.get("id").and_then(|id| id.as_str()).unwrap();
+    let update_user = json!({ "password": "NewPassword123!" });
 
     let update_response = app
         .put(&format!("/users/{}", user_id))
@@ -398,34 +245,17 @@ async fn test_update_user_password_only_one_field() {
         .await;
 
     assert_eq!(update_response.status_code(), 400);
-
-    // Clean up
-    app.delete(&format!("/users/{}", user_id)).await;
+    delete_user(&app, user_id).await;
 }
 
 #[tokio::test]
 async fn test_update_user_passwords_dont_match() {
     let app = init_test_app().await;
+    let new_user = UserBuilder::new().build();
+    let body = create_user(&app, new_user).await;
 
-    // First create a user
-    let new_user = json!({
-        "rut": "34108499-7",
-        "name": "Test User",
-        "email": generate_unique_email(),
-        "roles": ["administrator"],
-        "password": "TestPassword123!",
-        "confirmPassword": "TestPassword123!"
-    });
-
-    let create_response = app.post("/users").json(&new_user).await;
-    let body = create_response.json::<ResponseBody>();
-    let user_id = body.data.get("id").and_then(|id| id.as_str()).unwrap();
-
-    // Try to update with mismatched passwords
-    let update_user = json!({
-        "password": "NewPassword123!",
-        "confirmPassword": "DifferentPassword123!"
-    });
+    let user_id = body.get("id").and_then(|id| id.as_str()).unwrap();
+    let update_user = json!({ "password": "NewPassword123!", "confirmPassword": "DifferentPassword123!" });
 
     let update_response = app
         .put(&format!("/users/{}", user_id))
@@ -433,69 +263,35 @@ async fn test_update_user_passwords_dont_match() {
         .await;
 
     assert_eq!(update_response.status_code(), 400);
-
-    // Clean up
-    app.delete(&format!("/users/{}", user_id)).await;
+    delete_user(&app, user_id).await;
 }
 
 #[tokio::test]
 async fn test_update_user_invalid_password_format() {
     let app = init_test_app().await;
+    let new_user = UserBuilder::new().build();
 
-    // First create a user
-    let new_user = json!({
-        "rut": "34108499-7",
-        "name": "Test User",
-        "email": generate_unique_email(),
-        "roles": ["administrator"],
-        "password": "TestPassword123!",
-        "confirmPassword": "TestPassword123!"
-    });
+    let body = create_user(&app, new_user).await;
+    let user_id = body.get("id").and_then(|id| id.as_str()).unwrap();
 
-    let create_response = app.post("/users").json(&new_user).await;
-    let body = create_response.json::<ResponseBody>();
-
-    let user_id = body.data.get("id").and_then(|id| id.as_str()).unwrap();
-
-    // Try to update with invalid password (too short)
-    let update_user = json!({
-        "password": "Test1!",
-        "confirmPassword": "Test1!"
-    });
-
+    let update_user = json!({ "password": "Test1!", "confirmPassword": "Test1!" });
     let update_response = app
         .put(&format!("/users/{}", user_id))
         .json(&update_user)
         .await;
 
     assert_eq!(update_response.status_code(), 400);
-
-    // Clean up
-    app.delete(&format!("/users/{}", user_id)).await;
+    delete_user(&app, user_id).await;
 }
 
 #[tokio::test]
 async fn test_update_user_invalid_role() {
     let app = init_test_app().await;
+    let new_user = UserBuilder::new().build();
+    let body = create_user(&app, new_user).await;
 
-    // First create a user
-    let new_user = json!({
-        "rut": "34108499-7",
-        "name": "Test User",
-        "email": generate_unique_email(),
-        "roles": ["administrator"],
-        "password": "TestPassword123!",
-        "confirmPassword": "TestPassword123!"
-    });
-
-    let create_response = app.post("/users").json(&new_user).await;
-    let body = create_response.json::<ResponseBody>();
-    let user_id = body.data.get("id").and_then(|id| id.as_str()).unwrap();
-
-    // Try to update with invalid role
-    let update_user = json!({
-        "roles": ["invalid_role"]
-    });
+    let user_id = body.get("id").and_then(|id| id.as_str()).unwrap();
+    let update_user = json!({ "roles": ["invalid_role"] });
 
     let update_response = app
         .put(&format!("/users/{}", user_id))
@@ -503,34 +299,17 @@ async fn test_update_user_invalid_role() {
         .await;
 
     assert_eq!(update_response.status_code(), 400);
-
-    // Clean up
-    app.delete(&format!("/users/{}", user_id)).await;
+    delete_user(&app, user_id).await;
 }
 
 #[tokio::test]
 async fn test_update_user_valid_password_change() {
     let app = init_test_app().await;
+    let new_user = UserBuilder::new().build();
 
-    // First create a user
-    let new_user = json!({
-        "rut": "34108499-7",
-        "name": "Test User",
-        "email": generate_unique_email(),
-        "roles": ["administrator"],
-        "password": "TestPassword123!",
-        "confirmPassword": "TestPassword123!"
-    });
-
-    let create_response = app.post("/users").json(&new_user).await;
-    let body = create_response.json::<ResponseBody>();
-    let user_id = body.data.get("id").and_then(|id| id.as_str()).unwrap();
-
-    // Update with valid password
-    let update_user = json!({
-        "password": "NewValidPassword123!",
-        "confirmPassword": "NewValidPassword123!"
-    });
+    let body = create_user(&app, new_user).await;
+    let user_id = body.get("id").and_then(|id| id.as_str()).unwrap();
+    let update_user = json!({ "password": "NewValidPassword123!", "confirmPassword": "NewValidPassword123!" });
 
     let update_response = app
         .put(&format!("/users/{}", user_id))
@@ -538,33 +317,17 @@ async fn test_update_user_valid_password_change() {
         .await;
 
     assert_eq!(update_response.status_code(), 200);
-
-    // Clean up
-    app.delete(&format!("/users/{}", user_id)).await;
+    delete_user(&app, user_id).await;
 }
 
 #[tokio::test]
 async fn test_update_user_valid_role_change() {
     let app = init_test_app().await;
+    let new_user = UserBuilder::new().build();
+    let body = create_user(&app, new_user).await;
 
-    // First create a user
-    let new_user = json!({
-        "rut": "34108499-7",
-        "name": "Test User",
-        "email": generate_unique_email(),
-        "roles": ["administrator"],
-        "password": "TestPassword123!",
-        "confirmPassword": "TestPassword123!"
-    });
-
-    let create_response = app.post("/users").json(&new_user).await;
-    let body = create_response.json::<ResponseBody>();
-    let user_id = body.data.get("id").and_then(|id| id.as_str()).unwrap();
-
-    // Update with valid role
-    let update_user = json!({
-        "roles": ["teacher", "administrator"]
-    });
+    let user_id = body.get("id").and_then(|id| id.as_str()).unwrap();
+    let update_user = json!({ "roles": ["teacher", "administrator"] });
 
     let update_response = app
         .put(&format!("/users/{}", user_id))
@@ -586,9 +349,7 @@ async fn test_update_user_valid_role_change() {
         .collect::<Vec<&str>>();
 
     assert_eq!(roles, ["teacher", "administrator"]);
-
-    // Clean up
-    app.delete(&format!("/users/{}", user_id)).await;
+    delete_user(&app, user_id).await;
 }
 
 // ==================== EDGE CASES AND BOUNDARY TESTS ====================
@@ -596,98 +357,52 @@ async fn test_update_user_valid_role_change() {
 #[tokio::test]
 async fn test_create_user_name_boundary_valid() {
     let app = init_test_app().await;
+    let new_user = UserBuilder::new().with_name("Tests").build();
+    let body = create_user(&app, new_user).await;
 
-    // Test minimum length (5 characters)
-    let new_user = json!({
-        "rut": "34108499-7",
-        "name": "Tests", // Exactly 5 characters
-        "email": generate_unique_email(),
-        "roles": ["administrator"],
-        "password": "TestPassword123!",
-        "confirmPassword": "TestPassword123!"
-    });
-
-    let response = app.post("/users").json(&new_user).await;
-    assert_eq!(response.status_code(), 201);
-
-    // Clean up
-    let body = response.json::<ResponseBody>();
-    if let Some(user_id) = body.data.get("id").and_then(|id| id.as_str()) {
-        app.delete(&format!("/users/{}", user_id)).await;
+    if let Some(user_id) = body.get("id").and_then(|id| id.as_str()) {
+        delete_user(&app, user_id).await;
     }
 }
 
 #[tokio::test]
 async fn test_create_user_name_boundary_maximum() {
     let app = init_test_app().await;
+    let max_name = "a".repeat(100);
+    let new_user = UserBuilder::new().with_name(&max_name).build();
+    let body = create_user(&app, new_user).await;
 
-    let max_name = "a".repeat(100); // Exactly 100 characters
-
-    let new_user = json!({
-        "rut": "34108499-7",
-        "name": max_name,
-        "email": generate_unique_email(),
-        "roles": ["administrator"],
-        "password": "TestPassword123!",
-        "confirmPassword": "TestPassword123!"
-    });
-
-    let response = app.post("/users").json(&new_user).await;
-    assert_eq!(response.status_code(), 201);
-
-    // Clean up
-    let body = response.json::<ResponseBody>();
-    if let Some(user_id) = body.data.get("id").and_then(|id| id.as_str()) {
-        app.delete(&format!("/users/{}", user_id)).await;
+    if let Some(user_id) = body.get("id").and_then(|id| id.as_str()) {
+        delete_user(&app, user_id).await;
     }
 }
 
 #[tokio::test]
 async fn test_create_user_password_boundary_minimum() {
     let app = init_test_app().await;
+    let new_user = UserBuilder::new()
+        .with_password("TestPa1!", "TestPa1!")
+        .build();
 
-    let new_user = json!({
-        "rut": "34108499-7",
-        "name": "Test User",
-        "email": generate_unique_email(),
-        "roles": ["administrator"],
-        "password": "TestPa1!", // Exactly 8 characters with all requirements
-        "confirmPassword": "TestPa1!"
-    });
+    let body = create_user(&app, new_user).await;
 
-    let response = app.post("/users").json(&new_user).await;
-    assert_eq!(response.status_code(), 201);
-
-    // Clean up
-    let body = response.json::<ResponseBody>();
-    if let Some(user_id) = body.data.get("id").and_then(|id| id.as_str()) {
-        app.delete(&format!("/users/{}", user_id)).await;
+    if let Some(user_id) = body.get("id").and_then(|id| id.as_str()) {
+        delete_user(&app, user_id).await;
     }
 }
 
 #[tokio::test]
 async fn test_create_user_password_boundary_maximum() {
     let app = init_test_app().await;
+    let base_password = "A".repeat(96);
+    let password = format!("{}a1!", base_password);
+    let new_user = UserBuilder::new()
+        .with_password(&password, &password)
+        .build();
 
-    // Create a 100-character password with all requirements
-    let base_password = "A".repeat(96); // 96 uppercase letters
-    let password = format!("{}a1!", base_password); // Add lowercase, digit, and special char
+    let body = create_user(&app, new_user).await;
 
-    let new_user = json!({
-        "rut": "34108499-7",
-        "name": "Test User",
-        "email": generate_unique_email(),
-        "roles": ["administrator"],
-        "password": password,
-        "confirmPassword": password
-    });
-
-    let response = app.post("/users").json(&new_user).await;
-    assert_eq!(response.status_code(), 201);
-
-    // Clean up
-    let body = response.json::<ResponseBody>();
-    if let Some(user_id) = body.data.get("id").and_then(|id| id.as_str()) {
-        app.delete(&format!("/users/{}", user_id)).await;
+    if let Some(user_id) = body.get("id").and_then(|id| id.as_str()) {
+        delete_user(&app, user_id).await;
     }
 }

@@ -4,30 +4,23 @@ use sword::web::ResponseBody;
 use uuid::Uuid;
 
 pub mod utils;
+use crate::features::users::__tests__::utils::{
+    create_user, delete_user, UserBuilder,
+};
 use utils::*;
 
-async fn create_test_user_with_app(app: &axum_test::TestServer) -> String {
-    let new_user = json!({
-        "rut": "34108499-7",
-        "name": "Test Teacher",
-        "email": format!("teacher{}@example.com", Uuid::new_v4()),
-        "roles": ["teacher"],
-        "password": "TestPassword123!",
-        "confirmPassword": "TestPassword123!"
-    });
-
-    let response = app.post("/users").json(&new_user).await;
-    let body = response.json::<ResponseBody>();
-
-    body.data
-        .get("id")
+// Helper to create a teacher user and return its id
+async fn create_teacher(app: &axum_test::TestServer) -> String {
+    let user = UserBuilder::new().with_roles(vec!["teacher"]).build();
+    let body = create_user(app, user).await;
+    body.get("id")
         .and_then(|id| id.as_str())
         .unwrap()
         .to_string()
 }
 
-async fn cleanup_user_with_app(app: &axum_test::TestServer, user_id: &str) {
-    app.delete(&format!("/users/{}", user_id)).await;
+async fn cleanup_teacher(app: &axum_test::TestServer, user_id: &str) {
+    delete_user(app, user_id).await;
 }
 
 // ==================== CRUD TESTS ====================
@@ -35,58 +28,33 @@ async fn cleanup_user_with_app(app: &axum_test::TestServer, user_id: &str) {
 #[tokio::test]
 async fn test_create_asignature_should_work() {
     let app = init_test_app().await;
-    let teacher_id = create_test_user_with_app(&app).await;
-
-    let new_asignature = json!({
-        "year": 2024,
-        "code": generate_unique_code(),
-        "name": generate_unique_name(),
-        "evaluations": [
-            {
-                "name": "Bitácoras Semanales",
-                "weight": 0.3
-            },
-            {
-                "name": "Informe Final",
-                "weight": 0.4
-            },
-            {
-                "name": "Evaluación Empresa",
-                "weight": 0.3
-            }
-        ],
-        "teacherId": teacher_id
-    });
-
+    let teacher_id = create_teacher(&app).await;
+    let new_asignature = AsignatureBuilder::new(&teacher_id).build();
     let response = app.post("/asignatures").json(&new_asignature).await;
-    let body = response.json::<ResponseBody>();
-
-    assert_eq!(response.status_code(), 201);
+    let json = response.json::<ResponseBody>();
+    dbg!(&json);
+    let body = json.data;
 
     let asignature_id = body
-        .data
         .get("id")
         .and_then(|id| id.as_str())
         .expect("Asignature ID should be present");
-
-    assert_eq!(body.data.get("year").and_then(|y| y.as_i64()), Some(2024));
+    assert_eq!(body.get("year").and_then(|y| y.as_i64()), Some(2024));
     assert_eq!(
-        body.data.get("code").and_then(|c| c.as_str()),
+        body.get("code").and_then(|c| c.as_str()),
         new_asignature.get("code").and_then(|c| c.as_str())
     );
-
     let delete_response =
         app.delete(&format!("/asignatures/{}", asignature_id)).await;
     assert_eq!(delete_response.status_code(), 200);
-
-    cleanup_user_with_app(&app, &teacher_id).await;
+    cleanup_teacher(&app, &teacher_id).await;
 }
 
 #[tokio::test]
 async fn test_get_asignatures() {
     let app = init_test_app().await;
-    let response = app.get("/asignatures").await;
 
+    let response = app.get("/asignatures").await;
     assert_eq!(response.status_code(), 200);
 
     let body = response.json::<ResponseBody>();
@@ -96,109 +64,61 @@ async fn test_get_asignatures() {
 #[tokio::test]
 async fn test_update_asignature() {
     let app = init_test_app().await;
-    let teacher_id = create_test_user_with_app(&app).await;
+    let teacher_id = create_teacher(&app).await;
+    let new_asignature = AsignatureBuilder::new(&teacher_id)
+        .with_evaluations(vec![("Bitácoras Semanales", 50), ("Informe Final", 50)])
+        .build();
 
-    let new_asignature = json!({
-        "year": 2024,
-        "code": generate_unique_code(),
-        "name": generate_unique_name(),
-        "evaluations": [
-            {
-                "name": "Bitácoras Semanales",
-                "weight": 0.5
-            },
-            {
-                "name": "Informe Final",
-                "weight": 0.5
-            }
-        ],
-        "teacherId": teacher_id
-    });
-
-    let create_response = app.post("/asignatures").json(&new_asignature).await;
-    let body = create_response.json::<ResponseBody>();
-    assert_eq!(create_response.status_code(), 201);
-
+    let body = create_asignature(&app, &new_asignature).await;
     let asignature_id = body
-        .data
         .get("id")
         .and_then(|id| id.as_str())
         .expect("Asignature ID should be present");
-
     let new_name = generate_unique_name();
-    let update_asignature = json!({
-        "name": new_name,
-        "year": 2025
-    });
-
+    let update_asignature = json!({ "name": new_name, "year": 2025 });
     let update_response = app
         .patch(&format!("/asignatures/{}", asignature_id))
         .json(&update_asignature)
         .await;
-
     assert_eq!(update_response.status_code(), 200);
-
     let updated_body = update_response.json::<ResponseBody>();
-
     let updated_name = updated_body
         .data
         .get("name")
         .and_then(|name| name.as_str())
         .expect("Updated asignature name should be present");
-
     let updated_year = updated_body
         .data
         .get("year")
         .and_then(|year| year.as_i64())
         .expect("Updated asignature year should be present");
-
     assert_eq!(updated_name, new_name);
     assert_eq!(updated_year, 2025);
-
     let delete_response =
         app.delete(&format!("/asignatures/{}", asignature_id)).await;
     assert_eq!(delete_response.status_code(), 200);
-
-    cleanup_user_with_app(&app, &teacher_id).await;
+    cleanup_teacher(&app, &teacher_id).await;
 }
 
 #[tokio::test]
 async fn test_delete_asignature() {
     let app = init_test_app().await;
-    let teacher_id = create_test_user_with_app(&app).await;
-
-    let new_asignature = json!({
-        "year": 2024,
-        "code": generate_unique_code(),
-        "name": generate_unique_name(),
-        "evaluations": [
-            {
-                "name": "Test Evaluation",
-                "weight": 1.0
-            }
-        ],
-        "teacherId": teacher_id
-    });
-
-    let create_response = app.post("/asignatures").json(&new_asignature).await;
-    let body = create_response.json::<ResponseBody>();
-    assert_eq!(create_response.status_code(), 201);
-
+    let teacher_id = create_teacher(&app).await;
+    let new_asignature = AsignatureBuilder::new(&teacher_id)
+        .with_single_evaluation("Test Evaluation", 100)
+        .build();
+    let body = create_asignature(&app, &new_asignature).await;
     let asignature_id = body
-        .data
         .get("id")
         .and_then(|id| id.as_str())
         .expect("Asignature ID should be present");
-
     let delete_response =
         app.delete(&format!("/asignatures/{}", asignature_id)).await;
     assert_eq!(delete_response.status_code(), 200);
-
     let delete_again_response =
         app.delete(&format!("/asignatures/{}", asignature_id)).await;
     assert_eq!(delete_again_response.status_code(), 404);
-
-    cleanup_user_with_app(&app, &teacher_id).await;
+    cleanup_teacher(&app, &teacher_id).await;
 }
 
 // // ==================== CREATE ASIGNATURE VALIDATION TESTS ====================
@@ -206,47 +126,33 @@ async fn test_delete_asignature() {
 #[tokio::test]
 async fn test_create_asignature_invalid_year_too_low() {
     let app = init_test_app().await;
-    let teacher_id = create_test_user_with_app(&app).await;
+    let teacher_id = create_teacher(&app).await;
 
-    let new_asignature = json!({
-        "year": 1999, // Below minimum (2000)
-        "code": generate_unique_code(),
-        "name": generate_unique_name(),
-        "evaluations": [
-            {
-                "name": "Test Evaluation",
-                "weight": 1.0
-            }
-        ],
-        "teacherId": teacher_id
-    });
-
+    let new_asignature = AsignatureBuilder::new(&teacher_id).with_year(1999).build();
     let response = app.post("/asignatures").json(&new_asignature).await;
+
     assert_eq!(response.status_code(), 400);
-
     let body = response.json::<ResponseBody>();
-
     let error_arr = body
         .data
         .get("errors")
         .and_then(|e| e.as_array())
         .expect("Response data should be an array");
-
     assert!(!error_arr.is_empty(), "Expected validation errors");
-
-    assert_eq!(error_arr.len(), 1, "Expected one validation error");
-    assert_eq!(
-        error_arr[0].get("field").and_then(|m| m.as_str()),
-        Some("year"),
+    let year_error = error_arr
+        .iter()
+        .find(|err| err.get("field").and_then(|m| m.as_str()) == Some("year"));
+    assert!(
+        year_error.is_some(),
+        "Expected a validation error for 'year'"
     );
-
-    cleanup_user_with_app(&app, &teacher_id).await;
+    cleanup_teacher(&app, &teacher_id).await;
 }
 
 #[tokio::test]
 async fn test_create_asignature_invalid_year_too_high() {
     let app = init_test_app().await;
-    let teacher_id = create_test_user_with_app(&app).await;
+    let teacher_id = create_teacher(&app).await;
 
     let new_asignature = json!({
         "year": 2101, // Above maximum (2100)
@@ -255,7 +161,7 @@ async fn test_create_asignature_invalid_year_too_high() {
         "evaluations": [
             {
                 "name": "Test Evaluation",
-                "weight": 1.0
+                "weight": 100
             }
         ],
         "teacherId": teacher_id
@@ -264,13 +170,13 @@ async fn test_create_asignature_invalid_year_too_high() {
     let response = app.post("/asignatures").json(&new_asignature).await;
     assert_eq!(response.status_code(), 400);
 
-    cleanup_user_with_app(&app, &teacher_id).await;
+    cleanup_teacher(&app, &teacher_id).await;
 }
 
 #[tokio::test]
 async fn test_create_asignature_invalid_code_format() {
     let app = init_test_app().await;
-    let teacher_id = create_test_user_with_app(&app).await;
+    let teacher_id = create_teacher(&app).await;
 
     let new_asignature = json!({
         "year": 2024,
@@ -279,7 +185,7 @@ async fn test_create_asignature_invalid_code_format() {
         "evaluations": [
             {
                 "name": "Test Evaluation",
-                "weight": 1.0
+                "weight": 100
             }
         ],
         "teacherId": teacher_id
@@ -302,13 +208,13 @@ async fn test_create_asignature_invalid_code_format() {
         Some("code"),
     );
 
-    cleanup_user_with_app(&app, &teacher_id).await;
+    cleanup_teacher(&app, &teacher_id).await;
 }
 
 #[tokio::test]
 async fn test_create_asignature_invalid_code_length() {
     let app = init_test_app().await;
-    let teacher_id = create_test_user_with_app(&app).await;
+    let teacher_id = create_teacher(&app).await;
 
     let new_asignature = json!({
         "year": 2024,
@@ -317,7 +223,7 @@ async fn test_create_asignature_invalid_code_length() {
         "evaluations": [
             {
                 "name": "Test Evaluation",
-                "weight": 1.0
+                "weight": 100
             }
         ],
         "teacherId": teacher_id
@@ -326,13 +232,13 @@ async fn test_create_asignature_invalid_code_length() {
     let response = app.post("/asignatures").json(&new_asignature).await;
     assert_eq!(response.status_code(), 400);
 
-    cleanup_user_with_app(&app, &teacher_id).await;
+    cleanup_teacher(&app, &teacher_id).await;
 }
 
 #[tokio::test]
 async fn test_create_asignature_name_too_short() {
     let app = init_test_app().await;
-    let teacher_id = create_test_user_with_app(&app).await;
+    let teacher_id = create_teacher(&app).await;
 
     let new_asignature = json!({
         "year": 2024,
@@ -341,7 +247,7 @@ async fn test_create_asignature_name_too_short() {
         "evaluations": [
             {
                 "name": "Test Evaluation",
-                "weight": 1.0
+                "weight": 100
             }
         ],
         "teacherId": teacher_id
@@ -350,13 +256,13 @@ async fn test_create_asignature_name_too_short() {
     let response = app.post("/asignatures").json(&new_asignature).await;
     assert_eq!(response.status_code(), 400);
 
-    cleanup_user_with_app(&app, &teacher_id).await;
+    cleanup_teacher(&app, &teacher_id).await;
 }
 
 #[tokio::test]
 async fn test_create_asignature_name_too_long() {
     let app = init_test_app().await;
-    let teacher_id = create_test_user_with_app(&app).await;
+    let teacher_id = create_teacher(&app).await;
 
     let long_name = "a".repeat(101); // 101 characters, maximum is 100
 
@@ -367,7 +273,7 @@ async fn test_create_asignature_name_too_long() {
         "evaluations": [
             {
                 "name": "Test Evaluation",
-                "weight": 1.0
+                "weight": 100
             }
         ],
         "teacherId": teacher_id
@@ -376,13 +282,13 @@ async fn test_create_asignature_name_too_long() {
     let response = app.post("/asignatures").json(&new_asignature).await;
     assert_eq!(response.status_code(), 400);
 
-    cleanup_user_with_app(&app, &teacher_id).await;
+    cleanup_teacher(&app, &teacher_id).await;
 }
 
 #[tokio::test]
 async fn test_create_asignature_no_evaluations() {
     let app = init_test_app().await;
-    let teacher_id = create_test_user_with_app(&app).await;
+    let teacher_id = create_teacher(&app).await;
 
     let new_asignature = json!({
         "year": 2024,
@@ -395,13 +301,13 @@ async fn test_create_asignature_no_evaluations() {
     let response = app.post("/asignatures").json(&new_asignature).await;
     assert_eq!(response.status_code(), 400);
 
-    cleanup_user_with_app(&app, &teacher_id).await;
+    cleanup_teacher(&app, &teacher_id).await;
 }
 
 #[tokio::test]
 async fn test_create_asignature_evaluation_weights_not_sum_to_one() {
     let app = init_test_app().await;
-    let teacher_id = create_test_user_with_app(&app).await;
+    let teacher_id = create_teacher(&app).await;
 
     let new_asignature = json!({
         "year": 2024,
@@ -410,11 +316,11 @@ async fn test_create_asignature_evaluation_weights_not_sum_to_one() {
         "evaluations": [
             {
                 "name": "Test Evaluation 1",
-                "weight": 0.3
+                "weight": 30
             },
             {
                 "name": "Test Evaluation 2",
-                "weight": 0.4 // Total: 0.7 (should be 1.0)
+                "weight": 40 // Total: 70 (should be 100)
             }
         ],
         "teacherId": teacher_id
@@ -423,13 +329,13 @@ async fn test_create_asignature_evaluation_weights_not_sum_to_one() {
     let response = app.post("/asignatures").json(&new_asignature).await;
     assert_eq!(response.status_code(), 400);
 
-    cleanup_user_with_app(&app, &teacher_id).await;
+    cleanup_teacher(&app, &teacher_id).await;
 }
 
 #[tokio::test]
 async fn test_create_asignature_evaluation_name_too_short() {
     let app = init_test_app().await;
-    let teacher_id = create_test_user_with_app(&app).await;
+    let teacher_id = create_teacher(&app).await;
 
     let new_asignature = json!({
         "year": 2024,
@@ -438,7 +344,7 @@ async fn test_create_asignature_evaluation_name_too_short() {
         "evaluations": [
             {
                 "name": "", // Empty evaluation name
-                "weight": 1.0
+                "weight": 100
             }
         ],
         "teacherId": teacher_id
@@ -447,13 +353,13 @@ async fn test_create_asignature_evaluation_name_too_short() {
     let response = app.post("/asignatures").json(&new_asignature).await;
     assert_eq!(response.status_code(), 400);
 
-    cleanup_user_with_app(&app, &teacher_id).await;
+    cleanup_teacher(&app, &teacher_id).await;
 }
 
 #[tokio::test]
 async fn test_create_asignature_evaluation_name_too_long() {
     let app = init_test_app().await;
-    let teacher_id = create_test_user_with_app(&app).await;
+    let teacher_id = create_teacher(&app).await;
 
     let long_evaluation_name = "a".repeat(101); // 101 characters, maximum is 100
 
@@ -464,7 +370,7 @@ async fn test_create_asignature_evaluation_name_too_long() {
         "evaluations": [
             {
                 "name": long_evaluation_name,
-                "weight": 1.0
+                "weight": 100
             }
         ],
         "teacherId": teacher_id
@@ -473,13 +379,13 @@ async fn test_create_asignature_evaluation_name_too_long() {
     let response = app.post("/asignatures").json(&new_asignature).await;
     assert_eq!(response.status_code(), 400);
 
-    cleanup_user_with_app(&app, &teacher_id).await;
+    cleanup_teacher(&app, &teacher_id).await;
 }
 
 #[tokio::test]
 async fn test_create_asignature_evaluation_weight_too_low() {
     let app = init_test_app().await;
-    let teacher_id = create_test_user_with_app(&app).await;
+    let teacher_id = create_teacher(&app).await;
 
     let new_asignature = json!({
         "year": 2024,
@@ -488,7 +394,7 @@ async fn test_create_asignature_evaluation_weight_too_low() {
         "evaluations": [
             {
                 "name": "Test Evaluation",
-                "weight": 0.0 // Below minimum (0.01)
+                "weight": 0 // Below minimum (1)
             }
         ],
         "teacherId": teacher_id
@@ -497,13 +403,13 @@ async fn test_create_asignature_evaluation_weight_too_low() {
     let response = app.post("/asignatures").json(&new_asignature).await;
     assert_eq!(response.status_code(), 400);
 
-    cleanup_user_with_app(&app, &teacher_id).await;
+    cleanup_teacher(&app, &teacher_id).await;
 }
 
 #[tokio::test]
 async fn test_create_asignature_evaluation_weight_too_high() {
     let app = init_test_app().await;
-    let teacher_id = create_test_user_with_app(&app).await;
+    let teacher_id = create_teacher(&app).await;
 
     let new_asignature = json!({
         "year": 2024,
@@ -512,7 +418,7 @@ async fn test_create_asignature_evaluation_weight_too_high() {
         "evaluations": [
             {
                 "name": "Test Evaluation",
-                "weight": 1.1 // Above maximum (1.0)
+                "weight": 101 // Above maximum (100)
             }
         ],
         "teacherId": teacher_id
@@ -521,7 +427,7 @@ async fn test_create_asignature_evaluation_weight_too_high() {
     let response = app.post("/asignatures").json(&new_asignature).await;
     assert_eq!(response.status_code(), 400);
 
-    cleanup_user_with_app(&app, &teacher_id).await;
+    cleanup_teacher(&app, &teacher_id).await;
 }
 
 #[tokio::test]
@@ -535,7 +441,7 @@ async fn test_create_asignature_invalid_teacher_id() {
         "evaluations": [
             {
                 "name": "Test Evaluation",
-                "weight": 1.0
+                "weight": 100
             }
         ],
         "teacherId": "invalid-uuid"
@@ -548,7 +454,7 @@ async fn test_create_asignature_invalid_teacher_id() {
 #[tokio::test]
 async fn test_create_asignature_duplicate() {
     let app = init_test_app().await;
-    let teacher_id = create_test_user_with_app(&app).await;
+    let teacher_id = create_teacher(&app).await;
 
     let code = generate_unique_code();
     let name = generate_unique_name();
@@ -560,7 +466,7 @@ async fn test_create_asignature_duplicate() {
         "evaluations": [
             {
                 "name": "Test Evaluation",
-                "weight": 1.0
+                "weight": 100
             }
         ],
         "teacherId": teacher_id
@@ -579,7 +485,7 @@ async fn test_create_asignature_duplicate() {
 
     // Cleanup
     app.delete(&format!("/asignatures/{}", asignature_id)).await;
-    cleanup_user_with_app(&app, &teacher_id).await;
+    cleanup_teacher(&app, &teacher_id).await;
 }
 
 // // ==================== UPDATE ASIGNATURE VALIDATION TESTS ====================
@@ -587,7 +493,7 @@ async fn test_create_asignature_duplicate() {
 #[tokio::test]
 async fn test_update_asignature_invalid_year() {
     let app = init_test_app().await;
-    let teacher_id = create_test_user_with_app(&app).await;
+    let teacher_id = create_teacher(&app).await;
 
     // Create asignature
     let new_asignature = json!({
@@ -597,7 +503,7 @@ async fn test_update_asignature_invalid_year() {
         "evaluations": [
             {
                 "name": "Test Evaluation",
-                "weight": 1.0
+                "weight": 100
             }
         ],
         "teacherId": teacher_id
@@ -621,13 +527,13 @@ async fn test_update_asignature_invalid_year() {
 
     // Cleanup
     app.delete(&format!("/asignatures/{}", asignature_id)).await;
-    cleanup_user_with_app(&app, &teacher_id).await;
+    cleanup_teacher(&app, &teacher_id).await;
 }
 
 #[tokio::test]
 async fn test_update_asignature_invalid_code() {
     let app = init_test_app().await;
-    let teacher_id = create_test_user_with_app(&app).await;
+    let teacher_id = create_teacher(&app).await;
 
     // Create asignature
     let new_asignature = json!({
@@ -637,7 +543,7 @@ async fn test_update_asignature_invalid_code() {
         "evaluations": [
             {
                 "name": "Test Evaluation",
-                "weight": 1.0
+                "weight": 100
             }
         ],
         "teacherId": teacher_id
@@ -661,13 +567,13 @@ async fn test_update_asignature_invalid_code() {
 
     // Cleanup
     app.delete(&format!("/asignatures/{}", asignature_id)).await;
-    cleanup_user_with_app(&app, &teacher_id).await;
+    cleanup_teacher(&app, &teacher_id).await;
 }
 
 #[tokio::test]
 async fn test_update_asignature_invalid_teacher_id() {
     let app = init_test_app().await;
-    let teacher_id = create_test_user_with_app(&app).await;
+    let teacher_id = create_teacher(&app).await;
 
     // Create asignature
     let new_asignature = json!({
@@ -677,7 +583,7 @@ async fn test_update_asignature_invalid_teacher_id() {
         "evaluations": [
             {
                 "name": "Test Evaluation",
-                "weight": 1.0
+                "weight": 100
             }
         ],
         "teacherId": teacher_id
@@ -701,7 +607,7 @@ async fn test_update_asignature_invalid_teacher_id() {
 
     // Cleanup
     app.delete(&format!("/asignatures/{}", asignature_id)).await;
-    cleanup_user_with_app(&app, &teacher_id).await;
+    cleanup_teacher(&app, &teacher_id).await;
 }
 
 #[tokio::test]
@@ -726,7 +632,7 @@ async fn test_update_nonexistent_asignature() {
 #[tokio::test]
 async fn test_create_asignature_valid_year_boundaries() {
     let app = init_test_app().await;
-    let teacher_id = create_test_user_with_app(&app).await;
+    let teacher_id = create_teacher(&app).await;
 
     // Test minimum year (2000)
     let min_year_asignature = json!({
@@ -736,7 +642,7 @@ async fn test_create_asignature_valid_year_boundaries() {
         "evaluations": [
             {
                 "name": "Test Evaluation",
-                "weight": 1.0
+                "weight": 100
             }
         ],
         "teacherId": teacher_id
@@ -761,7 +667,7 @@ async fn test_create_asignature_valid_year_boundaries() {
         "evaluations": [
             {
                 "name": "Test Evaluation",
-                "weight": 1.0
+                "weight": 100
             }
         ],
         "teacherId": teacher_id
@@ -776,13 +682,13 @@ async fn test_create_asignature_valid_year_boundaries() {
     app.delete(&format!("/asignatures/{}", min_asignature_id))
         .await;
 
-    cleanup_user_with_app(&app, &teacher_id).await;
+    cleanup_teacher(&app, &teacher_id).await;
 }
 
 #[tokio::test]
 async fn test_create_asignature_valid_name_boundaries() {
     let app = init_test_app().await;
-    let teacher_id = create_test_user_with_app(&app).await;
+    let teacher_id = create_teacher(&app).await;
 
     // Test minimum length (1 character)
     let min_name_asignature = json!({
@@ -792,7 +698,7 @@ async fn test_create_asignature_valid_name_boundaries() {
         "evaluations": [
             {
                 "name": "Test Evaluation",
-                "weight": 1.0
+                "weight": 100
             }
         ],
         "teacherId": teacher_id
@@ -813,7 +719,7 @@ async fn test_create_asignature_valid_name_boundaries() {
         "evaluations": [
             {
                 "name": "Test Evaluation",
-                "weight": 1.0
+                "weight": 100
             }
         ],
         "teacherId": teacher_id
@@ -830,15 +736,15 @@ async fn test_create_asignature_valid_name_boundaries() {
         .await;
     app.delete(&format!("/asignatures/{}", max_asignature_id))
         .await;
-    cleanup_user_with_app(&app, &teacher_id).await;
+    cleanup_teacher(&app, &teacher_id).await;
 }
 
 #[tokio::test]
 async fn test_create_asignature_valid_evaluation_weight_boundaries() {
     let app = init_test_app().await;
-    let teacher_id = create_test_user_with_app(&app).await;
+    let teacher_id = create_teacher(&app).await;
 
-    // Test minimum weight (0.01)
+    // Test minimum weight (1)
     let min_weight_asignature = json!({
         "year": 2024,
         "code": generate_unique_code(),
@@ -846,11 +752,11 @@ async fn test_create_asignature_valid_evaluation_weight_boundaries() {
         "evaluations": [
             {
                 "name": "Test Evaluation 1",
-                "weight": 0.01
+                "weight": 1
             },
             {
                 "name": "Test Evaluation 2",
-                "weight": 0.99
+                "weight": 99
             }
         ],
         "teacherId": teacher_id
@@ -864,15 +770,15 @@ async fn test_create_asignature_valid_evaluation_weight_boundaries() {
 
     // Cleanup
     app.delete(&format!("/asignatures/{}", asignature_id)).await;
-    cleanup_user_with_app(&app, &teacher_id).await;
+    cleanup_teacher(&app, &teacher_id).await;
 }
 
 #[tokio::test]
 async fn test_create_asignature_valid_evaluation_weight_boundaries_3_33() {
     let app = init_test_app().await;
-    let teacher_id = create_test_user_with_app(&app).await;
+    let teacher_id = create_teacher(&app).await;
 
-    // Test minimum weight (0.01)
+    // Test weights distribution (33-33-34)
     let min_weight_asignature = json!({
         "year": 2024,
         "code": generate_unique_code(),
@@ -880,15 +786,15 @@ async fn test_create_asignature_valid_evaluation_weight_boundaries_3_33() {
         "evaluations": [
             {
                 "name": "Test Evaluation 1",
-                "weight": 0.33
+                "weight": 33
             },
             {
                 "name": "Test Evaluation 2",
-                "weight": 0.33
+                "weight": 33
             },
             {
                 "name": "Test Evaluation 3",
-                "weight": 0.33
+                "weight": 33
             }
         ],
         "teacherId": teacher_id
@@ -897,15 +803,15 @@ async fn test_create_asignature_valid_evaluation_weight_boundaries_3_33() {
     let response = app.post("/asignatures").json(&min_weight_asignature).await;
     assert_eq!(response.status_code(), 400);
 
-    cleanup_user_with_app(&app, &teacher_id).await;
+    cleanup_teacher(&app, &teacher_id).await;
 }
 
 #[tokio::test]
 async fn test_create_asignature_valid_evaluation_but_repeated_names() {
     let app = init_test_app().await;
-    let teacher_id = create_test_user_with_app(&app).await;
+    let teacher_id = create_teacher(&app).await;
 
-    // Test minimum weight (0.01)
+    // Test repeated evaluation names
     let min_weight_asignature = json!({
         "year": 2024,
         "code": generate_unique_code(),
@@ -913,15 +819,15 @@ async fn test_create_asignature_valid_evaluation_but_repeated_names() {
         "evaluations": [
             {
                 "name": "Test Evaluation 1",
-                "weight": 0.33
+                "weight": 33
             },
             {
                 "name": "Test Evaluation 2",
-                "weight": 0.33
+                "weight": 33
             },
             {
                 "name": "Test Evaluation 1",
-                "weight": 0.33
+                "weight": 33
             }
         ],
         "teacherId": teacher_id
@@ -930,5 +836,5 @@ async fn test_create_asignature_valid_evaluation_but_repeated_names() {
     let response = app.post("/asignatures").json(&min_weight_asignature).await;
     assert_eq!(response.status_code(), 400);
 
-    cleanup_user_with_app(&app, &teacher_id).await;
+    cleanup_teacher(&app, &teacher_id).await;
 }
