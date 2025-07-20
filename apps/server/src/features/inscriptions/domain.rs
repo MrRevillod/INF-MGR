@@ -3,7 +3,7 @@ use shaku::Interface;
 use thiserror::Error;
 use uuid::Uuid;
 
-use crate::users::domain::UserError;
+use crate::{asignatures::domain::AsignatureError, users::domain::UserError};
 
 #[derive(Debug, Clone)]
 pub struct Inscription {
@@ -52,6 +52,15 @@ pub enum InscriptionError {
         #[from]
         source: UserError,
     },
+
+    #[error("Asignature repository error: {source}")]
+    AsignatureError {
+        #[from]
+        source: AsignatureError,
+    },
+
+    #[error("Asignature not found: {id}")]
+    AsignatureNotFound { id: Uuid },
 }
 
 pub struct InscriptionFilter {

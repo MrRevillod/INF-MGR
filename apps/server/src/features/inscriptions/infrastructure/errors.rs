@@ -31,9 +31,21 @@ impl From<InscriptionError> for HttpResponse {
                 eprintln!("Database error: {}", source);
                 HttpResponse::InternalServerError()
             }
+
             InscriptionError::UserError { source } => {
                 eprintln!("User error: {}", source);
                 HttpResponse::InternalServerError()
+            }
+
+            InscriptionError::AsignatureError { source } => {
+                eprintln!("Asignature error: {}", source);
+                HttpResponse::InternalServerError()
+            }
+
+            InscriptionError::AsignatureNotFound { id } => {
+                HttpResponse::BadRequest()
+                    .message("Asignatura no encontrada")
+                    .data(id)
             }
         }
     }
