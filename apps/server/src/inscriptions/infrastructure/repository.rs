@@ -10,6 +10,7 @@ use crate::inscriptions::{
     },
     infrastructure::models::{InscriptionModel, StudentEvaluationModel},
 };
+
 use crate::shared::database::DatabaseConnection;
 
 #[derive(Component)]
@@ -44,11 +45,7 @@ impl InscriptionRepository for PostgresInscriptionRepository {
         }
 
         let query = builder.build_query_as::<InscriptionModel>();
-
-        let result = query
-            .fetch_all(self.db_connection.get_pool())
-            .await
-            .map_err(|e| InscriptionError::UnexpectedError(e.to_string()))?;
+        let result = query.fetch_all(self.db_connection.get_pool()).await?;
 
         Ok(result.into_iter().map(Inscription::from).collect())
     }
@@ -62,8 +59,7 @@ impl InscriptionRepository for PostgresInscriptionRepository {
         let model = sqlx::query_as::<_, InscriptionModel>(query)
             .bind(id)
             .fetch_optional(self.db_connection.get_pool())
-            .await
-            .map_err(|e| InscriptionError::UnexpectedError(e.to_string()))?;
+            .await?;
 
         Ok(model.map(Inscription::from))
     }
@@ -73,7 +69,7 @@ impl InscriptionRepository for PostgresInscriptionRepository {
         inscription: Inscription,
     ) -> Result<Inscription, InscriptionError> {
         let query = r#"
-            INSERT INTO inscriptions (id, user_id, asignature_id, practice_id, evaluation_scores, status)
+            INSERT INTO inscriptions (id, user_id, asignature_id, practice_id, evaluations_scores, status)
             VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING *
         "#;
@@ -92,8 +88,7 @@ impl InscriptionRepository for PostgresInscriptionRepository {
             .bind(scores)
             .bind(inscription.status)
             .fetch_one(self.db_connection.get_pool())
-            .await
-            .map_err(|e| InscriptionError::UnexpectedError(e.to_string()))?;
+            .await?;
 
         Ok(result.into())
     }
@@ -104,7 +99,7 @@ impl InscriptionRepository for PostgresInscriptionRepository {
         inscription: Inscription,
     ) -> Result<Inscription, InscriptionError> {
         let query = r#"
-            UPDATE inscriptions SET evaluation_scores = $1, status = $2
+            UPDATE inscriptions SET evaluations_scores = $1, status = $2
             WHERE id = $3
             RETURNING *
         "#;
@@ -120,8 +115,7 @@ impl InscriptionRepository for PostgresInscriptionRepository {
             .bind(inscription.status)
             .bind(id)
             .fetch_one(self.db_connection.get_pool())
-            .await
-            .map_err(|e| InscriptionError::UnexpectedError(e.to_string()))?;
+            .await?;
 
         Ok(result.into())
     }
@@ -130,8 +124,7 @@ impl InscriptionRepository for PostgresInscriptionRepository {
         sqlx::query("DELETE FROM inscriptions WHERE id = $1")
             .bind(id)
             .execute(self.db_connection.get_pool())
-            .await
-            .map_err(|e| InscriptionError::UnexpectedError(e.to_string()))?;
+            .await?;
 
         Ok(())
     }

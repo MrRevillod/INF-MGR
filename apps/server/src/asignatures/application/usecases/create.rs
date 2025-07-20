@@ -38,13 +38,7 @@ impl CreateAsignatureCase for CreateAsignatureCaseImpl {
             return Err(AsignatureError::AlreadyExists);
         }
 
-        let user_exists = self
-            .user_repository
-            .find_by_id(&input.teacher_id)
-            .await
-            .map_err(|_| {
-            AsignatureError::UnexpectedError("Error interno del servidor".into())
-        })?;
+        let user_exists = self.user_repository.find_by_id(&input.teacher_id).await?;
 
         let Some(user) = user_exists else {
             return Err(AsignatureError::TeacherNotFound);

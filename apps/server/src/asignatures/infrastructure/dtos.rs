@@ -77,10 +77,7 @@ impl TryFrom<CreateAsignatureDto> for Asignature {
             code: dto.code,
             name: dto.name,
             evaluations: dto.evaluations.into_iter().map(|e| e.into()).collect(),
-            teacher_id: dto
-                .teacher_id
-                .parse()
-                .map_err(|_| AsignatureError::InvalidIdentifier)?,
+            teacher_id: dto.teacher_id.parse().unwrap(),
         })
     }
 }

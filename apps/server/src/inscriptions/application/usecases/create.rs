@@ -39,17 +39,10 @@ impl CreateInscriptionCase for CreateInscriptionCaseImpl {
             return Err(InscriptionError::InscriptionAlreadyExists);
         }
 
-        let user_exists =
-            self.user_repository
-                .find_by_id(&user_id)
-                .await
-                .map_err(|e| {
-                    eprintln!("{:?}", e);
-                    InscriptionError::UnexpectedError("Unexpected error".to_string())
-                })?;
+        let user_exists = self.user_repository.find_by_id(&user_id).await?;
 
         let Some(user) = user_exists else {
-            return Err(InscriptionError::StudentNotFound);
+            return Err(InscriptionError::StudentNotFound { id: user_id });
         };
 
         if !user.roles.contains(&"student".to_string()) {

@@ -1,6 +1,9 @@
 use async_trait::async_trait;
 use shaku::Interface;
+use thiserror::Error;
 use uuid::Uuid;
+
+use crate::shared::services::errors::ServiceError;
 
 #[derive(Debug, Clone)]
 pub struct User {
@@ -12,14 +15,34 @@ pub struct User {
     pub roles: Vec<String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum UserError {
+    #[error("User not found")]
     NotFound,
+
+    #[error("User email already exists")]
     EmailAlreadyExists,
+
+    #[error("Invalid email format or domain")]
     InvalidEmail,
-    IdAlreadyExists,
-    UnexpectedError(String),
-    InvalidRole,
+
+    #[error("User RUT already exists: {rut}")]
+    RutAlreadyExists { rut: String },
+
+    #[error("User database error: {source}")]
+    Database {
+        #[from]
+        source: sqlx::Error,
+    },
+
+    #[error("Service error: {source}")]
+    ServiceError {
+        #[from]
+        source: ServiceError,
+    },
+
+    #[error("Invalid user role: {role}")]
+    InvalidRole { role: String },
 }
 
 #[async_trait]

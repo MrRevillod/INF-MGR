@@ -28,16 +28,18 @@ impl CreateUserCase for CreateUserCaseImpl {
     async fn execute(&self, input: User) -> Result<User, UserError> {
         let mut user = input.clone();
 
-        let (id, email) = tokio::try_join!(
+        let (user_by_rut, user_by_email) = tokio::try_join!(
             self.repository.find_by_rut(&user.rut),
             self.repository.find_by_email(&user.email)
         )?;
 
-        if id.is_some() {
-            return Err(UserError::IdAlreadyExists);
+        if user_by_rut.is_some() {
+            return Err(UserError::RutAlreadyExists {
+                rut: user.rut.clone(),
+            });
         }
 
-        if email.is_some() {
+        if user_by_email.is_some() {
             return Err(UserError::EmailAlreadyExists);
         }
 

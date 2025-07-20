@@ -28,15 +28,19 @@ impl LettreTransport {
         );
 
         let transporter = SmtpTransport::relay(&config.smtp_host)
-            .map_err(|_| ServiceError::Mailer("Invalid SMTP host".to_string()))?
+            .map_err(|e| ServiceError::Mailer {
+                source: Box::new(e),
+            })?
             .credentials(creds)
             .build();
 
         Ok(LettreTransport {
             smtp_transport: Arc::new(transporter),
             config: config.clone(),
-            templates: Arc::new(Tera::new(&config.templates).map_err(|_| {
-                ServiceError::Mailer("Failed to load email templates".to_string())
+            templates: Arc::new(Tera::new(&config.templates).map_err(|e| {
+                ServiceError::Mailer {
+                    source: Box::new(e),
+                }
             })?),
         })
     }

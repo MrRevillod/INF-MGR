@@ -29,8 +29,7 @@ impl AsignatureRepository for PostgresAsignatureRepository {
 
         let result = sqlx::query_as::<_, AsignatureModel>(query)
             .fetch_all(pool)
-            .await
-            .map_err(|e| AsignatureError::DatabaseError(e.to_string()))?;
+            .await?;
 
         Ok(result.into_iter().map(Asignature::from).collect())
     }
@@ -44,8 +43,7 @@ impl AsignatureRepository for PostgresAsignatureRepository {
         let model = sqlx::query_as::<_, AsignatureModel>(query)
             .bind(id)
             .fetch_optional(self.db_connection.get_pool())
-            .await
-            .map_err(|e| AsignatureError::DatabaseError(e.to_string()))?;
+            .await?;
 
         Ok(model.map(Asignature::from))
     }
@@ -71,11 +69,7 @@ impl AsignatureRepository for PostgresAsignatureRepository {
         }
 
         let query = builder.build_query_as::<AsignatureModel>();
-
-        let result = query
-            .fetch_all(self.db_connection.get_pool())
-            .await
-            .map_err(|e| AsignatureError::DatabaseError(e.to_string()))?;
+        let result = query.fetch_all(self.db_connection.get_pool()).await?;
 
         Ok(result.into_iter().map(Asignature::from).collect())
     }
@@ -104,8 +98,7 @@ impl AsignatureRepository for PostgresAsignatureRepository {
             .bind(evaluations)
             .bind(input.teacher_id)
             .fetch_one(self.db_connection.get_pool())
-            .await
-            .map_err(|e| AsignatureError::DatabaseError(e.to_string()))?;
+            .await?;
 
         Ok(Asignature::from(model))
     }
@@ -136,20 +129,16 @@ impl AsignatureRepository for PostgresAsignatureRepository {
             .bind(input.teacher_id)
             .bind(id)
             .fetch_one(self.db_connection.get_pool())
-            .await
-            .map_err(|e| AsignatureError::DatabaseError(e.to_string()))?;
+            .await?;
 
         Ok(Asignature::from(model))
     }
 
     async fn delete(&self, id: &Uuid) -> Result<(), AsignatureError> {
-        let query = r#"DELETE FROM asignatures WHERE id = $1"#;
-
-        sqlx::query(query)
+        sqlx::query("DELETE FROM asignatures WHERE id = $1")
             .bind(id)
             .execute(self.db_connection.get_pool())
-            .await
-            .map_err(|e| AsignatureError::DatabaseError(e.to_string()))?;
+            .await?;
 
         Ok(())
     }

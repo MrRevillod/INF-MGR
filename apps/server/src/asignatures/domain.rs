@@ -1,6 +1,9 @@
 use async_trait::async_trait;
 use shaku::Interface;
+use thiserror::Error;
 use uuid::Uuid;
+
+use crate::users::domain::UserError;
 
 #[derive(Debug, Clone)]
 pub struct Evaluation {
@@ -51,13 +54,32 @@ pub trait AsignatureRepository: Interface {
     async fn delete(&self, id: &Uuid) -> Result<(), AsignatureError>;
 }
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum AsignatureError {
+    #[error("Asignature not found")]
     NotFound,
+
+    #[error("Asignature already exists")]
     AlreadyExists,
-    UnexpectedError(String),
+
+    #[error("Asignature Database Error: {source}")]
+    Database {
+        #[from]
+        source: sqlx::Error,
+    },
+
+    #[error("Identificador inválido (uuid)")]
     InvalidIdentifier,
-    DatabaseError(String),
+
+    #[error("The user is not a teacher")]
     UserIsNotTeacher,
+
+    #[error("The teacher was not found")]
     TeacherNotFound,
+
+    #[error("User repository error: {source}")]
+    UserRepositoryError {
+        #[from]
+        source: UserError,
+    },
 }

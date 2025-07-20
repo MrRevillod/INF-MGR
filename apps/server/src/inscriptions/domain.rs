@@ -1,6 +1,9 @@
 use async_trait::async_trait;
 use shaku::Interface;
+use thiserror::Error;
 use uuid::Uuid;
+
+use crate::users::domain::UserError;
 
 #[derive(Debug, Clone)]
 pub struct Inscription {
@@ -18,13 +21,34 @@ pub struct StudentEvaluation {
     pub score: f64,
 }
 
+#[derive(Debug, Error)]
 pub enum InscriptionError {
-    UnexpectedError(String),
+    #[error("Database error: {source}")]
+    Database {
+        #[from]
+        source: sqlx::Error,
+    },
+
+    #[error("Inscription not found")]
     NotFound,
+
+    #[error("Invalid inscription state")]
     InvalidStudentState,
+
+    #[error("Inscription already exists, cannot create a duplicate")]
     InscriptionAlreadyExists,
-    StudentNotFound,
+
+    #[error("The selected student does not exist: {id}")]
+    StudentNotFound { id: Uuid },
+
+    #[error("The selected user is not a student")]
     InvalidStudentRole,
+
+    #[error("User repository error: {source}")]
+    UserError {
+        #[from]
+        source: UserError,
+    },
 }
 
 pub struct InscriptionFilter {

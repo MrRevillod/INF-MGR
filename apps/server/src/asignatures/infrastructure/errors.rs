@@ -14,12 +14,8 @@ impl From<AsignatureError> for HttpResponse {
             AsignatureError::AlreadyExists => {
                 HttpResponse::Conflict().message("La asignatura ya existe")
             }
-            AsignatureError::UnexpectedError(message) => {
-                eprintln!("AsignatureError (HTTP 500): {message}");
-                HttpResponse::InternalServerError()
-            }
-            AsignatureError::DatabaseError(message) => {
-                eprintln!("AsignatureError Database error (HTTP 500): {message}");
+            AsignatureError::Database { source } => {
+                eprintln!("AsignatureError internal error (HTTP 500): {source}");
                 HttpResponse::InternalServerError()
             }
             AsignatureError::TeacherNotFound => {
@@ -28,6 +24,10 @@ impl From<AsignatureError> for HttpResponse {
             AsignatureError::UserIsNotTeacher => HttpResponse::BadRequest().message(
                 "El profesor seleccionado no se encuentra registrado como docente",
             ),
+            AsignatureError::UserRepositoryError { source } => {
+                eprintln!("AsignatureError internal error (HTTP 500): {source}");
+                HttpResponse::InternalServerError()
+            }
         }
     }
 }

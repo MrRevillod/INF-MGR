@@ -15,7 +15,7 @@
 use serde_json::json;
 use sword::web::HttpResponse;
 
-use crate::{shared::services::errors::ServiceError, users::domain::UserError};
+use crate::users::domain::UserError;
 
 // Each variant of the `UserError` enum corresponds to a specific error
 // that can occur in the user management process.
@@ -32,8 +32,8 @@ impl From<UserError> for HttpResponse {
                 "message": "Usuario no encontrado",
             })),
 
-            UserError::UnexpectedError(error) => {
-                eprintln!("| USER ERROR | - Unexpected error: {error}");
+            UserError::Database { source } => {
+                eprintln!("| USER ERROR | - Database internal error: {source}");
 
                 HttpResponse::InternalServerError().data(json!({
                     "message": "Error inesperado",
@@ -45,24 +45,29 @@ impl From<UserError> for HttpResponse {
                 "message": "El correo electrónico proporcionado no es válido",
             })),
 
-            UserError::IdAlreadyExists => HttpResponse::BadRequest().data(json!({
-                "field": "rut",
-                "message": "La identificación de usuario ya está en uso",
-            })),
+            UserError::RutAlreadyExists { rut } => {
+                HttpResponse::BadRequest().data(json!({
+                    "field": "rut",
+                    "value": rut,
+                    "message": "La identificación de usuario ya está en uso",
+                }))
+            }
 
-            UserError::InvalidRole => HttpResponse::BadRequest().data(json!({
-                "field": "roles",
-                "message": "El rol proporcionado no es válido",
-            })),
-        }
-    }
-}
+            UserError::InvalidRole { role } => {
+                HttpResponse::BadRequest().data(json!({
+                    "field": "roles",
+                    "value": role,
+                    "message": "El rol proporcionado no es válido",
+                }))
+            }
 
-impl From<ServiceError> for UserError {
-    fn from(value: ServiceError) -> Self {
-        match value {
-            ServiceError::Hasher(error) => UserError::UnexpectedError(error),
-            ServiceError::Mailer(error) => UserError::UnexpectedError(error),
+            UserError::ServiceError { source } => {
+                eprintln!("| USER ERROR | - Service error: {source}");
+
+                HttpResponse::InternalServerError().data(json!({
+                    "message": "Error inesperado",
+                }))
+            }
         }
     }
 }

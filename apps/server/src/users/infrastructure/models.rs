@@ -61,7 +61,9 @@ impl FromStr for Role {
             "teacher" => Ok(Role::Teacher),
             "secretary" => Ok(Role::Secretary),
             "coordinator" => Ok(Role::Coordinator),
-            _ => Err(UserError::InvalidRole),
+            _ => Err(UserError::InvalidRole {
+                role: s.to_string(),
+            }),
         }
     }
 }

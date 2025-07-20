@@ -2243,6 +2243,7 @@ dependencies = [
  "sqlx",
  "sword",
  "tera",
+ "thiserror",
  "tokio",
  "tower-http",
  "tracing",

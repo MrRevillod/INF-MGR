@@ -80,7 +80,9 @@ impl Mailer for MailerService {
         mail_context: MailContext,
     ) -> Result<(), ServiceError> {
         if !self.is_valid_email(&mail_to.email) {
-            return Err(ServiceError::Mailer("Invalid email address".to_string()));
+            return Err(ServiceError::Mailer {
+                source: "Invalid email format".into(),
+            });
         }
 
         let email_from = self.mailer.get_config().smtp_username.clone();
@@ -95,8 +97,8 @@ impl Mailer for MailerService {
             .mailer
             .get_templates()
             .render(&template_name, &context)
-            .map_err(|e| {
-                ServiceError::Mailer(format!("Failed to render template: {e}"))
+            .map_err(|e| ServiceError::Mailer {
+                source: Box::new(e),
             })?;
 
         let message = Message::builder()
@@ -105,14 +107,16 @@ impl Mailer for MailerService {
             .subject(mail_to.subject)
             .header(ContentType::TEXT_HTML)
             .body(template)
-            .map_err(|e| {
-                ServiceError::Mailer(format!("Failed to build email: {e}"))
+            .map_err(|e| ServiceError::Mailer {
+                source: Box::new(e),
             })?;
 
         let transport = self.mailer.get_transtport();
 
         if transport.send(&message).is_err() {
-            return Err(ServiceError::Mailer("Failed to send email".to_string()));
+            return Err(ServiceError::Mailer {
+                source: "Failed to send email".into(),
+            });
         }
 
         Ok(())

@@ -25,8 +25,7 @@ impl UserRepository for PostgresUserRepository {
         let pool = self.database_connection.get_pool();
         let users = sqlx::query_as::<_, UserModel>("SELECT * FROM users")
             .fetch_all(pool)
-            .await
-            .map_err(|e| UserError::UnexpectedError(e.to_string()))?;
+            .await?;
 
         let entity_vec = users.into_iter().map(User::from).collect();
 
@@ -40,8 +39,7 @@ impl UserRepository for PostgresUserRepository {
         let user = sqlx::query_as::<_, UserModel>(query)
             .bind(user_id)
             .fetch_optional(pool)
-            .await
-            .map_err(|e| UserError::UnexpectedError(e.to_string()))?;
+            .await?;
 
         Ok(user.map(User::from))
     }
@@ -53,8 +51,7 @@ impl UserRepository for PostgresUserRepository {
         let user = sqlx::query_as::<_, UserModel>(query)
             .bind(rut)
             .fetch_optional(pool)
-            .await
-            .map_err(|e| UserError::UnexpectedError(e.to_string()))?;
+            .await?;
 
         Ok(user.map(User::from))
     }
@@ -66,8 +63,7 @@ impl UserRepository for PostgresUserRepository {
         let user = sqlx::query_as::<_, UserModel>(query)
             .bind(email)
             .fetch_optional(pool)
-            .await
-            .map_err(|e| UserError::UnexpectedError(e.to_string()))?;
+            .await?;
 
         Ok(user.map(User::from))
     }
@@ -94,8 +90,7 @@ impl UserRepository for PostgresUserRepository {
             .bind(user.password)
             .bind(roles)
             .fetch_one(pool)
-            .await
-            .map_err(|e| UserError::UnexpectedError(e.to_string()))?;
+            .await?;
 
         Ok(User::from(model))
     }
@@ -120,8 +115,7 @@ impl UserRepository for PostgresUserRepository {
             .bind(roles)
             .bind(user.id)
             .execute(pool)
-            .await
-            .map_err(|e| UserError::UnexpectedError(e.to_string()))?;
+            .await?;
 
         Ok(user)
     }
@@ -132,8 +126,7 @@ impl UserRepository for PostgresUserRepository {
         sqlx::query("DELETE FROM users WHERE id = $1")
             .bind(user_id)
             .execute(pool)
-            .await
-            .map_err(|e| UserError::UnexpectedError(e.to_string()))?;
+            .await?;
 
         Ok(())
     }
