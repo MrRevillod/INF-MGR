@@ -1,14 +1,16 @@
 use async_trait::async_trait;
 use shaku::Component;
 use sqlx::Postgres;
-use std::sync::Arc;
+use std::{str::FromStr, sync::Arc};
 use uuid::Uuid;
 
 use crate::inscriptions::{
     domain::{
         Inscription, InscriptionError, InscriptionFilter, InscriptionRepository,
     },
-    infrastructure::models::{InscriptionModel, StudentEvaluationModel},
+    infrastructure::models::{
+        InscriptionModel, StudentStatus, StudentEvaluationModel,
+    },
 };
 
 use crate::shared::database::DatabaseConnection;
@@ -41,6 +43,7 @@ impl InscriptionRepository for PostgresInscriptionRepository {
         }
 
         if let Some(status) = filter.status {
+            let status = StudentStatus::from_str(&status)?;
             builder.push(" AND status = ").push_bind(status);
         }
 
@@ -80,13 +83,15 @@ impl InscriptionRepository for PostgresInscriptionRepository {
             .map(Into::into)
             .collect::<Vec<_>>();
 
+        let status = StudentStatus::from_str(&inscription.status)?;
+
         let result = sqlx::query_as::<_, InscriptionModel>(query)
             .bind(inscription.id)
             .bind(inscription.user_id)
             .bind(inscription.asignature_id)
             .bind(inscription.practice_id)
             .bind(scores)
-            .bind(inscription.status)
+            .bind(status)
             .fetch_one(self.db_connection.get_pool())
             .await?;
 
@@ -110,9 +115,11 @@ impl InscriptionRepository for PostgresInscriptionRepository {
             .map(Into::into)
             .collect::<Vec<_>>();
 
+        let status = StudentStatus::from_str(&inscription.status)?;
+
         let result = sqlx::query_as::<_, InscriptionModel>(query)
             .bind(scores)
-            .bind(inscription.status)
+            .bind(status)
             .bind(inscription.practice_id)
             .bind(id)
             .fetch_one(self.db_connection.get_pool())

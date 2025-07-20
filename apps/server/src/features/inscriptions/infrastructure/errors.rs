@@ -12,6 +12,9 @@ impl From<InscriptionError> for HttpResponse {
                 HttpResponse::BadRequest().message("Estado del estudiante inválido")
             }
 
+            InscriptionError::InvalidStatus { status } => HttpResponse::BadRequest()
+                .message(&format!("Estado inválido: {}", status)),
+
             InscriptionError::InscriptionAlreadyExists => HttpResponse::Conflict()
                 .message(
                     "El estudiante ya se encuentra inscrito en esta asignatura",
@@ -21,7 +24,7 @@ impl From<InscriptionError> for HttpResponse {
                 .message("Estudiante no encontrado")
                 .data(id),
 
-            InscriptionError::InvalidStudentRole => HttpResponse::Forbidden()
+            InscriptionError::InvalidStudentRole => HttpResponse::BadRequest()
                 .message("Estudiante inválido, intente más tarde"),
 
             InscriptionError::Database { source } => {

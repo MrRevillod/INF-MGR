@@ -15,7 +15,7 @@ pub struct UserBuilder {
 impl UserBuilder {
     pub fn new() -> Self {
         Self {
-            rut: "34108499-7".to_string(),
+            rut: generate_unique_rut(),
             name: "Test User".to_string(),
             email: generate_unique_email(),
             roles: vec!["administrator".to_string()],
@@ -83,4 +83,31 @@ pub async fn delete_user(server: &TestServer, user_id: &str) {
 
 pub fn generate_unique_email() -> String {
     format!("{}@example.com", Uuid::new_v4())
+}
+
+pub fn generate_unique_rut() -> String {
+    // Generate a random 8-digit number and calculate the verification digit
+    let random_number = (Uuid::new_v4().as_u128() % 90000000) + 10000000;
+    let verification_digit = calculate_rut_verification_digit(random_number as u32);
+    format!("{}-{}", random_number, verification_digit)
+}
+
+fn calculate_rut_verification_digit(rut: u32) -> char {
+    let sequence = [2, 3, 4, 5, 6, 7];
+    let mut sum = 0;
+    let mut rut_copy = rut;
+    let mut i = 0;
+
+    while rut_copy > 0 {
+        sum += (rut_copy % 10) * sequence[i % 6];
+        rut_copy /= 10;
+        i += 1;
+    }
+
+    let remainder = sum % 11;
+    match 11 - remainder {
+        10 => 'K',
+        11 => '0',
+        n => char::from_digit(n as u32, 10).unwrap(),
+    }
 }

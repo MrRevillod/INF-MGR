@@ -1,13 +1,13 @@
-use crate::tests::init_test_app;
-use serde_json::json;
-use sword::web::ResponseBody;
-use uuid::Uuid;
-
 pub mod utils;
+
 use crate::features::users::__tests__::utils::{
     create_user, delete_user, UserBuilder,
 };
+use crate::tests::init_test_app;
+use serde_json::json;
+use sword::web::ResponseBody;
 use utils::*;
+use uuid::Uuid;
 
 // Helper to create a teacher user and return its id
 async fn create_teacher(app: &axum_test::TestServer) -> String {

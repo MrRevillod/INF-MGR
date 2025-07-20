@@ -35,6 +35,9 @@ pub enum InscriptionError {
     #[error("Invalid inscription state")]
     InvalidStudentState,
 
+    #[error("Invalid status: {status}")]
+    InvalidStatus { status: String },
+
     #[error("Inscription already exists, cannot create a duplicate")]
     InscriptionAlreadyExists,
 

@@ -24,7 +24,7 @@ pub trait CreateInscriptionCase: Interface {
 
 pub struct UpdateInscriptionInput {
     pub practice_id: Option<Uuid>,
-    pub evaluation_scores: Option<Vec<StudentEvaluation>>,
+    pub evaluations_scores: Option<Vec<StudentEvaluation>>,
     pub status: Option<String>,
 }
 

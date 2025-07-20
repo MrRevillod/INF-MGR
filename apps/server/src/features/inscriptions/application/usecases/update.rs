@@ -26,7 +26,7 @@ impl UpdateInscriptionCase for UpdateInscriptionCaseImpl {
             return Err(InscriptionError::NotFound);
         };
 
-        if let Some(evaluations_scores) = input.evaluation_scores {
+        if let Some(evaluations_scores) = input.evaluations_scores {
             inscription.evaluations_scores = evaluations_scores;
         }
 

@@ -122,6 +122,7 @@ pub async fn create_asignature(
 ) -> Value {
     let response = server.post("/asignatures").json(&asignature).await;
     let body = response.json::<ResponseBody>();
+    dbg!(&body);
     assert_eq!(response.status_code(), 201, "Failed to create asignature");
     body.data
 }

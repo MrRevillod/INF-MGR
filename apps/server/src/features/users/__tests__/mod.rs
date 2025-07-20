@@ -1,9 +1,10 @@
+pub mod utils;
+
 use serde_json::json;
 use sword::web::ResponseBody;
 
 use crate::tests::init_test_app;
 
-pub mod utils;
 use utils::*;
 
 #[tokio::test]

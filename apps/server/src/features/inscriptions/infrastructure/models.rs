@@ -8,6 +8,50 @@ use crate::inscriptions::domain::{
     Inscription, InscriptionError, StudentEvaluation,
 };
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Type)]
+#[sqlx(type_name = "student_status", rename_all = "lowercase")]
+#[serde(rename_all = "lowercase")]
+pub enum StudentStatus {
+    Active,
+    Inactive,
+    Completed,
+    Evaluating,
+}
+
+impl FromStr for StudentStatus {
+    type Err = InscriptionError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "active" => Ok(StudentStatus::Active),
+            "inactive" => Ok(StudentStatus::Inactive),
+            "completed" => Ok(StudentStatus::Completed),
+            "evaluating" => Ok(StudentStatus::Evaluating),
+            _ => Err(InscriptionError::InvalidStatus {
+                status: s.to_string(),
+            }),
+        }
+    }
+}
+
+impl Display for StudentStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let status = match self {
+            StudentStatus::Active => "active",
+            StudentStatus::Inactive => "inactive",
+            StudentStatus::Completed => "completed",
+            StudentStatus::Evaluating => "evaluating",
+        };
+        write!(f, "{}", status)
+    }
+}
+
+impl From<StudentStatus> for String {
+    fn from(status: StudentStatus) -> Self {
+        status.to_string()
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 #[serde(rename_all = "camelCase")]
 pub struct InscriptionModel {
@@ -24,7 +68,7 @@ pub struct InscriptionModel {
 
     #[sqlx(rename = "evaluations_scores")]
     pub evaluations_scores: Vec<StudentEvaluationModel>,
-    pub status: String,
+    pub status: StudentStatus,
 }
 
 impl From<InscriptionModel> for Inscription {
@@ -40,7 +84,7 @@ impl From<InscriptionModel> for Inscription {
                 .map(Into::into)
                 .collect(),
 
-            status: value.status,
+            status: value.status.to_string(),
         }
     }
 }
@@ -61,43 +105,6 @@ impl From<StudentEvaluationModel> for StudentEvaluation {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Type)]
-#[serde(rename_all = "lowercase")]
-#[sqlx(type_name = "user_role", rename_all = "lowercase")]
-pub enum InscriptionStatus {
-    Active,
-    Inactive,
-    Completed,
-    Evaluating,
-}
-
-impl Display for InscriptionStatus {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let status_str = match self {
-            InscriptionStatus::Active => "active",
-            InscriptionStatus::Inactive => "inactive",
-            InscriptionStatus::Completed => "completed",
-            InscriptionStatus::Evaluating => "evaluating",
-        };
-
-        write!(f, "{status_str}")
-    }
-}
-
-impl FromStr for InscriptionStatus {
-    type Err = InscriptionError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "active" => Ok(InscriptionStatus::Active),
-            "inactive" => Ok(InscriptionStatus::Inactive),
-            "completed" => Ok(InscriptionStatus::Completed),
-            "evaluating" => Ok(InscriptionStatus::Evaluating),
-            _ => Err(InscriptionError::InvalidStudentState),
-        }
-    }
-}
-
 impl From<Inscription> for InscriptionModel {
     fn from(value: Inscription) -> Self {
         InscriptionModel {
@@ -111,7 +118,8 @@ impl From<Inscription> for InscriptionModel {
                 .map(Into::into)
                 .collect(),
 
-            status: value.status,
+            status: StudentStatus::from_str(&value.status)
+                .unwrap_or(StudentStatus::Active),
         }
     }
 }

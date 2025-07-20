@@ -27,7 +27,7 @@ impl CreateInscriptionCase for CreateInscriptionCaseImpl {
         &self,
         inscription: Inscription,
     ) -> Result<Inscription, InscriptionError> {
-        let user_id = inscription.asignature_id.clone();
+        let user_id = inscription.user_id.clone();
 
         let filter = InscriptionFilter {
             user_id: Some(inscription.user_id),

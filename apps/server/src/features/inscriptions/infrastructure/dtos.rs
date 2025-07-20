@@ -28,7 +28,7 @@ impl From<CreateInscriptionDto> for Inscription {
             asignature_id: Uuid::parse_str(&value.asignature_id).unwrap(),
             practice_id: None,
             evaluations_scores: vec![],
-            status: "pending".to_string(),
+            status: "active".to_string(),
         }
     }
 }
@@ -37,7 +37,7 @@ impl From<CreateInscriptionDto> for Inscription {
 #[serde(rename_all = "camelCase")]
 pub struct UpdateInscriptionDto {
     #[validate(nested)]
-    pub evaluation_scores: Option<Vec<StudentEvaluationDto>>,
+    pub evaluations_scores: Option<Vec<StudentEvaluationDto>>,
 
     #[validate(length(min = 1, message = "El estado no puede estar vacío"))]
     pub status: Option<String>,
@@ -50,8 +50,8 @@ impl From<UpdateInscriptionDto> for UpdateInscriptionInput {
     fn from(value: UpdateInscriptionDto) -> Self {
         UpdateInscriptionInput {
             practice_id: value.practice_id.map(|id| Uuid::parse_str(&id).unwrap()),
-            evaluation_scores: value
-                .evaluation_scores
+            evaluations_scores: value
+                .evaluations_scores
                 .map(|scores| scores.into_iter().map(Into::into).collect()),
 
             status: value.status,

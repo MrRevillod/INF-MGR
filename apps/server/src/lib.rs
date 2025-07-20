@@ -120,9 +120,6 @@ pub mod features {
     pub mod inscriptions {
         pub mod domain;
 
-        // #[cfg(test)]
-        // pub mod __tests__;
-
         pub mod application {
             mod interfaces;
 
