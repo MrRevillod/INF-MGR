@@ -27,7 +27,7 @@ impl From<CreateInscriptionDto> for Inscription {
             user_id: Uuid::parse_str(&value.user_id).unwrap(),
             asignature_id: Uuid::parse_str(&value.asignature_id).unwrap(),
             practice_id: None,
-            evaluation_scores: vec![],
+            evaluations_scores: vec![],
             status: "pending".to_string(),
         }
     }
@@ -41,11 +41,15 @@ pub struct UpdateInscriptionDto {
 
     #[validate(length(min = 1, message = "El estado no puede estar vacío"))]
     pub status: Option<String>,
+
+    #[validate(custom(function = validate_uuid, message = "Identificador de práctica inválido"))]
+    pub practice_id: Option<String>,
 }
 
 impl From<UpdateInscriptionDto> for UpdateInscriptionInput {
     fn from(value: UpdateInscriptionDto) -> Self {
         UpdateInscriptionInput {
+            practice_id: value.practice_id.map(|id| Uuid::parse_str(&id).unwrap()),
             evaluation_scores: value
                 .evaluation_scores
                 .map(|scores| scores.into_iter().map(Into::into).collect()),

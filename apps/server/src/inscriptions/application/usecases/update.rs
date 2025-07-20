@@ -26,12 +26,16 @@ impl UpdateInscriptionCase for UpdateInscriptionCaseImpl {
             return Err(InscriptionError::NotFound);
         };
 
-        if let Some(evaluation_scores) = input.evaluation_scores {
-            inscription.evaluation_scores = evaluation_scores;
+        if let Some(evaluations_scores) = input.evaluation_scores {
+            inscription.evaluations_scores = evaluations_scores;
         }
 
         if let Some(status) = input.status {
             inscription.status = status;
+        }
+
+        if let Some(practice_id) = input.practice_id {
+            inscription.practice_id = Some(practice_id);
         }
 
         self.repository.update(id, inscription).await

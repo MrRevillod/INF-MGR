@@ -75,7 +75,7 @@ impl InscriptionRepository for PostgresInscriptionRepository {
         "#;
 
         let scores: Vec<StudentEvaluationModel> = inscription
-            .evaluation_scores
+            .evaluations_scores
             .into_iter()
             .map(Into::into)
             .collect::<Vec<_>>();
@@ -99,13 +99,13 @@ impl InscriptionRepository for PostgresInscriptionRepository {
         inscription: Inscription,
     ) -> Result<Inscription, InscriptionError> {
         let query = r#"
-            UPDATE inscriptions SET evaluations_scores = $1, status = $2
-            WHERE id = $3
+            UPDATE inscriptions SET evaluations_scores = $1, status = $2, practice_id = $3
+            WHERE id = $4
             RETURNING *
         "#;
 
         let scores: Vec<StudentEvaluationModel> = inscription
-            .evaluation_scores
+            .evaluations_scores
             .into_iter()
             .map(Into::into)
             .collect::<Vec<_>>();
@@ -113,6 +113,7 @@ impl InscriptionRepository for PostgresInscriptionRepository {
         let result = sqlx::query_as::<_, InscriptionModel>(query)
             .bind(scores)
             .bind(inscription.status)
+            .bind(inscription.practice_id)
             .bind(id)
             .fetch_one(self.db_connection.get_pool())
             .await?;

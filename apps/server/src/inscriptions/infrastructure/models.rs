@@ -22,8 +22,8 @@ pub struct InscriptionModel {
     #[sqlx(rename = "practice_id")]
     pub practice_id: Option<Uuid>,
 
-    #[sqlx(rename = "evaluation_scores")]
-    pub evaluation_scores: Vec<StudentEvaluationModel>,
+    #[sqlx(rename = "evaluations_scores")]
+    pub evaluations_scores: Vec<StudentEvaluationModel>,
     pub status: String,
 }
 
@@ -34,11 +34,12 @@ impl From<InscriptionModel> for Inscription {
             user_id: value.user_id,
             asignature_id: value.asignature_id,
             practice_id: value.practice_id,
-            evaluation_scores: value
-                .evaluation_scores
+            evaluations_scores: value
+                .evaluations_scores
                 .into_iter()
                 .map(Into::into)
                 .collect(),
+
             status: value.status,
         }
     }
@@ -104,11 +105,12 @@ impl From<Inscription> for InscriptionModel {
             user_id: value.user_id,
             asignature_id: value.asignature_id,
             practice_id: value.practice_id,
-            evaluation_scores: value
-                .evaluation_scores
+            evaluations_scores: value
+                .evaluations_scores
                 .into_iter()
                 .map(Into::into)
                 .collect(),
+
             status: value.status,
         }
     }

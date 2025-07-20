@@ -11,7 +11,7 @@ pub struct Inscription {
     pub user_id: Uuid,
     pub asignature_id: Uuid,
     pub practice_id: Option<Uuid>,
-    pub evaluation_scores: Vec<StudentEvaluation>,
+    pub evaluations_scores: Vec<StudentEvaluation>,
     pub status: String,
 }
 
