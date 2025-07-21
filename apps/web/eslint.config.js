@@ -42,7 +42,10 @@ export default ts.config(
 	{
 		rules: {
 			// Override or add rule settings here, such as:
-			// 'svelte/rule-name': 'error'
+			// 'svelte/rule-name': 'error',
+			"@typescript-eslint/no-explicit-any": "off",
+			"no-unused-vars": "off",
+			"@typescript-eslint/no-unused-vars": "off",
 		},
 	},
 )

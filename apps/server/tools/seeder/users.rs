@@ -1,6 +1,7 @@
 #![cfg(feature = "seeder")]
 
 use fake::faker::name::en::Name;
+use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use tokio::task::JoinSet;
 
@@ -8,11 +9,22 @@ use fake::faker::internet::en::{FreeEmail, Password};
 use fake::Fake;
 use rand::Rng;
 
+#[derive(Serialize, Deserialize, Debug, Clone, sqlx::Type)]
+#[serde(rename_all = "lowercase")]
+#[sqlx(type_name = "user_role", rename_all = "lowercase")]
+pub enum Role {
+    Administrator,
+    Student,
+    Teacher,
+    Secretary,
+    Coordinator,
+}
+
 pub async fn seed_users_table(pool: &PgPool) -> Result<(), sqlx::Error> {
     let mut tasks = JoinSet::new();
 
     let query = r#"
-        INSERT INTO users (id, rut, name, email, password, role) 
+        INSERT INTO users (id, rut, name, email, password, roles) 
         VALUES ($1, $2, $3, $4, $5, $6)
     "#;
 
@@ -25,7 +37,7 @@ pub async fn seed_users_table(pool: &PgPool) -> Result<(), sqlx::Error> {
                 .bind(Name().fake::<String>())
                 .bind(FreeEmail().fake::<String>())
                 .bind(Password(8..12).fake::<String>())
-                .bind("student")
+                .bind(vec![Role::Student])
                 .execute(&pool)
                 .await
         });
