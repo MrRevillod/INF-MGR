@@ -109,6 +109,11 @@ impl From<User> for UserResponseDTO {
     }
 }
 
+#[derive(Serialize, Deserialize, Validate)]
+pub struct GetUsersQuery {
+    pub role: String,
+}
+
 mod validators {
     use regex::Regex;
     use std::{str::FromStr, sync::OnceLock};
@@ -250,5 +255,16 @@ mod validators {
         }
 
         Ok(())
+    }
+
+    pub fn validate_roles_string(role: &String) -> Result<(), ValidationError> {
+        if role.is_empty() {
+            return Err(ValidationError::new("El rol no puede estar vacío"));
+        }
+
+        match Role::from_str(role) {
+            Ok(_) => Ok(()),
+            Err(_) => return Err(ValidationError::new("Rol invalido")),
+        }
     }
 }

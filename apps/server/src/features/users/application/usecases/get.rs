@@ -16,7 +16,7 @@ pub struct GetUsersCaseImpl {
 
 #[async_trait]
 impl GetUsersCase for GetUsersCaseImpl {
-    async fn execute(&self) -> Result<Vec<User>, UserError> {
-        self.repository.find_all().await
+    async fn execute(&self, role: String) -> Result<Vec<User>, UserError> {
+        self.repository.find_all(role).await
     }
 }

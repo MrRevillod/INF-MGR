@@ -1,6 +1,8 @@
 use crate::users::{
     application::{CreateUserCase, DeleteUserCase, GetUsersCase, UpdateUserCase},
-    infrastructure::dtos::{CreateUserDto, UpdateUserDto, UserResponseDTO},
+    infrastructure::dtos::{
+        CreateUserDto, GetUsersQuery, UpdateUserDto, UserResponseDTO,
+    },
 };
 
 use crate::shared::di::AppModule;
@@ -14,9 +16,10 @@ pub struct UserController;
 impl UserController {
     #[get("/")]
     async fn get_users(ctx: Context) -> HttpResult<HttpResponse> {
+        let query = ctx.validated_query::<GetUsersQuery>()?;
         let use_case = ctx.get_dependency::<AppModule, dyn GetUsersCase>()?;
 
-        let data = use_case.execute().await?;
+        let data = use_case.execute(query.role).await?;
         let users: Vec<UserResponseDTO> =
             data.into_iter().map(UserResponseDTO::from).collect();
 

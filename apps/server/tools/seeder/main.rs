@@ -18,7 +18,11 @@ async fn main() -> Result<(), sqlx::Error> {
         .await?;
 
     sqlx::migrate!("./config/migrations").run(&pool).await?;
-    users::seed_users_table(&pool).await?;
+    users::seed_users_table_administrator(&pool).await?;
+    users::seed_users_table_coordinator(&pool).await?;
+    users::seed_users_table_secretary(&pool).await?;
+    users::seed_users_table_teachers(&pool).await?;
+    users::seed_users_table_students(&pool).await?;
 
     println!("Database seeded successfully!");
 

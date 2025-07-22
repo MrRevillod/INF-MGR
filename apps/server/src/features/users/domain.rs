@@ -47,7 +47,7 @@ pub enum UserError {
 
 #[async_trait]
 pub trait UserRepository: Interface {
-    async fn find_all(&self) -> Result<Vec<User>, UserError>;
+    async fn find_all(&self, roles: String) -> Result<Vec<User>, UserError>;
     async fn find_by_id(&self, user_id: &Uuid) -> Result<Option<User>, UserError>;
     async fn find_by_rut(&self, rut: &str) -> Result<Option<User>, UserError>;
     async fn find_by_email(&self, email: &str) -> Result<Option<User>, UserError>;

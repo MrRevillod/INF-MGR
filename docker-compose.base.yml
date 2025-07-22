@@ -12,13 +12,13 @@ services:
     networks:
       - my_networks
 
-  web_base:
+  client_base:
     build:
       context: .
-      dockerfile: ./apps/web/Dockerfile
+      dockerfile: ./apps/client/Dockerfile
     volumes:
-      - ./apps/web:/app
-      - web_node_modules:/app/node_modules
+      - ./apps/client:/app
+      - client_node_modules:/app/node_modules
     networks:
       - my_networks
 
@@ -47,7 +47,7 @@ services:
 volumes:
   cargo_cache:
   server_target:
-  web_node_modules:
+  client_node_modules:
 
 networks:
   my_networks:

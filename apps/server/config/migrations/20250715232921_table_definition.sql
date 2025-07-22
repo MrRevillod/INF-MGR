@@ -24,14 +24,14 @@ CREATE TABLE IF NOT EXISTS asignatures (
     code TEXT NOT NULL,
     name TEXT NOT NULL,
     evaluations evaluation[] NOT NULL,
-    teacher_id UUID NOT NULL REFERENCES users(id)
+    teacher_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS inscriptions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES users(id),
-    asignature_id UUID NOT NULL REFERENCES asignatures(id),
-    practice_id UUID REFERENCES practices(id),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    asignature_id UUID NOT NULL REFERENCES asignatures(id) ON DELETE CASCADE,
+    practice_id UUID REFERENCES practices(id) ON DELETE SET NULL,
     evaluations_scores student_evaluation[] NOT NULL,
     status student_status NOT NULL DEFAULT 'active',
     UNIQUE(user_id, asignature_id)
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS inscriptions (
 
 CREATE TABLE IF NOT EXISTS reports (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    inscription_id UUID NOT NULL REFERENCES inscriptions(id),
+    inscription_id UUID NOT NULL REFERENCES inscriptions(id) ON DELETE CASCADE,
     title TEXT NOT NULL,
     content TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),

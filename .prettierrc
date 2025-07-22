@@ -7,17 +7,5 @@
     "printWidth": 80,
     "endOfLine": "lf",
     "arrowParens": "avoid",
-    "plugins": [
-        "prettier-plugin-svelte"
-    ],
-    "overrides": [
-        {
-            "files": "*.svelte",
-            "options": {
-                "parser": "svelte",
-                "useTabs": true,
-                "tabWidth": 4
-            }
-        }
-    ]
+	"tailwindStylesheet": "./apps/client/src/app.css"
 }

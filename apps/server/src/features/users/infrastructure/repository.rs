@@ -21,11 +21,17 @@ pub struct PostgresUserRepository {
 
 #[async_trait]
 impl UserRepository for PostgresUserRepository {
-    async fn find_all(&self) -> Result<Vec<User>, UserError> {
+    async fn find_all(&self, role: String) -> Result<Vec<User>, UserError> {
         let pool = self.database_connection.get_pool();
-        let users = sqlx::query_as::<_, UserModel>("SELECT * FROM users")
-            .fetch_all(pool)
-            .await?;
+
+        let role = Role::from_str(&role).unwrap_or(Role::Student);
+
+        let users = sqlx::query_as::<_, UserModel>(
+            "SELECT * FROM users WHERE roles @> ARRAY[$1]::user_role[]",
+        )
+        .bind(role)
+        .fetch_all(pool)
+        .await?;
 
         let entity_vec = users.into_iter().map(User::from).collect();
 

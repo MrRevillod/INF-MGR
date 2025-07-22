@@ -12,10 +12,10 @@ services:
       - postgres_dev
 
   web_dev:
-    container_name: inf_mgr_web_dev
+    container_name: inf_mgr_client_dev
     extends:
       file: docker-compose.base.yml
-      service: web_base
+      service: client_base
     env_file:
       - .env
     build:
@@ -65,4 +65,4 @@ volumes:
   postgres_data_dev:
   server_target:
   cargo_cache:
-  web_node_modules:
+  client_node_modules:

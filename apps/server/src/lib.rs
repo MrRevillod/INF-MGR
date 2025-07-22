@@ -93,10 +93,10 @@ pub mod features {
                 pub mod get;
                 pub mod update;
 
-                // pub use create::;
-                // pub use delete::;
-                // pub use get::;
-                // pub use update::;
+                // pub use create::CreatePracticeCaseImpl;
+                // pub use delete::DeletePracticeCaseImpl;
+                // pub use get::GetPracticeCaseImpl;
+                // pub use update::UpdatePracticeCaseImpl;
             }
 
             pub use interfaces::*;
@@ -167,10 +167,10 @@ pub mod features {
                 pub mod get;
                 pub mod update;
 
-                // pub use create::;
-                // pub use delete::;
-                // pub use get::;
-                // pub use update::;
+                pub use create::CreatePracticeCaseImpl;
+                pub use delete::DeletePracticeCaseImpl;
+                pub use get::GetPracticeCaseImpl;
+                pub use update::UpdatePracticeCaseImpl;
             }
 
             pub use interfaces::*;
@@ -184,10 +184,10 @@ pub mod features {
             mod repository;
 
             pub mod errors;
-            // pub use controllers::UserController;
+            pub use controllers::PracticesController;
             // pub use dtos::{CreateUserDto, UpdateUserDto, UserResponseDTO};
             // pub use models::{Role, UserModel};
-            // pub use repository::PostgresUserRepository;
+            pub use repository::PostgresPracticeRepository;
         }
     }
 }

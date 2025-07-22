@@ -11,7 +11,7 @@ use crate::users::domain::{User, UserError};
 /// implementación: users/application/use_cases/get.rs
 #[async_trait]
 pub trait GetUsersCase: Interface {
-    async fn execute(&self) -> Result<Vec<User>, UserError>;
+    async fn execute(&self, role: String) -> Result<Vec<User>, UserError>;
 }
 
 /// Caso de uso para crear un nuevo usuario.
