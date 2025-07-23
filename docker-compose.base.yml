@@ -12,15 +12,15 @@ services:
     networks:
       - my_networks
 
-  client_base:
-    build:
-      context: .
-      dockerfile: ./apps/client/Dockerfile
-    volumes:
-      - ./apps/client:/app
-      - client_node_modules:/app/node_modules
-    networks:
-      - my_networks
+  # client_base:
+  #   build:
+  #     context: .
+  #     dockerfile: ./apps/client/Dockerfile
+  #   volumes:
+  #     - ./apps/client:/app
+  #     - client_node_modules:/app/node_modules
+  #   networks:
+  #     - my_networks
 
   nginx_base:
     image: nginx:alpine
@@ -47,7 +47,7 @@ services:
 volumes:
   cargo_cache:
   server_target:
-  client_node_modules:
+  # client_node_modules:
 
 networks:
   my_networks:

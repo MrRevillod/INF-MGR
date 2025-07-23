@@ -17,7 +17,8 @@ RUN rm -rf ./src ./target/release/deps/server*
 # Build entire application
 
 COPY apps/server/src ./src
-COPY apps/server/html ./html
+COPY apps/server/tools ./tools
+COPY apps/server/config ./config
 RUN cargo build --release
 
 # -----------------------------------------------------------------------
@@ -31,7 +32,6 @@ RUN cargo install cargo-watch
 WORKDIR /app
 
 COPY apps/server/config ./config
-COPY apps/server/html ./html
 COPY apps/server/Cargo.toml apps/server/Cargo.lock ./
 COPY apps/server/src ./src/
 COPY apps/server/tools ./tools/
@@ -40,7 +40,7 @@ ENV CARGO_TARGET_DIR /app/target
 
 EXPOSE 8000
 
-CMD sh -c "cargo watch -x 'run --bin server' -w src -w config -w html"
+CMD sh -c "cargo watch -x 'run --bin server' -w src -w config -w tools"
 
 # -----------------------------------------------------------------------
 # TEST STAGE ------------------------------------------------------------
@@ -53,7 +53,6 @@ WORKDIR /app
 RUN cargo install cargo-watch
 
 COPY apps/server/config ./config
-COPY apps/server/html ./html
 COPY apps/server/Cargo.toml apps/server/Cargo.lock ./
 COPY apps/server/src ./src/
 COPY apps/server/tools ./tools/
@@ -62,7 +61,7 @@ ENV CARGO_TARGET_DIR /app/target
 
 EXPOSE 8000
 
-CMD sh -c "cargo watch -x 'test -- --nocapture' -w src -w config"
+CMD sh -c "cargo watch -x 'test -- --nocapture --test-threads=1' -w src -w config"
 
 # -----------------------------------------------------------------------
 # PRODUCTION STAGE ------------------------------------------------------

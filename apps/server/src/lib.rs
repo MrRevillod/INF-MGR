@@ -5,9 +5,6 @@ pub mod features {
     pub mod users {
         pub mod domain;
 
-        #[cfg(test)]
-        pub mod __tests__;
-
         pub mod application {
             mod interfaces;
 
@@ -42,9 +39,6 @@ pub mod features {
     }
 
     pub mod asignatures {
-
-        #[cfg(test)]
-        pub mod __tests__;
 
         pub mod domain;
 
@@ -211,4 +205,11 @@ pub mod shared {
 }
 
 #[cfg(test)]
-pub mod tests;
+pub mod tests {
+    pub mod app;
+    pub mod asignatures;
+    pub mod inscriptions;
+    pub mod practices;
+    pub mod reports;
+    pub mod users;
+}

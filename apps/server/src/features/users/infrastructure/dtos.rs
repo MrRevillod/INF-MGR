@@ -111,6 +111,7 @@ impl From<User> for UserResponseDTO {
 
 #[derive(Serialize, Deserialize, Validate)]
 pub struct GetUsersQuery {
+    #[validate(custom(function = "validators::validate_roles_string"))]
     pub role: String,
 }
 

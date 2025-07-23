@@ -14,7 +14,7 @@ use crate::inscriptions::{
 #[serde(rename_all = "camelCase")]
 pub struct CreateInscriptionDto {
     #[validate(custom(function = validate_uuid, message = "Identificador de inscripción inválido"))]
-    pub user_id: String,
+    pub student_id: String,
 
     #[validate(custom(function = validate_uuid, message = "Identificador de asignatura inválido"))]
     pub asignature_id: String,
@@ -24,7 +24,7 @@ impl From<CreateInscriptionDto> for Inscription {
     fn from(value: CreateInscriptionDto) -> Self {
         Inscription {
             id: Uuid::new_v4(),
-            user_id: Uuid::parse_str(&value.user_id).unwrap(),
+            user_id: Uuid::parse_str(&value.student_id).unwrap(),
             asignature_id: Uuid::parse_str(&value.asignature_id).unwrap(),
             practice_id: None,
             evaluations_scores: vec![],

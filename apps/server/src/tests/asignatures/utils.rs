@@ -1,3 +1,4 @@
+use axum_test::TestServer;
 use serde_json::{json, Value};
 use sword::web::ResponseBody;
 use uuid::Uuid;
@@ -20,7 +21,7 @@ impl AsignatureBuilder {
         Self {
             year: 2024,
             code: generate_unique_code(),
-            name: generate_unique_name(),
+            name: generate_unique_asignature_name(),
             evaluations: vec![
                 EvaluationBuilder {
                     name: "Bitácoras Semanales".to_string(),
@@ -96,7 +97,6 @@ impl AsignatureBuilder {
 }
 
 pub fn generate_unique_code() -> String {
-    // Use UUID to ensure uniqueness, convert to numeric value
     let uuid = Uuid::new_v4();
     let uuid_bytes = uuid.as_bytes();
     let numeric_value = u32::from_be_bytes([
@@ -105,24 +105,66 @@ pub fn generate_unique_code() -> String {
         uuid_bytes[2],
         uuid_bytes[3],
     ]);
-    let four_digits = (numeric_value % 9000) + 1000; // Ensures 4 digits between 1000-9999
+
+    let four_digits = (numeric_value % 9000) + 1000;
+
     format!("INFO{:04}", four_digits)
 }
 
-pub fn generate_unique_name() -> String {
+pub fn generate_unique_asignature_name() -> String {
     format!(
         "Test Asignature {}",
-        Uuid::new_v4().to_string()[0..8].to_uppercase()
+        Uuid::new_v4().to_string()[0..16].to_uppercase()
     )
 }
 
-pub async fn create_asignature(
-    server: &axum_test::TestServer,
-    asignature: &Value,
-) -> Value {
+pub async fn create_asignature(server: &TestServer, asignature: &Value) -> Value {
     let response = server.post("/asignatures").json(&asignature).await;
     let body = response.json::<ResponseBody>();
-    dbg!(&body);
-    assert_eq!(response.status_code(), 201, "Failed to create asignature");
+
+    assert_eq!(
+        response.status_code(),
+        201,
+        "{}",
+        format!("Failed to create asignature: {:?}", body.data)
+    );
+
     body.data
+}
+
+pub async fn update_asignature(
+    server: &TestServer,
+    asignature_id: &str,
+    update_data: &Value,
+) -> Value {
+    let response = server
+        .patch(&format!("/asignatures/{}", asignature_id))
+        .json(update_data)
+        .await;
+
+    let body = response.json::<ResponseBody>();
+
+    assert_eq!(
+        response.status_code(),
+        200,
+        "{}",
+        format!("Failed to update asignature: {:?}", body.data)
+    );
+
+    body.data
+}
+
+pub async fn delete_asignature(server: &TestServer, asignature_id: &str) {
+    let response = server
+        .delete(&format!("/asignatures/{}", asignature_id))
+        .await;
+
+    let body = response.json::<ResponseBody>();
+
+    assert_eq!(
+        response.status_code(),
+        200,
+        "{}",
+        format!("Failed to delete asignature: {:?}", body.data)
+    );
 }

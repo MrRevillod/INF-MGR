@@ -1,7 +1,8 @@
 use axum_test::TestServer;
+use serde_json::Value;
 use sword::prelude::Application;
 
-use super::{
+use crate::{
     asignatures::infrastructure::AsignaturesController,
     config::{MailerConfig, PostgresDbConfig},
     inscriptions::infrastructure::InscriptionController,
@@ -45,4 +46,11 @@ pub async fn init_test_app() -> TestServer {
         .controller::<InscriptionController>();
 
     TestServer::new(app.router()).expect("Failed to start test server")
+}
+
+pub fn extract_resource_id(data: &Value) -> String {
+    data.get("id")
+        .and_then(|id| id.as_str())
+        .map(String::from)
+        .unwrap_or_else(|| panic!("Response does not contain 'id': {:?}", data))
 }

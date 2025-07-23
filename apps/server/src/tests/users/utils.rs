@@ -3,6 +3,8 @@ use serde_json::{json, Value};
 use sword::web::ResponseBody;
 use uuid::Uuid;
 
+use crate::tests::app::extract_resource_id;
+
 pub struct UserBuilder {
     rut: String,
     name: String,
@@ -66,14 +68,39 @@ pub async fn create_user(server: &TestServer, user: Value) -> Value {
     let response = server.post("/users").json(&user).await;
     let body = response.json::<ResponseBody>();
 
-    assert_eq!(response.status_code(), 201, "Failed to create user");
+    assert_eq!(
+        response.status_code(),
+        201,
+        "{}",
+        format!("Failed to create user - response: {}", body.data)
+    );
 
     body.data
 }
 
+pub async fn create_teacher(server: &TestServer) -> String {
+    let user = UserBuilder::new().with_roles(vec!["teacher"]).build();
+    let data = create_user(server, user).await;
+
+    extract_resource_id(&data)
+}
+
+pub async fn create_administrator(server: &TestServer) -> String {
+    let user = UserBuilder::new().with_roles(vec!["administrator"]).build();
+    let data = create_user(server, user).await;
+
+    extract_resource_id(&data)
+}
+
+pub async fn create_student(server: &TestServer) -> String {
+    let user = UserBuilder::new().with_roles(vec!["student"]).build();
+    let data = create_user(server, user).await;
+
+    extract_resource_id(&data)
+}
+
 pub async fn delete_user(server: &TestServer, user_id: &str) {
     let response = server.delete(&format!("/users/{}", user_id)).await;
-    // Accept both 200 (successful deletion) and 404 (user not found/already deleted)
     assert!(
         response.status_code() == 200 || response.status_code() == 404,
         "Failed to delete user: expected 200 or 404, got {}",
@@ -86,7 +113,6 @@ pub fn generate_unique_email() -> String {
 }
 
 pub fn generate_unique_rut() -> String {
-    // Generate a random 8-digit number and calculate the verification digit
     let random_number = (Uuid::new_v4().as_u128() % 90000000) + 10000000;
     let verification_digit = calculate_rut_verification_digit(random_number as u32);
     format!("{}-{}", random_number, verification_digit)
