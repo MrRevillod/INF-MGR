@@ -35,8 +35,6 @@ impl From<UserError> for HttpResponse {
             UserError::Database { source } => {
                 eprintln!("| USER ERROR | - Database internal error: {source}");
 
-                dbg!(source);
-
                 HttpResponse::InternalServerError().data(json!({
                     "message": "Error inesperado",
                 }))
@@ -65,8 +63,6 @@ impl From<UserError> for HttpResponse {
 
             UserError::ServiceError { source } => {
                 eprintln!("| USER ERROR | - Service error: {source}");
-
-                dbg!(source);
 
                 HttpResponse::InternalServerError().data(json!({
                     "message": "Error inesperado",

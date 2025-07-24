@@ -51,9 +51,6 @@ pub async fn delete_incription(app: &TestServer, inscription_id: &str) {
     let response = app
         .delete(&format!("/inscriptions/{}", inscription_id))
         .await;
-    let body = response.json::<ResponseBody>();
-
-    dbg!(&body);
 
     assert_eq!(response.status_code(), 200);
 }

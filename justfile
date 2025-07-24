@@ -31,22 +31,29 @@ web-install package="" mode="":
         docker exec inf_mgr_client_dev npm install {{package}}
     fi
 
-#
+# Testing commands
+
+_ensure-test-service:
+    @docker compose -f {{COMPOSE_TEST_FILE}} up -d backend_test postgres_test
 
 test entity="" mode="":
+    just _ensure-test-service
     #!/usr/bin/env bash
-    if [ "{{mode}}" = "watch" ]; then
-        docker compose -f {{COMPOSE_TEST_FILE}} run --rm backend_test cargo watch -x 'test {{entity}} {{TEST_ARGS}}' -w src
+    if [ "{{entity}}" = "" ] || [ "{{entity}}" = "all" ]; then
+        entity_arg=""
     else
-        docker compose -f {{COMPOSE_TEST_FILE}} run --rm backend_test cargo test {{entity}} {{TEST_ARGS}}
+        entity_arg="{{entity}}"
+    fi
+    
+    if [ "{{mode}}" = "watch" ]; then
+        docker compose -f {{COMPOSE_TEST_FILE}} exec backend_test sh -c "cd tests && cargo watch -x 'test $entity_arg {{TEST_ARGS}}' -w src"
+    else
+        docker compose -f {{COMPOSE_TEST_FILE}} exec backend_test sh -c "cd tests && cargo test $entity_arg {{TEST_ARGS}}"
     fi
 
-#
+test-down:
+    docker compose -f {{COMPOSE_TEST_FILE}} down
 
-test-all mode="":
-    #!/usr/bin/env bash
-    if [ "{{mode}}" = "watch" ]; then
-        docker compose -f {{COMPOSE_TEST_FILE}} up
-    else
-        docker compose -f {{COMPOSE_TEST_FILE}} run --rm backend_test cargo test {{TEST_ARGS}}
-    fi
+test-clean:
+    docker compose -f {{COMPOSE_TEST_FILE}} down -v
+    docker volume rm inf-mgr_rust_target_cache inf-mgr_cargo_cache 2>/dev/null || true

@@ -12,6 +12,11 @@ services:
       - my_networks
     depends_on:
       - postgres_test
+    volumes:
+      - .:/app
+      - cargo_cache:/usr/local/cargo/registry
+      - rust_target_cache:/app/target
+    command: sh -c "cd /app/tests && ln -sf ../apps/server/config config && ln -sf ../apps/server/tools tools && tail -f /dev/null"
 
   postgres_test:
     container_name: inf_mgr_postgres_test
@@ -39,3 +44,4 @@ volumes:
   postgres_data_test:
   server_target:
   cargo_cache:
+  rust_target_cache:
