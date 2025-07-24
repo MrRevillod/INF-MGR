@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use shaku::Component;
 use sqlx::Postgres;
-use std::sync::Arc;
+use std::{str::FromStr, sync::Arc};
 use uuid::Uuid;
 
 use crate::{
@@ -9,7 +9,9 @@ use crate::{
         domain::{
             Asignature, AsignatureError, AsignatureFilter, AsignatureRepository,
         },
-        infrastructure::models::{AsignatureModel, EvaluationType},
+        infrastructure::models::{
+            AsignatureModel, AsignatureStatus, EvaluationType,
+        },
     },
     shared::database::DatabaseConnection,
 };
@@ -24,11 +26,9 @@ pub struct PostgresAsignatureRepository {
 #[async_trait]
 impl AsignatureRepository for PostgresAsignatureRepository {
     async fn find_all(&self) -> Result<Vec<Asignature>, AsignatureError> {
-        let pool = self.db_connection.get_pool();
-        let query = r#"SELECT * FROM asignatures"#;
-
+        let query = "SELECT * FROM asignatures";
         let result = sqlx::query_as::<_, AsignatureModel>(query)
-            .fetch_all(pool)
+            .fetch_all(self.db_connection.get_pool())
             .await?;
 
         Ok(result.into_iter().map(Asignature::from).collect())
@@ -79,8 +79,8 @@ impl AsignatureRepository for PostgresAsignatureRepository {
         input: Asignature,
     ) -> Result<Asignature, AsignatureError> {
         let query = r#"
-            INSERT INTO asignatures (id, year, code, name, evaluations, teacher_id) 
-            VALUES ($1, $2, $3, $4, $5, $6) 
+            INSERT INTO asignatures (id, year, code, name, evaluations, teacher_id, status) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7) 
             RETURNING *
         "#;
 
@@ -97,6 +97,7 @@ impl AsignatureRepository for PostgresAsignatureRepository {
             .bind(input.name)
             .bind(evaluations)
             .bind(input.teacher_id)
+            .bind(AsignatureStatus::from_str(&input.status)?)
             .fetch_one(self.db_connection.get_pool())
             .await?;
 
@@ -110,8 +111,8 @@ impl AsignatureRepository for PostgresAsignatureRepository {
     ) -> Result<Asignature, AsignatureError> {
         let query = r#"
             UPDATE asignatures 
-            SET year = $1, code = $2, name = $3, evaluations = $4, teacher_id = $5 
-            WHERE id = $6 
+            SET year = $1, code = $2, name = $3, evaluations = $4, teacher_id = $5 , status = $6
+            WHERE id = $7
             RETURNING *
         "#;
 
@@ -127,6 +128,7 @@ impl AsignatureRepository for PostgresAsignatureRepository {
             .bind(input.name)
             .bind(evaluations)
             .bind(input.teacher_id)
+            .bind(AsignatureStatus::from_str(&input.status)?)
             .bind(id)
             .fetch_one(self.db_connection.get_pool())
             .await?;

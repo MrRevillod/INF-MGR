@@ -78,6 +78,7 @@ impl TryFrom<CreateAsignatureDto> for Asignature {
             name: dto.name,
             evaluations: dto.evaluations.into_iter().map(|e| e.into()).collect(),
             teacher_id: dto.teacher_id.parse().unwrap(),
+            status: "inprogress".to_string(),
         })
     }
 }
@@ -123,6 +124,11 @@ pub struct UpdateAsignatureDto {
 
     #[validate(custom(function = validate_uuid))]
     pub teacher_id: Option<String>,
+
+    #[validate(
+        custom(function = validators::validate_asignature_status)
+    )]
+    pub status: Option<String>,
 }
 
 impl From<UpdateAsignatureDto> for UpdateAsignatureInput {
@@ -135,6 +141,7 @@ impl From<UpdateAsignatureDto> for UpdateAsignatureInput {
                 .evaluations
                 .map(|evs| evs.into_iter().map(Evaluation::from).collect()),
             teacher_id: dto.teacher_id.and_then(|id| id.parse().ok()),
+            status: dto.status,
         }
     }
 }
@@ -178,6 +185,18 @@ mod validators {
                 ));
             }
         }
+        Ok(())
+    }
+
+    pub fn validate_asignature_status(
+        status: &String,
+    ) -> Result<(), ValidationError> {
+        if status != "inprogress" && status != "ended" {
+            return Err(ValidationError::new(
+                "El estado de la asignatura debe ser 'inprogress' o 'ended'.",
+            ));
+        }
+
         Ok(())
     }
 }

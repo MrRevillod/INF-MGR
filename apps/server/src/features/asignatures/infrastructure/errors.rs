@@ -28,6 +28,14 @@ impl From<AsignatureError> for HttpResponse {
                 eprintln!("AsignatureError internal error (HTTP 500): {source}");
                 HttpResponse::InternalServerError()
             }
+
+            AsignatureError::UknownError(source) => {
+                eprintln!("AsignatureError internal error (HTTP 500): {source}");
+                HttpResponse::InternalServerError()
+            }
+
+            AsignatureError::HasInscriptions => HttpResponse::Forbidden()
+                .message("La asignatura tiene inscripciones"),
         }
     }
 }

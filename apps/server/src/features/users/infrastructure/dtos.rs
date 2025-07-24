@@ -46,6 +46,7 @@ impl From<CreateUserDto> for User {
             email: dto.email,
             password: dto.password,
             roles: dto.roles,
+            deleted_at: None,
         }
     }
 }

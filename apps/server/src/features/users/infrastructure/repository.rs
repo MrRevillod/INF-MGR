@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use chrono::Utc;
 use shaku::Component;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -6,6 +7,7 @@ use uuid::Uuid;
 
 use crate::shared::database::DatabaseConnection;
 
+use crate::users::infrastructure::models::vec_string_to_roles;
 use crate::users::infrastructure::Role;
 use crate::users::{
     domain::{User, UserError, UserRepository},
@@ -22,16 +24,15 @@ pub struct PostgresUserRepository {
 #[async_trait]
 impl UserRepository for PostgresUserRepository {
     async fn find_all(&self, role: String) -> Result<Vec<User>, UserError> {
-        let pool = self.database_connection.get_pool();
+        let query = r#"
+            SELECT * FROM users 
+            WHERE roles @> ARRAY[$1]::user_role[] AND deleted_at IS NULL
+        "#;
 
-        let role = Role::from_str(&role).unwrap_or(Role::Student);
-
-        let users = sqlx::query_as::<_, UserModel>(
-            "SELECT * FROM users WHERE roles @> ARRAY[$1]::user_role[]",
-        )
-        .bind(role)
-        .fetch_all(pool)
-        .await?;
+        let users = sqlx::query_as::<_, UserModel>(query)
+            .bind(Role::from_str(&role).unwrap_or(Role::Student))
+            .fetch_all(self.database_connection.get_pool())
+            .await?;
 
         let entity_vec = users.into_iter().map(User::from).collect();
 
@@ -39,54 +40,43 @@ impl UserRepository for PostgresUserRepository {
     }
 
     async fn find_by_id(&self, user_id: &Uuid) -> Result<Option<User>, UserError> {
-        let pool = self.database_connection.get_pool();
-        let query = r#"SELECT * FROM users WHERE id = $1"#;
+        let query = "SELECT * FROM users WHERE id = $1";
 
         let user = sqlx::query_as::<_, UserModel>(query)
             .bind(user_id)
-            .fetch_optional(pool)
+            .fetch_optional(self.database_connection.get_pool())
             .await?;
 
         Ok(user.map(User::from))
     }
 
     async fn find_by_rut(&self, rut: &str) -> Result<Option<User>, UserError> {
-        let pool = self.database_connection.get_pool();
-        let query = r#"SELECT * FROM users WHERE rut = $1"#;
-
-        let user = sqlx::query_as::<_, UserModel>(query)
-            .bind(rut)
-            .fetch_optional(pool)
-            .await?;
+        let user =
+            sqlx::query_as::<_, UserModel>("SELECT * FROM users WHERE rut = $1")
+                .bind(rut)
+                .fetch_optional(self.database_connection.get_pool())
+                .await?;
 
         Ok(user.map(User::from))
     }
 
     async fn find_by_email(&self, email: &str) -> Result<Option<User>, UserError> {
-        let pool = self.database_connection.get_pool();
         let query = r#"SELECT * FROM users WHERE email = $1"#;
 
         let user = sqlx::query_as::<_, UserModel>(query)
             .bind(email)
-            .fetch_optional(pool)
+            .fetch_optional(self.database_connection.get_pool())
             .await?;
 
         Ok(user.map(User::from))
     }
 
     async fn create(&self, user: User) -> Result<User, UserError> {
-        let pool = self.database_connection.get_pool();
         let query = r#"
-            INSERT INTO users (id, rut, name, email, password, roles) 
-            VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING id, rut, name, email, password, roles
+            INSERT INTO users (id, rut, name, email, password, roles, deleted_at) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING id, rut, name, email, password, roles, deleted_at
         "#;
-
-        let roles = user
-            .roles
-            .iter()
-            .map(|r| Role::from_str(r).unwrap_or(Role::Student))
-            .collect::<Vec<_>>();
 
         let model = sqlx::query_as::<_, UserModel>(query)
             .bind(user.id)
@@ -94,44 +84,37 @@ impl UserRepository for PostgresUserRepository {
             .bind(user.name)
             .bind(user.email)
             .bind(user.password)
-            .bind(roles)
-            .fetch_one(pool)
+            .bind(vec_string_to_roles(user.roles))
+            .bind(user.deleted_at)
+            .fetch_one(self.database_connection.get_pool())
             .await?;
 
         Ok(User::from(model))
     }
 
     async fn update(&self, user: User) -> Result<User, UserError> {
-        let pool = self.database_connection.get_pool();
         let query = r#"
             UPDATE users 
             SET email = $1, password = $2, roles = $3
             WHERE id = $4
         "#;
 
-        let roles = user
-            .roles
-            .iter()
-            .map(|r| Role::from_str(r).unwrap_or(Role::Student))
-            .collect::<Vec<_>>();
-
         sqlx::query(query)
             .bind(&user.email)
             .bind(&user.password)
-            .bind(roles)
+            .bind(vec_string_to_roles(user.roles.clone()))
             .bind(user.id)
-            .execute(pool)
+            .execute(self.database_connection.get_pool())
             .await?;
 
         Ok(user)
     }
 
     async fn delete(&self, user_id: &Uuid) -> Result<(), UserError> {
-        let pool = self.database_connection.get_pool();
-
-        sqlx::query("DELETE FROM users WHERE id = $1")
+        sqlx::query("UPDATE users SET deleted_at = $1 WHERE id = $2")
+            .bind(Utc::now())
             .bind(user_id)
-            .execute(pool)
+            .execute(self.database_connection.get_pool())
             .await?;
 
         Ok(())

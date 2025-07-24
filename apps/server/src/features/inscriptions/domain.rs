@@ -63,6 +63,7 @@ pub enum InscriptionError {
     AsignatureNotFound { id: Uuid },
 }
 
+#[derive(Default)]
 pub struct InscriptionFilter {
     pub user_id: Option<Uuid>,
     pub asignature_id: Option<Uuid>,

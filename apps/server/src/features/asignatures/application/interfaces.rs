@@ -24,6 +24,7 @@ pub struct UpdateAsignatureInput {
     pub name: Option<String>,
     pub evaluations: Option<Vec<Evaluation>>,
     pub teacher_id: Option<Uuid>,
+    pub status: Option<String>,
 }
 
 #[async_trait]

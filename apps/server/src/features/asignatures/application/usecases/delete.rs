@@ -3,28 +3,49 @@ use shaku::Component;
 use std::sync::Arc;
 use uuid::Uuid;
 
-use crate::asignatures::{
-    application::DeleteAsignatureCase,
-    domain::{AsignatureError, AsignatureRepository},
+use crate::{
+    asignatures::{
+        application::DeleteAsignatureCase,
+        domain::{AsignatureError, AsignatureRepository},
+    },
+    inscriptions::domain::{InscriptionFilter, InscriptionRepository},
 };
 
 #[derive(Component)]
 #[shaku(interface = DeleteAsignatureCase)]
 pub struct DeleteAsignatureCaseImpl {
     #[shaku(inject)]
-    repository: Arc<dyn AsignatureRepository>,
+    asignatures: Arc<dyn AsignatureRepository>,
+
+    #[shaku(inject)]
+    inscriptions: Arc<dyn InscriptionRepository>,
 }
 
 #[async_trait]
 impl DeleteAsignatureCase for DeleteAsignatureCaseImpl {
     async fn execute(&self, id: &Uuid) -> Result<(), AsignatureError> {
-        let asignature = self.repository.find_by_id(id).await?;
-
-        let Some(_) = asignature else {
+        if self.asignatures.find_by_id(id).await?.is_none() {
             return Err(AsignatureError::NotFound);
         };
 
-        self.repository.delete(id).await?;
+        let inscriptions_filter = InscriptionFilter {
+            asignature_id: Some(*id),
+            ..Default::default()
+        };
+
+        let inscriptions = self.inscriptions.find_all(inscriptions_filter).await;
+
+        let Ok(inscriptions) = inscriptions else {
+            return Err(AsignatureError::UknownError(
+                "Failed to fetch inscriptions".to_string(),
+            ));
+        };
+
+        if !inscriptions.is_empty() {
+            return Err(AsignatureError::HasInscriptions);
+        }
+
+        self.asignatures.delete(id).await?;
 
         Ok(())
     }

@@ -1,8 +1,10 @@
+use std::str::FromStr;
+
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Type};
 use uuid::Uuid;
 
-use crate::asignatures::domain::{Asignature, Evaluation};
+use crate::asignatures::domain::{Asignature, AsignatureError, Evaluation};
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 #[serde(rename_all = "camelCase")]
@@ -15,6 +17,29 @@ pub struct AsignatureModel {
 
     #[sqlx(rename = "teacher_id")]
     pub teacher_id: Uuid,
+    pub status: AsignatureStatus,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[sqlx(type_name = "asignature_status", rename_all = "lowercase")]
+#[serde(rename_all = "lowercase")]
+pub enum AsignatureStatus {
+    InProgress,
+    Ended,
+}
+
+impl FromStr for AsignatureStatus {
+    type Err = AsignatureError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "inprogress" => Ok(AsignatureStatus::InProgress),
+            "ended" => Ok(AsignatureStatus::Ended),
+            _ => Err(AsignatureError::UknownError(
+                "Unknown asignature status".to_string(),
+            )),
+        }
+    }
 }
 
 impl From<AsignatureModel> for Asignature {
@@ -30,6 +55,10 @@ impl From<AsignatureModel> for Asignature {
                 .map(Evaluation::from)
                 .collect(),
             teacher_id: asignature.teacher_id,
+            status: match asignature.status {
+                AsignatureStatus::InProgress => "inprogress".to_string(),
+                AsignatureStatus::Ended => "ended".to_string(),
+            },
         }
     }
 }
@@ -65,6 +94,11 @@ impl From<Asignature> for AsignatureModel {
                 .map(EvaluationType::from)
                 .collect(),
             teacher_id: asignature.teacher_id,
+            status: match asignature.status.as_str() {
+                "inprogress" => AsignatureStatus::InProgress,
+                "ended" => AsignatureStatus::Ended,
+                _ => panic!("Unknown asignature status"),
+            },
         }
     }
 }

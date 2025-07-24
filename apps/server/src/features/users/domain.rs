@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use shaku::Interface;
 use thiserror::Error;
 use uuid::Uuid;
@@ -13,6 +14,7 @@ pub struct User {
     pub email: String,
     pub password: String,
     pub roles: Vec<String>,
+    pub deleted_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Error)]

@@ -4,7 +4,8 @@ CREATE TABLE IF NOT EXISTS users (
     name TEXT NOT NULL,
     email TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
-    roles user_role[] NOT NULL
+    roles user_role[] NOT NULL,
+    deleted_at TIMESTAMP WITH TIME ZONE NULL
 );
 
 CREATE TABLE IF NOT EXISTS practices (
@@ -24,13 +25,14 @@ CREATE TABLE IF NOT EXISTS asignatures (
     code TEXT NOT NULL,
     name TEXT NOT NULL,
     evaluations evaluation[] NOT NULL,
-    teacher_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE
+    teacher_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    status asignature_status NOT NULL DEFAULT 'inprogress'
 );
 
 CREATE TABLE IF NOT EXISTS inscriptions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    asignature_id UUID NOT NULL REFERENCES asignatures(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    asignature_id UUID NOT NULL REFERENCES asignatures(id) ON DELETE RESTRICT,
     practice_id UUID REFERENCES practices(id) ON DELETE SET NULL,
     evaluations_scores student_evaluation[] NOT NULL,
     status student_status NOT NULL DEFAULT 'active',

@@ -3,6 +3,7 @@ use std::{
     str::FromStr,
 };
 
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
@@ -17,6 +18,7 @@ use crate::users::domain::{User, UserError};
 // Deserialize: JSON | OTHERS -> UserModel
 
 #[derive(Serialize, Deserialize, FromRow, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct UserModel {
     pub id: Uuid,
     pub rut: String,
@@ -24,6 +26,8 @@ pub struct UserModel {
     pub email: String,
     pub password: String,
     pub roles: Vec<Role>,
+    #[sqlx(rename = "deleted_at")]
+    pub deleted_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, sqlx::Type)]
@@ -68,6 +72,14 @@ impl FromStr for Role {
     }
 }
 
+/// Converts a Vec<String> to Vec<Role>, ignoring invalid roles.
+pub fn vec_string_to_roles(roles: Vec<String>) -> Vec<Role> {
+    roles
+        .into_iter()
+        .filter_map(|role| Role::from_str(&role).ok())
+        .collect()
+}
+
 // This is the conversion from the `UserModel` struct to the `User` struct.
 // This is necessary bc the `UserModel` struct is used in the infrastructure layer,
 // while the `User` struct is used in the application and domain layers.
@@ -88,6 +100,7 @@ impl From<UserModel> for User {
                 .iter()
                 .map(|role| role.to_string())
                 .collect(),
+            deleted_at: user_model.deleted_at,
         }
     }
 }
@@ -111,6 +124,7 @@ impl From<User> for UserModel {
                 .iter()
                 .map(|role| Role::from_str(role).unwrap_or(Role::Student))
                 .collect(),
+            deleted_at: user.deleted_at,
         }
     }
 }

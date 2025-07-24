@@ -1,5 +1,11 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+DROP TYPE IF EXISTS asignature_status CASCADE;
+CREATE TYPE asignature_status AS ENUM (
+    'inprogress',
+    'ended'
+);
+
 DROP TYPE IF EXISTS student_status CASCADE;
 CREATE TYPE student_status AS ENUM (
     'active',

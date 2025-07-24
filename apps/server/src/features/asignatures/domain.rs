@@ -19,6 +19,7 @@ pub struct Asignature {
     pub code: String,
     pub name: String,
     pub evaluations: Vec<Evaluation>,
+    pub status: String,
     pub teacher_id: Uuid,
 }
 
@@ -82,4 +83,10 @@ pub enum AsignatureError {
         #[from]
         source: UserError,
     },
+
+    #[error("Unknown error: {0}")]
+    UknownError(String),
+
+    #[error("Asignature has inscriptions, cannot delete")]
+    HasInscriptions,
 }

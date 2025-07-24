@@ -51,6 +51,7 @@ impl UserController {
     async fn delete_user(ctx: Context) -> HttpResult<HttpResponse> {
         let id = ctx.param::<Uuid>("id")?;
         let use_case = ctx.get_dependency::<AppModule, dyn DeleteUserCase>()?;
+
         use_case.execute(&id).await?;
 
         Ok(HttpResponse::Ok())
