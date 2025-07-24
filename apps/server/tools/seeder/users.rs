@@ -7,7 +7,7 @@ use tokio::task::JoinSet;
 
 use fake::faker::internet::en::{FreeEmail, Password};
 use fake::Fake;
-use rand::{random_range, Rng};
+use rand::Rng;
 
 #[derive(Serialize, Deserialize, Debug, Clone, sqlx::Type)]
 #[serde(rename_all = "lowercase")]

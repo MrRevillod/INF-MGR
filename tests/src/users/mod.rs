@@ -3,7 +3,7 @@ pub mod utils;
 use serde_json::json;
 use sword::web::ResponseBody;
 
-use crate::tests::app::init_test_app;
+use crate::init_test_app;
 
 use utils::*;
 

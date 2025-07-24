@@ -2752,6 +2752,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "tests"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "axum-test",
+ "rand 0.9.1",
+ "serde",
+ "serde_json",
+ "server",
+ "sqlx",
+ "sword",
+ "tokio",
+ "uuid",
+]
+
+[[package]]
 name = "thiserror"
 version = "2.0.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"

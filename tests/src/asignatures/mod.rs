@@ -1,8 +1,11 @@
 pub mod utils;
 
-use crate::tests::{
-    app::{extract_resource_id, init_test_app},
-    users::utils::{create_teacher, delete_user},
+use crate::{
+    extract_resource_id, init_test_app,
+    inscriptions::utils::{
+        InscriptionBuilder, create_inscription, delete_incription,
+    },
+    users::utils::{create_student, create_teacher, delete_user},
 };
 
 use serde_json::json;
@@ -99,6 +102,39 @@ async fn test_delete_asignature() {
     let created_asignature_id = extract_resource_id(&created_asignature);
 
     delete_asignature(&app, &created_asignature_id).await;
+    delete_user(&app, &teacher_id).await;
+}
+
+#[tokio::test]
+async fn test_delete_asignature_with_active_inscriptions_should_fail() {
+    let app = init_test_app().await;
+    let teacher_id = create_teacher(&app).await;
+
+    let new_asignature = AsignatureBuilder::new(&teacher_id)
+        .with_single_evaluation("Test Evaluation", 100)
+        .build();
+
+    let created_asignature = create_asignature(&app, &new_asignature).await;
+    let created_asignature_id = extract_resource_id(&created_asignature);
+
+    let student_id = create_student(&app).await;
+    let inscription_data = InscriptionBuilder::new()
+        .with_student_id(&student_id)
+        .with_asignature_id(&created_asignature_id)
+        .build();
+
+    let inscription = create_inscription(&app, &inscription_data).await;
+    let inscription_id = extract_resource_id(&inscription);
+
+    let response = app
+        .delete(&format!("/asignatures/{created_asignature_id}"))
+        .await;
+
+    assert_eq!(response.status_code(), 403);
+
+    delete_incription(&app, &inscription_id).await;
+    delete_asignature(&app, &created_asignature_id).await;
+    delete_user(&app, &student_id).await;
     delete_user(&app, &teacher_id).await;
 }
 

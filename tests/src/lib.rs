@@ -2,7 +2,18 @@ use axum_test::TestServer;
 use serde_json::Value;
 use sword::prelude::Application;
 
-use crate::{
+#[cfg(test)]
+pub mod asignatures;
+#[cfg(test)]
+pub mod inscriptions;
+#[cfg(test)]
+pub mod practices;
+#[cfg(test)]
+pub mod reports;
+#[cfg(test)]
+pub mod users;
+
+use server::{
     asignatures::infrastructure::AsignaturesController,
     config::{MailerConfig, PostgresDbConfig},
     inscriptions::infrastructure::InscriptionController,
@@ -52,5 +63,5 @@ pub fn extract_resource_id(data: &Value) -> String {
     data.get("id")
         .and_then(|id| id.as_str())
         .map(String::from)
-        .unwrap_or_else(|| panic!("Response does not contain 'id': {:?}", data))
+        .unwrap_or_else(|| panic!("Response does not contain 'id': {data:?}"))
 }

@@ -259,14 +259,14 @@ mod validators {
         Ok(())
     }
 
-    pub fn validate_roles_string(role: &String) -> Result<(), ValidationError> {
+    pub fn validate_roles_string(role: &str) -> Result<(), ValidationError> {
         if role.is_empty() {
             return Err(ValidationError::new("El rol no puede estar vacío"));
         }
 
         match Role::from_str(role) {
             Ok(_) => Ok(()),
-            Err(_) => return Err(ValidationError::new("Rol invalido")),
+            Err(_) => Err(ValidationError::new("Rol invalido")),
         }
     }
 }

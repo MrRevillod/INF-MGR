@@ -42,7 +42,8 @@ impl Display for StudentStatus {
             StudentStatus::Completed => "completed",
             StudentStatus::Evaluating => "evaluating",
         };
-        write!(f, "{}", status)
+
+        write!(f, "{status}")
     }
 }
 

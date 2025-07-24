@@ -1,0 +1,28 @@
+[package]
+name = "tests"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+
+server = { path = "../apps/server" }
+tokio = { version = "1.46.1", features = ["full"] }
+sword = { git = "https://github.com/MrRevillod/sword", branch = "dev" }
+axum = "0.8.4"
+
+axum-test = "17.3.0"
+rand = "0.9.1"
+
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.140"
+
+uuid = { version = "1.17.0", features = ["serde", "v4"] }
+
+sqlx = { version = "0.8.5", features = [
+    "runtime-tokio",
+    "postgres",
+    "chrono",
+    "uuid",
+    "derive",
+    "migrate",
+] }

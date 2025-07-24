@@ -82,15 +82,11 @@ pub mod features {
             mod interfaces;
 
             mod usecases {
-                pub mod create;
-                pub mod delete;
                 pub mod get;
                 pub mod update;
 
-                // pub use create::CreatePracticeCaseImpl;
-                // pub use delete::DeletePracticeCaseImpl;
-                // pub use get::GetPracticeCaseImpl;
-                // pub use update::UpdatePracticeCaseImpl;
+                pub use get::GetReportsCaseImpl;
+                pub use update::UpdateReportCaseImpl;
             }
 
             pub use interfaces::*;
@@ -104,10 +100,10 @@ pub mod features {
             mod repository;
 
             pub mod errors;
-            // pub use controllers::UserController;
-            // pub use dtos::{CreateUserDto, UpdateUserDto, UserResponseDTO};
-            // pub use models::{Role, UserModel};
-            // pub use repository::PostgresUserRepository;
+            pub use controllers::ReportController;
+            pub use dtos::{GetReportsQuery, UpdateReportDto};
+            pub use models::ReportModel;
+            pub use repository::PostgresReportRepository;
         }
     }
 
@@ -179,8 +175,8 @@ pub mod features {
 
             pub mod errors;
             pub use controllers::PracticesController;
-            // pub use dtos::{CreateUserDto, UpdateUserDto, UserResponseDTO};
-            // pub use models::{Role, UserModel};
+            pub use dtos::{CreatePracticeDto, UpdatePracticeDto};
+            pub use models::PracticeModel;
             pub use repository::PostgresPracticeRepository;
         }
     }
@@ -201,15 +197,21 @@ pub mod shared {
     pub mod di;
     pub mod layers;
     pub mod smtp;
-    pub mod validators;
-}
+    pub mod validators {
+        use validator::ValidationError;
 
-#[cfg(test)]
-pub mod tests {
-    pub mod app;
-    pub mod asignatures;
-    pub mod inscriptions;
-    pub mod practices;
-    pub mod reports;
-    pub mod users;
+        pub fn validate_uuid(uuid: &str) -> Result<(), ValidationError> {
+            if uuid.is_empty() {
+                return Err(ValidationError::new(
+                    "La identificación no puede estar vacía.",
+                ));
+            }
+
+            if uuid::Uuid::parse_str(uuid).is_err() {
+                return Err(ValidationError::new("Identificación inválida."));
+            }
+
+            Ok(())
+        }
+    }
 }

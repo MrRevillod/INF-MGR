@@ -1,7 +1,7 @@
 use shaku::module;
 
 use crate::{
-    asignatures, inscriptions, practices,
+    asignatures, inscriptions, practices, reports,
     shared::{
         database::PostgresDatabase,
         services::{BcryptPasswordHasher, MailerService},
@@ -53,6 +53,10 @@ module! {
             practices::application::CreatePracticeCaseImpl,
             practices::application::UpdatePracticeCaseImpl,
             practices::application::DeletePracticeCaseImpl,
+
+            reports::infrastructure::PostgresReportRepository,
+            reports::application::GetReportsCaseImpl,
+            reports::application::UpdateReportCaseImpl,
 
             users::infrastructure::PostgresUserRepository,
             users::application::GetUsersCaseImpl,

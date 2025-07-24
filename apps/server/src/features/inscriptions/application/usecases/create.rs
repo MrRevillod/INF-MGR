@@ -18,13 +18,13 @@ use crate::users::domain::UserRepository;
 #[shaku(interface = CreateInscriptionCase)]
 pub struct CreateInscriptionCaseImpl {
     #[shaku(inject)]
-    repository: Arc<dyn InscriptionRepository>,
+    inscriptions: Arc<dyn InscriptionRepository>,
 
     #[shaku(inject)]
-    user_repository: Arc<dyn UserRepository>,
+    users: Arc<dyn UserRepository>,
 
     #[shaku(inject)]
-    asignature_repository: Arc<dyn AsignatureRepository>,
+    asignatures: Arc<dyn AsignatureRepository>,
 }
 
 #[async_trait]
@@ -33,7 +33,7 @@ impl CreateInscriptionCase for CreateInscriptionCaseImpl {
         &self,
         inscription: Inscription,
     ) -> Result<Inscription, InscriptionError> {
-        let user_id = inscription.user_id.clone();
+        let user_id = inscription.user_id;
 
         let filter = InscriptionFilter {
             user_id: Some(inscription.user_id),
@@ -41,14 +41,13 @@ impl CreateInscriptionCase for CreateInscriptionCaseImpl {
             status: None,
         };
 
-        if !self.repository.find_all(filter).await?.is_empty() {
+        if !self.inscriptions.find_all(filter).await?.is_empty() {
             return Err(InscriptionError::InscriptionAlreadyExists);
         }
 
         let (user_exists, asignature_exists) = tokio::join!(
-            self.user_repository.find_by_id(&user_id),
-            self.asignature_repository
-                .find_by_id(&inscription.asignature_id)
+            self.users.find_by_id(&user_id),
+            self.asignatures.find_by_id(&inscription.asignature_id)
         );
 
         let Some(user) = user_exists? else {
@@ -65,6 +64,6 @@ impl CreateInscriptionCase for CreateInscriptionCaseImpl {
             return Err(InscriptionError::InvalidStudentRole);
         }
 
-        self.repository.create(inscription).await
+        self.inscriptions.create(inscription).await
     }
 }

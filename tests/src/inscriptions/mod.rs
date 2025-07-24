@@ -1,11 +1,11 @@
 use axum::http::StatusCode;
 use uuid::Uuid;
 
-use crate::tests::{
-    app::{extract_resource_id, init_test_app},
-    asignatures::utils::{create_asignature, delete_asignature, AsignatureBuilder},
+use crate::{
+    asignatures::utils::{AsignatureBuilder, create_asignature, delete_asignature},
+    extract_resource_id, init_test_app,
     inscriptions::utils::{
-        create_inscription, delete_incription, InscriptionBuilder,
+        InscriptionBuilder, create_inscription, delete_incription,
     },
     users::utils::{create_student, create_teacher, delete_user},
 };

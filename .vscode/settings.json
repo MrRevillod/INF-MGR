@@ -127,6 +127,7 @@
 		"editor.defaultFormatter": "tamasfe.even-better-toml"
 	},
 	"[dockercompose]": {
+		"editor.defaultFormatter": "ms-azuretools.vscode-containers",
 		"editor.formatOnSave": true,
 		"editor.tabSize": 2,
 		"editor.autoIndent": "advanced",

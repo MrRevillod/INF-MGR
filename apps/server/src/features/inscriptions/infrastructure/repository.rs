@@ -9,7 +9,7 @@ use crate::inscriptions::{
         Inscription, InscriptionError, InscriptionFilter, InscriptionRepository,
     },
     infrastructure::models::{
-        InscriptionModel, StudentStatus, StudentEvaluationModel,
+        InscriptionModel, StudentEvaluationModel, StudentStatus,
     },
 };
 

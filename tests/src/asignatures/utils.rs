@@ -1,5 +1,5 @@
 use axum_test::TestServer;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use sword::web::ResponseBody;
 use uuid::Uuid;
 

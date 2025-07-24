@@ -1,9 +1,9 @@
 use axum_test::TestServer;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use sword::web::ResponseBody;
 use uuid::Uuid;
 
-use crate::tests::app::extract_resource_id;
+use crate::extract_resource_id;
 
 pub struct UserBuilder {
     rut: String,

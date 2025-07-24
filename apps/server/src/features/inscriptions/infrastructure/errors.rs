@@ -13,7 +13,7 @@ impl From<InscriptionError> for HttpResponse {
             }
 
             InscriptionError::InvalidStatus { status } => HttpResponse::BadRequest()
-                .message(&format!("Estado inválido: {}", status)),
+                .message(format!("Estado inválido: {status}")),
 
             InscriptionError::InscriptionAlreadyExists => HttpResponse::Conflict()
                 .message(
@@ -28,17 +28,17 @@ impl From<InscriptionError> for HttpResponse {
                 .message("Estudiante inválido, intente más tarde"),
 
             InscriptionError::Database { source } => {
-                eprintln!("Database error: {}", source);
+                eprintln!("Database error: {source}");
                 HttpResponse::InternalServerError()
             }
 
             InscriptionError::UserError { source } => {
-                eprintln!("User error: {}", source);
+                eprintln!("User error: {source}");
                 HttpResponse::InternalServerError()
             }
 
             InscriptionError::AsignatureError { source } => {
-                eprintln!("Asignature error: {}", source);
+                eprintln!("Asignature error: {source}");
                 HttpResponse::InternalServerError()
             }
 

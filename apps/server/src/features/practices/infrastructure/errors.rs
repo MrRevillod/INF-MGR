@@ -7,7 +7,7 @@ impl From<PracticeError> for HttpResponse {
         match error {
             PracticeError::NotFound => HttpResponse::NotFound(),
             PracticeError::Database { source } => {
-                eprintln!("Database error: {}", source);
+                eprintln!("Database error: {source}");
                 HttpResponse::InternalServerError()
             }
         }
