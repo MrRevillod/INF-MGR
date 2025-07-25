@@ -1,7 +1,7 @@
 node_modules
 dist
 target
-/.svelte-kit
+.svelte-kit
 /build
 
 logs
@@ -21,3 +21,6 @@ pnpm-lock.yaml
 
 .env
 .env.test
+
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*

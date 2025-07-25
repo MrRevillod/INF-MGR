@@ -36,12 +36,13 @@
 		"**/CVS": true,
 		"**/.DS_Store": true,
 		"**/Thumbs.db": true,
-		"**/node_modules": false,
+		"**/node_modules": true,
 		"**/build": true,
 		"**/dist": true,
 		"**/migrations": false,
 		".markdown": false,
-		"target": true
+		"target": true,
+		"**/.svelte-kit": true,
 	},
 	"explorer.fileNesting.enabled": true,
 	"explorer.fileNesting.expand": false,
@@ -156,6 +157,12 @@
 		"editor.tabSize": 4,
 		"editor.indentSize": "tabSize"
 	},
+	"[just]": {
+		"editor.defaultFormatter": "nefrob.vscode-just-syntax",
+		"editor.formatOnSave": true,
+		"editor.tabSize": 4,
+		"editor.indentSize": "tabSize"
+	},
 	"errorLens.enabled": true,
 	"javascript.updateImportsOnFileMove.enabled": "always",
 	"editor.formatOnSave": true,
@@ -181,5 +188,11 @@
 		"**/{.git,node_modules}": {
 			"when": "**"
 		}
-	}
+	},
+	"editor.quickSuggestions": {
+		"strings": "on"
+	},
+	"typescript.preferences.autoImportSpecifierExcludeRegexes": [
+		"^(node:)?os$"
+	],
 }

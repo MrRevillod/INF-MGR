@@ -1,0 +1,25 @@
+import type { MutateFunction } from "@tanstack/svelte-query"
+
+export type Nullable<T> = T | null
+
+// API Call types -----
+
+export type ApiResponse<T = unknown> = {
+	data: T
+	status: number
+	timestamp: string
+	message: string
+}
+
+export type Conflicts = {
+	conflicts: string[]
+}
+
+export type MutationFn<TData, TVariables> = MutateFunction<
+	TData,
+	Error,
+	TVariables,
+	unknown
+>
+
+export type Action<T, P> = (params: P) => Promise<ApiResponse<T>>
