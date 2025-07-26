@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use crate::users::{
     application::interfaces::GetUsersCase,
-    domain::{User, UserError, UserRepository},
+    domain::{GetUsersParams, User, UserError, UserRepository},
 };
 
 #[derive(Component)]
@@ -16,7 +16,7 @@ pub struct GetUsersCaseImpl {
 
 #[async_trait]
 impl GetUsersCase for GetUsersCaseImpl {
-    async fn execute(&self, role: String) -> Result<Vec<User>, UserError> {
-        self.repository.find_all(role).await
+    async fn execute(&self, filter: GetUsersParams) -> Result<Vec<User>, UserError> {
+        self.repository.find_all(filter).await
     }
 }

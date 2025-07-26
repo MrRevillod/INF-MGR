@@ -23,11 +23,13 @@ export const UknownError = {
 	message: "Error desconocido, por favor intente más tarde.",
 }
 
-export const tryHttp = async <T>(
-	promise: AxiosResponse<T>
-): Promise<ApiResponse<T>> => {
+export const tryHttp = async <T>({
+	fn,
+}: {
+	fn: AxiosResponse<T>
+}): Promise<ApiResponse<T>> => {
 	try {
-		return (await promise.data) as ApiResponse<T>
+		return (await fn.data) as ApiResponse<T>
 	} catch (error: any) {
 		console.error("Error in tryHttp:", error)
 		return error?.response?.data ?? UknownError

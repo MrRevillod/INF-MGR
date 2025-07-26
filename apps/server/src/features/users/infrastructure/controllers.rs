@@ -19,7 +19,7 @@ impl UserController {
         let query = ctx.validated_query::<GetUsersQuery>()?;
         let use_case = ctx.get_dependency::<AppModule, dyn GetUsersCase>()?;
 
-        let data = use_case.execute(query.role).await?;
+        let data = use_case.execute(query.try_into()?).await?;
         let users: Vec<UserResponseDTO> =
             data.into_iter().map(UserResponseDTO::from).collect();
 

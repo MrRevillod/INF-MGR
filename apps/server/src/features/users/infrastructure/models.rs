@@ -73,10 +73,10 @@ impl FromStr for Role {
 }
 
 /// Converts a Vec<String> to Vec<Role>, ignoring invalid roles.
-pub fn vec_string_to_roles(roles: Vec<String>) -> Vec<Role> {
+pub fn vec_string_to_roles(roles: Vec<impl Into<String>>) -> Vec<Role> {
     roles
         .into_iter()
-        .filter_map(|role| Role::from_str(&role).ok())
+        .filter_map(|role| Role::from_str(&role.into()).ok())
         .collect()
 }
 

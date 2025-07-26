@@ -2,7 +2,10 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use validator::Validate;
 
-use crate::users::{application::UpdateUserInput, domain::User};
+use crate::users::{
+    application::UpdateUserInput,
+    domain::{GetUsersParams, User, UserError},
+};
 
 #[derive(Deserialize, Validate, Debug)]
 #[validate(schema(function = "validators::validate_password_pairs"))]
@@ -112,8 +115,34 @@ impl From<User> for UserResponseDTO {
 
 #[derive(Serialize, Deserialize, Validate)]
 pub struct GetUsersQuery {
-    #[validate(custom(function = "validators::validate_roles_string"))]
+    #[validate(custom(function = "validators::validate_roles_query_string"))]
     pub role: String,
+    #[validate(length(
+        min = 1,
+        max = 100,
+        message = "El término de búsqueda debe tener entre 3 y 100 caracteres."
+    ))]
+    pub search: Option<String>,
+}
+
+impl TryFrom<GetUsersQuery> for GetUsersParams {
+    type Error = UserError;
+    fn try_from(query: GetUsersQuery) -> Result<Self, Self::Error> {
+        Ok(GetUsersParams {
+            roles: match query.role.as_str() {
+                "students" => vec!["student"],
+                "staff" => {
+                    vec!["teacher", "administrator", "coordinator", "secretary"]
+                }
+                _ => {
+                    return Err(UserError::InvalidRole {
+                        role: query.role.clone(),
+                    });
+                }
+            },
+            search: query.search,
+        })
+    }
 }
 
 mod validators {
@@ -259,14 +288,17 @@ mod validators {
         Ok(())
     }
 
-    pub fn validate_roles_string(role: &str) -> Result<(), ValidationError> {
+    pub fn validate_roles_query_string(role: &str) -> Result<(), ValidationError> {
         if role.is_empty() {
             return Err(ValidationError::new("El rol no puede estar vacío"));
         }
 
-        match Role::from_str(role) {
-            Ok(_) => Ok(()),
-            Err(_) => Err(ValidationError::new("Rol invalido")),
+        if role == "students" || role == "staff" {
+            return Ok(());
         }
+
+        Err(ValidationError::new(
+            "Rol inválido, debe ser 'students' o 'staff'",
+        ))
     }
 }

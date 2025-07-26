@@ -7,13 +7,13 @@ const config = {
 
 	kit: {
 		adapter: adapter({
-			fallback: "index.html"
+			fallback: "index.html",
 		}),
 		alias: {
 			$lib: "src/lib",
-			$components: "src/components"
-		}
-	}
+			$components: "src/components",
+		},
+	},
 }
 
 export default config

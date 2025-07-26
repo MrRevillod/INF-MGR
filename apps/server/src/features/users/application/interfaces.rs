@@ -5,13 +5,13 @@ use async_trait::async_trait;
 use shaku::Interface;
 use uuid::Uuid;
 
-use crate::users::domain::{User, UserError};
+use crate::users::domain::{GetUsersParams, User, UserError};
 
 /// Caso de uso para obtener todos los usuarios.
 /// implementación: users/application/use_cases/get.rs
 #[async_trait]
 pub trait GetUsersCase: Interface {
-    async fn execute(&self, role: String) -> Result<Vec<User>, UserError>;
+    async fn execute(&self, filter: GetUsersParams) -> Result<Vec<User>, UserError>;
 }
 
 /// Caso de uso para crear un nuevo usuario.

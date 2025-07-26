@@ -1,21 +1,23 @@
 import { api } from "."
+import { createQuery } from "@tanstack/svelte-query"
 import { appendQueryParams, tryHttp } from "./utils"
-
-import type { Action } from "$lib/types"
-import type { User } from "$lib/schemas/user"
 
 interface GetUsersParams {
 	role?: string
 	search?: string
 }
 
-export const getUsers: Action<User[], GetUsersParams> = async ({ role, search }) => {
-	return await tryHttp(
-		await api.get(
-			appendQueryParams("/users", {
-				role: role?.slice(0, -1),
-				search,
-			})
-		)
-	)
+export const getUserQuery = (role: string, search: string) => {
+	const action = async ({ role, search }: GetUsersParams) => {
+		return tryHttp({
+			fn: await api.get(appendQueryParams("/users", { role, search })),
+		})
+	}
+
+	return createQuery({
+		queryKey: ["users", role, search],
+		enabled: !!role,
+		staleTime: 1000 * 60 * 1,
+		queryFn: async () => await action({ role, search }),
+	})
 }

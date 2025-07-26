@@ -1,14 +1,14 @@
 use async_trait::async_trait;
 use chrono::Utc;
 use shaku::Component;
-use std::str::FromStr;
+use sqlx::{Postgres, QueryBuilder};
 use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::shared::database::DatabaseConnection;
 
+use crate::users::domain::GetUsersParams;
 use crate::users::infrastructure::models::vec_string_to_roles;
-use crate::users::infrastructure::Role;
 use crate::users::{
     domain::{User, UserError, UserRepository},
     infrastructure::models::UserModel,
@@ -23,20 +23,43 @@ pub struct PostgresUserRepository {
 
 #[async_trait]
 impl UserRepository for PostgresUserRepository {
-    async fn find_all(&self, role: String) -> Result<Vec<User>, UserError> {
-        let query = r#"
-            SELECT * FROM users 
-            WHERE roles @> ARRAY[$1]::user_role[] AND deleted_at IS NULL
-        "#;
+    async fn find_all(
+        &self,
+        filter: GetUsersParams,
+    ) -> Result<Vec<User>, UserError> {
+        let mut query = QueryBuilder::<Postgres>::new(
+            "SELECT * FROM users WHERE deleted_at IS NULL",
+        );
 
-        let users = sqlx::query_as::<_, UserModel>(query)
-            .bind(Role::from_str(&role).unwrap_or(Role::Student))
+        if let Some(search) = filter.search {
+            let pattern = format!("%{}%", search);
+
+            query.push(" AND (");
+            query
+                .push("name ILIKE ")
+                .push_bind(pattern.clone())
+                .push(" OR email ILIKE ")
+                .push_bind(pattern.clone())
+                .push(" OR rut ILIKE ")
+                .push_bind(pattern.clone());
+
+            query.push(")");
+        }
+
+        let roles = vec_string_to_roles(filter.roles);
+
+        if !roles.is_empty() {
+            query.push(" AND roles && ");
+            query.push_bind(roles);
+            query.push("::user_role[]");
+        }
+
+        let users = query
+            .build_query_as::<UserModel>()
             .fetch_all(self.database_connection.get_pool())
             .await?;
 
-        let entity_vec = users.into_iter().map(User::from).collect();
-
-        Ok(entity_vec)
+        Ok(users.into_iter().map(User::from).collect())
     }
 
     async fn find_by_id(&self, user_id: &Uuid) -> Result<Option<User>, UserError> {

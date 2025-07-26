@@ -1,133 +1,62 @@
 <script lang="ts">
-	import { goto } from "$app/navigation"
 	import { page } from "$app/state"
-	import { getUsers } from "$lib/api/users"
+	import { goto } from "$app/navigation"
+	import { getUserQuery } from "$lib/api/users"
+	import { tableColumns, actions } from "$lib/utils/users"
 
-	import { createQuery } from "@tanstack/svelte-query"
+	import Table from "$components/Table/Table.svelte"
+	import SearchBar from "$components/SearchBar.svelte"
+	import PageTitle from "$components/PageTitle.svelte"
+	import Button from "$components/Button.svelte"
 
-	const role = $derived(page.params.role)
+	const role = $derived(page.params.role ?? "students")
 	const search = $derived(page.url.searchParams.get("search") ?? "")
 
-	function onSearchChange(e: Event) {
-		const input = e.target as HTMLInputElement
-		const searchValue = input.value.trim().toLocaleLowerCase()
-
-		goto(`/users/${role}?search=${encodeURIComponent(searchValue)}`, {
+	function onQueryChange(value: string) {
+		const encoded = encodeURIComponent(value)
+		goto(`/users/${role}?search=${encoded}`, {
 			keepFocus: true,
 			noScroll: true,
 		})
 	}
 
-	let query = $derived(
-		createQuery({
-			queryKey: ["users", role, search],
-			queryFn: () => getUsers({ role, search }),
-			enabled: !!role,
-			staleTime: 1000 * 60 * 1,
-		})
-	)
+	const query = $derived(getUserQuery(role, search))
+
+	const { data: response, isLoading, isError, refetch } = $derived($query)
 </script>
 
-<main>
-	<header>
-		<h1>Usuarios del sistema</h1>
-	</header>
+<div class="space-y-6">
+	<PageTitle
+		description="Gestiona y visualiza la información de los usuarios del sistema"
+	/>
 
-	<section class="filters">
-		<input
-			type="text"
-			value={search}
-			oninput={onSearchChange}
-			placeholder="Buscar por nombre, correo o RUT"
-		/>
-	</section>
+	<div class="flex items-center justify-between gap-4">
+		<div class="max-w-md flex-1">
+			<SearchBar
+				{search}
+				placeholder="Buscar usuarios..."
+				onSearchChange={onQueryChange}
+			/>
+		</div>
 
-	<section class="table">
-		<table>
-			<thead>
-				<tr>
-					<th>RUT</th>
-					<th>Nombre</th>
-					<th>Correo electrónico</th>
-					<th>Roles</th>
-				</tr>
-			</thead>
-			<tbody>
-				{#each $query?.data?.data ?? [] as user (user.rut)}
-					<tr>
-						<td>{user.rut}</td>
-						<td>{user.name}</td>
-						<td>{user.email}</td>
-						<td
-							>[
-							{#if Array.isArray(user.roles) && user.roles.length > 0}
-								{#each user.roles as userRole (userRole)}
-									<span class="role">{userRole}</span>
-								{/each}
-							{:else}
-								<span class="role">Sin roles</span>
-							{/if}]
-						</td>
-					</tr>
-				{/each}
-			</tbody>
-		</table>
-	</section>
-</main>
+		<div class="flex items-center gap-3">
+			<Button
+				onclick={() => refetch()}
+				variant="secondary"
+				disabled={isLoading}
+				text={isLoading ? "Cargando..." : "Actualizar"}
+			/>
 
-<style>
-	main {
-		width: 100%;
-		display: flex;
-		flex-direction: column;
-	}
+			<Button onclick={() => {}} variant="primary" text="Nuevo usuario" />
+		</div>
+	</div>
 
-	.table {
-		width: 100%;
-		margin-top: 1.5rem;
-		margin-bottom: 2rem;
-		margin-left: 0;
-		align-self: stretch;
-	}
-
-	table {
-		width: 100%;
-		border-collapse: separate;
-		border-spacing: 0 0.5rem;
-		font-size: 1rem;
-	}
-
-	thead tr {
-		text-align: left;
-	}
-
-	thead th {
-		padding: 0.75rem 1.25rem 0.5rem 0.5rem;
-		font-weight: 600;
-		text-align: start;
-		letter-spacing: 0.02em;
-	}
-
-	tbody td {
-		padding: 0.75rem 1.25rem 0.75rem 0.5rem;
-		vertical-align: top;
-	}
-
-	tr {
-		background: none;
-		border-radius: 0.5rem;
-	}
-
-	tr:not(:last-child) td {
-		border-bottom: 1px solid #e0e0e0;
-	}
-
-	.role {
-		display: inline-block;
-		margin-right: 0.5rem;
-		padding: 0.15em 0.7em;
-		border-radius: 0.4em;
-		font-size: 0.95em;
-		background: #f5f5f5;
-	}
-</style>
+	<Table
+		data={response?.data}
+		columns={tableColumns}
+		{actions}
+		{isError}
+		{isLoading}
+		onPageChange={onQueryChange}
+	/>
+</div>

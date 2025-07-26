@@ -1,7 +1,5 @@
 import type { MutateFunction } from "@tanstack/svelte-query"
 
-export type Nullable<T> = T | null
-
 // API Call types -----
 
 export type ApiResponse<T = unknown> = {
