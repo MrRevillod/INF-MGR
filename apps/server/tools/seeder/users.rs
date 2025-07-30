@@ -24,8 +24,8 @@ pub async fn seed_users_table_students(pool: &PgPool) -> Result<(), sqlx::Error>
     let mut tasks = JoinSet::new();
 
     let query = r#"
-        INSERT INTO users (id, rut, name, email, password, roles) 
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO users (id, rut, name, email, password, roles, deleted_at, created_at) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     "#;
 
     for _ in 0..50 {
@@ -38,6 +38,8 @@ pub async fn seed_users_table_students(pool: &PgPool) -> Result<(), sqlx::Error>
                 .bind(FreeEmail().fake::<String>())
                 .bind(Password(8..12).fake::<String>())
                 .bind(vec![Role::Student])
+                .bind(Option::<chrono::DateTime<chrono::Utc>>::None)
+                .bind(chrono::Utc::now())
                 .execute(&pool)
                 .await
         });
@@ -56,8 +58,8 @@ pub async fn seed_users_table_teachers(pool: &PgPool) -> Result<(), sqlx::Error>
     let mut tasks = JoinSet::new();
 
     let query = r#"
-        INSERT INTO users (id, rut, name, email, password, roles) 
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO users (id, rut, name, email, password, roles, deleted_at, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     "#;
 
     for _ in 0..10 {
@@ -70,6 +72,8 @@ pub async fn seed_users_table_teachers(pool: &PgPool) -> Result<(), sqlx::Error>
                 .bind(FreeEmail().fake::<String>())
                 .bind(Password(8..12).fake::<String>())
                 .bind(vec![Role::Teacher])
+                .bind(Option::<chrono::DateTime<chrono::Utc>>::None)
+                .bind(chrono::Utc::now())
                 .execute(&pool)
                 .await
         });
@@ -90,8 +94,8 @@ pub async fn seed_users_table_administrator(
     let mut tasks = JoinSet::new();
 
     let query = r#"
-        INSERT INTO users (id, rut, name, email, password, roles) 
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO users (id, rut, name, email, password, roles, deleted_at, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     "#;
 
     for _ in 0..2 {
@@ -104,6 +108,8 @@ pub async fn seed_users_table_administrator(
                 .bind(FreeEmail().fake::<String>())
                 .bind(Password(8..12).fake::<String>())
                 .bind(vec![Role::Administrator])
+                .bind(Option::<chrono::DateTime<chrono::Utc>>::None)
+                .bind(chrono::Utc::now())
                 .execute(&pool)
                 .await
         });
@@ -122,8 +128,8 @@ pub async fn seed_users_table_coordinator(pool: &PgPool) -> Result<(), sqlx::Err
     let mut tasks = JoinSet::new();
 
     let query = r#"
-        INSERT INTO users (id, rut, name, email, password, roles) 
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO users (id, rut, name, email, password, roles, deleted_at, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     "#;
 
     for _ in 0..4 {
@@ -136,6 +142,8 @@ pub async fn seed_users_table_coordinator(pool: &PgPool) -> Result<(), sqlx::Err
                 .bind(FreeEmail().fake::<String>())
                 .bind(Password(8..12).fake::<String>())
                 .bind(vec![Role::Coordinator])
+                .bind(Option::<chrono::DateTime<chrono::Utc>>::None)
+                .bind(chrono::Utc::now())
                 .execute(&pool)
                 .await
         });
@@ -154,8 +162,8 @@ pub async fn seed_users_table_secretary(pool: &PgPool) -> Result<(), sqlx::Error
     let mut tasks = JoinSet::new();
 
     let query = r#"
-        INSERT INTO users (id, rut, name, email, password, roles) 
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO users (id, rut, name, email, password, roles, deleted_at, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     "#;
 
     for _ in 0..2 {
@@ -168,6 +176,8 @@ pub async fn seed_users_table_secretary(pool: &PgPool) -> Result<(), sqlx::Error
                 .bind(FreeEmail().fake::<String>())
                 .bind(Password(8..12).fake::<String>())
                 .bind(vec![Role::Secretary])
+                .bind(Option::<chrono::DateTime<chrono::Utc>>::None)
+                .bind(chrono::Utc::now())
                 .execute(&pool)
                 .await
         });

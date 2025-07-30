@@ -24,16 +24,15 @@ impl From<AsignatureError> for HttpResponse {
             AsignatureError::UserIsNotTeacher => HttpResponse::BadRequest().message(
                 "El profesor seleccionado no se encuentra registrado como docente",
             ),
-            AsignatureError::UserRepositoryError { source } => {
-                eprintln!("AsignatureError internal error (HTTP 500): {source}");
+            AsignatureError::ForeignUserError(msg) => {
+                eprintln!("AsignatureError::ForeignUserError: {msg}");
                 HttpResponse::InternalServerError()
+                    .message("Error inesperado en usuarios")
             }
-
             AsignatureError::UknownError(source) => {
                 eprintln!("AsignatureError internal error (HTTP 500): {source}");
                 HttpResponse::InternalServerError()
             }
-
             AsignatureError::HasInscriptions => HttpResponse::Forbidden()
                 .message("La asignatura tiene inscripciones"),
         }

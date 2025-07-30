@@ -17,6 +17,10 @@ pub struct AsignatureModel {
 
     #[sqlx(rename = "teacher_id")]
     pub teacher_id: Uuid,
+
+    #[sqlx(rename = "coordinator_id")]
+    pub coordinator_id: Uuid,
+
     pub status: AsignatureStatus,
 }
 
@@ -54,7 +58,10 @@ impl From<AsignatureModel> for Asignature {
                 .into_iter()
                 .map(Evaluation::from)
                 .collect(),
+
             teacher_id: asignature.teacher_id,
+            coordinator_id: asignature.coordinator_id,
+
             status: match asignature.status {
                 AsignatureStatus::InProgress => "inprogress".to_string(),
                 AsignatureStatus::Ended => "ended".to_string(),
@@ -93,7 +100,10 @@ impl From<Asignature> for AsignatureModel {
                 .into_iter()
                 .map(EvaluationType::from)
                 .collect(),
+
             teacher_id: asignature.teacher_id,
+            coordinator_id: asignature.coordinator_id,
+
             status: match asignature.status.as_str() {
                 "inprogress" => AsignatureStatus::InProgress,
                 "ended" => AsignatureStatus::Ended,

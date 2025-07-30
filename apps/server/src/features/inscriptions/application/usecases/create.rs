@@ -50,11 +50,17 @@ impl CreateInscriptionCase for CreateInscriptionCaseImpl {
             self.asignatures.find_by_id(&inscription.asignature_id)
         );
 
-        let Some(user) = user_exists? else {
+        let user_exists = user_exists
+            .map_err(|e| InscriptionError::ForeignUserError(e.to_string()))?;
+
+        let asignature_exists = asignature_exists
+            .map_err(|e| InscriptionError::ForeignAsignatureError(e.to_string()))?;
+
+        let Some(user) = user_exists else {
             return Err(InscriptionError::StudentNotFound { id: user_id });
         };
 
-        if asignature_exists?.is_none() {
+        if asignature_exists.is_none() {
             return Err(InscriptionError::AsignatureNotFound {
                 id: inscription.asignature_id,
             });

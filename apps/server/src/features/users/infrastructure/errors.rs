@@ -68,6 +68,27 @@ impl From<UserError> for HttpResponse {
                     "message": "Error inesperado",
                 }))
             }
+
+            UserError::InvalidCursor { cursor } => {
+                HttpResponse::BadRequest().data(json!({
+                    "field": "cursor",
+                    "value": cursor,
+                    "message": "El cursor proporcionado no es válido",
+                }))
+            }
+
+            UserError::ForeignInscriptionError(msg) => {
+                eprintln!("UserError::ForeignInscriptionError: {msg}");
+                HttpResponse::InternalServerError().data(json!({
+                    "message": "Error inesperado en inscripciones",
+                }))
+            }
+            UserError::ForeignAsignatureError(msg) => {
+                eprintln!("UserError::ForeignAsignatureError: {msg}");
+                HttpResponse::InternalServerError().data(json!({
+                    "message": "Error inesperado en asignaturas",
+                }))
+            }
         }
     }
 }

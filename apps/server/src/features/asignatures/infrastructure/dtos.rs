@@ -49,6 +49,9 @@ pub struct CreateAsignatureDto {
 
     #[validate(custom(function = validate_uuid))]
     pub teacher_id: String,
+
+    #[validate(custom(function = validate_uuid))]
+    pub coordinator_id: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Validate)]
@@ -78,6 +81,7 @@ impl TryFrom<CreateAsignatureDto> for Asignature {
             name: dto.name,
             evaluations: dto.evaluations.into_iter().map(|e| e.into()).collect(),
             teacher_id: dto.teacher_id.parse().unwrap(),
+            coordinator_id: dto.coordinator_id.parse().unwrap(),
             status: "inprogress".to_string(),
         })
     }
@@ -125,6 +129,9 @@ pub struct UpdateAsignatureDto {
     #[validate(custom(function = validate_uuid))]
     pub teacher_id: Option<String>,
 
+    #[validate(custom(function = validate_uuid))]
+    pub coordinator_id: Option<String>,
+
     #[validate(
         custom(function = validators::validate_asignature_status)
     )]
@@ -140,7 +147,10 @@ impl From<UpdateAsignatureDto> for UpdateAsignatureInput {
             evaluations: dto
                 .evaluations
                 .map(|evs| evs.into_iter().map(Evaluation::from).collect()),
+
             teacher_id: dto.teacher_id.and_then(|id| id.parse().ok()),
+            coordinator_id: dto.coordinator_id.and_then(|id| id.parse().ok()),
+
             status: dto.status,
         }
     }

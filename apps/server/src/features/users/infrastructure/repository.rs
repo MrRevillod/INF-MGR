@@ -7,12 +7,13 @@ use uuid::Uuid;
 
 use crate::shared::database::DatabaseConnection;
 
-use crate::users::domain::GetUsersParams;
-use crate::users::infrastructure::models::vec_string_to_roles;
+use crate::users::domain::FindAllReturnType;
 use crate::users::{
-    domain::{User, UserError, UserRepository},
-    infrastructure::models::UserModel,
+    domain::{GetUsersParams, User, UserError, UserRepository},
+    infrastructure::models::{vec_string_to_roles, UserModel},
 };
+
+const PAGE_SIZE: usize = 10;
 
 #[derive(Component)]
 #[shaku(interface = UserRepository)]
@@ -21,45 +22,89 @@ pub struct PostgresUserRepository {
     database_connection: Arc<dyn DatabaseConnection>,
 }
 
-#[async_trait]
-impl UserRepository for PostgresUserRepository {
-    async fn find_all(
-        &self,
-        filter: GetUsersParams,
-    ) -> Result<Vec<User>, UserError> {
-        let mut query = QueryBuilder::<Postgres>::new(
-            "SELECT * FROM users WHERE deleted_at IS NULL",
-        );
-
-        if let Some(search) = filter.search {
+impl PostgresUserRepository {
+    fn apply_user_filters<'a>(
+        builder: &mut QueryBuilder<'a, Postgres>,
+        filter: &GetUsersParams,
+    ) {
+        if let Some(search) = &filter.search {
             let pattern = format!("%{}%", search);
 
-            query.push(" AND (");
-            query
+            builder.push(" AND (");
+            builder
                 .push("name ILIKE ")
                 .push_bind(pattern.clone())
                 .push(" OR email ILIKE ")
                 .push_bind(pattern.clone())
                 .push(" OR rut ILIKE ")
                 .push_bind(pattern.clone());
-
-            query.push(")");
+            builder.push(")");
         }
 
-        let roles = vec_string_to_roles(filter.roles);
+        let roles = vec_string_to_roles(filter.roles.clone());
 
         if !roles.is_empty() {
-            query.push(" AND roles && ");
-            query.push_bind(roles);
-            query.push("::user_role[]");
+            builder.push(" AND roles && ");
+            builder.push_bind(roles);
+            builder.push("::user_role[]");
         }
+    }
+}
 
-        let users = query
-            .build_query_as::<UserModel>()
-            .fetch_all(self.database_connection.get_pool())
+#[async_trait]
+impl UserRepository for PostgresUserRepository {
+    async fn find_all(
+        &self,
+        filter: GetUsersParams,
+    ) -> Result<FindAllReturnType, UserError> {
+        // Primero obtener el total de registros
+        let mut count_query = QueryBuilder::<Postgres>::new(
+            "SELECT COUNT(*) FROM users WHERE deleted_at IS NULL",
+        );
+        Self::apply_user_filters(&mut count_query, &filter);
+
+        let total_users: i64 = count_query
+            .build_query_scalar()
+            .fetch_one(self.database_connection.get_pool())
             .await?;
 
-        Ok(users.into_iter().map(User::from).collect())
+        // Luego obtener los datos paginados
+        let mut query = QueryBuilder::<Postgres>::new(
+            "SELECT * FROM users WHERE deleted_at IS NULL",
+        );
+
+        Self::apply_user_filters(&mut query, &filter);
+
+        query.push(" ORDER BY created_at DESC");
+
+        let offset = (filter.page - 1) * PAGE_SIZE;
+
+        query.push(" LIMIT ");
+        query.push_bind(PAGE_SIZE as i64);
+
+        query.push(" OFFSET ");
+        query.push_bind(offset as i64);
+
+        let all_users = query
+            .build_query_as::<UserModel>()
+            .fetch_all(self.database_connection.get_pool())
+            .await?
+            .into_iter()
+            .map(User::from)
+            .collect::<Vec<User>>();
+
+        let total_pages = (total_users as f64 / PAGE_SIZE as f64).ceil() as usize;
+        let has_next = filter.page < total_pages;
+        let has_previous = filter.page > 1;
+
+        Ok(FindAllReturnType {
+            users: all_users,
+            current_page: filter.page,
+            total_pages,
+            total_users: total_users as usize,
+            has_next,
+            has_previous,
+        })
     }
 
     async fn find_by_id(&self, user_id: &Uuid) -> Result<Option<User>, UserError> {
@@ -96,9 +141,9 @@ impl UserRepository for PostgresUserRepository {
 
     async fn create(&self, user: User) -> Result<User, UserError> {
         let query = r#"
-            INSERT INTO users (id, rut, name, email, password, roles, deleted_at) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            RETURNING id, rut, name, email, password, roles, deleted_at
+            INSERT INTO users (id, rut, name, email, password, roles, deleted_at, created_at) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            RETURNING id, rut, name, email, password, roles, deleted_at, created_at
         "#;
 
         let model = sqlx::query_as::<_, UserModel>(query)
@@ -109,6 +154,7 @@ impl UserRepository for PostgresUserRepository {
             .bind(user.password)
             .bind(vec_string_to_roles(user.roles))
             .bind(user.deleted_at)
+            .bind(user.created_at)
             .fetch_one(self.database_connection.get_pool())
             .await?;
 

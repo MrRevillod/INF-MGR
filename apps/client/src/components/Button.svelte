@@ -1,9 +1,12 @@
 <script lang="ts">
+	import type { Snippet } from "svelte"
+
 	interface ButtonProps {
 		onclick: () => void
 		variant: "primary" | "secondary"
 		disabled?: boolean
-		text: string
+		text?: string
+		children?: Snippet
 	}
 
 	const variantClasses = {
@@ -20,12 +23,17 @@
 
 	let {
 		onclick,
-		text = "Button",
+		text,
 		variant = "primary",
 		disabled = false,
+		children,
 	}: ButtonProps = $props()
 </script>
 
 <button {onclick} class={variantClasses[variant]} {disabled}>
-	{text}
+	{#if text}
+		<span>{text}</span>
+	{:else if children}
+		{@render children()}
+	{/if}
 </button>

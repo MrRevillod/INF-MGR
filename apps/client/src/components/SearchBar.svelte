@@ -4,20 +4,15 @@
 	interface SearchBarProps {
 		search: string
 		placeholder?: string
-		onSearchChange: (searchValue: string) => void
 	}
 
-	const {
-		search,
-		placeholder = "Buscar...",
-		onSearchChange,
-	}: SearchBarProps = $props()
+	let { search = $bindable(), placeholder = "Buscar..." }: SearchBarProps = $props()
 
-	const handleInput = (e: Event) => {
-		const input = e.target as HTMLInputElement
-		const searchValue = input.value.trim().toLocaleLowerCase()
-		onSearchChange(searchValue)
-	}
+	let inputValue = $state("")
+
+	$effect(() => {
+		search = inputValue.trim().toLowerCase()
+	})
 </script>
 
 <div class="relative">
@@ -26,8 +21,7 @@
 	</div>
 	<input
 		type="text"
-		value={search}
-		oninput={handleInput}
+		bind:value={inputValue}
 		{placeholder}
 		class="bg-surface border-border focus:ring-focus-ring hover:border-border-hover placeholder:text-text-muted block w-full rounded-lg border py-2.5
 		       pl-10 pr-4 text-sm

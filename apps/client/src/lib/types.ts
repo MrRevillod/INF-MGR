@@ -19,5 +19,3 @@ export type MutationFn<TData, TVariables> = MutateFunction<
 	TVariables,
 	unknown
 >
-
-export type Action<T, P> = (params: P) => Promise<ApiResponse<T>>

@@ -33,13 +33,11 @@ impl DeleteAsignatureCase for DeleteAsignatureCaseImpl {
             ..Default::default()
         };
 
-        let inscriptions = self.inscriptions.find_all(inscriptions_filter).await;
-
-        let Ok(inscriptions) = inscriptions else {
-            return Err(AsignatureError::UknownError(
-                "Failed to fetch inscriptions".to_string(),
-            ));
-        };
+        let inscriptions = self
+            .inscriptions
+            .find_all(inscriptions_filter)
+            .await
+            .map_err(|e| AsignatureError::UknownError(e.to_string()))?;
 
         if !inscriptions.is_empty() {
             return Err(AsignatureError::HasInscriptions);

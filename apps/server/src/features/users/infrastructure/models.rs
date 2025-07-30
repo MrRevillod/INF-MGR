@@ -28,6 +28,8 @@ pub struct UserModel {
     pub roles: Vec<Role>,
     #[sqlx(rename = "deleted_at")]
     pub deleted_at: Option<DateTime<Utc>>,
+    #[sqlx(rename = "created_at")]
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, sqlx::Type)]
@@ -101,6 +103,7 @@ impl From<UserModel> for User {
                 .map(|role| role.to_string())
                 .collect(),
             deleted_at: user_model.deleted_at,
+            created_at: user_model.created_at,
         }
     }
 }
@@ -125,6 +128,7 @@ impl From<User> for UserModel {
                 .map(|role| Role::from_str(role).unwrap_or(Role::Student))
                 .collect(),
             deleted_at: user.deleted_at,
+            created_at: user.created_at,
         }
     }
 }

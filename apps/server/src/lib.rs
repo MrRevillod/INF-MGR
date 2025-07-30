@@ -75,38 +75,6 @@ pub mod features {
         }
     }
 
-    pub mod reports {
-        pub mod domain;
-
-        pub mod application {
-            mod interfaces;
-
-            mod usecases {
-                pub mod get;
-                pub mod update;
-
-                pub use get::GetReportsCaseImpl;
-                pub use update::UpdateReportCaseImpl;
-            }
-
-            pub use interfaces::*;
-            pub use usecases::*;
-        }
-
-        pub mod infrastructure {
-            mod controllers;
-            mod dtos;
-            mod models;
-            mod repository;
-
-            pub mod errors;
-            pub use controllers::ReportController;
-            pub use dtos::{GetReportsQuery, UpdateReportDto};
-            pub use models::ReportModel;
-            pub use repository::PostgresReportRepository;
-        }
-    }
-
     pub mod inscriptions {
         pub mod domain;
 
@@ -140,49 +108,15 @@ pub mod features {
             pub use dtos::{
                 CreateInscriptionDto, StudentEvaluationDto, UpdateInscriptionDto,
             };
-            pub use models::{InscriptionModel, StudentEvaluationModel};
+            pub use models::{
+                InscriptionModel, InscriptionResponseModel, StudentEvaluationModel,
+            };
             pub use repository::PostgresInscriptionRepository;
-        }
-    }
-
-    pub mod practices {
-        pub mod domain;
-
-        pub mod application {
-            mod interfaces;
-
-            mod usecases {
-                pub mod create;
-                pub mod delete;
-                pub mod get;
-                pub mod update;
-
-                pub use create::CreatePracticeCaseImpl;
-                pub use delete::DeletePracticeCaseImpl;
-                pub use get::GetPracticeCaseImpl;
-                pub use update::UpdatePracticeCaseImpl;
-            }
-
-            pub use interfaces::*;
-            pub use usecases::*;
-        }
-
-        pub mod infrastructure {
-            mod controllers;
-            mod dtos;
-            mod models;
-            mod repository;
-
-            pub mod errors;
-            pub use controllers::PracticesController;
-            pub use dtos::{CreatePracticeDto, UpdatePracticeDto};
-            pub use models::PracticeModel;
-            pub use repository::PostgresPracticeRepository;
         }
     }
 }
 
-pub use features::{asignatures, inscriptions, practices, reports, users};
+pub use features::{asignatures, inscriptions, users};
 
 pub mod shared {
     pub mod services {

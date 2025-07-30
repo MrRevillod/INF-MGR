@@ -4,8 +4,9 @@ use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Type};
 use uuid::Uuid;
 
-use crate::inscriptions::domain::{
-    Inscription, InscriptionError, StudentEvaluation,
+use crate::{
+    asignatures::{domain::Asignature, infrastructure::AsignatureModel},
+    inscriptions::domain::{Inscription, InscriptionError, StudentEvaluation},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Type)]
@@ -70,6 +71,39 @@ pub struct InscriptionModel {
     #[sqlx(rename = "evaluations_scores")]
     pub evaluations_scores: Vec<StudentEvaluationModel>,
     pub status: StudentStatus,
+}
+
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+#[serde(rename_all = "camelCase")]
+pub struct InscriptionResponseModel {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub asignature_id: Uuid,
+    pub practice_id: Option<Uuid>,
+    pub evaluations_scores: Vec<StudentEvaluationModel>,
+    pub status: StudentStatus,
+    pub asignature: AsignatureModel,
+}
+
+impl From<(Asignature, Inscription)> for InscriptionResponseModel {
+    fn from((asignature, inscription): (Asignature, Inscription)) -> Self {
+        InscriptionResponseModel {
+            id: inscription.id,
+            user_id: inscription.user_id,
+            asignature_id: inscription.asignature_id,
+            practice_id: inscription.practice_id,
+            evaluations_scores: inscription
+                .evaluations_scores
+                .into_iter()
+                .map(Into::into)
+                .collect(),
+
+            status: StudentStatus::from_str(&inscription.status)
+                .unwrap_or(StudentStatus::Active),
+
+            asignature: AsignatureModel::from(asignature),
+        }
+    }
 }
 
 impl From<InscriptionModel> for Inscription {

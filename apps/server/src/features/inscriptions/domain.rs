@@ -3,8 +3,6 @@ use shaku::Interface;
 use thiserror::Error;
 use uuid::Uuid;
 
-use crate::{asignatures::domain::AsignatureError, users::domain::UserError};
-
 #[derive(Debug, Clone)]
 pub struct Inscription {
     pub id: Uuid,
@@ -28,37 +26,22 @@ pub enum InscriptionError {
         #[from]
         source: sqlx::Error,
     },
-
     #[error("Inscription not found")]
     NotFound,
-
     #[error("Invalid inscription state")]
     InvalidStudentState,
-
     #[error("Invalid status: {status}")]
     InvalidStatus { status: String },
-
     #[error("Inscription already exists, cannot create a duplicate")]
     InscriptionAlreadyExists,
-
     #[error("The selected student does not exist: {id}")]
     StudentNotFound { id: Uuid },
-
     #[error("The selected user is not a student")]
     InvalidStudentRole,
-
-    #[error("User repository error: {source}")]
-    UserError {
-        #[from]
-        source: UserError,
-    },
-
-    #[error("Asignature repository error: {source}")]
-    AsignatureError {
-        #[from]
-        source: AsignatureError,
-    },
-
+    #[error("User error: {0}")]
+    ForeignUserError(String),
+    #[error("Asignature error: {0}")]
+    ForeignAsignatureError(String),
     #[error("Asignature not found: {id}")]
     AsignatureNotFound { id: Uuid },
 }

@@ -32,20 +32,21 @@ impl From<InscriptionError> for HttpResponse {
                 HttpResponse::InternalServerError()
             }
 
-            InscriptionError::UserError { source } => {
-                eprintln!("User error: {source}");
-                HttpResponse::InternalServerError()
-            }
-
-            InscriptionError::AsignatureError { source } => {
-                eprintln!("Asignature error: {source}");
-                HttpResponse::InternalServerError()
-            }
-
             InscriptionError::AsignatureNotFound { id } => {
                 HttpResponse::BadRequest()
                     .message("Asignatura no encontrada")
                     .data(id)
+            }
+
+            InscriptionError::ForeignUserError(msg) => {
+                eprintln!("InscriptionError::ForeignUserError: {msg}");
+                HttpResponse::InternalServerError()
+                    .message("Error inesperado en usuarios")
+            }
+            InscriptionError::ForeignAsignatureError(msg) => {
+                eprintln!("InscriptionError::ForeignAsignatureError: {msg}");
+                HttpResponse::InternalServerError()
+                    .message("Error inesperado en asignaturas")
             }
         }
     }

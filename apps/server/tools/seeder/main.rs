@@ -1,5 +1,6 @@
 #![cfg(feature = "seeder")]
 
+mod asignatures;
 mod users;
 
 use sqlx::postgres::PgPoolOptions;
@@ -23,6 +24,10 @@ async fn main() -> Result<(), sqlx::Error> {
     users::seed_users_table_secretary(&pool).await?;
     users::seed_users_table_teachers(&pool).await?;
     users::seed_users_table_students(&pool).await?;
+
+    // Seed asignatures y luego inscripciones
+    let asignature_ids = asignatures::seed_asignatures(&pool).await?;
+    asignatures::seed_inscriptions(&pool, &asignature_ids).await?;
 
     println!("Database seeded successfully!");
 

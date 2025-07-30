@@ -1,4 +1,4 @@
-import { type } from "arktype"
+import * as v from "valibot"
 
 export interface Inscription {
 	id: string
@@ -9,25 +9,33 @@ export interface Inscription {
 	status: StudentStatus
 }
 
-const StudentStatus = type("('active' | 'inactive' | 'completed' | 'evaluating')")
-export type StudentStatus = typeof StudentStatus.infer
+const StudentStatus = v.union([
+	v.literal("active"),
+	v.literal("inactive"),
+	v.literal("completed"),
+	v.literal("evaluating"),
+])
 
-const StudentEvaluation = type({
-	id: "string",
-	score: "number"
+export type StudentStatus = v.InferInput<typeof StudentStatus>
+
+const StudentEvaluation = v.object({
+	id: v.string(),
+	score: v.number(),
 })
 
-export type StudentEvaluation = typeof StudentEvaluation.infer
+export type StudentEvaluation = v.InferInput<typeof StudentEvaluation>
 
-export const CreateInscriptionSchema = type({
-	userId: "string",
-	asignatureId: "string"
+export const CreateInscriptionSchema = v.object({
+	userId: v.string(),
+	asignatureId: v.string(),
 })
 
-export type CreateInscriptionSchemaType = typeof CreateInscriptionSchema.infer
+export type CreateInscriptionSchemaType = v.InferInput<
+	typeof CreateInscriptionSchema
+>
 
-export const UpdateInscriptionSchema = type({
-	practiceId: "string?",
-	evaluationScores: StudentEvaluation.array().optional(),
-	status: StudentStatus.optional()
+export const UpdateInscriptionSchema = v.object({
+	practiceId: v.optional(v.string()),
+	evaluationScores: v.optional(v.array(StudentEvaluation)),
+	status: v.optional(StudentStatus),
 })

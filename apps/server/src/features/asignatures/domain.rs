@@ -3,8 +3,6 @@ use shaku::Interface;
 use thiserror::Error;
 use uuid::Uuid;
 
-use crate::users::domain::UserError;
-
 #[derive(Debug, Clone)]
 pub struct Evaluation {
     pub id: Uuid,
@@ -21,13 +19,14 @@ pub struct Asignature {
     pub evaluations: Vec<Evaluation>,
     pub status: String,
     pub teacher_id: Uuid,
+    pub coordinator_id: Uuid,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct AsignatureFilter {
-    pub year: Option<i32>,
     pub code: Option<String>,
     pub name: Option<String>,
+    pub user_id: Option<Uuid>,
 }
 
 #[async_trait]
@@ -59,34 +58,23 @@ pub trait AsignatureRepository: Interface {
 pub enum AsignatureError {
     #[error("Asignature not found")]
     NotFound,
-
     #[error("Asignature already exists")]
     AlreadyExists,
-
     #[error("Asignature Database Error: {source}")]
     Database {
         #[from]
         source: sqlx::Error,
     },
-
     #[error("Identificador inválido (uuid)")]
     InvalidIdentifier,
-
     #[error("The user is not a teacher")]
     UserIsNotTeacher,
-
     #[error("The teacher was not found")]
     TeacherNotFound,
-
-    #[error("User repository error: {source}")]
-    UserRepositoryError {
-        #[from]
-        source: UserError,
-    },
-
+    #[error("User error: {0}")]
+    ForeignUserError(String),
     #[error("Unknown error: {0}")]
     UknownError(String),
-
     #[error("Asignature has inscriptions, cannot delete")]
     HasInscriptions,
 }

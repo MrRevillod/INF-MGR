@@ -29,16 +29,18 @@ impl CreateAsignatureCase for CreateAsignatureCaseImpl {
         input: Asignature,
     ) -> Result<Asignature, AsignatureError> {
         let filter = AsignatureFilter {
-            year: Some(input.year),
             code: Some(input.code.clone()),
             name: Some(input.name.clone()),
+            user_id: None,
         };
 
         if !self.repository.find_by_filter(filter).await?.is_empty() {
             return Err(AsignatureError::AlreadyExists);
         }
 
-        let user_exists = self.user_repository.find_by_id(&input.teacher_id).await?;
+        let user_exists = self.user_repository.find_by_id(&input.teacher_id)
+            .await
+            .map_err(|e| AsignatureError::ForeignUserError(e.to_string()))?;
 
         let Some(user) = user_exists else {
             return Err(AsignatureError::TeacherNotFound);

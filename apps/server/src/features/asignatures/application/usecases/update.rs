@@ -35,6 +35,7 @@ impl UpdateAsignatureCase for UpdateAsignatureCaseImpl {
             name: input.name.unwrap_or(a.name),
             evaluations: input.evaluations.unwrap_or(a.evaluations),
             teacher_id: input.teacher_id.unwrap_or(a.teacher_id),
+            coordinator_id: input.coordinator_id.unwrap_or(a.coordinator_id),
             status: input.status.unwrap_or(a.status),
         };
 

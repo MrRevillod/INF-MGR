@@ -56,16 +56,17 @@ impl AsignatureRepository for PostgresAsignatureRepository {
             "SELECT * FROM asignatures WHERE 1=1",
         );
 
-        if let Some(year) = filter.year {
-            builder.push(" AND year = ").push_bind(year);
-        }
-
         if let Some(ref code) = filter.code {
             builder.push(" AND code = ").push_bind(code);
         }
 
         if let Some(ref name) = filter.name {
             builder.push(" AND name = ").push_bind(name);
+        }
+
+        if let Some(user_id) = filter.user_id {
+            builder.push(" AND teacher_id = ").push_bind(user_id);
+            builder.push(" OR coordinator_id = ").push_bind(user_id);
         }
 
         let query = builder.build_query_as::<AsignatureModel>();

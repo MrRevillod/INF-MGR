@@ -9,10 +9,13 @@ export interface TableProps<T> {
 	columns: TableColumn<T>[]
 	isLoading?: boolean
 	isError?: boolean
-	actions: Array<{
-		label: string
-		icon: any
-		func: (item: T) => void
-	}>
-	onPageChange: (action: "prev" | "next") => void
+	pagination: {
+		currentPage: number
+		totalPages?: number
+		totalUsers?: number
+		hasNext?: boolean
+		hasPrevious?: boolean
+		onPageChange: (page: number) => void
+	}
+	onDetailsClick?: (item: T) => void
 }

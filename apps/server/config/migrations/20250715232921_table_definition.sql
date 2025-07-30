@@ -5,8 +5,11 @@ CREATE TABLE IF NOT EXISTS users (
     email TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
     roles user_role[] NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     deleted_at TIMESTAMP WITH TIME ZONE NULL
 );
+
+CREATE INDEX IF NOT EXISTS users_created_at_idx ON users(created_at DESC);
 
 CREATE TABLE IF NOT EXISTS practices (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -26,6 +29,7 @@ CREATE TABLE IF NOT EXISTS asignatures (
     name TEXT NOT NULL,
     evaluations evaluation[] NOT NULL,
     teacher_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    coordinator_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     status asignature_status NOT NULL DEFAULT 'inprogress'
 );
 

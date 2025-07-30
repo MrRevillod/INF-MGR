@@ -1,3 +1,4 @@
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use validator::Validate;
@@ -50,6 +51,7 @@ impl From<CreateUserDto> for User {
             password: dto.password,
             roles: dto.roles,
             deleted_at: None,
+            created_at: Utc::now(),
         }
     }
 }
@@ -99,6 +101,7 @@ pub struct UserResponseDTO {
     pub name: String,
     pub email: String,
     pub roles: Vec<String>,
+    pub created_at: String,
 }
 
 impl From<User> for UserResponseDTO {
@@ -109,6 +112,7 @@ impl From<User> for UserResponseDTO {
             name: user_model.name,
             email: user_model.email,
             roles: user_model.roles.clone(),
+            created_at: user_model.created_at.to_rfc3339(),
         }
     }
 }
@@ -123,6 +127,9 @@ pub struct GetUsersQuery {
         message = "El término de búsqueda debe tener entre 3 y 100 caracteres."
     ))]
     pub search: Option<String>,
+
+    #[validate(range(min = 1, message = "La página debe ser mayor o igual a 1."))]
+    pub page: Option<usize>,
 }
 
 impl TryFrom<GetUsersQuery> for GetUsersParams {
@@ -141,6 +148,7 @@ impl TryFrom<GetUsersQuery> for GetUsersParams {
                 }
             },
             search: query.search,
+            page: query.page.unwrap_or(1),
         })
     }
 }

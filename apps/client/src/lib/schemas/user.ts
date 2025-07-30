@@ -1,5 +1,4 @@
-import { type } from "arktype"
-import type { Nullable } from "$lib/types"
+import * as v from "valibot"
 
 export interface User {
 	id: string
@@ -7,29 +6,35 @@ export interface User {
 	name: string
 	email: string
 	roles: Role[]
-	deletedAt: Nullable<string>
+	deletedAt: string | null
 }
 
-const RoleDto = type(
-	"'administrator' | 'student' | 'teacher' | 'coordinator' | 'secretary'"
-)
+const RoleDto = v.union([
+	v.literal("administrator"),
+	v.literal("student"),
+	v.literal("teacher"),
+	v.literal("coordinator"),
+	v.literal("secretary"),
+])
 
-export const CreateUserSchema = type({
-	rut: "string",
-	name: "string",
-	email: "string",
-	password: "string",
-	confirmPassword: "string",
-	roles: RoleDto.array(),
+export type Role = v.InferInput<typeof RoleDto>
+
+export const CreateUserSchema = v.object({
+	rut: v.string(),
+	name: v.string(),
+	email: v.string(),
+	password: v.string(),
+	confirmPassword: v.string(),
+	roles: v.array(RoleDto),
 })
 
-export const UpdateUserSchema = type({
-	email: "string?",
-	password: "string?",
-	confirmPassword: "string?",
-	roles: RoleDto.array().optional(),
+export type CreateUserSchemaType = v.InferInput<typeof CreateUserSchema>
+
+export const UpdateUserSchema = v.object({
+	email: v.optional(v.string()),
+	password: v.optional(v.string()),
+	confirmPassword: v.optional(v.string()),
+	roles: v.optional(v.array(RoleDto)),
 })
 
-export type Role = typeof RoleDto.infer
-export type CreateUserSchemaType = typeof CreateUserSchema.infer
-export type UpdateUserSchemaType = typeof UpdateUserSchema.infer
+export type UpdateUserSchemaType = v.InferInput<typeof UpdateUserSchema>

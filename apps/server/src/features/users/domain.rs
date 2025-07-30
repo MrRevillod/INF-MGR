@@ -14,13 +14,29 @@ pub struct User {
     pub email: String,
     pub password: String,
     pub roles: Vec<String>,
+    pub created_at: DateTime<Utc>,
     pub deleted_at: Option<DateTime<Utc>>,
+}
+
+impl User {
+    pub fn is_student(&self) -> bool {
+        self.roles.contains(&"student".to_string())
+    }
+
+    pub fn is_teacher(&self) -> bool {
+        self.roles.contains(&"teacher".to_string())
+    }
+
+    pub fn is_coordinator(&self) -> bool {
+        self.roles.contains(&"coordinator".to_string())
+    }
 }
 
 #[derive(Debug, Clone)]
 pub struct GetUsersParams {
     pub roles: Vec<&'static str>, // Comma-separated list of roles
     pub search: Option<String>,   // Search term for name, email, or RUT
+    pub page: usize,              // Page number for pagination
 }
 
 #[derive(Debug, Error)]
@@ -51,11 +67,33 @@ pub enum UserError {
 
     #[error("Invalid user role: {role}")]
     InvalidRole { role: String },
+
+    #[error("Invalid cursor: {cursor}")]
+    InvalidCursor { cursor: String },
+
+    #[error("Inscription error: {0}")]
+    ForeignInscriptionError(String),
+
+    #[error("Asignature error: {0}")]
+    ForeignAsignatureError(String),
+}
+
+pub struct FindAllReturnType {
+    pub users: Vec<User>,
+    pub current_page: usize,
+    pub total_pages: usize,
+    pub total_users: usize,
+    pub has_next: bool,
+    pub has_previous: bool,
 }
 
 #[async_trait]
 pub trait UserRepository: Interface {
-    async fn find_all(&self, roles: GetUsersParams) -> Result<Vec<User>, UserError>;
+    async fn find_all(
+        &self,
+        roles: GetUsersParams,
+    ) -> Result<FindAllReturnType, UserError>;
+
     async fn find_by_id(&self, user_id: &Uuid) -> Result<Option<User>, UserError>;
     async fn find_by_rut(&self, rut: &str) -> Result<Option<User>, UserError>;
     async fn find_by_email(&self, email: &str) -> Result<Option<User>, UserError>;
