@@ -4,6 +4,7 @@
 	import { useQuery } from "$lib/shared/hooks/useQuery"
 	import { tableColumns } from "$users/utils"
 	import { getUsersQuery } from "$users/querys"
+	import { useEncodeData } from "$lib/shared/hooks/useUrlData"
 
 	import Table from "$lib/components/Table.svelte"
 	import Button from "$lib/components/ui/Button.svelte"
@@ -61,7 +62,11 @@
 		isLoading={$isLoading}
 		pagination={paginationProps}
 		onDetailsClick={item => {
-			goto(`/users/${role}/${item.id}`)
+			const pageData = {
+				user: item,
+			}
+
+			goto(`/users/${role}/${item.id}?${useEncodeData(pageData)}`)
 		}}
 	/>
 </div>

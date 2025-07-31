@@ -1,25 +1,27 @@
 <script lang="ts">
-	import { page } from "$app/state"
+	import type { PageProps } from "./$types"
+
+	import { goto } from "$app/navigation"
 	import { useQuery } from "$lib/shared/hooks/useQuery"
 	import { formatRoles } from "$users/utils"
-	import { getStudentInscriptionsQuery, getUserQuery } from "$users/querys"
+	import { useEncodeData } from "$lib/shared/hooks/useUrlData"
+	import { getStudentInscriptionsQuery } from "$users/querys"
 
 	import PageTitle from "$lib/components/ui/PageTitle.svelte"
 	import AsignatureCard from "$lib/features/components/Card.svelte"
 	import UpdateUserForm from "$lib/features/users/components/UpdateUserForm.svelte"
 
-	const userId = $derived(page.params.id ?? "")
+	const { data: page }: PageProps = $props()
 
-	const { data: user } = $derived(useQuery(() => getUserQuery(userId)))
 	const { data: inscriptions, isLoading } = $derived(
-		useQuery(() => getStudentInscriptionsQuery(userId))
+		useQuery(() => getStudentInscriptionsQuery(page.user.id))
 	)
 </script>
 
 <section class="space-y-6">
 	<PageTitle
-		title={`Perfil de ${$user?.name ?? "Cargando..."}`}
-		description={`Tipo de usuario: ${formatRoles($user?.roles ?? [])}`}
+		title={`Perfil de ${page.user?.name ?? "Cargando..."}`}
+		description={`Tipo de usuario: ${formatRoles(page.user?.roles ?? [])}`}
 	/>
 
 	<section class="flex w-full flex-row items-start justify-between gap-12">
@@ -28,7 +30,7 @@
 				<h2 class="text-text-primary text-lg font-semibold">Información</h2>
 			</div>
 
-			<UpdateUserForm user={$user} />
+			<UpdateUserForm user={page.user} />
 		</section>
 
 		<section class="flex w-1/2 flex-col gap-4">
@@ -46,6 +48,16 @@
 								code={inscription.asignature.code}
 								name={inscription.asignature.name}
 								year={inscription.asignature.year}
+								onclick={() => {
+									const encoded = useEncodeData({
+										user: page.user,
+										inscription: inscription,
+									})
+
+									goto(
+										`/asignatures/student/${inscription.asignature.id}?${encoded}`
+									)
+								}}
 							/>
 						{/each}
 					</ul>

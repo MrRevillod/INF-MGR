@@ -3,8 +3,10 @@
 use rand::seq::SliceRandom;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
-use std::collections::HashSet;
+use std::{collections::HashSet, vec};
 use uuid::Uuid;
+
+use server::asignatures::infrastructure::EvaluationType;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Asignature {
@@ -44,20 +46,39 @@ pub async fn seed_asignatures(pool: &PgPool) -> Result<Vec<Uuid>, sqlx::Error> {
 
         // Generar datos de la asignatura
         let id = Uuid::new_v4();
-        let code = format!("ASG{:03}", i + 1);
+        let code = format!("INFO{:03}", i + 1);
         let name = format!("Asignatura {}", i + 1);
         let year = 2025;
         let status = "inprogress";
 
+        let evaluations = vec![
+            EvaluationType {
+                id: Uuid::new_v4(),
+                name: String::from("Informe de Práctica"),
+                weight: 30,
+            },
+            EvaluationType {
+                id: Uuid::new_v4(),
+                name: String::from("Bitácoras de Práctica"),
+                weight: 30,
+            },
+            EvaluationType {
+                id: Uuid::new_v4(),
+                name: String::from("Evaluación del Supervisor de Práctica"),
+                weight: 40,
+            },
+        ];
+
         // Insertar la asignatura, evaluations como ARRAY[]::evaluation[] y status casteado a asignature_status
         sqlx::query(
             r#"INSERT INTO asignatures (id, year, code, name, evaluations, teacher_id, coordinator_id, status)
-            VALUES ($1, $2, $3, $4, ARRAY[]::evaluation[], $5, $6, $7::asignature_status)"#
+            VALUES ($1, $2, $3, $4, $5::evaluation[], $6, $7, $8::asignature_status)"#
         )
         .bind(id)
         .bind(year)
         .bind(&code)
         .bind(&name)
+        .bind(&evaluations)
         .bind(teacher_id)
         .bind(coordinator_id)
         .bind(status)

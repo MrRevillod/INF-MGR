@@ -1,4 +1,5 @@
 import * as v from "valibot"
+import type { Asignature } from "../asignatures/schemas"
 
 export interface User {
 	id: string
@@ -39,6 +40,8 @@ export const UpdateUserSchema = v.object({
 
 export type UpdateUserSchemaType = v.InferInput<typeof UpdateUserSchema>
 
+// -------------------------------------
+
 export interface Inscription {
 	id: string
 	userId: string
@@ -46,6 +49,7 @@ export interface Inscription {
 	practiceId: string
 	evaluationScores: StudentEvaluation[]
 	status: StudentStatus
+	asignature: Asignature
 }
 
 const StudentStatus = v.union([
@@ -78,3 +82,15 @@ export const UpdateInscriptionSchema = v.object({
 	evaluationScores: v.optional(v.array(StudentEvaluation)),
 	status: v.optional(StudentStatus),
 })
+
+// -------------------------------------------------
+
+export interface Report {
+	id: string
+	inscriptionId: string
+	userId: string
+	title: string
+	content: string
+	createdAt: string
+	updatedAt: string
+}
