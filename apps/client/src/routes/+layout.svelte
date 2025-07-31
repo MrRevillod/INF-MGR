@@ -1,7 +1,9 @@
 <script lang="ts">
-	import Navbar from "$components/Navbar.svelte"
 	import "../app.css"
+
 	import { QueryClient, QueryClientProvider } from "@tanstack/svelte-query"
+
+	import Navbar from "$lib/components/ui/Navbar.svelte"
 
 	let { children } = $props()
 

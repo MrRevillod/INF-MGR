@@ -1,50 +1,26 @@
 <script lang="ts">
-	import type { User } from "$lib/schemas/user"
-
 	import { page } from "$app/state"
-	import { match, P } from "ts-pattern"
-	import { PencilSquareIcon } from "@fvilers/heroicons-svelte/20/solid"
-	import { formatRoles, RutFormatter } from "$lib/utils/users"
-	import { getStudentInscriptionsQuery, getUserQuery } from "$lib/api/users"
+	import { useQuery } from "$lib/shared/hooks/useQuery"
+	import { formatRoles } from "$users/utils"
+	import { getStudentInscriptionsQuery, getUserQuery } from "$users/querys"
 
-	import AsignatureCard from "$components/AsignatureCard.svelte"
+	import PageTitle from "$lib/components/ui/PageTitle.svelte"
+	import AsignatureCard from "$lib/features/components/Card.svelte"
+	import UpdateUserForm from "$lib/features/users/components/UpdateUserForm.svelte"
 
 	const userId = $derived(page.params.id ?? "")
-	const userQuery = $derived(getUserQuery(userId))
 
-	let { data: userResponse } = $derived($userQuery)
-
-	const user = $derived(userResponse?.data as User | undefined)
-
-	const asignaturesQuery = $derived.by(() => {
-		const roles = userResponse?.data.roles ?? []
-
-		return match(roles)
-			.with(
-				P.when(r => r.includes("student")),
-				() => getStudentInscriptionsQuery(userId)
-			)
-			.otherwise(() => getStudentInscriptionsQuery(userId))
-	})
-
-	const query = $derived(asignaturesQuery)
-
-	let { data: inscriptionsData, isLoading } = $derived($query)
+	const { data: user } = $derived(useQuery(() => getUserQuery(userId)))
+	const { data: inscriptions, isLoading } = $derived(
+		useQuery(() => getStudentInscriptionsQuery(userId))
+	)
 </script>
 
 <section class="space-y-6">
-	<header
-		class="border-border flex flex-row items-center justify-between border-b pb-8"
-	>
-		<div>
-			<h1 class="text-text-primary text-2xl font-semibold">
-				{user?.name ?? "Cargando..."}
-			</h1>
-			<p class="text-text-muted mt-2 text-sm">
-				Tipo de usuario: {formatRoles(user?.roles ?? [])}
-			</p>
-		</div>
-	</header>
+	<PageTitle
+		title={`Perfil de ${$user?.name ?? "Cargando..."}`}
+		description={`Tipo de usuario: ${formatRoles($user?.roles ?? [])}`}
+	/>
 
 	<section class="flex w-full flex-row items-start justify-between gap-12">
 		<section class="flex w-1/2 flex-col gap-8">
@@ -52,14 +28,7 @@
 				<h2 class="text-text-primary text-lg font-semibold">Información</h2>
 			</div>
 
-			<div class="text-text-muted flex w-5/6 flex-col gap-6 text-base">
-				{@render field("ID", user?.id ?? "")}
-				{@render field("RUT", RutFormatter(user?.rut ?? ""))}
-				{@render field("Nombre", user?.name ?? "")}
-				{@render field("Correo electrónico", user?.email ?? "", true)}
-				{@render field("Contraseña", "Campo oculto", true)}
-				{@render field("Roles", formatRoles(user?.roles ?? []), true)}
-			</div>
+			<UpdateUserForm user={$user} />
 		</section>
 
 		<section class="flex w-1/2 flex-col gap-4">
@@ -68,11 +37,11 @@
 			</div>
 
 			<div>
-				{#if isLoading}
+				{#if $isLoading}
 					<p>Cargando asignaturas...</p>
 				{:else}
 					<ul class="flex w-5/6 list-none flex-col gap-2">
-						{#each inscriptionsData?.data ?? [] as inscription}
+						{#each $inscriptions ?? [] as inscription}
 							<AsignatureCard
 								code={inscription.asignature.code}
 								name={inscription.asignature.name}
@@ -85,18 +54,3 @@
 		</section>
 	</section>
 </section>
-
-{#snippet field(label: string, value: any, editable: boolean = false)}
-	<div class="border-border flex w-full flex-row justify-between border-b pb-2">
-		<p>
-			<strong>{label}:</strong>
-			{value}
-		</p>
-		{#if editable}
-			<button class="flex cursor-pointer flex-row gap-2">
-				Editar
-				<PencilSquareIcon class="text-text-muted h-5 w-5" />
-			</button>
-		{/if}
-	</div>
-{/snippet}

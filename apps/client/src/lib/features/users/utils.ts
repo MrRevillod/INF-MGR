@@ -1,5 +1,5 @@
-import type { User } from "$lib/schemas/user"
-import type { TableColumn } from "$components/Table/types"
+import type { User } from "$users/schemas"
+import type { TableColumn } from "$components/Table.svelte"
 
 export const spanishRoles = {
 	student: "Estudiante",

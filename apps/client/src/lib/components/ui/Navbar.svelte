@@ -8,7 +8,7 @@
 		UserCircleIcon,
 	} from "@fvilers/heroicons-svelte/20/solid"
 
-	import { appStore } from "$lib/stores/app.svelte"
+	import { appStore } from "$lib/shared/app.store.svelte"
 	import { afterNavigate } from "$app/navigation"
 
 	import cx from "clsx"

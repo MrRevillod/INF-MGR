@@ -24,8 +24,12 @@ impl From<UserError> for HttpResponse {
     fn from(value: UserError) -> Self {
         match value {
             UserError::EmailAlreadyExists => HttpResponse::Conflict().data(json!({
-                "field": "email",
-                "message": "Este correo electrónico ya está en uso",
+                "conflicts": [
+                    {
+                        "field": "email",
+                        "message": "Este correo electrónico ya está en uso"
+                    }
+                ]
             })),
 
             UserError::NotFound => HttpResponse::NotFound().data(json!({
@@ -47,9 +51,13 @@ impl From<UserError> for HttpResponse {
 
             UserError::RutAlreadyExists { rut } => {
                 HttpResponse::BadRequest().data(json!({
-                    "field": "rut",
-                    "value": rut,
-                    "message": "La identificación de usuario ya está en uso",
+                    "conflicts": [
+                        {
+                            "field": "rut",
+                            "value": rut,
+                            "message": "El RUT proporcionado ya está en uso"
+                        }
+                    ]
                 }))
             }
 

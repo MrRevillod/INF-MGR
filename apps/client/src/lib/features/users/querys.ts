@@ -1,9 +1,8 @@
-import type { Asignature } from "$lib/schemas/asignature"
-import type { Inscription } from "$lib/schemas/inscriptions"
-import type { User } from "$lib/schemas/user"
+import type { Asignature } from "$asignatures/schemas"
+import type { User, Inscription } from "$users/schemas"
 
-import { api } from "."
-import { tryHttp } from "./utils"
+import { api } from "$api/client"
+import { tryHttp } from "$api/utils"
 import { createQuery } from "@tanstack/svelte-query"
 
 interface GetUsersParams {
@@ -69,6 +68,7 @@ export const getUserQuery = (userId: string) => {
 
 	return createQuery({
 		queryKey: ["user", userId],
+		enabled: !!userId,
 		staleTime: 1000 * 60 * 1,
 		queryFn: () => tryHttp<User>({ fn: request }),
 	})

@@ -1,39 +1,34 @@
 <script lang="ts">
 	import { page } from "$app/state"
-	import { tableColumns } from "$lib/utils/users"
-	import { getUsersQuery } from "$lib/api/users"
-
-	import Table from "$components/Table/Table.svelte"
-	import Button from "$components/Button.svelte"
-	import SearchBar from "$components/SearchBar.svelte"
-	import PageTitle from "$components/PageTitle.svelte"
 	import { goto } from "$app/navigation"
-	import { appStore } from "$lib/stores/app.svelte"
+	import { useQuery } from "$lib/shared/hooks/useQuery"
+	import { tableColumns } from "$users/utils"
+	import { getUsersQuery } from "$users/querys"
+
+	import Table from "$lib/components/Table.svelte"
+	import Button from "$lib/components/ui/Button.svelte"
+	import SearchBar from "$lib/components/SearchBar.svelte"
+	import PageTitle from "$lib/components/ui/PageTitle.svelte"
 
 	let search = $state("")
+	let currentPage = $state(1)
 	let role = $derived(page.params.role ?? "")
 
-	let currentPage = $state(1)
-
-	const query = $derived(getUsersQuery({ role, search, page: currentPage }))
-
-	const { data: response, isLoading, isError, refetch } = $derived($query)
+	const { data, isLoading, isError, refetch } = $derived(
+		useQuery(() => getUsersQuery({ role, search, page: currentPage }))
+	)
 
 	const paginationProps = $derived({
 		currentPage,
-		totalPages: response?.data.totalPages ?? 1,
-		totalUsers: response?.data.totalUsers ?? 0,
-		hasNext: response?.data.hasNext ?? false,
-		hasPrevious: response?.data.hasPrevious ?? false,
-		onPageChange: (page: number) => {
-			currentPage = page
-		},
+		totalPages: $data?.totalPages ?? 1,
+		totalUsers: $data?.totalUsers ?? 0,
+		hasNext: $data?.hasNext ?? false,
+		hasPrevious: $data?.hasPrevious ?? false,
+		onPageChange: (page: number) => (currentPage = page),
 	})
 
 	$effect(() => {
-		if (search.length > 0) {
-			currentPage = 1
-		}
+		if (search.length > 0) currentPage = 1
 	})
 </script>
 
@@ -49,10 +44,10 @@
 
 		<div class="flex items-center gap-3">
 			<Button
-				onclick={() => refetch()}
+				onclick={() => $refetch()}
 				variant="secondary"
-				disabled={isLoading}
-				text={isLoading ? "Cargando..." : "Actualizar"}
+				disabled={$isLoading}
+				text={$isLoading ? "Cargando..." : "Actualizar"}
 			/>
 
 			<Button onclick={() => {}} variant="primary" text="Nuevo usuario" />
@@ -60,10 +55,10 @@
 	</div>
 
 	<Table
-		data={response?.data.users ?? []}
+		data={$data?.users ?? []}
 		columns={tableColumns}
-		{isError}
-		{isLoading}
+		isError={$isError}
+		isLoading={$isLoading}
 		pagination={paginationProps}
 		onDetailsClick={item => {
 			goto(`/users/${role}/${item.id}`)

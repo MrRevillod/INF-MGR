@@ -11,8 +11,12 @@ const config = {
 		}),
 		alias: {
 			$lib: "src/lib",
-			$components: "src/components",
-			$assets: "src/assets",
+			$api: "src/lib/shared/api",
+			$components: "src/lib/components",
+			$stores: "src/lib/stores",
+			$shared: "src/lib/shared",
+			$users: "src/lib/features/users",
+			$asignatures: "src/lib/features/asignatures",
 		},
 	},
 }
