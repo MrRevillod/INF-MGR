@@ -1,17 +1,19 @@
 use sword::prelude::Application;
 
 use server::{
-    asignatures::infrastructure::AsignaturesController,
     config::{CorsConfig, MailerConfig, PostgresDbConfig},
-    inscriptions::infrastructure::InscriptionController,
+    courses::CoursesController,
+    inscriptions::InscriptionsController,
     shared::{
         database::PostgresDatabase,
         di::DependencyContainer,
         layers::{setup_cors, HttpLogger},
         smtp::LettreTransport,
     },
-    users::infrastructure::UserController,
+    users::UsersController,
 };
+
+pub const DEFAULT_PAGE_SIZE: usize = 10;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -40,9 +42,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cors_layer = setup_cors(&cors_config);
 
     app.di_module(dependency_container.module)?
-        .controller::<UserController>()
-        .controller::<AsignaturesController>()
-        .controller::<InscriptionController>()
+        .controller::<UsersController>()
+        .controller::<CoursesController>()
+        .controller::<InscriptionsController>()
         .layer(http_logger.layer)
         .layer(cors_layer)
         .run()

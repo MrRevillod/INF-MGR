@@ -28,7 +28,7 @@ impl InscriptionBuilder {
     pub fn build(self) -> Value {
         json!({
             "studentId": self.student_id,
-            "asignatureId": self.asignature_id
+            "courseId": self.asignature_id
         })
     }
 }

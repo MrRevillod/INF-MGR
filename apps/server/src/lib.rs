@@ -1,122 +1,68 @@
 pub mod config;
 
-pub mod features {
+pub mod users {
 
-    pub mod users {
-        pub mod domain;
+    mod controllers;
+    mod dtos;
+    mod entity;
+    mod errors;
+    mod repository;
+    mod service;
 
-        pub mod application {
-            mod interfaces;
-
-            mod usecases {
-                pub mod create;
-                pub mod delete;
-                pub mod get;
-                pub mod update;
-
-                pub use create::CreateUserCaseImpl;
-                pub use delete::DeleteUserCaseImpl;
-                pub use get::GetUsersCaseImpl;
-                pub use update::UpdateUserCaseImpl;
-            }
-
-            pub use interfaces::*;
-            pub use usecases::*;
-        }
-
-        pub mod infrastructure {
-            mod controllers;
-            mod dtos;
-            mod models;
-            mod repository;
-
-            pub mod errors;
-            pub use controllers::UserController;
-            pub use dtos::{CreateUserDto, UpdateUserDto, UserResponseDTO};
-            pub use models::{Role, UserModel};
-            pub use repository::PostgresUserRepository;
-        }
-    }
-
-    pub mod asignatures {
-
-        pub mod domain;
-
-        pub mod application {
-            mod interfaces;
-
-            mod usecases {
-                pub mod create;
-                pub mod delete;
-                pub mod get;
-                pub mod update;
-
-                pub use create::CreateAsignatureCaseImpl;
-                pub use delete::DeleteAsignatureCaseImpl;
-                pub use get::GetAsignaturesCaseImpl;
-                pub use update::UpdateAsignatureCaseImpl;
-            }
-
-            pub use interfaces::*;
-            pub use usecases::*;
-        }
-
-        pub mod infrastructure {
-            mod controllers;
-            mod dtos;
-            mod models;
-            mod repository;
-
-            pub mod errors;
-            pub use controllers::AsignaturesController;
-            pub use dtos::{CreateAsignatureDto, UpdateAsignatureDto};
-            pub use models::{AsignatureModel, EvaluationType};
-            pub use repository::PostgresAsignatureRepository;
-        }
-    }
-
-    pub mod inscriptions {
-        pub mod domain;
-
-        pub mod application {
-            mod interfaces;
-
-            mod usecases {
-                pub mod create;
-                pub mod delete;
-                pub mod get;
-                pub mod update;
-
-                pub use create::CreateInscriptionCaseImpl;
-                pub use delete::DeleteInscriptionCaseImpl;
-                pub use get::GetInscriptionsCaseImpl;
-                pub use update::UpdateInscriptionCaseImpl;
-            }
-
-            pub use interfaces::*;
-            pub use usecases::*;
-        }
-
-        pub mod infrastructure {
-            mod controllers;
-            mod dtos;
-            mod models;
-            mod repository;
-
-            pub mod errors;
-            pub use controllers::InscriptionController;
-            pub use dtos::{
-                CreateInscriptionDto, StudentEvaluationDto, UpdateInscriptionDto,
-            };
-            pub use models::{
-                InscriptionModel, InscriptionResponseModel, StudentEvaluationModel,
-            };
-            pub use repository::PostgresInscriptionRepository;
-        }
-    }
+    pub use controllers::UsersController;
+    pub use dtos::{CreateUserDto, GetUsersQueryDto, UpdateUserDto, UserResponse};
+    pub use entity::{Role, User};
+    pub use errors::UserError;
+    pub use repository::{
+        PostgresUserRepository, UserFilter, UserRepository, UserWithCount,
+    };
+    pub use service::{UserService, UserServiceImpl};
 }
 
-pub use features::{asignatures, inscriptions, users};
+pub mod courses {
+
+    mod controllers;
+    mod dtos;
+    mod entity;
+    mod errors;
+    mod repository;
+    mod service;
+
+    pub use controllers::CoursesController;
+    pub use dtos::{
+        CourseEvaluationDto, CourseResponse, CourseWithStaff, CreateCourseDto,
+        UpdateCourseDto,
+    };
+    pub use entity::{Course, CourseEvaluation, CourseStatus};
+    pub use errors::CourseError;
+
+    pub use repository::{CourseFilter, CourseRepository, PostgresCourseRepository};
+    pub use service::{CourseService, CourseServiceImpl};
+}
+
+pub mod inscriptions {
+
+    mod controllers;
+    mod dtos;
+    mod entity;
+    mod errors;
+    mod repository;
+    mod service;
+
+    pub use controllers::InscriptionsController;
+    pub use dtos::{
+        CreateInscriptionDto, GetInscriptionsDto, InscriptionResponse,
+        InscriptionWithCourse, StudentScoreDto, UpdateInscriptionDto,
+    };
+    pub use entity::{Inscription, StudentScore};
+    pub use errors::InscriptionError;
+
+    pub use repository::{
+        InscriptionFilter, InscriptionRepository, PostgresInscriptionRepository,
+    };
+
+    pub use service::{InscriptionService, InscriptionServiceImpl};
+}
 
 pub mod shared {
     pub mod services {
@@ -126,6 +72,8 @@ pub mod shared {
         pub use mailer::{MailContext, MailTo, Mailer, MailerService};
         pub use password::{BcryptPasswordHasher, PasswordHasher};
     }
+
+    pub mod entities;
 
     pub mod database;
     pub mod di;

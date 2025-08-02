@@ -25,7 +25,7 @@ async fn test_create_user_should_work() {
 #[tokio::test]
 async fn test_get_users() {
     let app = init_test_app().await;
-    let response = app.get("/users?role=student").await;
+    let response = app.get("/users?role=students").await;
 
     assert_eq!(response.status_code(), 200);
 }

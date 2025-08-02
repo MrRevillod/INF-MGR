@@ -60,16 +60,3 @@ export const getStudentInscriptionsQuery = (userId: string) => {
 		queryFn: () => tryHttp<StudentInscriptionsResponse>({ fn: request }),
 	})
 }
-
-export const getUserQuery = (userId: string) => {
-	const request = () => {
-		return api.get<User>(`users/${userId}`)
-	}
-
-	return createQuery({
-		queryKey: ["user", userId],
-		enabled: !!userId,
-		staleTime: 1000 * 60 * 1,
-		queryFn: () => tryHttp<User>({ fn: request }),
-	})
-}

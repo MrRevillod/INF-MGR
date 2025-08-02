@@ -6,7 +6,7 @@ use sqlx::PgPool;
 use std::{collections::HashSet, vec};
 use uuid::Uuid;
 
-use server::asignatures::infrastructure::EvaluationType;
+use server::courses::CourseEvaluation;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Asignature {
@@ -52,17 +52,17 @@ pub async fn seed_asignatures(pool: &PgPool) -> Result<Vec<Uuid>, sqlx::Error> {
         let status = "inprogress";
 
         let evaluations = vec![
-            EvaluationType {
+            CourseEvaluation {
                 id: Uuid::new_v4(),
                 name: String::from("Informe de Práctica"),
                 weight: 30,
             },
-            EvaluationType {
+            CourseEvaluation {
                 id: Uuid::new_v4(),
                 name: String::from("Bitácoras de Práctica"),
                 weight: 30,
             },
-            EvaluationType {
+            CourseEvaluation {
                 id: Uuid::new_v4(),
                 name: String::from("Evaluación del Supervisor de Práctica"),
                 weight: 40,

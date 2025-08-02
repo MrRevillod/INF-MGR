@@ -3,24 +3,20 @@ use serde_json::Value;
 use sword::prelude::Application;
 
 #[cfg(test)]
-pub mod asignatures;
+pub mod courses;
 #[cfg(test)]
 pub mod inscriptions;
-#[cfg(test)]
-pub mod practices;
-#[cfg(test)]
-pub mod reports;
 #[cfg(test)]
 pub mod users;
 
 use server::{
-    asignatures::infrastructure::AsignaturesController,
     config::{MailerConfig, PostgresDbConfig},
-    inscriptions::infrastructure::InscriptionController,
+    courses::CoursesController,
+    inscriptions::InscriptionsController,
     shared::{
         database::PostgresDatabase, di::DependencyContainer, smtp::LettreTransport,
     },
-    users::infrastructure::UserController,
+    users::UsersController,
 };
 
 pub async fn init_test_app() -> TestServer {
@@ -38,7 +34,7 @@ pub async fn init_test_app() -> TestServer {
         .await
         .expect("Failed to migrate database");
 
-    sqlx::query("TRUNCATE users, asignatures, inscriptions, practices CASCADE")
+    sqlx::query("TRUNCATE users, courses, inscriptions, practices, reports CASCADE")
         .execute(&postgres_db.pool)
         .await
         .expect("Failed to truncate database tables");
@@ -52,9 +48,9 @@ pub async fn init_test_app() -> TestServer {
     let app = app
         .di_module(dependency_container.module)
         .expect("Failed to load DI module")
-        .controller::<UserController>()
-        .controller::<AsignaturesController>()
-        .controller::<InscriptionController>();
+        .controller::<UsersController>()
+        .controller::<CoursesController>()
+        .controller::<InscriptionsController>();
 
     TestServer::new(app.router()).expect("Failed to start test server")
 }

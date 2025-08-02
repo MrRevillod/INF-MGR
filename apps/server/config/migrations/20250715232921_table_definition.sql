@@ -11,6 +11,17 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE INDEX IF NOT EXISTS users_created_at_idx ON users(created_at DESC);
 
+CREATE TABLE IF NOT EXISTS courses (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    year INTEGER NOT NULL,
+    code TEXT NOT NULL,
+    name TEXT NOT NULL,
+    evaluations course_evaluation[] NOT NULL,
+    teacher_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    coordinator_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    status course_status NOT NULL DEFAULT 'inprogress'
+);
+
 CREATE TABLE IF NOT EXISTS practices (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     enterprise_name TEXT NOT NULL,
@@ -18,29 +29,18 @@ CREATE TABLE IF NOT EXISTS practices (
     description TEXT NOT NULL,
     supervisor_name TEXT NOT NULL,
     supervisor_email TEXT NOT NULL,
+
     start_date TIMESTAMP WITH TIME ZONE NOT NULL,
     end_date TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS asignatures (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    year INTEGER NOT NULL,
-    code TEXT NOT NULL,
-    name TEXT NOT NULL,
-    evaluations evaluation[] NOT NULL,
-    teacher_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
-    coordinator_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
-    status asignature_status NOT NULL DEFAULT 'inprogress'
-);
-
 CREATE TABLE IF NOT EXISTS inscriptions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
-    asignature_id UUID NOT NULL REFERENCES asignatures(id) ON DELETE RESTRICT,
+    student_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    course_id UUID NOT NULL REFERENCES courses(id) ON DELETE RESTRICT,
     practice_id UUID REFERENCES practices(id) ON DELETE SET NULL,
-    evaluations_scores student_evaluation[] NOT NULL,
-    status student_status NOT NULL DEFAULT 'active',
-    UNIQUE(user_id, asignature_id)
+    student_scores student_score[] NOT NULL,
+    UNIQUE(student_id, course_id)
 );
 
 CREATE TABLE IF NOT EXISTS reports (

@@ -1,0 +1,108 @@
+use async_trait::async_trait;
+use shaku::{Component, Interface};
+use sqlx::{Postgres, QueryBuilder};
+use std::sync::Arc;
+use uuid::Uuid;
+
+use crate::courses::{Course, CourseError};
+use crate::shared::database::DatabaseConnection;
+
+#[derive(Component)]
+#[shaku(interface = CourseRepository)]
+pub struct PostgresCourseRepository {
+    #[shaku(inject)]
+    db_connection: Arc<dyn DatabaseConnection>,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct CourseFilter {
+    pub code: Option<String>,
+    pub name: Option<String>,
+    pub teacher_id: Option<Uuid>,
+    pub coordinator_id: Option<Uuid>,
+}
+
+#[async_trait]
+pub trait CourseRepository: Interface {
+    async fn find(&self, filter: CourseFilter) -> Result<Vec<Course>, CourseError>;
+    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Course>, CourseError>;
+    async fn save(&self, course: Course) -> Result<Course, CourseError>;
+    async fn delete(&self, id: &Uuid) -> Result<(), CourseError>;
+}
+
+#[async_trait]
+impl CourseRepository for PostgresCourseRepository {
+    async fn find(&self, filter: CourseFilter) -> Result<Vec<Course>, CourseError> {
+        let mut builder =
+            QueryBuilder::<Postgres>::new("SELECT * FROM Courses WHERE 1=1");
+
+        if let Some(ref code) = filter.code {
+            builder.push(" AND code = ").push_bind(code);
+        }
+
+        if let Some(ref name) = filter.name {
+            builder.push(" AND name = ").push_bind(name);
+        }
+
+        if let Some(teacher_id) = filter.teacher_id {
+            builder.push(" AND teacher_id = ").push_bind(teacher_id);
+        }
+
+        if let Some(coordinator_id) = filter.coordinator_id {
+            builder
+                .push(" AND coordinator_id = ")
+                .push_bind(coordinator_id);
+        }
+
+        let query = builder.build_query_as::<Course>();
+
+        Ok(query.fetch_all(self.db_connection.get_pool()).await?)
+    }
+
+    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Course>, CourseError> {
+        let query = r#"SELECT * FROM Courses WHERE id = $1"#;
+
+        let model = sqlx::query_as::<_, Course>(query)
+            .bind(id)
+            .fetch_optional(self.db_connection.get_pool())
+            .await?;
+
+        Ok(model)
+    }
+
+    async fn save(&self, course: Course) -> Result<Course, CourseError> {
+        let query = r#"
+            INSERT INTO Courses (id, year, code, name, status, teacher_id, coordinator_id, evaluations)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            ON CONFLICT (id) DO UPDATE SET
+                teacher_id = EXCLUDED.teacher_id,
+                coordinator_id = EXCLUDED.coordinator_id,
+                status = EXCLUDED.status,
+                evaluations = EXCLUDED.evaluations
+            RETURNING *
+        "#;
+
+        let result = sqlx::query_as::<_, Course>(query)
+            .bind(course.id)
+            .bind(course.year)
+            .bind(&course.code)
+            .bind(&course.name)
+            .bind(course.status)
+            .bind(course.teacher_id)
+            .bind(course.coordinator_id)
+            .bind(&course.evaluations)
+            .fetch_one(self.db_connection.get_pool())
+            .await?;
+
+        Ok(result)
+    }
+
+    async fn delete(&self, id: &Uuid) -> Result<(), CourseError> {
+        sqlx::query("DELETE FROM Courses WHERE id = $1")
+            .bind(id)
+            .execute(self.db_connection.get_pool())
+            .await?;
+
+        Ok(())
+    }
+}

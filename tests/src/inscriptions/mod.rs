@@ -2,12 +2,14 @@ use axum::http::StatusCode;
 use uuid::Uuid;
 
 use crate::{
-    asignatures::utils::{AsignatureBuilder, create_asignature, delete_asignature},
+    courses::utils::{AsignatureBuilder, create_asignature, delete_asignature},
     extract_resource_id, init_test_app,
     inscriptions::utils::{
         InscriptionBuilder, create_inscription, delete_incription,
     },
-    users::utils::{create_student, create_teacher, delete_user},
+    users::utils::{
+        create_coordinator, create_student, create_teacher, delete_user,
+    },
 };
 
 pub mod utils;
@@ -18,7 +20,12 @@ async fn create_and_delete_inscription_should_work() {
 
     let student_id = create_student(&app).await;
     let teacher_id = create_teacher(&app).await;
-    let asignature_data = AsignatureBuilder::new(&teacher_id).build();
+    let coordinator_id = create_coordinator(&app).await;
+
+    let asignature_data =
+        AsignatureBuilder::new(&teacher_id, &coordinator_id).build();
+
+    dbg!("Creating asignature with data: {:?}", &asignature_data);
 
     let asignature = create_asignature(&app, &asignature_data).await;
     let asignature_id = extract_resource_id(&asignature);
@@ -32,15 +39,17 @@ async fn create_and_delete_inscription_should_work() {
     let inscription_id = extract_resource_id(&incription);
 
     assert_eq!(
-        incription["asignatureId"].as_str().unwrap(),
+        incription["courseId"].as_str().unwrap(),
         asignature_id.as_str(),
         "Asignature ID does not match"
     );
 
     delete_incription(&app, &inscription_id).await;
     delete_asignature(&app, &asignature_id).await;
+
     delete_user(&app, &student_id).await;
     delete_user(&app, &teacher_id).await;
+    delete_user(&app, &coordinator_id).await;
 }
 
 #[tokio::test]
@@ -48,11 +57,12 @@ async fn create_inscription_without_asignature_should_fail() {
     let app = init_test_app().await;
 
     let student_id = create_student(&app).await;
+
     let inscription_data = InscriptionBuilder::new()
         .with_student_id(&student_id)
         .build();
 
-    app.post("/inscriptions")
+    app.post("/courses")
         .json(&inscription_data)
         .await
         .assert_status(StatusCode::BAD_REQUEST);
@@ -65,7 +75,10 @@ async fn create_inscription_without_student_should_fail() {
     let app = init_test_app().await;
 
     let teacher_id = create_teacher(&app).await;
-    let asignature_data = AsignatureBuilder::new(&teacher_id).build();
+    let coordinator_id = create_coordinator(&app).await;
+
+    let asignature_data =
+        AsignatureBuilder::new(&teacher_id, &coordinator_id).build();
 
     let asignature = create_asignature(&app, &asignature_data).await;
     let asignature_id = extract_resource_id(&asignature);
@@ -74,13 +87,14 @@ async fn create_inscription_without_student_should_fail() {
         .with_asignature_id(&asignature_id)
         .build();
 
-    app.post("/inscriptions")
+    app.post("/courses")
         .json(&inscription_data)
         .await
         .assert_status(StatusCode::BAD_REQUEST);
 
     delete_asignature(&app, &asignature_id).await;
     delete_user(&app, &teacher_id).await;
+    delete_user(&app, &coordinator_id).await;
 }
 
 #[tokio::test]
@@ -103,7 +117,10 @@ async fn create_inscription_with_non_existent_student_should_fail() {
     let app = init_test_app().await;
 
     let teacher_id = create_teacher(&app).await;
-    let asignature_data = AsignatureBuilder::new(&teacher_id).build();
+    let coordinator_id = create_coordinator(&app).await;
+
+    let asignature_data =
+        AsignatureBuilder::new(&teacher_id, &coordinator_id).build();
 
     let asignature = create_asignature(&app, &asignature_data).await;
     let asignature_id = extract_resource_id(&asignature);
@@ -113,13 +130,15 @@ async fn create_inscription_with_non_existent_student_should_fail() {
         .with_asignature_id(&asignature_id)
         .build();
 
-    app.post("/inscriptions")
+    app.post("/courses")
         .json(&inscription_data)
         .await
         .assert_status(StatusCode::BAD_REQUEST);
 
     delete_asignature(&app, &asignature_id).await;
+
     delete_user(&app, &teacher_id).await;
+    delete_user(&app, &coordinator_id).await;
 }
 
 #[tokio::test]
@@ -128,7 +147,10 @@ async fn create_duplicate_inscription_should_fail() {
 
     let student_id = create_student(&app).await;
     let teacher_id = create_teacher(&app).await;
-    let asignature_data = AsignatureBuilder::new(&teacher_id).build();
+    let coordinator_id = create_coordinator(&app).await;
+
+    let asignature_data =
+        AsignatureBuilder::new(&teacher_id, &coordinator_id).build();
 
     let asignature = create_asignature(&app, &asignature_data).await;
     let asignature_id = extract_resource_id(&asignature);
@@ -148,6 +170,8 @@ async fn create_duplicate_inscription_should_fail() {
 
     delete_incription(&app, &inscription_id).await;
     delete_asignature(&app, &asignature_id).await;
+
     delete_user(&app, &student_id).await;
     delete_user(&app, &teacher_id).await;
+    delete_user(&app, &coordinator_id).await;
 }
