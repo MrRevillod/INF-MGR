@@ -1,5 +1,5 @@
 import * as v from "valibot"
-import type { Asignature } from "../asignatures/schemas"
+import type { Course } from "../courses/schemas"
 
 export interface User {
 	id: string
@@ -7,6 +7,7 @@ export interface User {
 	name: string
 	email: string
 	roles: Role[]
+	createdAt: string
 	deletedAt: string | null
 }
 
@@ -39,58 +40,3 @@ export const UpdateUserSchema = v.object({
 })
 
 export type UpdateUserSchemaType = v.InferInput<typeof UpdateUserSchema>
-
-// -------------------------------------
-
-export interface Inscription {
-	id: string
-	userId: string
-	asignatureId: string
-	practiceId: string
-	evaluationScores: StudentEvaluation[]
-	status: StudentStatus
-	asignature: Asignature
-}
-
-const StudentStatus = v.union([
-	v.literal("active"),
-	v.literal("inactive"),
-	v.literal("completed"),
-	v.literal("evaluating"),
-])
-
-export type StudentStatus = v.InferInput<typeof StudentStatus>
-
-const StudentEvaluation = v.object({
-	id: v.string(),
-	score: v.number(),
-})
-
-export type StudentEvaluation = v.InferInput<typeof StudentEvaluation>
-
-export const CreateInscriptionSchema = v.object({
-	userId: v.string(),
-	asignatureId: v.string(),
-})
-
-export type CreateInscriptionSchemaType = v.InferInput<
-	typeof CreateInscriptionSchema
->
-
-export const UpdateInscriptionSchema = v.object({
-	practiceId: v.optional(v.string()),
-	evaluationScores: v.optional(v.array(StudentEvaluation)),
-	status: v.optional(StudentStatus),
-})
-
-// -------------------------------------------------
-
-export interface Report {
-	id: string
-	inscriptionId: string
-	userId: string
-	title: string
-	content: string
-	createdAt: string
-	updatedAt: string
-}

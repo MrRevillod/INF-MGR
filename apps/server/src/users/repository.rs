@@ -6,7 +6,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::shared::{database::DatabaseConnection, entities::Pagination};
-use crate::users::{Role, User, UserError};
+use crate::users::{User, UserError};
 
 pub const DEFAULT_PAGE_SIZE: usize = 10;
 
@@ -19,7 +19,6 @@ pub struct PostgresUserRepository {
 
 #[derive(Default)]
 pub struct UserFilter {
-    pub roles: Option<Vec<Role>>,
     pub search: Option<String>,
     pub page: i64,
 }
@@ -28,7 +27,7 @@ pub struct UserFilter {
 pub struct UserWithCount {
     #[sqlx(flatten)]
     pub user: User,
-    pub count: i64,
+    pub total_count: i64,
 }
 
 #[async_trait]
@@ -57,7 +56,7 @@ impl UserRepository for PostgresUserRepository {
         );
 
         if let Some(search) = &filter.search {
-            let pattern = format!("%{}%", search);
+            let pattern = format!("%{search}%");
 
             query.push(" AND (");
             query
@@ -70,10 +69,6 @@ impl UserRepository for PostgresUserRepository {
             query.push(")");
         }
 
-        query.push(" AND roles && ");
-        query.push_bind(filter.roles.clone());
-        query.push("::user_role[]");
-
         query.push(" ORDER BY created_at DESC");
         query.push(" LIMIT ");
         query.push_bind(DEFAULT_PAGE_SIZE as i64);
@@ -85,11 +80,10 @@ impl UserRepository for PostgresUserRepository {
             .fetch_all(self.database_connection.get_pool())
             .await?;
 
-        let total_users = results.first().map(|r| r.count).unwrap_or(0) as usize;
-        let all_users = results
-            .into_iter()
-            .map(|r| User::from(r.user))
-            .collect::<Vec<User>>();
+        let total_users =
+            results.first().map(|r| r.total_count).unwrap_or(0) as usize;
+
+        let all_users = results.into_iter().map(|r| r.user).collect::<Vec<User>>();
 
         let total_pages =
             (total_users as f64 / DEFAULT_PAGE_SIZE as f64).ceil() as i64;
@@ -98,7 +92,6 @@ impl UserRepository for PostgresUserRepository {
             items: all_users,
             current_page: filter.page as usize,
             total_pages: total_pages as usize,
-            total_items: total_users,
             has_next: filter.page < total_pages as i64,
             has_previous: filter.page > 1,
         })
@@ -136,8 +129,6 @@ impl UserRepository for PostgresUserRepository {
     }
 
     async fn save(&self, user: User) -> Result<User, UserError> {
-        let pool = self.database_connection.get_pool();
-
         let upsert_query = r#"
             INSERT INTO users (id, rut, name, email, password, roles, created_at, deleted_at)
             VALUES ($1, $2, $3, $4, $5, $6, NOW(), NULL)
@@ -159,7 +150,7 @@ impl UserRepository for PostgresUserRepository {
             .bind(user.email)
             .bind(user.password)
             .bind(user.roles)
-            .fetch_one(&*pool)
+            .fetch_one(self.database_connection.get_pool())
             .await?;
 
         Ok(saved_user)

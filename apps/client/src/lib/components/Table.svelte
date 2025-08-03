@@ -18,7 +18,6 @@
 		pagination: {
 			currentPage: number
 			totalPages?: number
-			totalUsers?: number
 			hasNext?: boolean
 			hasPrevious?: boolean
 			onPageChange: (page: number) => void
@@ -40,7 +39,7 @@
 	<table class="w-full">
 		<thead class="border-border border-b bg-gray-50">
 			<tr>
-				{#each columns as column}
+				{#each columns as column (column.key)}
 					{@render th(column.label)}
 				{/each}
 				{@render th("Detalles")}
@@ -49,7 +48,7 @@
 		<tbody class="bg-surface divide-border divide-y">
 			{#each data ?? [] as item (item.id)}
 				<tr class="hover:bg-hover-bg transition-colors duration-150">
-					{#each columns as column}
+					{#each columns as column (column.key)}
 						<td class="text-text-primary px-6 py-3 text-sm">
 							{#if column.formatter}
 								{column.formatter(item)}

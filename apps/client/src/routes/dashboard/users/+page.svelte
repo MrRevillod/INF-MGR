@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { page } from "$app/state"
 	import { goto } from "$app/navigation"
 	import { useQuery } from "$lib/shared/hooks/useQuery"
 	import { tableColumns } from "$users/utils"
@@ -13,10 +12,9 @@
 
 	let search = $state("")
 	let currentPage = $state(1)
-	let role = $derived(page.params.role ?? "")
 
 	const { data, isLoading, isError, refetch } = $derived(
-		useQuery(() => getUsersQuery({ role, search, page: currentPage }))
+		useQuery(() => getUsersQuery({ search, page: currentPage }))
 	)
 
 	const paginationProps = $derived({
@@ -66,7 +64,7 @@
 				user: item,
 			}
 
-			goto(`/users/${role}/${item.id}?${useEncodeData(pageData)}`)
+			goto(`/users/${item.id}?${useEncodeData(pageData)}`)
 		}}
 	/>
 </div>

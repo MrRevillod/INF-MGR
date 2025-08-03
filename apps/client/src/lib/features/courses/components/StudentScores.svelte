@@ -1,24 +1,24 @@
 <script lang="ts">
-	import type { Asignature } from "../schemas"
-	import type { Inscription } from "$lib/features/users/schemas"
+	import type { Course, Inscription } from "../schemas"
+
 	import { PencilSquareIcon } from "@fvilers/heroicons-svelte/20/solid"
 
 	interface Props {
 		inscription: Inscription
-		asignature: Asignature
+		course: Course
 	}
 
-	const { inscription, asignature }: Props = $props()
+	const { inscription, course }: Props = $props()
 
 	const califications = $derived.by(() => {
-		return asignature?.evaluations.map(evaluation => {
-			const studentEvaluation = inscription?.evaluationScores?.find(
+		return course?.evaluations.map(evaluation => {
+			const studentScore = inscription?.studentScores?.find(
 				score => score.id === evaluation.id
 			)
 
 			return {
 				...evaluation,
-				score: studentEvaluation?.score ?? 1.0,
+				score: studentScore?.score ?? 1.0,
 			}
 		})
 	})
@@ -37,7 +37,7 @@
 			</tr>
 		</thead>
 		<tbody class="divide-border divide-y">
-			{#each califications as calification}
+			{#each califications as calification (calification.id)}
 				<tr>
 					<td class="py-2">{calification.name}</td>
 					<td class="py-2">{calification.weight}%</td>

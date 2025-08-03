@@ -7,15 +7,15 @@ run DOCKERARGS="":
 	docker compose up {{DOCKERARGS}}
 
 lint:
-	cargo clippy --all-features -- -D warnings
+	cargo clippy --all-features -- -D warnings && \
 	cd apps/client && npm run lint && cd ../..
 
 fmt:
-	cargo fmt
+	cargo fmt --verbose && \
 	cd apps/client && npm run format && cd ../..
 
 fmt-check:
-	cargo fmt --check
+	cargo fmt --check && \
 	cd apps/client && npm run format && cd ../..
 
 db-seed:
@@ -45,3 +45,4 @@ test-watch entity="":
 test-clean:
 	docker compose -f {{COMPOSE_TEST_FILE}} down -v
 	docker volume rm inf-mgr_rust_target_cache inf-mgr_cargo_cache 2>/dev/null || true
+	rm -f tests/config tests/tools apps/server/tools/tools apps/server/config/config

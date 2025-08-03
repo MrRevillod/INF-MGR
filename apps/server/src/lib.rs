@@ -40,28 +40,27 @@ pub mod courses {
     pub use service::{CourseService, CourseServiceImpl};
 }
 
-pub mod inscriptions {
+pub mod enrollments {
 
-    mod controllers;
     mod dtos;
     mod entity;
     mod errors;
     mod repository;
     mod service;
 
-    pub use controllers::InscriptionsController;
     pub use dtos::{
-        CreateInscriptionDto, GetInscriptionsDto, InscriptionResponse,
-        InscriptionWithCourse, StudentScoreDto, UpdateInscriptionDto,
+        CreateEnrollmentDto, EnrollmentResponse, EnrollmentWithStudent,
+        GetEnrollmentsDto, StudentScoreDto, UpdateEnrollmentDto,
     };
-    pub use entity::{Inscription, StudentScore};
-    pub use errors::InscriptionError;
+
+    pub use entity::{Enrollment, StudentScore};
+    pub use errors::EnrollmentError;
 
     pub use repository::{
-        InscriptionFilter, InscriptionRepository, PostgresInscriptionRepository,
+        EnrollmentFilter, EnrollmentRepository, PostgresEnrollmentRepository,
     };
 
-    pub use service::{InscriptionService, InscriptionServiceImpl};
+    pub use service::{EnrollmentService, EnrollmentServiceImpl};
 }
 
 pub mod shared {

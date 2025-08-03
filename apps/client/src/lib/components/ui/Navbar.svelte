@@ -1,8 +1,9 @@
 <script lang="ts">
+	import type { Component } from "svelte"
+
 	import {
 		HomeIcon,
-		BookOpenIcon,
-		PencilIcon,
+		UserGroupIcon,
 		ComputerDesktopIcon,
 		ArrowLeftStartOnRectangleIcon,
 		UserCircleIcon,
@@ -15,12 +16,11 @@
 
 	const routes = [
 		{ title: "Inicio", path: "/", icon: HomeIcon },
-		{ title: "Estudiantes", path: "/users/students", icon: PencilIcon },
-		{ title: "Personal Académico", path: "/users/staff", icon: BookOpenIcon },
-		{ title: "Asignaturas", path: "/asignatures", icon: ComputerDesktopIcon },
+		{ title: "Usuarios", path: "/dashboard/users", icon: UserGroupIcon },
+		{ title: "Cursos", path: "/dashboard/courses", icon: ComputerDesktopIcon },
 	]
 
-	const bottomRoutes = [
+	const bottomActions = [
 		{ title: "Mi perfil", path: "/profile", icon: UserCircleIcon },
 		{ title: "Cerrar sesión", path: "/logout", icon: ArrowLeftStartOnRectangleIcon },
 	]
@@ -52,7 +52,7 @@
 
 	<div class="flex-1 px-2 py-6 lg:px-4">
 		<nav class="space-y-2">
-			{#each routes as route}
+			{#each routes as route (route.path)}
 				{@render navItem(route)}
 			{/each}
 		</nav>
@@ -61,8 +61,8 @@
 	<div
 		class="flex flex-col items-center justify-center p-4 lg:items-start lg:justify-start"
 	>
-		{#each bottomRoutes as route}
-			{@render navItem(route)}
+		{#each bottomActions as action (action.title)}
+			{@render navItem(action)}
 		{/each}
 	</div>
 
@@ -74,7 +74,7 @@
 	</div>
 </nav>
 
-{#snippet navItem(route: { title: string; path: string; icon: any })}
+{#snippet navItem(route: { title: string; path: string; icon: Component })}
 	<a
 		href={route.path}
 		title={route.title}

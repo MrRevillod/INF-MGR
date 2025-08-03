@@ -5,51 +5,51 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::{
-    inscriptions::{entity::Inscription, errors::InscriptionError},
+    enrollments::{Enrollment, EnrollmentError},
     shared::database::DatabaseConnection,
 };
 
 #[derive(Component)]
-#[shaku(interface = InscriptionRepository)]
-pub struct PostgresInscriptionRepository {
+#[shaku(interface = EnrollmentRepository)]
+pub struct PostgresEnrollmentRepository {
     #[shaku(inject)]
     db_connection: Arc<dyn DatabaseConnection>,
 }
 
 #[derive(Default)]
-pub struct InscriptionFilter {
+pub struct EnrollmentFilter {
     pub student_id: Option<Uuid>,
     pub course_id: Option<Uuid>,
 }
 
 #[async_trait]
-pub trait InscriptionRepository: Interface {
+pub trait EnrollmentRepository: Interface {
     async fn find_all(
         &self,
-        filter: InscriptionFilter,
-    ) -> Result<Vec<Inscription>, InscriptionError>;
+        filter: EnrollmentFilter,
+    ) -> Result<Vec<Enrollment>, EnrollmentError>;
 
     async fn find_by_id(
         &self,
         id: &Uuid,
-    ) -> Result<Option<Inscription>, InscriptionError>;
+    ) -> Result<Option<Enrollment>, EnrollmentError>;
 
     async fn save(
         &self,
-        inscription: Inscription,
-    ) -> Result<Inscription, InscriptionError>;
+        enrollment: Enrollment,
+    ) -> Result<Enrollment, EnrollmentError>;
 
-    async fn delete(&self, id: &Uuid) -> Result<(), InscriptionError>;
+    async fn delete(&self, id: &Uuid) -> Result<(), EnrollmentError>;
 }
 
 #[async_trait]
-impl InscriptionRepository for PostgresInscriptionRepository {
+impl EnrollmentRepository for PostgresEnrollmentRepository {
     async fn find_all(
         &self,
-        filter: InscriptionFilter,
-    ) -> Result<Vec<Inscription>, InscriptionError> {
+        filter: EnrollmentFilter,
+    ) -> Result<Vec<Enrollment>, EnrollmentError> {
         let mut builder = sqlx::QueryBuilder::<Postgres>::new(
-            "SELECT * FROM inscriptions WHERE 1=1",
+            "SELECT * FROM enrollments WHERE 1=1",
         );
 
         if let Some(user_id) = filter.student_id {
@@ -60,7 +60,7 @@ impl InscriptionRepository for PostgresInscriptionRepository {
             builder.push(" AND course_id = ").push_bind(course_id);
         }
 
-        let query = builder.build_query_as::<Inscription>();
+        let query = builder.build_query_as::<Enrollment>();
         let result = query.fetch_all(self.db_connection.get_pool()).await?;
 
         Ok(result)
@@ -69,10 +69,10 @@ impl InscriptionRepository for PostgresInscriptionRepository {
     async fn find_by_id(
         &self,
         id: &Uuid,
-    ) -> Result<Option<Inscription>, InscriptionError> {
-        let query = r#"SELECT * FROM inscriptions WHERE id = $1"#;
+    ) -> Result<Option<Enrollment>, EnrollmentError> {
+        let query = r#"SELECT * FROM enrollments WHERE id = $1"#;
 
-        let model = sqlx::query_as::<_, Inscription>(query)
+        let model = sqlx::query_as::<_, Enrollment>(query)
             .bind(id)
             .fetch_optional(self.db_connection.get_pool())
             .await?;
@@ -82,10 +82,10 @@ impl InscriptionRepository for PostgresInscriptionRepository {
 
     async fn save(
         &self,
-        inscription: Inscription,
-    ) -> Result<Inscription, InscriptionError> {
+        enrollment: Enrollment,
+    ) -> Result<Enrollment, EnrollmentError> {
         let query = r#"
-            INSERT INTO inscriptions (id, student_id, course_id, practice_id, student_scores)
+            INSERT INTO enrollments (id, student_id, course_id, practice_id, student_scores)
             VALUES ($1, $2, $3, $4, $5)
             ON CONFLICT (id) DO UPDATE SET
                 student_id = EXCLUDED.student_id,
@@ -94,20 +94,20 @@ impl InscriptionRepository for PostgresInscriptionRepository {
             RETURNING *
         "#;
 
-        let result = sqlx::query_as::<_, Inscription>(query)
-            .bind(inscription.id)
-            .bind(inscription.student_id)
-            .bind(inscription.course_id)
-            .bind(inscription.practice_id)
-            .bind(inscription.student_scores)
+        let result = sqlx::query_as::<_, Enrollment>(query)
+            .bind(enrollment.id)
+            .bind(enrollment.student_id)
+            .bind(enrollment.course_id)
+            .bind(enrollment.practice_id)
+            .bind(enrollment.student_scores)
             .fetch_one(self.db_connection.get_pool())
             .await?;
 
         Ok(result)
     }
 
-    async fn delete(&self, id: &Uuid) -> Result<(), InscriptionError> {
-        sqlx::query("DELETE FROM inscriptions WHERE id = $1")
+    async fn delete(&self, id: &Uuid) -> Result<(), EnrollmentError> {
+        sqlx::query("DELETE FROM enrollments WHERE id = $1")
             .bind(id)
             .execute(self.db_connection.get_pool())
             .await?;

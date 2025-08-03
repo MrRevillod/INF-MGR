@@ -1,4 +1,4 @@
-import type { Asignature } from "$asignatures/schemas"
+import type { Asignature } from "$lib/features/courses/schemas"
 import type { User, Inscription } from "$users/schemas"
 
 import { api } from "$api/client"
@@ -6,7 +6,6 @@ import { tryHttp } from "$api/utils"
 import { createQuery } from "@tanstack/svelte-query"
 
 interface GetUsersParams {
-	role?: string
 	search?: string
 	page?: number
 }
@@ -21,12 +20,11 @@ interface GetUsersResponseData {
 }
 
 export const getUsersQuery = (params: GetUsersParams) => {
-	const { role, search, page } = params
+	const { search, page } = params
 
 	const request = () => {
 		return api.get<GetUsersResponseData>("users", {
 			params: {
-				role,
 				page,
 				search,
 			},
@@ -34,8 +32,7 @@ export const getUsersQuery = (params: GetUsersParams) => {
 	}
 
 	return createQuery({
-		queryKey: ["users", role, search, page],
-		enabled: !!role,
+		queryKey: ["users", search, page],
 		staleTime: 1000 * 60 * 1,
 		queryFn: () => tryHttp<GetUsersResponseData>({ fn: request }),
 	})
@@ -49,9 +46,7 @@ type StudentInscriptionsResponse = Array<
 
 export const getStudentInscriptionsQuery = (userId: string) => {
 	const request = () => {
-		return api.get<StudentInscriptionsResponse>(
-			`users/student/${userId}/inscriptions`
-		)
+		return api.get<StudentInscriptionsResponse>(`inscriptions?userId=${userId}`)
 	}
 
 	return createQuery({

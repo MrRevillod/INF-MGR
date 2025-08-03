@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 #[serde(rename_all = "camelCase")]
-pub struct Inscription {
+pub struct Enrollment {
     pub id: Uuid,
 
     #[sqlx(rename = "student_id")]
@@ -20,7 +20,7 @@ pub struct Inscription {
     pub student_scores: Vec<StudentScore>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Type)]
+#[derive(Clone, Debug, Serialize, Deserialize, Type)]
 #[sqlx(type_name = "student_score")]
 #[serde(rename_all = "camelCase")]
 pub struct StudentScore {

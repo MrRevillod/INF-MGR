@@ -30,7 +30,6 @@ impl UsersController {
             "users": users,
             "currentPage": data.current_page,
             "totalPages": data.total_pages,
-            "totalUsers": data.total_items,
             "hasNext": data.has_next,
             "hasPrevious": data.has_previous,
         });

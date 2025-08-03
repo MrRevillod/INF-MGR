@@ -1,12 +1,11 @@
 use serde::{Deserialize, Serialize};
-use sqlx::prelude::FromRow;
 use uuid::Uuid;
 use validator::Validate;
 
 use crate::{
-    courses::Course,
-    inscriptions::{Inscription, InscriptionFilter, StudentScore},
+    enrollments::{Enrollment, EnrollmentFilter, StudentScore},
     shared::validators::validate_uuid,
+    users::User,
 };
 
 // ============================================================================
@@ -14,7 +13,7 @@ use crate::{
 // ============================================================================
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate, Default)]
-pub struct GetInscriptionsDto {
+pub struct GetEnrollmentsDto {
     #[validate(
         custom(function = validate_uuid, message = "Identificador de estudiante inválido")
     )]
@@ -26,9 +25,9 @@ pub struct GetInscriptionsDto {
     pub course_id: Option<String>,
 }
 
-impl From<GetInscriptionsDto> for InscriptionFilter {
-    fn from(dto: GetInscriptionsDto) -> Self {
-        InscriptionFilter {
+impl From<GetEnrollmentsDto> for EnrollmentFilter {
+    fn from(dto: GetEnrollmentsDto) -> Self {
+        EnrollmentFilter {
             student_id: dto.student_id.map(|id| Uuid::parse_str(&id).unwrap()),
             course_id: dto.course_id.map(|id| Uuid::parse_str(&id).unwrap()),
         }
@@ -41,7 +40,7 @@ impl From<GetInscriptionsDto> for InscriptionFilter {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
-pub struct CreateInscriptionDto {
+pub struct CreateEnrollmentDto {
     #[validate(
         custom(function = validate_uuid, message = "Identificador de inscripción inválido")
     )]
@@ -53,9 +52,9 @@ pub struct CreateInscriptionDto {
     pub course_id: String,
 }
 
-impl From<CreateInscriptionDto> for Inscription {
-    fn from(dto: CreateInscriptionDto) -> Self {
-        Inscription {
+impl From<CreateEnrollmentDto> for Enrollment {
+    fn from(dto: CreateEnrollmentDto) -> Self {
+        Enrollment {
             id: Uuid::new_v4(),
             student_id: Uuid::parse_str(&dto.student_id).unwrap(),
             course_id: Uuid::parse_str(&dto.course_id).unwrap(),
@@ -71,7 +70,7 @@ impl From<CreateInscriptionDto> for Inscription {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
-pub struct UpdateInscriptionDto {
+pub struct UpdateEnrollmentDto {
     #[validate(nested)]
     pub student_scores: Option<Vec<StudentScoreDto>>,
 }
@@ -102,32 +101,32 @@ impl From<StudentScoreDto> for StudentScore {
 }
 
 // ============================================================================
-// >>>>>>>>>>>>>>>>>>>>>>>>>> INSCRIPTION RESPONSE DTO <<<<<<<<<<<<<<<<<<<<<<<<
+// >>>>>>>>>>>>>>>>>>>>>>>>>> Enrollment Response DTO <<<<<<<<<<<<<<<<<<<<<<<<<
 // ============================================================================
 
-pub type InscriptionWithCourse = (Inscription, Course);
-
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct InscriptionResponse {
-    pub id: Uuid,
-    pub student_id: Uuid,
-    pub course_id: Uuid,
-    pub practice_id: Option<Uuid>,
+pub struct EnrollmentResponse {
+    pub id: String,
+    pub student_id: String,
+    pub course_id: String,
     pub student_scores: Vec<StudentScore>,
+    pub practice_id: Option<String>,
 
-    pub asignature: Course,
+    pub student: User,
 }
 
-impl From<InscriptionWithCourse> for InscriptionResponse {
-    fn from((inscription, course): InscriptionWithCourse) -> Self {
-        InscriptionResponse {
-            id: inscription.id,
-            student_id: inscription.student_id,
-            course_id: inscription.course_id,
-            practice_id: inscription.practice_id,
-            student_scores: inscription.student_scores,
-            asignature: course,
+pub type EnrollmentWithStudent = (Enrollment, User);
+
+impl From<EnrollmentWithStudent> for EnrollmentResponse {
+    fn from((enrollment, student): EnrollmentWithStudent) -> Self {
+        EnrollmentResponse {
+            id: enrollment.id.to_string(),
+            student_id: enrollment.student_id.to_string(),
+            course_id: enrollment.course_id.to_string(),
+            student_scores: enrollment.student_scores,
+            practice_id: enrollment.practice_id.map(|id| id.to_string()),
+            student,
         }
     }
 }

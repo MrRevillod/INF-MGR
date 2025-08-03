@@ -108,9 +108,6 @@ pub struct UpdateUserDto {
 
 #[derive(Serialize, Deserialize, Validate)]
 pub struct GetUsersQueryDto {
-    #[validate(custom(function = "validate_roles_query_string"))]
-    pub role: String,
-
     #[validate(length(
         min = 1,
         max = 100,
@@ -124,19 +121,7 @@ pub struct GetUsersQueryDto {
 
 impl From<GetUsersQueryDto> for UserFilter {
     fn from(dto: GetUsersQueryDto) -> Self {
-        let roles = match dto.role.as_str() {
-            "students" => vec![Role::Student],
-            "staff" => vec![
-                Role::Administrator,
-                Role::Teacher,
-                Role::Coordinator,
-                Role::Secretary,
-            ],
-            _ => unreachable!("Invalid role filter"),
-        };
-
         UserFilter {
-            roles: Some(roles),
             search: dto.search,
             page: dto.page.unwrap_or(1) as i64,
         }
@@ -302,19 +287,4 @@ fn role_validator(roles: &Vec<String>) -> Result<(), ValidationError> {
     }
 
     Ok(())
-}
-
-/// Valida que el filtro de roles en query sea válido
-fn validate_roles_query_string(role: &str) -> Result<(), ValidationError> {
-    if role.is_empty() {
-        return Err(ValidationError::new("El rol no puede estar vacío"));
-    }
-
-    if role == "students" || role == "staff" {
-        return Ok(());
-    }
-
-    Err(ValidationError::new(
-        "Rol inválido, debe ser 'students' o 'staff'",
-    ))
 }

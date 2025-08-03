@@ -3,7 +3,7 @@ import type { CreateMutationResult } from "@tanstack/svelte-query"
 
 import { derived } from "svelte/store"
 
-type MutationResult<T, E> = CreateMutationResult<ApiResponse<T>, E, any, any>
+type MutationResult<T, E> = CreateMutationResult<ApiResponse<T>, E, unknown, unknown>
 
 export const useMutation = <TData, TError>(
 	mutationFn: () => MutationResult<TData, TError>

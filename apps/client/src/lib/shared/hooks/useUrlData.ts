@@ -1,4 +1,4 @@
-export const useEncodeData = (data: Record<string, any>) => {
+export const useEncodeData = (data: Record<string, unknown>) => {
 	const encodedData = encodeURIComponent(JSON.stringify(data))
 	return `data=${encodedData}`
 }

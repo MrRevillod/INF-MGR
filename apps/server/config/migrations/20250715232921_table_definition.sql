@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS practices (
     end_date TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS inscriptions (
+CREATE TABLE IF NOT EXISTS enrollments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     student_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     course_id UUID NOT NULL REFERENCES courses(id) ON DELETE RESTRICT,
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS inscriptions (
 
 CREATE TABLE IF NOT EXISTS reports (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    inscription_id UUID NOT NULL REFERENCES inscriptions(id) ON DELETE CASCADE,
+    enrollment_id UUID NOT NULL REFERENCES enrollments(id) ON DELETE CASCADE,
     title TEXT NOT NULL,
     content TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),

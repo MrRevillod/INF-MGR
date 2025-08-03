@@ -1,7 +1,7 @@
 use shaku::module;
 
 use crate::{
-    courses, inscriptions,
+    courses, enrollments,
     shared::{
         database::PostgresDatabase,
         services::{BcryptPasswordHasher, MailerService},
@@ -39,8 +39,8 @@ module! {
             courses::PostgresCourseRepository,
             courses::CourseServiceImpl,
 
-            inscriptions::PostgresInscriptionRepository,
-            inscriptions::InscriptionServiceImpl,
+            enrollments::PostgresEnrollmentRepository,
+            enrollments::EnrollmentServiceImpl,
 
             users::PostgresUserRepository,
             users::UserServiceImpl

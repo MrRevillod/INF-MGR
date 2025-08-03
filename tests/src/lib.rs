@@ -12,7 +12,6 @@ pub mod users;
 use server::{
     config::{MailerConfig, PostgresDbConfig},
     courses::CoursesController,
-    inscriptions::InscriptionsController,
     shared::{
         database::PostgresDatabase, di::DependencyContainer, smtp::LettreTransport,
     },
@@ -49,8 +48,7 @@ pub async fn init_test_app() -> TestServer {
         .di_module(dependency_container.module)
         .expect("Failed to load DI module")
         .controller::<UsersController>()
-        .controller::<CoursesController>()
-        .controller::<InscriptionsController>();
+        .controller::<CoursesController>();
 
     TestServer::new(app.router()).expect("Failed to start test server")
 }

@@ -1,9 +1,18 @@
-# Package Managers
-package-lock.json
-pnpm-lock.yaml
-yarn.lock
-bun.lock
-bun.lockb
+# Dependencies
+node_modules/
+.pnpm-store/
 
-# Miscellaneous
-/static/
+# Build outputs
+build/
+dist/
+static/
+.svelte-kit/
+
+# Generated files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Specific files
+*.min.js
+*.bundle.js

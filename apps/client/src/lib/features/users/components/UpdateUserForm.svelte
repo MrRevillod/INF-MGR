@@ -27,7 +27,7 @@
 		)
 	)
 
-	const onSubmit = (data: Record<string, any>) => {
+	const onSubmit = (data: Record<string, unknown>) => {
 		console.log("Updated data:", data)
 		$mutate(data, {
 			onSuccess: () => {

@@ -8,7 +8,7 @@
 	import { getStudentInscriptionsQuery } from "$users/querys"
 
 	import PageTitle from "$lib/components/ui/PageTitle.svelte"
-	import AsignatureCard from "$lib/features/components/Card.svelte"
+	import AsignatureCard from "$lib/features/courses/components/Card.svelte"
 	import UpdateUserForm from "$lib/features/users/components/UpdateUserForm.svelte"
 
 	const { data: page }: PageProps = $props()
@@ -43,7 +43,7 @@
 					<p>Cargando asignaturas...</p>
 				{:else}
 					<ul class="flex w-5/6 list-none flex-col gap-2">
-						{#each $inscriptions ?? [] as inscription}
+						{#each $inscriptions ?? [] as inscription (inscription.id)}
 							<AsignatureCard
 								code={inscription.asignature.code}
 								name={inscription.asignature.name}

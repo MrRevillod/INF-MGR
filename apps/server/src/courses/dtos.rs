@@ -150,6 +150,7 @@ pub struct CourseResponse {
     pub evaluations: Vec<CourseEvaluation>,
     pub teacher_id: Uuid,
     pub coordinator_id: Uuid,
+
     pub teacher: User,
     pub coordinator: User,
 }

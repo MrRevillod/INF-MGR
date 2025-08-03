@@ -9,7 +9,7 @@ use crate::{
         Course, CourseError, CourseFilter, CourseRepository, CourseStatus,
         CourseWithStaff, CreateCourseDto, UpdateCourseDto,
     },
-    inscriptions::{InscriptionFilter, InscriptionRepository},
+    enrollments::{EnrollmentFilter, EnrollmentRepository},
     users::UserRepository,
 };
 
@@ -37,7 +37,7 @@ pub struct CourseServiceImpl {
     users: Arc<dyn UserRepository>,
 
     #[shaku(inject)]
-    inscriptions: Arc<dyn InscriptionRepository>,
+    inscriptions: Arc<dyn EnrollmentRepository>,
 }
 
 #[async_trait]
@@ -151,7 +151,7 @@ impl CourseService for CourseServiceImpl {
             return Err(CourseError::NotFound);
         };
 
-        let filter = InscriptionFilter {
+        let filter = EnrollmentFilter {
             course_id: Some(course.id),
             ..Default::default()
         };
