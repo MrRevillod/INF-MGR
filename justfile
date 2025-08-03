@@ -36,13 +36,13 @@ _ensure-test-service:
 
 test entity="":
     just _ensure-test-service
-    docker compose -f {{COMPOSE_TEST_FILE}} exec backend_test sh -c "cd tests && cargo test {{entity}} {{TEST_ARGS}}"
+    docker compose -f {{COMPOSE_TEST_FILE}} exec backend_test sh -c "cd lib/tests && cargo test {{entity}} {{TEST_ARGS}}"
 
 test-watch entity="":
 	just _ensure-test-service
-	docker compose -f {{COMPOSE_TEST_FILE}} exec backend_test sh -c "cd tests && cargo watch -x test {{entity}} {{TEST_ARGS}} -w src"
+	docker compose -f {{COMPOSE_TEST_FILE}} exec backend_test sh -c "cd lib/tests && cargo watch -x test {{entity}} {{TEST_ARGS}} -w src"
 
 test-clean:
 	docker compose -f {{COMPOSE_TEST_FILE}} down -v
 	docker volume rm inf-mgr_rust_target_cache inf-mgr_cargo_cache 2>/dev/null || true
-	rm -f tests/config tests/tools apps/server/tools/tools apps/server/config/config
+	rm -f lib/tests/config lib/tests/tools apps/server/tools/tools apps/server/config/config

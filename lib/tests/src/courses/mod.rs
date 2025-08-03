@@ -144,7 +144,7 @@ async fn test_delete_asignature_with_active_inscriptions_should_fail() {
         .delete(&format!("/courses/{created_asignature_id}"))
         .await;
 
-    assert_eq!(response.status_code(), 403);
+    assert_eq!(response.status_code(), 400);
 
     delete_incription(&app, &inscription_id).await;
     delete_asignature(&app, &created_asignature_id).await;

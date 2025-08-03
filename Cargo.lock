@@ -72,12 +72,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d301b3b94cb4b2f23d7917810addbbaff90738e0ca2be692bd027e70d7e0330c"
 
 [[package]]
-name = "ascii_utils"
-version = "0.9.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71938f30533e4d95a6d17aa530939da3842c2ab6f4f84b9dae68447e4129f74a"
-
-[[package]]
 name = "assert-json-diff"
 version = "2.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -675,15 +669,6 @@ checksum = "2f5f203b70a419cb8880d1cfe6bebe488add0a0307d404e9f24021e5fd864b80"
 dependencies = [
  "deunicode",
  "rand 0.9.1",
-]
-
-[[package]]
-name = "fast_chemail"
-version = "0.9.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "495a39d30d624c2caabe6312bfead73e7717692b44e0b32df168c275a2e8e9e4"
-dependencies = [
- "ascii_utils",
 ]
 
 [[package]]
@@ -1348,16 +1333,6 @@ name = "log"
 version = "0.4.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "13dc2df351e3202783a1fe0d44375f7295ffb4049267b0f3018346dc122a1d94"
-
-[[package]]
-name = "mailchecker"
-version = "6.0.17"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db3c69370540384985601e4adbbbc3046a658853e4909a4bd744bb390f6f9759"
-dependencies = [
- "fast_chemail",
- "once_cell",
-]
 
 [[package]]
 name = "matchers"
@@ -2233,16 +2208,14 @@ dependencies = [
  "chrono",
  "fake",
  "jsonwebtoken",
- "lettre",
- "mailchecker",
  "rand 0.9.1",
  "regex",
  "serde",
  "serde_json",
+ "services",
  "shaku",
  "sqlx",
  "sword",
- "tera",
  "thiserror",
  "tokio",
  "tower-http",
@@ -2250,6 +2223,24 @@ dependencies = [
  "tracing-subscriber",
  "uuid",
  "validator",
+]
+
+[[package]]
+name = "services"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bcrypt",
+ "lettre",
+ "serde",
+ "shaku",
+ "sword",
+ "tera",
+ "thiserror",
+ "tokio",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
@@ -2761,6 +2752,7 @@ dependencies = [
  "serde",
  "serde_json",
  "server",
+ "services",
  "sqlx",
  "sword",
  "tokio",

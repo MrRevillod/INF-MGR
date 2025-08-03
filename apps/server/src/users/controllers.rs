@@ -1,9 +1,7 @@
+use crate::container::AppModule;
 use crate::users::{
-    dtos::{CreateUserDto, GetUsersQueryDto, UpdateUserDto, UserResponse},
-    UserService,
+    CreateUserDto, GetUsersQueryDto, UpdateUserDto, UserResponse, UserService,
 };
-
-use crate::shared::di::AppModule;
 
 use serde_json::json;
 use sword::{prelude::*, web::HttpResult};

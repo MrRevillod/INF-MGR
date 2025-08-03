@@ -1,13 +1,10 @@
 use shaku::module;
 
-use crate::{
-    courses, enrollments,
-    shared::{
-        database::PostgresDatabase,
-        services::{BcryptPasswordHasher, MailerService},
-        smtp::LettreTransport,
-    },
-    users,
+use crate::{courses, enrollments, shared::database::PostgresDatabase, users};
+
+use services::{
+    hasher::BcryptPasswordHasher,
+    mailer::{LettreTransport, MailerService},
 };
 
 pub struct DependencyContainer {
@@ -33,6 +30,7 @@ module! {
         components = [
             PostgresDatabase,
             LettreTransport,
+
             BcryptPasswordHasher,
             MailerService,
 

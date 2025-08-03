@@ -2,12 +2,12 @@ use sword::prelude::*;
 use uuid::Uuid;
 
 use crate::{
+    container::AppModule,
     courses::{CourseResponse, CourseService, CreateCourseDto, UpdateCourseDto},
     enrollments::{
         CreateEnrollmentDto, EnrollmentFilter, EnrollmentResponse,
         EnrollmentService, UpdateEnrollmentDto,
     },
-    shared::di::AppModule,
 };
 
 #[controller("/courses")]
@@ -114,7 +114,7 @@ impl CoursesController {
         let course_id = ctx.param::<Uuid>("id")?;
         let service = ctx.get_dependency::<AppModule, dyn CourseService>()?;
 
-        service.delete(&course_id).await?;
+        service.remove(&course_id).await?;
 
         Ok(HttpResponse::Ok())
     }

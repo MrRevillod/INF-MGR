@@ -10,13 +10,12 @@ pub mod inscriptions;
 pub mod users;
 
 use server::{
-    config::{MailerConfig, PostgresDbConfig},
-    courses::CoursesController,
-    shared::{
-        database::PostgresDatabase, di::DependencyContainer, smtp::LettreTransport,
-    },
+    config::PostgresDbConfig, container::DependencyContainer,
+    courses::CoursesController, shared::database::PostgresDatabase,
     users::UsersController,
 };
+
+use services::mailer::{LettreTransport, MailerConfig};
 
 pub async fn init_test_app() -> TestServer {
     let app = Application::builder().expect("Failed to build Application");
@@ -33,7 +32,7 @@ pub async fn init_test_app() -> TestServer {
         .await
         .expect("Failed to migrate database");
 
-    sqlx::query("TRUNCATE users, courses, inscriptions, practices, reports CASCADE")
+    sqlx::query("TRUNCATE users, courses, enrollments, practices, reports CASCADE")
         .execute(&postgres_db.pool)
         .await
         .expect("Failed to truncate database tables");

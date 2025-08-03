@@ -125,8 +125,6 @@ pub async fn create_asignature(server: &TestServer, asignature: &Value) -> Value
     let response = server.post("/courses").json(&asignature).await;
     let body = response.json::<ResponseBody>();
 
-    dbg!("Response body: {:?}", &body);
-
     assert_eq!(
         response.status_code(),
         201,

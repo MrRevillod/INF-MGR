@@ -34,7 +34,7 @@ impl InscriptionBuilder {
 }
 
 pub async fn create_inscription(app: &TestServer, inscription: &Value) -> Value {
-    let response = app.post("/inscriptions").json(inscription).await;
+    let response = app.post("/courses/enroll").json(inscription).await;
     let body = response.json::<ResponseBody>();
 
     assert_eq!(
@@ -49,7 +49,7 @@ pub async fn create_inscription(app: &TestServer, inscription: &Value) -> Value 
 
 pub async fn delete_incription(app: &TestServer, inscription_id: &str) {
     let response = app
-        .delete(&format!("/inscriptions/{}", inscription_id))
+        .delete(&format!("/courses/enrollments/{}", inscription_id))
         .await;
 
     assert_eq!(response.status_code(), 200);

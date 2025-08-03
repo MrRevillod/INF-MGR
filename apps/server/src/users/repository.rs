@@ -5,8 +5,9 @@ use sqlx::{FromRow, Postgres, QueryBuilder};
 use std::sync::Arc;
 use uuid::Uuid;
 
+use crate::shared::errors::AppError;
 use crate::shared::{database::DatabaseConnection, entities::Pagination};
-use crate::users::{User, UserError};
+use crate::users::User;
 
 pub const DEFAULT_PAGE_SIZE: usize = 10;
 
@@ -35,14 +36,14 @@ pub trait UserRepository: Interface {
     async fn find_all(
         &self,
         filter: UserFilter,
-    ) -> Result<Pagination<User>, UserError>;
+    ) -> Result<Pagination<User>, AppError>;
 
-    async fn find_by_id(&self, user_id: &Uuid) -> Result<Option<User>, UserError>;
-    async fn find_by_rut(&self, rut: &str) -> Result<Option<User>, UserError>;
-    async fn find_by_email(&self, email: &str) -> Result<Option<User>, UserError>;
+    async fn find_by_id(&self, user_id: &Uuid) -> Result<Option<User>, AppError>;
+    async fn find_by_rut(&self, rut: &str) -> Result<Option<User>, AppError>;
+    async fn find_by_email(&self, email: &str) -> Result<Option<User>, AppError>;
 
-    async fn save(&self, user: User) -> Result<User, UserError>;
-    async fn delete(&self, user_id: &Uuid) -> Result<(), UserError>;
+    async fn save(&self, user: User) -> Result<User, AppError>;
+    async fn delete(&self, user_id: &Uuid) -> Result<(), AppError>;
 }
 
 #[async_trait]
@@ -50,9 +51,10 @@ impl UserRepository for PostgresUserRepository {
     async fn find_all(
         &self,
         filter: UserFilter,
-    ) -> Result<Pagination<User>, UserError> {
+    ) -> Result<Pagination<User>, AppError> {
         let mut query = QueryBuilder::<Postgres>::new(
-            "SELECT *, COUNT(*) OVER() as total_count FROM users WHERE deleted_at IS NULL"
+            "SELECT *, COUNT(*) OVER() as total_count FROM users 
+            WHERE deleted_at IS NULL",
         );
 
         if let Some(search) = &filter.search {
@@ -97,7 +99,7 @@ impl UserRepository for PostgresUserRepository {
         })
     }
 
-    async fn find_by_id(&self, user_id: &Uuid) -> Result<Option<User>, UserError> {
+    async fn find_by_id(&self, user_id: &Uuid) -> Result<Option<User>, AppError> {
         let query = "SELECT * FROM users WHERE id = $1";
 
         let user = sqlx::query_as::<_, User>(query)
@@ -108,7 +110,7 @@ impl UserRepository for PostgresUserRepository {
         Ok(user)
     }
 
-    async fn find_by_rut(&self, rut: &str) -> Result<Option<User>, UserError> {
+    async fn find_by_rut(&self, rut: &str) -> Result<Option<User>, AppError> {
         let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE rut = $1")
             .bind(rut)
             .fetch_optional(self.database_connection.get_pool())
@@ -117,7 +119,7 @@ impl UserRepository for PostgresUserRepository {
         Ok(user)
     }
 
-    async fn find_by_email(&self, email: &str) -> Result<Option<User>, UserError> {
+    async fn find_by_email(&self, email: &str) -> Result<Option<User>, AppError> {
         let query = r#"SELECT * FROM users WHERE email = $1"#;
 
         let user = sqlx::query_as::<_, User>(query)
@@ -128,7 +130,7 @@ impl UserRepository for PostgresUserRepository {
         Ok(user)
     }
 
-    async fn save(&self, user: User) -> Result<User, UserError> {
+    async fn save(&self, user: User) -> Result<User, AppError> {
         let upsert_query = r#"
             INSERT INTO users (id, rut, name, email, password, roles, created_at, deleted_at)
             VALUES ($1, $2, $3, $4, $5, $6, NOW(), NULL)
@@ -156,7 +158,7 @@ impl UserRepository for PostgresUserRepository {
         Ok(saved_user)
     }
 
-    async fn delete(&self, user_id: &Uuid) -> Result<(), UserError> {
+    async fn delete(&self, user_id: &Uuid) -> Result<(), AppError> {
         sqlx::query("UPDATE users SET deleted_at = $1 WHERE id = $2")
             .bind(Utc::now())
             .bind(user_id)

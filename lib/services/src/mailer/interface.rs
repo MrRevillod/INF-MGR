@@ -1,19 +1,20 @@
 use std::sync::Arc;
 use tera::Tera;
 
-use lettre::{transport::smtp::authentication::Credentials, SmtpTransport};
+use lettre::{SmtpTransport, transport::smtp::authentication::Credentials};
 use shaku::{Component, Interface};
 
-use crate::{config::MailerConfig, shared::services::errors::ServiceError};
+use super::MailerConfig;
+use crate::errors::{MailerError, ServiceError};
 
-pub trait MailerTransport: Interface {
-    fn get_transtport(&self) -> Arc<SmtpTransport>;
+pub trait EmailTransport: Interface {
+    fn get_transport(&self) -> Arc<SmtpTransport>;
     fn get_config(&self) -> &MailerConfig;
     fn get_templates(&self) -> Arc<Tera>;
 }
 
 #[derive(Component)]
-#[shaku(interface = MailerTransport)]
+#[shaku(interface = EmailTransport)]
 pub struct LettreTransport {
     pub smtp_transport: Arc<SmtpTransport>,
     pub config: MailerConfig,
@@ -28,26 +29,28 @@ impl LettreTransport {
         );
 
         let transporter = SmtpTransport::relay(&config.smtp_host)
-            .map_err(|e| ServiceError::Mailer {
-                source: Box::new(e),
-            })?
+            .map_err(|source| MailerError::SmtpTransport { source })?
             .credentials(creds)
             .build();
+
+        let mut tera = Tera::default();
+
+        tera.add_raw_template(
+            "welcome.html",
+            include_str!("templates/welcome.html"),
+        )
+        .map_err(|source| MailerError::TemplateError { source })?;
 
         Ok(LettreTransport {
             smtp_transport: Arc::new(transporter),
             config: config.clone(),
-            templates: Arc::new(Tera::new(&config.templates).map_err(|e| {
-                ServiceError::Mailer {
-                    source: Box::new(e),
-                }
-            })?),
+            templates: Arc::new(tera),
         })
     }
 }
 
-impl MailerTransport for LettreTransport {
-    fn get_transtport(&self) -> Arc<SmtpTransport> {
+impl EmailTransport for LettreTransport {
+    fn get_transport(&self) -> Arc<SmtpTransport> {
         self.smtp_transport.clone()
     }
 

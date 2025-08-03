@@ -5,11 +5,12 @@ use uuid::Uuid;
 
 use crate::courses::CourseRepository;
 use crate::enrollments::EnrollmentWithStudent;
+use crate::shared::errors::{AppError, Input};
 use crate::users::UserRepository;
 
 use crate::enrollments::{
-    CreateEnrollmentDto, Enrollment, EnrollmentError, EnrollmentFilter,
-    EnrollmentRepository, StudentScore, UpdateEnrollmentDto,
+    CreateEnrollmentDto, Enrollment, EnrollmentFilter, EnrollmentRepository,
+    StudentScore, UpdateEnrollmentDto,
 };
 
 #[derive(Component)]
@@ -30,20 +31,20 @@ pub trait EnrollmentService: Interface {
     async fn get_all(
         &self,
         filter: EnrollmentFilter,
-    ) -> Result<Vec<EnrollmentWithStudent>, EnrollmentError>;
+    ) -> Result<Vec<EnrollmentWithStudent>, AppError>;
 
     async fn create(
         &self,
         input: CreateEnrollmentDto,
-    ) -> Result<Enrollment, EnrollmentError>;
+    ) -> Result<Enrollment, AppError>;
 
     async fn update(
         &self,
         id: &Uuid,
         input: UpdateEnrollmentDto,
-    ) -> Result<Enrollment, EnrollmentError>;
+    ) -> Result<Enrollment, AppError>;
 
-    async fn remove(&self, id: &Uuid) -> Result<(), EnrollmentError>;
+    async fn remove(&self, id: &Uuid) -> Result<(), AppError>;
 }
 
 #[async_trait]
@@ -51,17 +52,20 @@ impl EnrollmentService for EnrollmentServiceImpl {
     async fn get_all(
         &self,
         filter: EnrollmentFilter,
-    ) -> Result<Vec<EnrollmentWithStudent>, EnrollmentError> {
+    ) -> Result<Vec<EnrollmentWithStudent>, AppError> {
         let mut result = Vec::new();
         let enrollments = self.enrollments.find_all(filter).await?;
 
         for enrollment in enrollments {
-            let student = self
+            let Some(student) = self
                 .users
                 .find_by_id(&enrollment.student_id)
                 .await
-                .map_err(|e| EnrollmentError::ForeignUserError(e.to_string()))?
-                .ok_or(EnrollmentError::StudentNotFound)?;
+                .ok()
+                .flatten()
+            else {
+                continue;
+            };
 
             result.push((enrollment, student));
         }
@@ -72,7 +76,7 @@ impl EnrollmentService for EnrollmentServiceImpl {
     async fn create(
         &self,
         input: CreateEnrollmentDto,
-    ) -> Result<Enrollment, EnrollmentError> {
+    ) -> Result<Enrollment, AppError> {
         let enrollment = Enrollment::from(input);
 
         let filter = EnrollmentFilter {
@@ -81,31 +85,41 @@ impl EnrollmentService for EnrollmentServiceImpl {
         };
 
         if !self.enrollments.find_all(filter).await?.is_empty() {
-            return Err(EnrollmentError::InscriptionAlreadyExists);
+            return Err(AppError::Conflict(Input {
+                message: "El estudiante ya está inscrito en este curso.".to_string(),
+                ..Input::default()
+            }));
         }
 
-        let (student_exists, course_exists) = tokio::join!(
-            self.users.find_by_id(&enrollment.student_id),
-            self.courses.find_by_id(&enrollment.course_id)
-        );
+        let (student_exists, course_exists) = {
+            let (student, course) = tokio::join!(
+                self.users.find_by_id(&enrollment.student_id),
+                self.courses.find_by_id(&enrollment.course_id)
+            );
 
-        let (student_exists, course_exists) = (
-            student_exists
-                .map_err(|e| EnrollmentError::ForeignUserError(e.to_string()))?,
-            course_exists
-                .map_err(|e| EnrollmentError::ForeignCourseError(e.to_string()))?,
-        );
+            (student.ok().flatten(), course.ok().flatten())
+        };
 
         let Some(student) = student_exists else {
-            return Err(EnrollmentError::StudentNotFound);
+            return Err(AppError::ResourceNotFound {
+                id: enrollment.student_id.to_string(),
+                kind: "Student",
+            });
         };
 
         if course_exists.is_none() {
-            return Err(EnrollmentError::AsignatureNotFound);
+            return Err(AppError::ResourceNotFound {
+                id: enrollment.course_id.to_string(),
+                kind: "Course",
+            });
         };
 
         if !student.is_student() {
-            return Err(EnrollmentError::InvalidStudentRole);
+            return Err(AppError::InvalidInput(Input {
+                field: "studentId".to_string(),
+                message: "El usuario no es un estudiante.".to_string(),
+                value: enrollment.student_id.to_string(),
+            }));
         }
 
         self.enrollments.save(enrollment).await
@@ -115,9 +129,12 @@ impl EnrollmentService for EnrollmentServiceImpl {
         &self,
         id: &Uuid,
         input: UpdateEnrollmentDto,
-    ) -> Result<Enrollment, EnrollmentError> {
+    ) -> Result<Enrollment, AppError> {
         let Some(mut enrollment) = self.enrollments.find_by_id(id).await? else {
-            return Err(EnrollmentError::NotFound);
+            return Err(AppError::ResourceNotFound {
+                id: id.to_string(),
+                kind: "Enrollment",
+            });
         };
 
         if let Some(scores) = input.student_scores {
@@ -128,9 +145,12 @@ impl EnrollmentService for EnrollmentServiceImpl {
         self.enrollments.save(enrollment).await
     }
 
-    async fn remove(&self, id: &Uuid) -> Result<(), EnrollmentError> {
+    async fn remove(&self, id: &Uuid) -> Result<(), AppError> {
         if self.enrollments.find_by_id(id).await?.is_none() {
-            return Err(EnrollmentError::NotFound);
+            return Err(AppError::ResourceNotFound {
+                id: id.to_string(),
+                kind: "Enrollment",
+            });
         };
 
         self.enrollments.delete(id).await

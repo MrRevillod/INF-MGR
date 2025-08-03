@@ -4,8 +4,11 @@ use uuid::Uuid;
 use validator::Validate;
 
 use crate::{
-    courses::{Course, CourseError, CourseEvaluation, CourseStatus},
-    shared::validators::validate_uuid,
+    courses::{Course, CourseEvaluation, CourseStatus},
+    shared::{
+        errors::{AppError, Input},
+        validators::validate_uuid,
+    },
     users::User,
 };
 
@@ -101,15 +104,17 @@ impl From<CourseEvaluationDto> for CourseEvaluation {
 }
 
 impl FromStr for CourseStatus {
-    type Err = CourseError;
+    type Err = AppError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "inprogress" => Ok(CourseStatus::InProgress),
             "ended" => Ok(CourseStatus::Ended),
-            _ => Err(CourseError::UknownError(
-                "Unknown asignature status".to_string(),
-            )),
+            _ => Err(AppError::InvalidInput(Input {
+                field: "status".to_string(),
+                message: "El estado debe ser 'inprogress' o 'ended'.".to_string(),
+                value: s.to_string(),
+            })),
         }
     }
 }

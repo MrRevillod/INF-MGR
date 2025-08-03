@@ -11,17 +11,6 @@ pub struct PostgresDbConfig {
     pub acquire_timeout_ms: u64,
 }
 
-#[derive(Debug, Clone, Deserialize)]
-#[config(key = "mailer")]
-pub struct MailerConfig {
-    pub smtp_host: String,
-    pub smtp_port: String,
-    pub smtp_username: String,
-    pub smtp_password: String,
-    pub templates: String,
-    pub public_url: String,
-}
-
 // #[derive(Debug, Deserialize)]
 // #[config(key = "auth")]
 // pub struct AuthConfig {

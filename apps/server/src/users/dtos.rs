@@ -5,7 +5,10 @@ use std::{str::FromStr, sync::OnceLock};
 use uuid::Uuid;
 use validator::{Validate, ValidationError};
 
-use crate::users::{Role, User, UserError, UserFilter};
+use crate::{
+    shared::errors::{AppError, Input},
+    users::{Role, User, UserFilter},
+};
 
 // ============================================================================
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> CREATE USER DTO <<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -39,7 +42,7 @@ pub struct CreateUserDto {
 }
 
 impl TryFrom<CreateUserDto> for User {
-    type Error = UserError;
+    type Error = AppError;
 
     fn try_from(dto: CreateUserDto) -> Result<Self, Self::Error> {
         let roles = from_string_vec_roles(dto.roles)?;
@@ -58,7 +61,7 @@ impl TryFrom<CreateUserDto> for User {
 }
 
 impl FromStr for Role {
-    type Err = UserError;
+    type Err = AppError;
 
     fn from_str(role: &str) -> Result<Self, Self::Err> {
         match role.to_lowercase().as_str() {
@@ -67,18 +70,20 @@ impl FromStr for Role {
             "coordinator" => Ok(Role::Coordinator),
             "student" => Ok(Role::Student),
             "secretary" => Ok(Role::Secretary),
-            _ => Err(UserError::InvalidRole {
-                role: role.to_string(),
-            }),
+            _ => Err(AppError::InvalidInput(Input {
+                field: "role".to_string(),
+                message: "Rol inválido".to_string(),
+                value: role.to_string(),
+            })),
         }
     }
 }
 
-pub fn from_string_vec_roles(roles: Vec<String>) -> Result<Vec<Role>, UserError> {
+pub fn from_string_vec_roles(roles: Vec<String>) -> Result<Vec<Role>, AppError> {
     roles
         .into_iter()
         .map(|role| Role::from_str(&role))
-        .collect::<Result<Vec<Role>, UserError>>()
+        .collect::<Result<Vec<Role>, AppError>>()
 }
 
 // ============================================================================

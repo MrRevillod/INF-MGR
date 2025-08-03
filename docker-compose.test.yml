@@ -3,7 +3,7 @@ services:
     container_name: inf_mgr_backend_test
     build:
       context: .
-      dockerfile: ./tests/Dockerfile
+      dockerfile: ./lib/tests/Dockerfile
     env_file:
       - .env.test
     ports:
@@ -16,7 +16,7 @@ services:
       - .:/app
       - cargo_cache:/usr/local/cargo/registry
       - rust_target_cache:/app/target
-    command: sh -c "cd /app/tests && ln -sf ../apps/server/config config && ln -sf ../apps/server/tools tools && tail -f /dev/null"
+    command: sh -c "cd /app/lib/tests && ln -sf ../../apps/server/config config && tail -f /dev/null"
 
   postgres_test:
     container_name: inf_mgr_postgres_test

@@ -5,8 +5,8 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::{
-    enrollments::{Enrollment, EnrollmentError},
-    shared::database::DatabaseConnection,
+    enrollments::Enrollment,
+    shared::{database::DatabaseConnection, errors::AppError},
 };
 
 #[derive(Component)]
@@ -27,19 +27,11 @@ pub trait EnrollmentRepository: Interface {
     async fn find_all(
         &self,
         filter: EnrollmentFilter,
-    ) -> Result<Vec<Enrollment>, EnrollmentError>;
+    ) -> Result<Vec<Enrollment>, AppError>;
 
-    async fn find_by_id(
-        &self,
-        id: &Uuid,
-    ) -> Result<Option<Enrollment>, EnrollmentError>;
-
-    async fn save(
-        &self,
-        enrollment: Enrollment,
-    ) -> Result<Enrollment, EnrollmentError>;
-
-    async fn delete(&self, id: &Uuid) -> Result<(), EnrollmentError>;
+    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Enrollment>, AppError>;
+    async fn save(&self, enrollment: Enrollment) -> Result<Enrollment, AppError>;
+    async fn delete(&self, id: &Uuid) -> Result<(), AppError>;
 }
 
 #[async_trait]
@@ -47,7 +39,7 @@ impl EnrollmentRepository for PostgresEnrollmentRepository {
     async fn find_all(
         &self,
         filter: EnrollmentFilter,
-    ) -> Result<Vec<Enrollment>, EnrollmentError> {
+    ) -> Result<Vec<Enrollment>, AppError> {
         let mut builder = sqlx::QueryBuilder::<Postgres>::new(
             "SELECT * FROM enrollments WHERE 1=1",
         );
@@ -66,10 +58,7 @@ impl EnrollmentRepository for PostgresEnrollmentRepository {
         Ok(result)
     }
 
-    async fn find_by_id(
-        &self,
-        id: &Uuid,
-    ) -> Result<Option<Enrollment>, EnrollmentError> {
+    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Enrollment>, AppError> {
         let query = r#"SELECT * FROM enrollments WHERE id = $1"#;
 
         let model = sqlx::query_as::<_, Enrollment>(query)
@@ -80,10 +69,7 @@ impl EnrollmentRepository for PostgresEnrollmentRepository {
         Ok(model)
     }
 
-    async fn save(
-        &self,
-        enrollment: Enrollment,
-    ) -> Result<Enrollment, EnrollmentError> {
+    async fn save(&self, enrollment: Enrollment) -> Result<Enrollment, AppError> {
         let query = r#"
             INSERT INTO enrollments (id, student_id, course_id, practice_id, student_scores)
             VALUES ($1, $2, $3, $4, $5)
@@ -106,7 +92,7 @@ impl EnrollmentRepository for PostgresEnrollmentRepository {
         Ok(result)
     }
 
-    async fn delete(&self, id: &Uuid) -> Result<(), EnrollmentError> {
+    async fn delete(&self, id: &Uuid) -> Result<(), AppError> {
         sqlx::query("DELETE FROM enrollments WHERE id = $1")
             .bind(id)
             .execute(self.db_connection.get_pool())

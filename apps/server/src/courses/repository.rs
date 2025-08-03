@@ -4,8 +4,9 @@ use sqlx::{Postgres, QueryBuilder};
 use std::sync::Arc;
 use uuid::Uuid;
 
-use crate::courses::{Course, CourseError};
+use crate::courses::Course;
 use crate::shared::database::DatabaseConnection;
+use crate::shared::errors::AppError;
 
 #[derive(Component)]
 #[shaku(interface = CourseRepository)]
@@ -20,19 +21,20 @@ pub struct CourseFilter {
     pub name: Option<String>,
     pub teacher_id: Option<Uuid>,
     pub coordinator_id: Option<Uuid>,
+    pub year: Option<i32>,
 }
 
 #[async_trait]
 pub trait CourseRepository: Interface {
-    async fn find(&self, filter: CourseFilter) -> Result<Vec<Course>, CourseError>;
-    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Course>, CourseError>;
-    async fn save(&self, course: Course) -> Result<Course, CourseError>;
-    async fn delete(&self, id: &Uuid) -> Result<(), CourseError>;
+    async fn find(&self, filter: CourseFilter) -> Result<Vec<Course>, AppError>;
+    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Course>, AppError>;
+    async fn save(&self, course: Course) -> Result<Course, AppError>;
+    async fn delete(&self, id: &Uuid) -> Result<(), AppError>;
 }
 
 #[async_trait]
 impl CourseRepository for PostgresCourseRepository {
-    async fn find(&self, filter: CourseFilter) -> Result<Vec<Course>, CourseError> {
+    async fn find(&self, filter: CourseFilter) -> Result<Vec<Course>, AppError> {
         let mut builder =
             QueryBuilder::<Postgres>::new("SELECT * FROM Courses WHERE 1=1");
 
@@ -59,7 +61,7 @@ impl CourseRepository for PostgresCourseRepository {
         Ok(query.fetch_all(self.db_connection.get_pool()).await?)
     }
 
-    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Course>, CourseError> {
+    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Course>, AppError> {
         let query = r#"SELECT * FROM Courses WHERE id = $1"#;
 
         let model = sqlx::query_as::<_, Course>(query)
@@ -70,7 +72,7 @@ impl CourseRepository for PostgresCourseRepository {
         Ok(model)
     }
 
-    async fn save(&self, course: Course) -> Result<Course, CourseError> {
+    async fn save(&self, course: Course) -> Result<Course, AppError> {
         let query = r#"
             INSERT INTO Courses (id, year, code, name, status, teacher_id, coordinator_id, evaluations)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -97,7 +99,7 @@ impl CourseRepository for PostgresCourseRepository {
         Ok(result)
     }
 
-    async fn delete(&self, id: &Uuid) -> Result<(), CourseError> {
+    async fn delete(&self, id: &Uuid) -> Result<(), AppError> {
         sqlx::query("DELETE FROM Courses WHERE id = $1")
             .bind(id)
             .execute(self.db_connection.get_pool())

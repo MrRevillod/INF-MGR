@@ -1,16 +1,18 @@
 use sword::prelude::Application;
 
 use server::{
-    config::{CorsConfig, MailerConfig, PostgresDbConfig},
     courses::CoursesController,
     shared::{
         database::PostgresDatabase,
-        di::DependencyContainer,
         layers::{setup_cors, HttpLogger},
-        smtp::LettreTransport,
     },
     users::UsersController,
 };
+
+use services::mailer::{LettreTransport, MailerConfig};
+
+use server::config::{CorsConfig, PostgresDbConfig};
+use server::container::DependencyContainer;
 
 pub const DEFAULT_PAGE_SIZE: usize = 10;
 

@@ -5,7 +5,8 @@ edition = "2024"
 
 [dependencies]
 
-server = { path = "../apps/server" }
+server = { path = "../../apps/server" }
+services = { path = "../services" }
 tokio = { version = "1.46.1", features = ["full"] }
 sword = { git = "https://github.com/MrRevillod/sword", branch = "dev" }
 axum = "0.8.4"
