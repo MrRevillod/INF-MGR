@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Solicitud de Inscripción de Práctica</title>
+</head>
+
+<body>
+    <h1>Estimado(a) {{ supervisor_name }}</h1>
+    <p>
+        Junto con saludar, desde la carrera de Ingeniería Civil en 
+        Informática de la Universidad Católica de Temuco le informamos que el estudiante
+        <strong>{{ student_name }}</strong> ha registrado la empresa <strong>{{ enterprise_name }}</strong> 
+        para realizar su curso <strong>{{ course_name }}</strong>.
+    </p>
+
+    <p>
+        Si la información es correcta, por favor ingrese al siguiente enlace de confirmación. Aquí encontrará
+        las instrucciones para continuar con la inscripción de la práctica:
+    </p>
+
+    <p>
+        <a href="{{ approval_link }}">Inscripción de Práctica</a>
+    </p>
+
+    <p>
+        Al aprobar la práctica, recibirá un correo con los datos de la práctica y el estudiante, además de los 
+        documentos oficiales del proceso.
+    </p>
+
+    <p>
+        Si la información es incorrecta, por favor ingrese al siguiente enlace para rechazar la práctica:
+    </p>
+    
+    <p>
+        <a href="{{ public_url }}{{ rejection_link }}">Rechazar Práctica</a>
+    </p>
+
+    <p>
+        Ante cualquier duda, por favor contáctese con la secretaría de la carrera: <strong>{{ secretary_email }}</strong>.
+    </p>
+
+    <p>
+        Saludos cordiales,<br>
+        Secretaría de la carrera de Ingeniería Civil en Informática
+        <br>
+        Universidad Católica de Temuco
+    </p>
+</body>
+
+</html>

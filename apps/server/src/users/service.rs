@@ -76,21 +76,21 @@ impl UserService for UserServiceImpl {
             }));
         }
 
+        let context = MailContext::new(self.mailer.get_config())
+            .insert("name", &input.name)
+            .insert("email", &input.email)
+            .insert("password", &input.password);
+
         let mail_opts = MailTo {
             subject: "Bienvenido (a) a la plataforma",
             email: input.email.clone(),
             template: "welcome",
+            context,
         };
-
-        let context = MailContext::new()
-            .insert("name", &input.name)
-            .insert("email", &input.email)
-            .insert("password", &input.password)
-            .insert("public_url", &self.mailer.get_config().public_url);
 
         input.password = self.hasher.hash(&input.password)?;
 
-        self.mailer.send(mail_opts, context).await?;
+        self.mailer.send(mail_opts).await?;
         self.users.save(User::try_from(input)?).await
     }
 

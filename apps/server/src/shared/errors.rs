@@ -26,12 +26,11 @@ pub enum AppError {
     #[error("Invalid input: {0:?}")]
     InvalidInput(Input),
 
-    #[error("Cross-module dependency error: {module} - {source}")]
-    CrossModule {
-        module: String,
-        #[source]
-        source: Box<dyn std::error::Error + Send + Sync>,
-    },
+    #[error("Internal server error")]
+    InternalServerError(Box<dyn std::error::Error + Send + Sync>),
+
+    #[error("Invalid operation: {0}")]
+    InvalidOperation(String),
 }
 
 impl From<AppError> for HttpResponse {
@@ -53,6 +52,11 @@ impl From<AppError> for HttpResponse {
                     "message": input.message,
                 }))
             }
+
+            AppError::InvalidOperation(message) => {
+                HttpResponse::BadRequest().message(message)
+            }
+
             _ => {
                 eprintln!("Internal AppError: {:?}", error);
 

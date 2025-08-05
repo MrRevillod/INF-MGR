@@ -1,5 +1,6 @@
 mod context;
 mod interface;
+mod templates;
 
 pub use context::{MailContext, MailTo, MailerConfig};
 pub use interface::{EmailTransport, LettreTransport};
@@ -22,27 +23,18 @@ pub struct MailerService {
 
 #[async_trait]
 pub trait Mailer: Interface {
-    async fn send(
-        &self,
-        mail_to: MailTo,
-        context: MailContext,
-    ) -> Result<(), ServiceError>;
     fn get_config(&self) -> &MailerConfig;
+    async fn send(&self, mail_to: MailTo) -> Result<(), ServiceError>;
 }
 
 #[async_trait]
 impl Mailer for MailerService {
-    async fn send(
-        &self,
-        mail_to: MailTo,
-        mail_context: MailContext,
-    ) -> Result<(), ServiceError> {
+    async fn send(&self, mail_to: MailTo) -> Result<(), ServiceError> {
         let email_from = self.transport.get_config().smtp_username.clone();
         let email_from_fmt = format!("Prácticas y Tesis <{email_from}>");
 
         let mut context = Context::new();
-
-        mail_context.apply_to_tera_context(&mut context);
+        mail_to.context.apply_to_tera_context(&mut context);
 
         let template_name = format!("{}.html", mail_to.template);
         let template = self
@@ -69,11 +61,5 @@ impl Mailer for MailerService {
 
     fn get_config(&self) -> &MailerConfig {
         self.transport.get_config()
-    }
-}
-
-impl Default for MailContext {
-    fn default() -> Self {
-        Self::new()
     }
 }

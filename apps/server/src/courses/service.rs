@@ -30,6 +30,8 @@ pub struct CourseServiceImpl {
 #[async_trait]
 pub trait CourseService: Interface {
     async fn get_all(&self) -> Result<Vec<CourseWithStaff>, AppError>;
+    async fn get_by_id(&self, id: &Uuid) -> Result<Course, AppError>;
+
     async fn create(&self, input: CreateCourseDto) -> Result<Course, AppError>;
     async fn remove(&self, id: &Uuid) -> Result<(), AppError>;
 
@@ -70,6 +72,17 @@ impl CourseService for CourseServiceImpl {
         }
 
         Ok(result)
+    }
+
+    async fn get_by_id(&self, id: &Uuid) -> Result<Course, AppError> {
+        let Some(course) = self.courses.find_by_id(id).await? else {
+            return Err(AppError::ResourceNotFound {
+                id: id.to_string(),
+                kind: "Course",
+            });
+        };
+
+        Ok(course)
     }
 
     async fn create(&self, input: CreateCourseDto) -> Result<Course, AppError> {

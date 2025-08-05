@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Documentos de práctica</title>
+</head>
+
+<body>
+    <h1>Estimado(a) {{ supervisor_name }}</h1>
+
+    <p>
+        Junto con saludar, le informamos que la práctica del estudiante {{ student_name }} 
+        en la empresa {{ enterprise_name }} ha sido confirmada exitosamente.
+    </p>
+
+    <p>
+        A continuación encontrará los documentos oficiales del proceso de práctica:
+    </p>
+
+    <div>
+        <p><strong>Autorización de Práctica:</strong></p>
+        <a href="{{ practice_authorization_doc_url }}">
+            Documento de autorización de práctica (PDF)
+        </a>
+    </div>
+
+    <div>
+        <p><strong>Pauta de Evaluación del Supervisor:</strong></p>
+        <p>Al finalizar el periodo de práctica deberá acceder y completar el siguiente formulario:</p>
+        <a href="{{ supervisor_evaluation_url }}">Formulario y pauta de evaluación</a>
+        <p>
+            Tenga en cuenta que el formulario es válido por una sola vez, por lo tanto, al 
+            enviar los resultados, el enlace expirará.
+        </p>
+    </div>
+
+    <p>
+        Ante cualquier duda, por favor contáctese con la secretaría de la carrera: <strong>{{ secretary_email }}</strong>.
+    </p>
+
+    <p>
+        Se despide cordialmente,<br>
+        Equipo de Prácticas y Tesis de la carrera de Ingeniería Civil en Informática
+    </p>
+</body>
+
+</html>

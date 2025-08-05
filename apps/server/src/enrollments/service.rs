@@ -4,13 +4,13 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::courses::CourseRepository;
-use crate::enrollments::EnrollmentWithStudent;
+use crate::practices::PracticeRepository;
 use crate::shared::errors::{AppError, Input};
 use crate::users::UserRepository;
 
 use crate::enrollments::{
     CreateEnrollmentDto, Enrollment, EnrollmentFilter, EnrollmentRepository,
-    StudentScore, UpdateEnrollmentDto,
+    EnrollmentWithStudentAndPractice, StudentScore, UpdateEnrollmentDto,
 };
 
 #[derive(Component)]
@@ -24,6 +24,9 @@ pub struct EnrollmentServiceImpl {
 
     #[shaku(inject)]
     courses: Arc<dyn CourseRepository>,
+
+    #[shaku(inject)]
+    practices: Arc<dyn PracticeRepository>,
 }
 
 #[async_trait]
@@ -31,7 +34,12 @@ pub trait EnrollmentService: Interface {
     async fn get_all(
         &self,
         filter: EnrollmentFilter,
-    ) -> Result<Vec<EnrollmentWithStudent>, AppError>;
+    ) -> Result<Vec<EnrollmentWithStudentAndPractice>, AppError>;
+
+    async fn get_by_id(
+        &self,
+        id: &Uuid,
+    ) -> Result<EnrollmentWithStudentAndPractice, AppError>;
 
     async fn create(
         &self,
@@ -44,6 +52,7 @@ pub trait EnrollmentService: Interface {
         input: UpdateEnrollmentDto,
     ) -> Result<Enrollment, AppError>;
 
+    async fn save(&self, enrollment: Enrollment) -> Result<Enrollment, AppError>;
     async fn remove(&self, id: &Uuid) -> Result<(), AppError>;
 }
 
@@ -52,7 +61,7 @@ impl EnrollmentService for EnrollmentServiceImpl {
     async fn get_all(
         &self,
         filter: EnrollmentFilter,
-    ) -> Result<Vec<EnrollmentWithStudent>, AppError> {
+    ) -> Result<Vec<EnrollmentWithStudentAndPractice>, AppError> {
         let mut result = Vec::new();
         let enrollments = self.enrollments.find_all(filter).await?;
 
@@ -67,10 +76,36 @@ impl EnrollmentService for EnrollmentServiceImpl {
                 continue;
             };
 
-            result.push((enrollment, student));
+            let practice =
+                self.practices.find_by_enrollment_id(&enrollment.id).await?;
+
+            result.push((enrollment, student, practice));
         }
 
         Ok(result)
+    }
+
+    async fn get_by_id(
+        &self,
+        id: &Uuid,
+    ) -> Result<EnrollmentWithStudentAndPractice, AppError> {
+        let enrollment = self.enrollments.find_by_id(id).await?.ok_or(
+            AppError::ResourceNotFound {
+                id: id.to_string(),
+                kind: "Enrollment",
+            },
+        )?;
+
+        let student = self.users.find_by_id(&enrollment.student_id).await?.ok_or(
+            AppError::ResourceNotFound {
+                id: enrollment.student_id.to_string(),
+                kind: "Student",
+            },
+        )?;
+
+        let practice = self.practices.find_by_enrollment_id(&enrollment.id).await?;
+
+        Ok((enrollment, student, practice))
     }
 
     async fn create(
@@ -122,6 +157,10 @@ impl EnrollmentService for EnrollmentServiceImpl {
             }));
         }
 
+        self.enrollments.save(enrollment).await
+    }
+
+    async fn save(&self, enrollment: Enrollment) -> Result<Enrollment, AppError> {
         self.enrollments.save(enrollment).await
     }
 

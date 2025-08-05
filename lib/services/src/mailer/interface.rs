@@ -5,7 +5,10 @@ use lettre::{SmtpTransport, transport::smtp::authentication::Credentials};
 use shaku::{Component, Interface};
 
 use super::MailerConfig;
-use crate::errors::{MailerError, ServiceError};
+use crate::{
+    errors::{MailerError, ServiceError},
+    mailer::templates::TemplateHandler,
+};
 
 pub trait EmailTransport: Interface {
     fn get_transport(&self) -> Arc<SmtpTransport>;
@@ -33,18 +36,12 @@ impl LettreTransport {
             .credentials(creds)
             .build();
 
-        let mut tera = Tera::default();
-
-        tera.add_raw_template(
-            "welcome.html",
-            include_str!("templates/welcome.html"),
-        )
-        .map_err(|source| MailerError::TemplateError { source })?;
+        let tera = TemplateHandler::new()?;
 
         Ok(LettreTransport {
             smtp_transport: Arc::new(transporter),
             config: config.clone(),
-            templates: Arc::new(tera),
+            templates: tera,
         })
     }
 }

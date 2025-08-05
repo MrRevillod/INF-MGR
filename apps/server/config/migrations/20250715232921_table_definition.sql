@@ -30,8 +30,8 @@ CREATE TABLE IF NOT EXISTS practices (
     supervisor_name TEXT NOT NULL,
     supervisor_email TEXT NOT NULL,
 
-    start_date TIMESTAMP WITH TIME ZONE NOT NULL,
-    end_date TIMESTAMP WITH TIME ZONE NOT NULL
+    start_date TIMESTAMP WITH TIME ZONE,
+    end_date TIMESTAMP WITH TIME ZONE
 );
 
 CREATE TABLE IF NOT EXISTS enrollments (

@@ -43,7 +43,7 @@ pub mod enrollments {
     mod service;
 
     pub use dtos::{
-        CreateEnrollmentDto, EnrollmentResponse, EnrollmentWithStudent,
+        CreateEnrollmentDto, EnrollmentResponse, EnrollmentWithStudentAndPractice,
         GetEnrollmentsDto, StudentScoreDto, UpdateEnrollmentDto,
     };
 
@@ -54,6 +54,19 @@ pub mod enrollments {
     };
 
     pub use service::{EnrollmentService, EnrollmentServiceImpl};
+}
+
+pub mod practices {
+    mod controllers;
+    mod dtos;
+    mod entity;
+    mod repository;
+    mod service;
+
+    pub use dtos::{CreatePracticeDto, UpdatePracticeDto};
+    pub use entity::Practice;
+    pub use repository::{PostgresPracticeRepository, PracticeRepository};
+    pub use service::{PracticeService, PracticeServiceImpl};
 }
 
 pub mod shared {

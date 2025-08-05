@@ -4,6 +4,7 @@ use validator::Validate;
 
 use crate::{
     enrollments::{Enrollment, EnrollmentFilter, StudentScore},
+    practices::Practice,
     shared::validators::validate_uuid,
     users::User,
 };
@@ -114,12 +115,15 @@ pub struct EnrollmentResponse {
     pub practice_id: Option<String>,
 
     pub student: User,
+    pub practice: Option<Practice>,
 }
 
-pub type EnrollmentWithStudent = (Enrollment, User);
+pub type EnrollmentWithStudentAndPractice = (Enrollment, User, Option<Practice>);
 
-impl From<EnrollmentWithStudent> for EnrollmentResponse {
-    fn from((enrollment, student): EnrollmentWithStudent) -> Self {
+impl From<EnrollmentWithStudentAndPractice> for EnrollmentResponse {
+    fn from(
+        (enrollment, student, practice): EnrollmentWithStudentAndPractice,
+    ) -> Self {
         EnrollmentResponse {
             id: enrollment.id.to_string(),
             student_id: enrollment.student_id.to_string(),
@@ -127,6 +131,7 @@ impl From<EnrollmentWithStudent> for EnrollmentResponse {
             student_scores: enrollment.student_scores,
             practice_id: enrollment.practice_id.map(|id| id.to_string()),
             student,
+            practice,
         }
     }
 }

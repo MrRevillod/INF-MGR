@@ -1,6 +1,8 @@
 use shaku::module;
 
-use crate::{courses, enrollments, shared::database::PostgresDatabase, users};
+use crate::{
+    courses, enrollments, practices, shared::database::PostgresDatabase, users,
+};
 
 use services::{
     hasher::BcryptPasswordHasher,
@@ -41,7 +43,10 @@ module! {
             enrollments::EnrollmentServiceImpl,
 
             users::PostgresUserRepository,
-            users::UserServiceImpl
+            users::UserServiceImpl,
+
+            practices::PostgresPracticeRepository,
+            practices::PracticeServiceImpl,
         ],
         providers = []
     }
