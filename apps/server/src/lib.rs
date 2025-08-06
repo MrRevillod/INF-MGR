@@ -73,6 +73,8 @@ pub mod shared {
     pub mod entities;
     pub mod errors;
 
+    pub use errors::{AppError, AppResult};
+
     pub mod database;
     pub mod layers;
     pub mod validators {

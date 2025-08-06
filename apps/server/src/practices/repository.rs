@@ -58,8 +58,8 @@ impl PracticeRepository for PostgresPracticeRepository {
             INSERT INTO practices (
                 id, enrollment_id, enterprise_name, location,
                 description, supervisor_name, supervisor_email,
-                start_date, end_date
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                start_date, end_date, is_approved
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             ON CONFLICT (id) DO UPDATE SET
                 enterprise_name = EXCLUDED.enterprise_name,
                 location = EXCLUDED.location,
@@ -67,7 +67,8 @@ impl PracticeRepository for PostgresPracticeRepository {
                 supervisor_name = EXCLUDED.supervisor_name,
                 supervisor_email = EXCLUDED.supervisor_email,
                 start_date = EXCLUDED.start_date,
-                end_date = EXCLUDED.end_date
+                end_date = EXCLUDED.end_date,
+                is_approved = EXCLUDED.is_approved
             RETURNING *";
 
         let saved_practice = sqlx::query_as::<_, Practice>(query)
@@ -80,6 +81,7 @@ impl PracticeRepository for PostgresPracticeRepository {
             .bind(practice.supervisor_email)
             .bind(practice.start_date)
             .bind(practice.end_date)
+            .bind(practice.is_approved)
             .fetch_one(self.db_connection.get_pool())
             .await?;
 

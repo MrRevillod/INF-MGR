@@ -1,4 +1,7 @@
-use std::sync::Arc;
+use std::{
+    collections::HashMap,
+    sync::{Arc, LazyLock},
+};
 use tera::Tera;
 
 use lettre::{SmtpTransport, transport::smtp::authentication::Credentials};
@@ -7,8 +10,46 @@ use shaku::{Component, Interface};
 use super::MailerConfig;
 use crate::{
     errors::{MailerError, ServiceError},
-    mailer::templates::TemplateHandler,
+    templates::TemplateHandler,
 };
+
+static TEMPLATES: LazyLock<HashMap<&'static str, &'static str>> =
+    LazyLock::new(|| {
+        HashMap::from([
+            (
+                "system:welcome.html",
+                include_str!("templates/system/welcome.html"),
+            ),
+            (
+                "practice:creation:supervisor.html",
+                include_str!("templates/practice/creation/supervisor.html"),
+            ),
+            (
+                "practice:creation:student.html",
+                include_str!("templates/practice/creation/student.html"),
+            ),
+            (
+                "practice:approval:supervisor.html",
+                include_str!("templates/practice/approval/supervisor.html"),
+            ),
+            (
+                "practice:approval:coordinator.html",
+                include_str!("templates/practice/approval/coordinator.html"),
+            ),
+            (
+                "practice:approval:student.html",
+                include_str!("templates/practice/approval/student.html"),
+            ),
+            (
+                "practice:rejection:coordinator.html",
+                include_str!("templates/practice/rejection/coordinator.html"),
+            ),
+            (
+                "practice:rejection:student.html",
+                include_str!("templates/practice/rejection/student.html"),
+            ),
+        ])
+    });
 
 pub trait EmailTransport: Interface {
     fn get_transport(&self) -> Arc<SmtpTransport>;
@@ -36,7 +77,7 @@ impl LettreTransport {
             .credentials(creds)
             .build();
 
-        let tera = TemplateHandler::new()?;
+        let tera = TemplateHandler::new(TEMPLATES.clone())?;
 
         Ok(LettreTransport {
             smtp_transport: Arc::new(transporter),

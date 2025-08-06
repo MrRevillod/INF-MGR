@@ -25,4 +25,7 @@ pub struct Practice {
     pub start_date: Option<DateTime<Utc>>,
     #[sqlx(rename = "end_date")]
     pub end_date: Option<DateTime<Utc>>,
+
+    #[sqlx(rename = "is_approved")]
+    pub is_approved: bool,
 }

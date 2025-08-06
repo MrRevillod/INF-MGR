@@ -61,6 +61,7 @@ impl From<CreatePracticeDto> for Practice {
             supervisor_email: dto.supervisor_email,
             start_date: dto.start_date,
             end_date: dto.end_date,
+            is_approved: false,
         }
     }
 }

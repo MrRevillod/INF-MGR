@@ -18,6 +18,12 @@ pub enum ServiceError {
         #[from]
         source: MailerError,
     },
+
+    #[error("Printer error: {source}")]
+    Printer {
+        #[from]
+        source: PrinterError,
+    },
 }
 
 #[derive(Debug, Error)]
@@ -64,4 +70,25 @@ pub enum MailerError {
         #[from]
         source: LettreError,
     },
+}
+
+#[derive(Debug, Error)]
+pub enum PrinterError {
+    #[error("Template handling error: {source}")]
+    TemplateError {
+        #[from]
+        source: TeraError,
+    },
+
+    #[error("Archive creation error: {0}")]
+    ArchiveError(String),
+
+    #[error("File write error: {source}")]
+    FileWriteError {
+        #[from]
+        source: std::io::Error,
+    },
+
+    #[error("PDF generation error: {0}")]
+    PdfGenerationError(String),
 }

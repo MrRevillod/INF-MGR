@@ -1,8 +1,7 @@
 mod context;
 mod interface;
-mod templates;
 
-pub use context::{MailContext, MailTo, MailerConfig};
+pub use context::{MailTo, MailerConfig};
 pub use interface::{EmailTransport, LettreTransport};
 
 use std::sync::Arc;
@@ -10,9 +9,11 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use lettre::{Message, Transport, message::header::ContentType};
 use shaku::{Component, Interface};
-use tera::Context;
 
-use crate::errors::{MailerError, ServiceError};
+use crate::{
+    errors::{MailerError, ServiceError},
+    templates::TemplateContext,
+};
 
 #[derive(Component)]
 #[shaku(interface = Mailer)]
@@ -33,14 +34,15 @@ impl Mailer for MailerService {
         let email_from = self.transport.get_config().smtp_username.clone();
         let email_from_fmt = format!("Prácticas y Tesis <{email_from}>");
 
-        let mut context = Context::new();
-        mail_to.context.apply_to_tera_context(&mut context);
+        let mut ctx = TemplateContext::new();
+
+        ctx.insert_ctx(mail_to.context);
 
         let template_name = format!("{}.html", mail_to.template);
         let template = self
             .transport
             .get_templates()
-            .render(&template_name, &context)
+            .render(&template_name, &ctx.tera_ctx)
             .map_err(|source| MailerError::TemplateError { source })?;
 
         let message = Message::builder()

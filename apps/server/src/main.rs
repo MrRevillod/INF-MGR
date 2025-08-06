@@ -9,7 +9,10 @@ use server::{
     users::UsersController,
 };
 
-use services::mailer::{LettreTransport, MailerConfig};
+use services::{
+    mailer::{LettreTransport, MailerConfig},
+    printer::DocumentPrinter,
+};
 
 use server::config::{CorsConfig, PostgresDbConfig};
 use server::container::DependencyContainer;
@@ -35,9 +38,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let smtp_transport = LettreTransport::new(&mailer_config)
         .await
-        .expect("Failed to create SMTP transport");
+        .expect("Failed to create SMTP transport service");
 
-    let dependency_container = DependencyContainer::new(postgres_db, smtp_transport);
+    let printer = DocumentPrinter::new()
+        .await
+        .expect("Failed to create DocumentPrinter service");
+
+    let dependency_container =
+        DependencyContainer::new(postgres_db, smtp_transport, printer);
 
     let http_logger = HttpLogger::new();
     let cors_layer = setup_cors(&cors_config);

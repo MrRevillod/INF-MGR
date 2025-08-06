@@ -3,6 +3,10 @@ port = 8000
 host = "0.0.0.0"
 public_url = "${PUBLIC_URL:http://localhost:8000}"
 
+[career]
+career_name = "${CAREER_NAME:Ingeniería en Informática}"
+career_manager = "${CAREER_MANAGER:Director de Carrera}"
+
 [postgres-db]
 url = "${POSTGRES_DATABASE_URL:postgres://localhost:5432/inf_mgr}"
 migration_path = "config/migrations"

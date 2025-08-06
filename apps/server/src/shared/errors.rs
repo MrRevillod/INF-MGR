@@ -3,6 +3,8 @@ use services::errors::ServiceError;
 use sword::web::HttpResponse;
 use thiserror::Error;
 
+pub type AppResult<T> = Result<T, AppError>;
+
 #[derive(Debug, Error)]
 pub enum AppError {
     #[error("Service error: {source}")]
@@ -58,7 +60,7 @@ impl From<AppError> for HttpResponse {
             }
 
             _ => {
-                eprintln!("Internal AppError: {:?}", error);
+                eprintln!("Internal AppError: {error:?}");
 
                 HttpResponse::InternalServerError()
                     .data(json!({ "error": "Error interno del servidor" }))
@@ -67,21 +69,11 @@ impl From<AppError> for HttpResponse {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Input {
     pub field: String,
     pub message: String,
     pub value: String,
-}
-
-impl Default for Input {
-    fn default() -> Self {
-        Input {
-            field: String::new(),
-            message: String::new(),
-            value: String::new(),
-        }
-    }
 }
 
 impl std::fmt::Display for Input {

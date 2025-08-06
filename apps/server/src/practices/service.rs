@@ -1,6 +1,11 @@
 use async_trait::async_trait;
 use chrono::Utc;
-use services::mailer::{MailContext, MailTo, Mailer};
+use services::{
+    mailer::{MailTo, Mailer},
+    printer::{PrintOptions, Printer},
+    templates::RawContext,
+};
+
 use shaku::{Component, Interface};
 use std::sync::Arc;
 use uuid::Uuid;
@@ -11,7 +16,7 @@ use crate::{
     practices::{
         CreatePracticeDto, Practice, PracticeRepository, UpdatePracticeDto,
     },
-    shared::errors::AppError,
+    shared::{errors::AppError, AppResult},
 };
 
 #[derive(Component)]
@@ -28,10 +33,15 @@ pub struct PracticeServiceImpl {
 
     #[shaku(inject)]
     mailer: Arc<dyn Mailer>,
+
+    #[shaku(inject)]
+    printer: Arc<dyn Printer>,
 }
 
 #[async_trait]
 pub trait PracticeService: Interface {
+    async fn get_by_id(&self, id: &Uuid) -> Result<Option<Practice>, AppError>;
+
     async fn get_by_enrollment_id(
         &self,
         id: &Uuid,
@@ -46,10 +56,16 @@ pub trait PracticeService: Interface {
     async fn create(&self, input: CreatePracticeDto) -> Result<Practice, AppError>;
     async fn remove(&self, id: &Uuid) -> Result<(), AppError>;
     async fn practice_exists(&self, id: &Uuid) -> Result<bool, AppError>;
+
+    async fn approve(&self, id: &Uuid) -> AppResult<String>;
 }
 
 #[async_trait]
 impl PracticeService for PracticeServiceImpl {
+    async fn get_by_id(&self, id: &Uuid) -> Result<Option<Practice>, AppError> {
+        self.practices.find_by_id(id).await
+    }
+
     async fn get_by_enrollment_id(
         &self,
         enrollment_id: &Uuid,
@@ -65,44 +81,46 @@ impl PracticeService for PracticeServiceImpl {
 
         let course = self.courses.get_by_id(&enrollment.course_id).await?;
 
-        // generate jsonwebtoken for unique 1TIME approval and rejection link
-        let approval_link =
-            format!("/practices/supervisor/approval/{}", practice.id);
+        let (start_date, end_date) = (
+            practice.start_date.map(|d| d.to_string()),
+            practice.end_date.map(|d| d.to_string()),
+        );
 
-        let rejection_link =
-            format!("/practices/supervisor/rejection/{}", practice.id);
+        let email_context: RawContext = vec![
+            ("student_name", student.name.clone()),
+            ("student_email", student.email.clone()),
+            ("enterprise_name", practice.enterprise_name.clone()),
+            ("supervisor_name", practice.supervisor_name.clone()),
+            ("supervisor_email", practice.supervisor_email.clone()),
+            ("course_name", course.name.clone()),
+            ("course_code", course.code.clone()),
+            ("location", practice.location.clone()),
+            ("start_date", start_date.unwrap_or_default()),
+            ("end_date", end_date.unwrap_or_default()),
+            (
+                "approval_link",
+                format!("/practices/{}/approve", practice.id),
+            ),
+            (
+                "rejection_link",
+                format!("/practices/{}/reject", practice.id),
+            ),
+        ];
 
-        let supervisor_email_context = MailContext::new(self.mailer.get_config())
-            .insert("supervisor_name", &practice.supervisor_name)
-            .insert("enterprise_name", &practice.enterprise_name)
-            .insert("course_name", &course.name)
-            .insert("student_name", &student.name)
-            .insert("approval_link", &approval_link)
-            .insert("rejection_link", &rejection_link);
-
-        let student_email_context = MailContext::new(self.mailer.get_config())
-            .insert("student_name", &student.name)
-            .insert("enterprise_name", &practice.enterprise_name)
-            .insert("course_name", &course.name)
-            .insert("supervisor_name", &practice.supervisor_name);
-
-        self.mailer
-            .send(MailTo {
+        let (_, _) = tokio::try_join!(
+            self.mailer.send(MailTo {
                 email: practice.supervisor_email.clone(),
                 subject: "Solicitud de Inscripción de Práctica",
                 template: "practices:creation:supervisor",
-                context: supervisor_email_context,
-            })
-            .await?;
-
-        self.mailer
-            .send(MailTo {
+                context: email_context.clone(),
+            }),
+            self.mailer.send(MailTo {
                 email: student.email.clone(),
                 subject: "Inscripción a Práctica Aprobada",
                 template: "practices:creation:student",
-                context: student_email_context,
-            })
-            .await?;
+                context: email_context,
+            }),
+        )?;
 
         let practice = self.practices.save(practice).await?;
 
@@ -110,6 +128,44 @@ impl PracticeService for PracticeServiceImpl {
         self.enrollments.save(enrollment).await?;
 
         Ok(practice)
+    }
+
+    async fn approve(&self, id: &Uuid) -> AppResult<String> {
+        let mut practice = self.practices.find_by_id(id).await?.ok_or(
+            AppError::ResourceNotFound {
+                id: id.to_string(),
+                kind: "Practice",
+            },
+        )?;
+
+        let (enrollment, student, _) =
+            self.enrollments.get_by_id(&practice.enrollment_id).await?;
+
+        let course = self.courses.get_by_id(&enrollment.course_id).await?;
+
+        let template_ctx = RawContext::from(vec![
+            ("enterprise_name", practice.enterprise_name.clone()),
+            ("supervisor_name", practice.supervisor_name.clone()),
+            ("supervisor_email", practice.supervisor_email.clone()),
+            ("course_name", course.name.clone()),
+            ("student_name", student.name.clone()),
+            ("student_email", student.email.clone()),
+        ]);
+
+        let print_opts = PrintOptions {
+            doc_id: practice.id.to_string(),
+            template: "document:practice:authotization",
+            context: template_ctx,
+        };
+
+        let pdf_data = self.printer.print(print_opts)?;
+
+        println!("Generated PDF Data: {}", pdf_data);
+
+        practice.is_approved = true;
+        self.practices.save(practice).await?;
+
+        Ok("Práctica aprobada exitosamente.".to_string())
     }
 
     async fn update(

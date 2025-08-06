@@ -11,7 +11,8 @@ use crate::shared::{
 
 use services::{
     hasher::PasswordHasher,
-    mailer::{MailContext, MailTo, Mailer},
+    mailer::{MailTo, Mailer},
+    templates::RawContext,
 };
 
 use crate::users::{
@@ -76,10 +77,11 @@ impl UserService for UserServiceImpl {
             }));
         }
 
-        let context = MailContext::new(self.mailer.get_config())
-            .insert("name", &input.name)
-            .insert("email", &input.email)
-            .insert("password", &input.password);
+        let context: RawContext = vec![
+            ("name", input.name.clone()),
+            ("email", input.email.clone()),
+            ("password", input.password.clone()),
+        ];
 
         let mail_opts = MailTo {
             subject: "Bienvenido (a) a la plataforma",

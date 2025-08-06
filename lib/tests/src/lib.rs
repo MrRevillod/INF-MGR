@@ -15,7 +15,10 @@ use server::{
     users::UsersController,
 };
 
-use services::mailer::{LettreTransport, MailerConfig};
+use services::{
+    mailer::{LettreTransport, MailerConfig},
+    printer::DocumentPrinter,
+};
 
 pub async fn init_test_app() -> TestServer {
     let app = Application::builder().expect("Failed to build Application");
@@ -41,7 +44,12 @@ pub async fn init_test_app() -> TestServer {
         .await
         .expect("Failed to create SMTP transport");
 
-    let dependency_container = DependencyContainer::new(postgres_db, smtp_transport);
+    let printer = DocumentPrinter::new()
+        .await
+        .expect("Failed to create DocumentPrinter service");
+
+    let dependency_container =
+        DependencyContainer::new(postgres_db, smtp_transport, printer);
 
     let app = app
         .di_module(dependency_container.module)

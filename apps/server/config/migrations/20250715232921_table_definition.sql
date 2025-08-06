@@ -31,7 +31,9 @@ CREATE TABLE IF NOT EXISTS practices (
     supervisor_email TEXT NOT NULL,
 
     start_date TIMESTAMP WITH TIME ZONE,
-    end_date TIMESTAMP WITH TIME ZONE
+    end_date TIMESTAMP WITH TIME ZONE,
+
+    is_approved BOOLEAN NOT NULL DEFAULT FALSE,
 );
 
 CREATE TABLE IF NOT EXISTS enrollments (
