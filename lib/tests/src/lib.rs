@@ -16,8 +16,9 @@ use server::{
 };
 
 use services::{
-    mailer::{LettreTransport, MailerConfig},
+    mailer::{MailerConfig, MailerService},
     printer::DocumentPrinter,
+    templates::TemplateConfig,
 };
 
 pub async fn init_test_app() -> TestServer {
@@ -25,6 +26,10 @@ pub async fn init_test_app() -> TestServer {
 
     let pg_db_config = app.config.get::<PostgresDbConfig>().unwrap();
     let mailer_config = app.config.get::<MailerConfig>().unwrap();
+    let template_config = app
+        .config
+        .get::<TemplateConfig>()
+        .expect("Failed to get TemplateConfig");
 
     let postgres_db = PostgresDatabase::new(&pg_db_config)
         .await
@@ -40,11 +45,10 @@ pub async fn init_test_app() -> TestServer {
         .await
         .expect("Failed to truncate database tables");
 
-    let smtp_transport = LettreTransport::new(&mailer_config)
-        .await
+    let smtp_transport = MailerService::new(&mailer_config, &template_config)
         .expect("Failed to create SMTP transport");
 
-    let printer = DocumentPrinter::new()
+    let printer = DocumentPrinter::new(&template_config)
         .await
         .expect("Failed to create DocumentPrinter service");
 

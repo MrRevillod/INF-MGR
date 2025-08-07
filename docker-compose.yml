@@ -13,7 +13,7 @@ services:
     volumes:
       - documents_volume:/app/documents
     environment:
-      - DOCUMENTS_PATH=/app/documents
+      - DOCUMENTS_DIR=/app/documents
 
   client_dev:
     container_name: inf_mgr_client_dev

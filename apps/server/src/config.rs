@@ -11,13 +11,6 @@ pub struct PostgresDbConfig {
     pub acquire_timeout_ms: u64,
 }
 
-#[derive(Debug, Deserialize)]
-#[config(key = "career")]
-pub struct CareerConfig {
-    pub career_name: String,
-    pub career_manager: String,
-}
-
 // #[derive(Debug, Deserialize)]
 // #[config(key = "auth")]
 // pub struct AuthConfig {

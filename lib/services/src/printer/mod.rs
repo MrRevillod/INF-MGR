@@ -1,32 +1,20 @@
 use std::{
-    collections::HashMap,
     env::{temp_dir, var},
     process::Command,
-    sync::{Arc, LazyLock},
 };
-
-use async_trait::async_trait;
-use shaku::{Component, Interface};
-use tera::Tera;
 
 use crate::{
     errors::{PrinterError, ServiceError},
     templates::*,
 };
 
-static TEMPLATES: LazyLock<HashMap<&'static str, &'static str>> =
-    LazyLock::new(|| {
-        HashMap::from([(
-            "document:practice:authorization",
-            include_str!("./templates/authorization.typ"),
-        )])
-    });
+use async_trait::async_trait;
+use shaku::{Component, Interface};
 
 #[derive(Component)]
 #[shaku(interface = Printer)]
 pub struct DocumentPrinter {
-    templates: Arc<Tera>,
-    context: TemplateContext,
+    template_ctx: TemplateContext,
 }
 
 pub struct PrintOptions {
@@ -37,80 +25,31 @@ pub struct PrintOptions {
 
 #[async_trait]
 pub trait Printer: Interface {
-    fn print(&self, options: PrintOptions) -> Result<String, ServiceError>;
+    async fn print(&self, options: PrintOptions) -> Result<String, ServiceError>;
 }
 
 impl DocumentPrinter {
-    pub async fn new() -> Result<Self, ServiceError> {
-        let mut context = TemplateContext::new();
-
-        let interal_ctx = vec![
-            (
-                "public_url",
-                var("PUBLIC_URL")
-                    .unwrap_or_else(|_| "http://localhost:3000".to_string()),
-            ),
-            (
-                "secretary_email",
-                var("SECRETARY_EMAIL")
-                    .expect("SECRETARY_EMAIL must be set in the environment"),
-            ),
-            (
-                "career_manager",
-                var("CAREER_MANAGER")
-                    .expect("CAREER_MANAGER must be set in the environment"),
-            ),
-            (
-                "career_name",
-                var("CAREER_NAME")
-                    .expect("CAREER_NAME must be set in the environment"),
-            ),
-        ];
-
-        context.insert_ctx(interal_ctx);
-
+    pub fn new(template_config: &TemplateConfig) -> Result<Self, ServiceError> {
         Ok(DocumentPrinter {
-            templates: TemplateHandler::new(TEMPLATES.clone())?,
-            context,
+            template_ctx: TemplateContext::new(
+                PRINTER_TEMPLATES.clone(),
+                template_config.clone(),
+            )?,
         })
-    }
-}
-
-impl From<DocumentPrinter> for DocumentPrinterParameters {
-    fn from(printer: DocumentPrinter) -> Self {
-        DocumentPrinterParameters {
-            templates: printer.templates,
-            context: printer.context,
-        }
     }
 }
 
 #[async_trait]
 impl Printer for DocumentPrinter {
-    fn print(
-        &self,
-        PrintOptions {
-            doc_id,
-            template,
-            context,
-        }: PrintOptions,
-    ) -> Result<String, ServiceError> {
-        let mut local_context = self.context.clone();
-        local_context.insert_ctx(context);
+    async fn print(&self, opts: PrintOptions) -> Result<String, ServiceError> {
+        let template = self.template_ctx.render(opts.template, opts.context)?;
 
-        let template_name = format!("{template}.typ");
-        let template = self
-            .templates
-            .render(&template_name, &local_context.tera_ctx)
-            .map_err(|source| ServiceError::Printer {
-                source: source.into(),
-            })?;
-
-        let documents_path =
-            var("DOCUMENTS_PATH").unwrap_or_else(|_| "/tmp/documents".to_string());
-
-        let temp_file = format!("{}/{template_name}.typ", temp_dir().display());
-        let out_file = format!("{}/{doc_id}.pdf", documents_path);
+        let temp_file = format!("{}/{}.typ", opts.doc_id, temp_dir().display());
+        let out_file = format!(
+            "{}/{}.pdf",
+            opts.doc_id,
+            var("DOCUMENTS_DIR").unwrap_or_else(|_| ".".to_string())
+        );
 
         std::fs::write(&temp_file, template).map_err(|source| {
             ServiceError::Printer {
@@ -140,5 +79,13 @@ impl Printer for DocumentPrinter {
         }
 
         Ok(out_file)
+    }
+}
+
+impl From<DocumentPrinter> for DocumentPrinterParameters {
+    fn from(printer: DocumentPrinter) -> Self {
+        DocumentPrinterParameters {
+            template_ctx: printer.template_ctx,
+        }
     }
 }

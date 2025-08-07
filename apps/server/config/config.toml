@@ -1,7 +1,6 @@
 [application]
 port = 8000
 host = "0.0.0.0"
-public_url = "${PUBLIC_URL:http://localhost:8000}"
 
 [career]
 career_name = "${CAREER_NAME:Ingeniería en Informática}"
@@ -31,5 +30,9 @@ smtp_host = "${SMTP_HOST:localhost}"
 smtp_port = "${SMTP_PORT}"
 smtp_username = "${SMTP_USERNAME}"
 smtp_password = "${SMTP_PASSWORD}"
+
+[template-context]
 public_url = "${PUBLIC_URL:http://localhost:8000}"
+career_name = "${CAREER_NAME:Ingeniería en Informática}"
+career_manager = "${CAREER_MANAGER:Director de Carrera}"
 secretary_email = "${SECRETARY_EMAIL}"

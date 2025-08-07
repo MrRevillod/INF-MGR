@@ -4,8 +4,8 @@ pub mod mailer;
 pub mod printer;
 pub mod templates {
     mod context;
-    mod handler;
+    mod files;
 
     pub use context::*;
-    pub use handler::TemplateHandler;
+    pub use files::*;
 }

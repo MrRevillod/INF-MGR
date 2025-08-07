@@ -1,49 +1,67 @@
 mod context;
-mod interface;
 
 pub use context::{MailTo, MailerConfig};
-pub use interface::{EmailTransport, LettreTransport};
-
-use std::sync::Arc;
 
 use async_trait::async_trait;
-use lettre::{Message, Transport, message::header::ContentType};
+use lettre::{
+    Message, SmtpTransport, Transport, message::header::ContentType,
+    transport::smtp::authentication::Credentials,
+};
+
 use shaku::{Component, Interface};
 
 use crate::{
     errors::{MailerError, ServiceError},
-    templates::TemplateContext,
+    templates::{MAILER_TEMPLATES, TemplateConfig, TemplateContext},
 };
 
 #[derive(Component)]
 #[shaku(interface = Mailer)]
 pub struct MailerService {
-    #[shaku(inject)]
-    transport: Arc<dyn EmailTransport>,
+    transport: SmtpTransport,
+    config: MailerConfig,
+    template_ctx: TemplateContext,
+}
+
+impl MailerService {
+    pub fn new(
+        config: &MailerConfig,
+        template_config: &TemplateConfig,
+    ) -> Result<Self, ServiceError> {
+        let creds = Credentials::new(
+            config.smtp_username.clone(),
+            config.smtp_password.clone(),
+        );
+
+        let transporter = SmtpTransport::relay(&config.smtp_host)
+            .map_err(|source| MailerError::SmtpTransport { source })?
+            .credentials(creds)
+            .build();
+
+        let templates =
+            TemplateContext::new(MAILER_TEMPLATES.clone(), template_config.clone())?;
+
+        Ok(MailerService {
+            transport: transporter,
+            config: config.clone(),
+            template_ctx: templates,
+        })
+    }
 }
 
 #[async_trait]
 pub trait Mailer: Interface {
-    fn get_config(&self) -> &MailerConfig;
     async fn send(&self, mail_to: MailTo) -> Result<(), ServiceError>;
 }
 
 #[async_trait]
 impl Mailer for MailerService {
     async fn send(&self, mail_to: MailTo) -> Result<(), ServiceError> {
-        let email_from = self.transport.get_config().smtp_username.clone();
+        let email_from = self.config.smtp_username.clone();
         let email_from_fmt = format!("Prácticas y Tesis <{email_from}>");
 
-        let mut ctx = TemplateContext::new();
-
-        ctx.insert_ctx(mail_to.context);
-
         let template_name = format!("{}.html", mail_to.template);
-        let template = self
-            .transport
-            .get_templates()
-            .render(&template_name, &ctx.tera_ctx)
-            .map_err(|source| MailerError::TemplateError { source })?;
+        let template = self.template_ctx.render(&template_name, mail_to.context)?;
 
         let message = Message::builder()
             .from(email_from_fmt.parse().unwrap())
@@ -54,14 +72,19 @@ impl Mailer for MailerService {
             .map_err(|source| MailerError::MessageBuild { source })?;
 
         self.transport
-            .get_transport()
             .send(&message)
             .map_err(|source| MailerError::SmtpTransport { source })?;
 
         Ok(())
     }
+}
 
-    fn get_config(&self) -> &MailerConfig {
-        self.transport.get_config()
+impl From<MailerService> for MailerServiceParameters {
+    fn from(mailer: MailerService) -> Self {
+        MailerServiceParameters {
+            transport: mailer.transport,
+            config: mailer.config,
+            template_ctx: mailer.template_ctx,
+        }
     }
 }

@@ -11,8 +11,9 @@ use server::{
 };
 
 use services::{
-    mailer::{LettreTransport, MailerConfig},
+    mailer::{MailerConfig, MailerService},
     printer::DocumentPrinter,
+    templates::TemplateConfig,
 };
 
 use server::config::{CorsConfig, PostgresDbConfig};
@@ -27,6 +28,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cors_config = app.config.get::<CorsConfig>()?;
     let pg_db_config = app.config.get::<PostgresDbConfig>()?;
     let mailer_config = app.config.get::<MailerConfig>()?;
+    let tamplate_config = app.config.get::<TemplateConfig>()?;
 
     let postgres_db = PostgresDatabase::new(&pg_db_config)
         .await
@@ -37,12 +39,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await
         .expect("Failed to create database connection");
 
-    let smtp_transport = LettreTransport::new(&mailer_config)
-        .await
-        .expect("Failed to create SMTP transport service");
+    let smtp_transport = MailerService::new(&mailer_config, &tamplate_config)
+        .expect("Failed to create Mailer service");
 
-    let printer = DocumentPrinter::new()
-        .await
+    let printer = DocumentPrinter::new(&tamplate_config)
         .expect("Failed to create DocumentPrinter service");
 
     let dependency_container =

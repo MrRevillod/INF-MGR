@@ -24,6 +24,12 @@ pub enum ServiceError {
         #[from]
         source: PrinterError,
     },
+
+    #[error("Template handler error: {source}")]
+    TemplateHandler {
+        #[from]
+        source: TeraError,
+    },
 }
 
 #[derive(Debug, Error)]
@@ -59,12 +65,6 @@ pub enum MailerError {
         source: AddressError,
     },
 
-    #[error("Template handling error: {source}")]
-    TemplateError {
-        #[from]
-        source: TeraError,
-    },
-
     #[error("Message building error: {source}")]
     MessageBuild {
         #[from]
@@ -74,12 +74,6 @@ pub enum MailerError {
 
 #[derive(Debug, Error)]
 pub enum PrinterError {
-    #[error("Template handling error: {source}")]
-    TemplateError {
-        #[from]
-        source: TeraError,
-    },
-
     #[error("Archive creation error: {0}")]
     ArchiveError(String),
 

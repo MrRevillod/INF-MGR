@@ -167,11 +167,14 @@ impl PracticeService for PracticeServiceImpl {
             ("coordinator_name", coordinator.name),
         ];
 
-        let pdf_url = self.printer.print(PrintOptions {
-            doc_id: practice.id.to_string(),
-            template: "document:practice:authotization",
-            context: enterprise_auth_pdf_ctx.clone(),
-        })?;
+        let pdf_url = self
+            .printer
+            .print(PrintOptions {
+                doc_id: practice.id.to_string(),
+                template: "document:practice:authotization",
+                context: enterprise_auth_pdf_ctx.clone(),
+            })
+            .await?;
 
         let supervisor_evaluation_url =
             format!("/practices/{}/evaluation/supervisor", practice.id);
