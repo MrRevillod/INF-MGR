@@ -8,8 +8,6 @@ use sqlx::FromRow;
 #[serde(rename_all = "camelCase")]
 pub struct Practice {
     pub id: Uuid,
-    #[sqlx(rename = "enrollment_id")]
-    pub enrollment_id: Uuid,
 
     #[sqlx(rename = "enterprise_name")]
     pub enterprise_name: String,

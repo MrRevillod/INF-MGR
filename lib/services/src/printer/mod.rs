@@ -55,6 +55,16 @@ impl DocumentPrinter {
                 var("SECRETARY_EMAIL")
                     .expect("SECRETARY_EMAIL must be set in the environment"),
             ),
+            (
+                "career_manager",
+                var("CAREER_MANAGER")
+                    .expect("CAREER_MANAGER must be set in the environment"),
+            ),
+            (
+                "career_name",
+                var("CAREER_NAME")
+                    .expect("CAREER_NAME must be set in the environment"),
+            ),
         ];
 
         context.insert_ctx(interal_ctx);
@@ -96,8 +106,11 @@ impl Printer for DocumentPrinter {
                 source: source.into(),
             })?;
 
+        let documents_path =
+            var("DOCUMENTS_PATH").unwrap_or_else(|_| "/tmp/documents".to_string());
+
         let temp_file = format!("{}/{template_name}.typ", temp_dir().display());
-        let out_file = format!("{}/{doc_id}.pdf", temp_dir().display());
+        let out_file = format!("{}/{doc_id}.pdf", documents_path);
 
         std::fs::write(&temp_file, template).map_err(|source| {
             ServiceError::Printer {

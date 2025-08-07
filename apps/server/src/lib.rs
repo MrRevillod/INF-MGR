@@ -37,11 +37,13 @@ pub mod courses {
 }
 
 pub mod enrollments {
+    mod controllers;
     mod dtos;
     mod entity;
     mod repository;
     mod service;
 
+    pub use controllers::EnrollmentsController;
     pub use dtos::{
         CreateEnrollmentDto, EnrollmentResponse, EnrollmentWithStudentAndPractice,
         GetEnrollmentsDto, StudentScoreDto, UpdateEnrollmentDto,
@@ -57,7 +59,6 @@ pub mod enrollments {
 }
 
 pub mod practices {
-    mod controllers;
     mod dtos;
     mod entity;
     mod repository;
@@ -73,6 +74,8 @@ pub mod shared {
     pub mod entities;
     pub mod errors;
 
+    use chrono::{DateTime, Utc};
+    use chrono_tz::America::Santiago;
     pub use errors::{AppError, AppResult};
 
     pub mod database;
@@ -93,6 +96,11 @@ pub mod shared {
 
             Ok(())
         }
+    }
+
+    pub fn format_date(date: Option<DateTime<Utc>>) -> String {
+        date.map(|date| date.with_timezone(&Santiago).format("%d/%m/%y").to_string())
+            .unwrap_or_default()
     }
 }
 

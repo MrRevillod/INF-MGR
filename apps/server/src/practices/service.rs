@@ -16,7 +16,7 @@ use crate::{
     practices::{
         CreatePracticeDto, Practice, PracticeRepository, UpdatePracticeDto,
     },
-    shared::{errors::AppError, AppResult},
+    shared::{errors::AppError, format_date, AppResult},
 };
 
 #[derive(Component)]
@@ -42,22 +42,26 @@ pub struct PracticeServiceImpl {
 pub trait PracticeService: Interface {
     async fn get_by_id(&self, id: &Uuid) -> Result<Option<Practice>, AppError>;
 
-    async fn get_by_enrollment_id(
-        &self,
-        id: &Uuid,
-    ) -> Result<Option<Practice>, AppError>;
-
     async fn update(
         &self,
         id: &Uuid,
         input: UpdatePracticeDto,
     ) -> Result<Practice, AppError>;
 
-    async fn create(&self, input: CreatePracticeDto) -> Result<Practice, AppError>;
+    async fn create(
+        &self,
+        enrollment_id: &Uuid,
+        input: CreatePracticeDto,
+    ) -> Result<Practice, AppError>;
+
     async fn remove(&self, id: &Uuid) -> Result<(), AppError>;
     async fn practice_exists(&self, id: &Uuid) -> Result<bool, AppError>;
 
-    async fn approve(&self, id: &Uuid) -> AppResult<String>;
+    async fn approve(
+        &self,
+        enrollment_id: &Uuid,
+        practice_id: &Uuid,
+    ) -> AppResult<String>;
 }
 
 #[async_trait]
@@ -66,20 +70,17 @@ impl PracticeService for PracticeServiceImpl {
         self.practices.find_by_id(id).await
     }
 
-    async fn get_by_enrollment_id(
+    async fn create(
         &self,
         enrollment_id: &Uuid,
-    ) -> Result<Option<Practice>, AppError> {
-        self.practices.find_by_enrollment_id(enrollment_id).await
-    }
-
-    async fn create(&self, input: CreatePracticeDto) -> Result<Practice, AppError> {
+        input: CreatePracticeDto,
+    ) -> Result<Practice, AppError> {
         let practice = Practice::from(input);
 
         let (mut enrollment, student, _) =
-            self.enrollments.get_by_id(&practice.enrollment_id).await?;
+            self.enrollments.get_by_id(&enrollment_id).await?;
 
-        let course = self.courses.get_by_id(&enrollment.course_id).await?;
+        let (course, _, _) = self.courses.get_by_id(&enrollment.course_id).await?;
 
         let (start_date, end_date) = (
             practice.start_date.map(|d| d.to_string()),
@@ -99,27 +100,33 @@ impl PracticeService for PracticeServiceImpl {
             ("end_date", end_date.unwrap_or_default()),
             (
                 "approval_link",
-                format!("/practices/{}/approve", practice.id),
+                format!(
+                    "/enrollments/{}/practice/{}/approve",
+                    enrollment.id, practice.id
+                ),
             ),
             (
                 "rejection_link",
-                format!("/practices/{}/reject", practice.id),
+                format!(
+                    "/enrollments/{}/practice/{}/reject",
+                    enrollment.id, practice.id
+                ),
             ),
         ];
 
-        let (_, _) = tokio::try_join!(
+        tokio::try_join!(
             self.mailer.send(MailTo {
                 email: practice.supervisor_email.clone(),
                 subject: "Solicitud de Inscripción de Práctica",
-                template: "practices:creation:supervisor",
+                template: "practice:creation:supervisor",
                 context: email_context.clone(),
             }),
             self.mailer.send(MailTo {
                 email: student.email.clone(),
                 subject: "Inscripción a Práctica Aprobada",
-                template: "practices:creation:student",
+                template: "practice:creation:student",
                 context: email_context,
-            }),
+            })
         )?;
 
         let practice = self.practices.save(practice).await?;
@@ -130,37 +137,73 @@ impl PracticeService for PracticeServiceImpl {
         Ok(practice)
     }
 
-    async fn approve(&self, id: &Uuid) -> AppResult<String> {
-        let mut practice = self.practices.find_by_id(id).await?.ok_or(
-            AppError::ResourceNotFound {
-                id: id.to_string(),
-                kind: "Practice",
-            },
-        )?;
+    async fn approve(
+        &self,
+        enrollment_id: &Uuid,
+        practice_id: &Uuid,
+    ) -> AppResult<String> {
+        let (enrollment, student, practice) =
+            self.enrollments.get_by_id(enrollment_id).await?;
 
-        let (enrollment, student, _) =
-            self.enrollments.get_by_id(&practice.enrollment_id).await?;
+        let mut practice = practice.ok_or(AppError::ResourceNotFound {
+            id: practice_id.to_string(),
+            kind: "Practice",
+        })?;
 
-        let course = self.courses.get_by_id(&enrollment.course_id).await?;
+        let (course, _, coordinator) =
+            self.courses.get_by_id(&enrollment.course_id).await?;
 
-        let template_ctx = RawContext::from(vec![
+        let enterprise_auth_pdf_ctx: RawContext = vec![
+            ("student_name", student.name),
+            ("course_name", course.name),
+            ("course_code", course.code),
             ("enterprise_name", practice.enterprise_name.clone()),
+            ("location", practice.location.clone()),
+            ("start_date", format_date(practice.start_date)),
+            ("end_date", format_date(practice.end_date)),
             ("supervisor_name", practice.supervisor_name.clone()),
             ("supervisor_email", practice.supervisor_email.clone()),
-            ("course_name", course.name.clone()),
-            ("student_name", student.name.clone()),
-            ("student_email", student.email.clone()),
-        ]);
+            ("coordinator_email", coordinator.email.clone()),
+            ("coordinator_name", coordinator.name),
+        ];
 
-        let print_opts = PrintOptions {
+        let pdf_url = self.printer.print(PrintOptions {
             doc_id: practice.id.to_string(),
             template: "document:practice:authotization",
-            context: template_ctx,
-        };
+            context: enterprise_auth_pdf_ctx.clone(),
+        })?;
 
-        let pdf_data = self.printer.print(print_opts)?;
+        let supervisor_evaluation_url =
+            format!("/practices/{}/evaluation/supervisor", practice.id);
 
-        println!("Generated PDF Data: {}", pdf_data);
+        let mut email_context = enterprise_auth_pdf_ctx.clone();
+
+        email_context.push(("practice_authorization_doc_url", pdf_url));
+        email_context.push((
+            "supervisor_evaluation_url",
+            supervisor_evaluation_url.clone(),
+        ));
+
+        tokio::try_join!(
+            self.mailer.send(MailTo {
+                subject: "Información de Práctica Aprobada",
+                email: practice.supervisor_email.clone(),
+                template: "practice:approval:supervisor",
+                context: email_context.clone(),
+            }),
+            self.mailer.send(MailTo {
+                subject: "Práctica Aprobada",
+                email: student.email.clone(),
+                template: "practice:approval:student",
+                context: email_context.clone(),
+            }),
+            self.mailer.send(MailTo {
+                subject: "Práctica Aprobada",
+                email: coordinator.email.clone(),
+                template: "practice:approval:coordinator",
+                context: email_context.clone(),
+            }),
+        )?;
 
         practice.is_approved = true;
         self.practices.save(practice).await?;

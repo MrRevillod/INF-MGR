@@ -1,18 +1,68 @@
-// use axum::http::StatusCode;
-// use uuid::Uuid;
+use serde_json::json;
 
-// use crate::{
-//     courses::utils::{AsignatureBuilder, create_asignature, delete_asignature},
-//     extract_resource_id, init_test_app,
-//     inscriptions::utils::{
-//         InscriptionBuilder, create_inscription, delete_incription,
-//     },
-//     users::utils::{
-//         create_coordinator, create_student, create_teacher, delete_user,
-//     },
-// };
+use crate::{
+    courses::utils::{AsignatureBuilder, create_asignature, delete_asignature},
+    extract_resource_id, init_test_app,
+    inscriptions::utils::{
+        InscriptionBuilder, create_inscription, delete_incription,
+    },
+    users::utils::{
+        create_coordinator, create_student, create_teacher, delete_user,
+    },
+};
 
 pub mod utils;
+
+#[tokio::test]
+pub async fn create_enrollment_and_practice() {
+    let app = init_test_app().await;
+
+    let student_id = create_student(&app).await; // alu
+    let teacher_id = create_teacher(&app).await;
+    let coordinator_id = create_coordinator(&app).await; //temp
+
+    let asignature_data =
+        AsignatureBuilder::new(&teacher_id, &coordinator_id).build();
+
+    let asignature = create_asignature(&app, &asignature_data).await;
+    let asignature_id = extract_resource_id(&asignature);
+
+    let inscription_data = InscriptionBuilder::new()
+        .with_student_id(&student_id)
+        .with_asignature_id(&asignature_id)
+        .build();
+
+    let inscription = create_inscription(&app, &inscription_data).await;
+    let inscription_id = extract_resource_id(&inscription);
+
+    assert_eq!(
+        inscription["courseId"].as_str().unwrap(),
+        asignature_id.as_str(),
+        "Asignature ID does not match"
+    );
+
+    let practice_data = json!({
+        "enterpriseName": "Test Enterprise 6AM",
+        "description": "Test Description 6AM",
+        "location": "Test Location 6AM",
+        "supervisorName": "Test Supervisor 6AM",
+        "supervisorEmail": "k8533nycie@illubd.com",
+    });
+
+    let create_practice_res = app
+        .post(&format!("/enrollments/{inscription_id}/practices"))
+        .json(&practice_data)
+        .await;
+
+    dbg!(&create_practice_res);
+
+    // Clean up
+    delete_incription(&app, &inscription_id).await;
+    delete_asignature(&app, &asignature_id).await;
+    delete_user(&app, &student_id).await;
+    delete_user(&app, &teacher_id).await;
+    delete_user(&app, &coordinator_id).await;
+}
 
 // #[tokio::test]
 // async fn create_and_delete_inscription_should_work() {

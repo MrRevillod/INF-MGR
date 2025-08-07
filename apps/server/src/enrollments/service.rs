@@ -76,8 +76,10 @@ impl EnrollmentService for EnrollmentServiceImpl {
                 continue;
             };
 
-            let practice =
-                self.practices.find_by_enrollment_id(&enrollment.id).await?;
+            let practice = match enrollment.practice_id {
+                Some(practice_id) => self.practices.find_by_id(&practice_id).await?,
+                None => None,
+            };
 
             result.push((enrollment, student, practice));
         }
@@ -103,7 +105,10 @@ impl EnrollmentService for EnrollmentServiceImpl {
             },
         )?;
 
-        let practice = self.practices.find_by_enrollment_id(&enrollment.id).await?;
+        let practice = match enrollment.practice_id {
+            Some(practice_id) => self.practices.find_by_id(&practice_id).await?,
+            None => None,
+        };
 
         Ok((enrollment, student, practice))
     }

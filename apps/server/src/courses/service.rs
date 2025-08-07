@@ -30,7 +30,7 @@ pub struct CourseServiceImpl {
 #[async_trait]
 pub trait CourseService: Interface {
     async fn get_all(&self) -> Result<Vec<CourseWithStaff>, AppError>;
-    async fn get_by_id(&self, id: &Uuid) -> Result<Course, AppError>;
+    async fn get_by_id(&self, id: &Uuid) -> Result<CourseWithStaff, AppError>;
 
     async fn create(&self, input: CreateCourseDto) -> Result<Course, AppError>;
     async fn remove(&self, id: &Uuid) -> Result<(), AppError>;
@@ -74,7 +74,7 @@ impl CourseService for CourseServiceImpl {
         Ok(result)
     }
 
-    async fn get_by_id(&self, id: &Uuid) -> Result<Course, AppError> {
+    async fn get_by_id(&self, id: &Uuid) -> Result<CourseWithStaff, AppError> {
         let Some(course) = self.courses.find_by_id(id).await? else {
             return Err(AppError::ResourceNotFound {
                 id: id.to_string(),
@@ -82,7 +82,19 @@ impl CourseService for CourseServiceImpl {
             });
         };
 
-        Ok(course)
+        let (teacher, coordinator) = tokio::try_join!(
+            self.users.find_by_id(&course.teacher_id),
+            self.users.find_by_id(&course.coordinator_id)
+        )?;
+
+        if teacher.is_none() || coordinator.is_none() {
+            return Err(AppError::ResourceNotFound {
+                id: id.to_string(),
+                kind: "Course Staff",
+            });
+        }
+
+        Ok((course, teacher.unwrap(), coordinator.unwrap()))
     }
 
     async fn create(&self, input: CreateCourseDto) -> Result<Course, AppError> {

@@ -81,7 +81,7 @@ Autorizamos a: {{ student_name }}, alumno(a) regular de la carrera {{ career_nam
 ) <tab:tab1>
 La coordinación de esta Práctica en la empresa/institución estará bajo la supervisión:
 
- #let tab2 = {
+#let tab2 = {
   table(
     columns: (1fr, 1fr),
     rows: (2em, 2em, 2em, 2em),

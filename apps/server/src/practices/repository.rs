@@ -18,11 +18,6 @@ pub struct PostgresPracticeRepository {
 
 #[async_trait]
 pub trait PracticeRepository: Interface {
-    async fn find_by_enrollment_id(
-        &self,
-        id: &Uuid,
-    ) -> Result<Option<Practice>, AppError>;
-
     async fn find_by_id(&self, id: &Uuid) -> Result<Option<Practice>, AppError>;
     async fn save(&self, practice: Practice) -> Result<Practice, AppError>;
     async fn delete(&self, id: &Uuid) -> Result<(), AppError>;
@@ -30,19 +25,6 @@ pub trait PracticeRepository: Interface {
 
 #[async_trait]
 impl PracticeRepository for PostgresPracticeRepository {
-    async fn find_by_enrollment_id(
-        &self,
-        id: &Uuid,
-    ) -> Result<Option<Practice>, AppError> {
-        let query = "SELECT * FROM practices WHERE enrollment_id = $1";
-        let practice = sqlx::query_as::<_, Practice>(query)
-            .bind(id)
-            .fetch_optional(self.db_connection.get_pool())
-            .await?;
-
-        Ok(practice)
-    }
-
     async fn find_by_id(&self, id: &Uuid) -> Result<Option<Practice>, AppError> {
         let query = "SELECT * FROM practices WHERE id = $1";
         let practice = sqlx::query_as::<_, Practice>(query)
@@ -56,10 +38,10 @@ impl PracticeRepository for PostgresPracticeRepository {
     async fn save(&self, practice: Practice) -> Result<Practice, AppError> {
         let query = "
             INSERT INTO practices (
-                id, enrollment_id, enterprise_name, location,
+                id, enterprise_name, location,
                 description, supervisor_name, supervisor_email,
                 start_date, end_date, is_approved
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             ON CONFLICT (id) DO UPDATE SET
                 enterprise_name = EXCLUDED.enterprise_name,
                 location = EXCLUDED.location,
@@ -73,7 +55,6 @@ impl PracticeRepository for PostgresPracticeRepository {
 
         let saved_practice = sqlx::query_as::<_, Practice>(query)
             .bind(practice.id)
-            .bind(practice.enrollment_id)
             .bind(practice.enterprise_name)
             .bind(practice.location)
             .bind(practice.description)

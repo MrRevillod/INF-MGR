@@ -11,8 +11,8 @@ pub mod users;
 
 use server::{
     config::PostgresDbConfig, container::DependencyContainer,
-    courses::CoursesController, shared::database::PostgresDatabase,
-    users::UsersController,
+    courses::CoursesController, enrollments::EnrollmentsController,
+    shared::database::PostgresDatabase, users::UsersController,
 };
 
 use services::{
@@ -55,7 +55,8 @@ pub async fn init_test_app() -> TestServer {
         .di_module(dependency_container.module)
         .expect("Failed to load DI module")
         .controller::<UsersController>()
-        .controller::<CoursesController>();
+        .controller::<CoursesController>()
+        .controller::<EnrollmentsController>();
 
     TestServer::new(app.router()).expect("Failed to start test server")
 }

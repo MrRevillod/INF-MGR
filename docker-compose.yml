@@ -10,6 +10,10 @@ services:
       - .env
     depends_on:
       - postgres_dev
+    volumes:
+      - documents_volume:/app/documents
+    environment:
+      - DOCUMENTS_PATH=/app/documents
 
   client_dev:
     container_name: inf_mgr_client_dev
@@ -66,3 +70,5 @@ volumes:
   server_target:
   cargo_cache:
   client_node_modules:
+  documents_volume:
+    driver: local

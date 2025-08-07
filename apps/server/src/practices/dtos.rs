@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use validator::{Validate, ValidationError};
 
-use crate::{practices::Practice, shared::validators::validate_uuid};
+use crate::practices::Practice;
 
 #[derive(Serialize, Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
@@ -15,9 +15,6 @@ pub struct CreatePracticeDto {
         message = "El nombre de la debe contener entre 1 y 255 caracteres."
     ))]
     pub enterprise_name: String,
-
-    #[validate(custom(function = validate_uuid, message = "Identificador de curso inválido"))]
-    pub enrollment_id: String,
 
     #[validate(length(
         min = 1,
@@ -53,7 +50,6 @@ impl From<CreatePracticeDto> for Practice {
     fn from(dto: CreatePracticeDto) -> Self {
         Practice {
             id: Uuid::new_v4(),
-            enrollment_id: Uuid::parse_str(&dto.enrollment_id).unwrap(),
             enterprise_name: dto.enterprise_name,
             description: dto.description,
             location: dto.location,

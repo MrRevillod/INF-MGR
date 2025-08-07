@@ -86,7 +86,7 @@ impl UserService for UserServiceImpl {
         let mail_opts = MailTo {
             subject: "Bienvenido (a) a la plataforma",
             email: input.email.clone(),
-            template: "welcome",
+            template: "system:welcome",
             context,
         };
 
