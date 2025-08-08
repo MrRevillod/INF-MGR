@@ -88,7 +88,7 @@ La coordinación de esta Práctica en la empresa/institución estará bajo la su
     align: start,
     [Nombre del funcionario], [ {{ supervisor_name }} ],
     [Cargo], [  ],
-    [Correo electrónico], [ {{ supervisor_email }} ],
+    [Correo electrónico], [ #raw("{{ supervisor_email }}") ],
     [Teléfono de contacto], [ ],
   )
 }

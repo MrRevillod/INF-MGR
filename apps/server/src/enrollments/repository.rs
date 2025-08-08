@@ -76,6 +76,7 @@ impl EnrollmentRepository for PostgresEnrollmentRepository {
             ON CONFLICT (id) DO UPDATE SET
                 student_id = EXCLUDED.student_id,
                 course_id = EXCLUDED.course_id,
+                practice_id = EXCLUDED.practice_id,
                 student_scores = EXCLUDED.student_scores
             RETURNING *
         "#;

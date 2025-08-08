@@ -4,6 +4,9 @@ WORKDIR /app
 
 RUN cargo install cargo-watch
 
+# Install typst for PDF generation
+RUN cargo install --git https://github.com/typst/typst --locked typst-cli
+
 # Copy workspace files
 COPY Cargo.toml Cargo.lock ./
 
@@ -16,6 +19,9 @@ COPY apps/server/ ./apps/server/
 # Copy tests
 COPY lib/tests/src ./lib/tests/src
 COPY lib/tests/Cargo.toml ./lib/tests/
+
+# Create documents directory
+RUN mkdir -p /app/documents
 
 ENV CARGO_TARGET_DIR /app/target
 

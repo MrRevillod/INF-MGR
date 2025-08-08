@@ -82,6 +82,11 @@ impl PracticeService for PracticeServiceImpl {
 
         let (course, _, _) = self.courses.get_by_id(&enrollment.course_id).await?;
 
+        let practice = self.practices.save(practice).await?;
+
+        enrollment.practice_id = Some(practice.id);
+        let enrollment = self.enrollments.save(enrollment).await?;
+
         let (start_date, end_date) = (
             practice.start_date.map(|d| d.to_string()),
             practice.end_date.map(|d| d.to_string()),
@@ -129,11 +134,6 @@ impl PracticeService for PracticeServiceImpl {
             })
         )?;
 
-        let practice = self.practices.save(practice).await?;
-
-        enrollment.practice_id = Some(practice.id);
-        self.enrollments.save(enrollment).await?;
-
         Ok(practice)
     }
 
@@ -149,6 +149,13 @@ impl PracticeService for PracticeServiceImpl {
             id: practice_id.to_string(),
             kind: "Practice",
         })?;
+
+        if practice.id != *practice_id {
+            return Err(AppError::ResourceNotFound {
+                id: practice_id.to_string(),
+                kind: "Practice",
+            });
+        }
 
         let (course, _, coordinator) =
             self.courses.get_by_id(&enrollment.course_id).await?;
@@ -171,7 +178,7 @@ impl PracticeService for PracticeServiceImpl {
             .printer
             .print(PrintOptions {
                 doc_id: practice.id.to_string(),
-                template: "document:practice:authotization",
+                template: "document:practice:authorization",
                 context: enterprise_auth_pdf_ctx.clone(),
             })
             .await?;

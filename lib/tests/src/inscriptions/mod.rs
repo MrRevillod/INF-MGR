@@ -1,4 +1,6 @@
+use axum::http::StatusCode;
 use serde_json::json;
+use sword::web::ResponseBody;
 
 use crate::{
     courses::utils::{AsignatureBuilder, create_asignature, delete_asignature},
@@ -46,15 +48,27 @@ pub async fn create_enrollment_and_practice() {
         "description": "Test Description 6AM",
         "location": "Test Location 6AM",
         "supervisorName": "Test Supervisor 6AM",
-        "supervisorEmail": "k8533nycie@illubd.com",
+        "supervisorEmail": "mofodak313@bizmud.com",
     });
 
     let create_practice_res = app
-        .post(&format!("/enrollments/{inscription_id}/practices"))
+        .post(&format!("/enrollments/{inscription_id}/practice"))
         .json(&practice_data)
         .await;
 
-    dbg!(&create_practice_res);
+    let json = create_practice_res.json::<ResponseBody>().data;
+
+    let practice_id = extract_resource_id(&json);
+
+    //approve practice
+    let approve_resposnse = app
+        .post(&format!(
+            "/enrollments/{inscription_id}/practice/{practice_id}/approve",
+        ))
+        .json(&json!({}))
+        .await;
+
+    approve_resposnse.assert_status(StatusCode::OK);
 
     // Clean up
     delete_incription(&app, &inscription_id).await;

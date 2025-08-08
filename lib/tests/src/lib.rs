@@ -49,7 +49,6 @@ pub async fn init_test_app() -> TestServer {
         .expect("Failed to create SMTP transport");
 
     let printer = DocumentPrinter::new(&template_config)
-        .await
         .expect("Failed to create DocumentPrinter service");
 
     let dependency_container =
