@@ -4,40 +4,53 @@ use tokio::sync::{Mutex, mpsc::Receiver};
 use crate::{broker::Event, mailer::Mailer, printer::Printer};
 
 pub struct SubscriberServices {
-    pub mailer: Arc<Mailer>,
-    pub printer: Arc<Printer>,
+    pub mailer: Mailer,
+    pub printer: Printer,
 }
 
-pub struct BrokerSubscriber {
+pub struct EventSubscriber {
     receiver: Arc<Mutex<Receiver<Event>>>,
     mailer: Arc<Mailer>,
     printer: Arc<Printer>,
 }
 
-impl BrokerSubscriber {
+impl EventSubscriber {
     pub fn new(rcv: Receiver<Event>, services: SubscriberServices) -> Self {
         Self {
             receiver: Arc::new(Mutex::new(rcv)),
-            mailer: services.mailer,
-            printer: services.printer,
+            mailer: Arc::new(services.mailer),
+            printer: Arc::new(services.printer),
         }
     }
 
     pub async fn subscribe(&self) -> Result<(), Box<dyn std::error::Error>> {
         while let Some(event) = self.receiver.lock().await.recv().await {
-            match event {
-                Event::PracticeApproved => {
-                    println!("Practice approved event received.");
-                    std::thread::sleep(std::time::Duration::from_secs(5));
-                    println!("Practice approved event done!.");
+            let mailer = Arc::clone(&self.mailer);
+            let printer = Arc::clone(&self.printer);
+
+            tokio::spawn(async move {
+                if let Err(e) = Self::handle_event(event, mailer, printer).await {
+                    eprintln!("Error processing event: {}", e);
                 }
-                Event::PracticeCreated => {}
-                _ => {
-                    eprintln!("Unhandled event: {:?}", event);
-                }
-            }
+            });
         }
 
+        Ok(())
+    }
+
+    async fn handle_event(
+        event: Event,
+        _: Arc<Mailer>,
+        _: Arc<Printer>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        match event {
+            _ => {
+                println!("Received event: {:?}", event);
+                tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
+
+                println!("Event processed: {:?}", event);
+            }
+        }
         Ok(())
     }
 }

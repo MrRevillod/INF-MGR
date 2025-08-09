@@ -52,6 +52,8 @@ impl UserService for UserServiceImpl {
         &self,
         filter: UserFilter,
     ) -> Result<Pagination<User>, AppError> {
+        let _ = self.event_queue.publish(Event::PracticeApproved).await;
+
         self.users.find_all(filter).await
     }
 
