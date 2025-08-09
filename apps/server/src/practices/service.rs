@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 use chrono::Utc;
 use services::{
+    broker::{Event, EventQueue},
     mailer::{MailTo, Mailer},
     printer::{PrintOptions, Printer},
     templates::RawContext,
@@ -32,10 +33,7 @@ pub struct PracticeServiceImpl {
     courses: Arc<dyn CourseService>,
 
     #[shaku(inject)]
-    mailer: Arc<dyn Mailer>,
-
-    #[shaku(inject)]
-    printer: Arc<dyn Printer>,
+    event_queue: Arc<dyn EventQueue>,
 }
 
 #[async_trait]
@@ -92,47 +90,49 @@ impl PracticeService for PracticeServiceImpl {
             practice.end_date.map(|d| d.to_string()),
         );
 
-        let email_context: RawContext = vec![
-            ("student_name", student.name.clone()),
-            ("student_email", student.email.clone()),
-            ("enterprise_name", practice.enterprise_name.clone()),
-            ("supervisor_name", practice.supervisor_name.clone()),
-            ("supervisor_email", practice.supervisor_email.clone()),
-            ("course_name", course.name.clone()),
-            ("course_code", course.code.clone()),
-            ("location", practice.location.clone()),
-            ("start_date", start_date.unwrap_or_default()),
-            ("end_date", end_date.unwrap_or_default()),
-            (
-                "approval_link",
-                format!(
-                    "/enrollments/{}/practice/{}/approve",
-                    enrollment.id, practice.id
-                ),
-            ),
-            (
-                "rejection_link",
-                format!(
-                    "/enrollments/{}/practice/{}/reject",
-                    enrollment.id, practice.id
-                ),
-            ),
-        ];
+        self.event_queue.publish(Event::PracticeCreated).await;
 
-        tokio::try_join!(
-            self.mailer.send(MailTo {
-                email: practice.supervisor_email.clone(),
-                subject: "Solicitud de Inscripción de Práctica",
-                template: "practice:creation:supervisor",
-                context: email_context.clone(),
-            }),
-            self.mailer.send(MailTo {
-                email: student.email.clone(),
-                subject: "Inscripción a Práctica Aprobada",
-                template: "practice:creation:student",
-                context: email_context,
-            })
-        )?;
+        // let email_context: RawContext = vec![
+        //     ("student_name", student.name.clone()),
+        //     ("student_email", student.email.clone()),
+        //     ("enterprise_name", practice.enterprise_name.clone()),
+        //     ("supervisor_name", practice.supervisor_name.clone()),
+        //     ("supervisor_email", practice.supervisor_email.clone()),
+        //     ("course_name", course.name.clone()),
+        //     ("course_code", course.code.clone()),
+        //     ("location", practice.location.clone()),
+        //     ("start_date", start_date.unwrap_or_default()),
+        //     ("end_date", end_date.unwrap_or_default()),
+        //     (
+        //         "approval_link",
+        //         format!(
+        //             "/enrollments/{}/practice/{}/approve",
+        //             enrollment.id, practice.id
+        //         ),
+        //     ),
+        //     (
+        //         "rejection_link",
+        //         format!(
+        //             "/enrollments/{}/practice/{}/reject",
+        //             enrollment.id, practice.id
+        //         ),
+        //     ),
+        // ];
+
+        // tokio::try_join!(
+        //     self.mailer.send(MailTo {
+        //         email: practice.supervisor_email.clone(),
+        //         subject: "Solicitud de Inscripción de Práctica",
+        //         template: "practice:creation:supervisor",
+        //         context: email_context.clone(),
+        //     }),
+        //     self.mailer.send(MailTo {
+        //         email: student.email.clone(),
+        //         subject: "Inscripción a Práctica Aprobada",
+        //         template: "practice:creation:student",
+        //         context: email_context,
+        //     })
+        // )?;
 
         Ok(practice)
     }
@@ -160,60 +160,62 @@ impl PracticeService for PracticeServiceImpl {
         let (course, _, coordinator) =
             self.courses.get_by_id(&enrollment.course_id).await?;
 
-        let enterprise_auth_pdf_ctx: RawContext = vec![
-            ("student_name", student.name),
-            ("course_name", course.name),
-            ("course_code", course.code),
-            ("enterprise_name", practice.enterprise_name.clone()),
-            ("location", practice.location.clone()),
-            ("start_date", format_date(practice.start_date)),
-            ("end_date", format_date(practice.end_date)),
-            ("supervisor_name", practice.supervisor_name.clone()),
-            ("supervisor_email", practice.supervisor_email.clone()),
-            ("coordinator_email", coordinator.email.clone()),
-            ("coordinator_name", coordinator.name),
-        ];
+        self.event_queue.publish(Event::PracticeApproved).await;
 
-        let pdf_url = self
-            .printer
-            .print(PrintOptions {
-                doc_id: practice.id.to_string(),
-                template: "document:practice:authorization",
-                context: enterprise_auth_pdf_ctx.clone(),
-            })
-            .await?;
+        // let enterprise_auth_pdf_ctx: RawContext = vec![
+        //     ("student_name", student.name),
+        //     ("course_name", course.name),
+        //     ("course_code", course.code),
+        //     ("enterprise_name", practice.enterprise_name.clone()),
+        //     ("location", practice.location.clone()),
+        //     ("start_date", format_date(practice.start_date)),
+        //     ("end_date", format_date(practice.end_date)),
+        //     ("supervisor_name", practice.supervisor_name.clone()),
+        //     ("supervisor_email", practice.supervisor_email.clone()),
+        //     ("coordinator_email", coordinator.email.clone()),
+        //     ("coordinator_name", coordinator.name),
+        // ];
 
-        let supervisor_evaluation_url =
-            format!("/practices/{}/evaluation/supervisor", practice.id);
+        // let pdf_url = self
+        //     .printer
+        //     .print(PrintOptions {
+        //         doc_id: practice.id.to_string(),
+        //         template: "document:practice:authorization",
+        //         context: enterprise_auth_pdf_ctx.clone(),
+        //     })
+        //     .await?;
 
-        let mut email_context = enterprise_auth_pdf_ctx.clone();
+        // let supervisor_evaluation_url =
+        //     format!("/practices/{}/evaluation/supervisor", practice.id);
 
-        email_context.push(("practice_authorization_doc_url", pdf_url));
-        email_context.push((
-            "supervisor_evaluation_url",
-            supervisor_evaluation_url.clone(),
-        ));
+        // let mut email_context = enterprise_auth_pdf_ctx.clone();
 
-        tokio::try_join!(
-            self.mailer.send(MailTo {
-                subject: "Información de Práctica Aprobada",
-                email: practice.supervisor_email.clone(),
-                template: "practice:approval:supervisor",
-                context: email_context.clone(),
-            }),
-            self.mailer.send(MailTo {
-                subject: "Práctica Aprobada",
-                email: student.email.clone(),
-                template: "practice:approval:student",
-                context: email_context.clone(),
-            }),
-            self.mailer.send(MailTo {
-                subject: "Práctica Aprobada",
-                email: coordinator.email.clone(),
-                template: "practice:approval:coordinator",
-                context: email_context.clone(),
-            }),
-        )?;
+        // email_context.push(("practice_authorization_doc_url", pdf_url));
+        // email_context.push((
+        //     "supervisor_evaluation_url",
+        //     supervisor_evaluation_url.clone(),
+        // ));
+
+        // tokio::try_join!(
+        //     self.mailer.send(MailTo {
+        //         subject: "Información de Práctica Aprobada",
+        //         email: practice.supervisor_email.clone(),
+        //         template: "practice:approval:supervisor",
+        //         context: email_context.clone(),
+        //     }),
+        //     self.mailer.send(MailTo {
+        //         subject: "Práctica Aprobada",
+        //         email: student.email.clone(),
+        //         template: "practice:approval:student",
+        //         context: email_context.clone(),
+        //     }),
+        //     self.mailer.send(MailTo {
+        //         subject: "Práctica Aprobada",
+        //         email: coordinator.email.clone(),
+        //         template: "practice:approval:coordinator",
+        //         context: email_context.clone(),
+        //     }),
+        // )?;
 
         practice.is_approved = true;
         self.practices.save(practice).await?;

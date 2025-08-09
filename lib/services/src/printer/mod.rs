@@ -5,12 +5,7 @@ use crate::{
     templates::*,
 };
 
-use async_trait::async_trait;
-use shaku::{Component, Interface};
-
-#[derive(Component)]
-#[shaku(interface = Printer)]
-pub struct DocumentPrinter {
+pub struct Printer {
     template_ctx: TemplateContext,
 }
 
@@ -20,25 +15,17 @@ pub struct PrintOptions {
     pub context: RawContext,
 }
 
-#[async_trait]
-pub trait Printer: Interface {
-    async fn print(&self, options: PrintOptions) -> Result<String, ServiceError>;
-}
-
-impl DocumentPrinter {
+impl Printer {
     pub fn new(template_config: &TemplateConfig) -> Result<Self, ServiceError> {
-        Ok(DocumentPrinter {
+        Ok(Printer {
             template_ctx: TemplateContext::new(
                 PRINTER_TEMPLATES.clone(),
                 template_config.clone(),
             )?,
         })
     }
-}
 
-#[async_trait]
-impl Printer for DocumentPrinter {
-    async fn print(&self, opts: PrintOptions) -> Result<String, ServiceError> {
+    pub async fn print(&self, opts: PrintOptions) -> Result<String, ServiceError> {
         let template = self.template_ctx.render(opts.template, opts.context)?;
 
         let template_dir =
@@ -73,13 +60,5 @@ impl Printer for DocumentPrinter {
         let _ = std::fs::remove_file(&temp_file);
 
         Ok(out_file)
-    }
-}
-
-impl From<DocumentPrinter> for DocumentPrinterParameters {
-    fn from(printer: DocumentPrinter) -> Self {
-        DocumentPrinterParameters {
-            template_ctx: printer.template_ctx,
-        }
     }
 }

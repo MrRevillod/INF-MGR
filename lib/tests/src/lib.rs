@@ -15,21 +15,17 @@ use server::{
     shared::database::PostgresDatabase, users::UsersController,
 };
 
-use services::{
-    mailer::{MailerConfig, MailerService},
-    printer::DocumentPrinter,
-    templates::TemplateConfig,
-};
+use services::templates::TemplateConfig;
 
 pub async fn init_test_app() -> TestServer {
     let app = Application::builder().expect("Failed to build Application");
 
     let pg_db_config = app.config.get::<PostgresDbConfig>().unwrap();
-    let mailer_config = app.config.get::<MailerConfig>().unwrap();
-    let template_config = app
-        .config
-        .get::<TemplateConfig>()
-        .expect("Failed to get TemplateConfig");
+    // let mailer_config = app.config.get::<MailerConfig>().unwrap();
+    // let template_config = app
+    //     .config
+    //     .get::<TemplateConfig>()
+    //     .expect("Failed to get TemplateConfig");
 
     let postgres_db = PostgresDatabase::new(&pg_db_config)
         .await
@@ -45,14 +41,17 @@ pub async fn init_test_app() -> TestServer {
         .await
         .expect("Failed to truncate database tables");
 
-    let smtp_transport = MailerService::new(&mailer_config, &template_config)
-        .expect("Failed to create SMTP transport");
+    // let smtp_transport = MailerService::new(&mailer_config, &template_config)
+    //     .expect("Failed to create SMTP transport");
 
-    let printer = DocumentPrinter::new(&template_config)
-        .expect("Failed to create DocumentPrinter service");
+    // let printer = DocumentPrinter::new(&template_config)
+    //     .expect("Failed to create DocumentPrinter service");
 
-    let dependency_container =
-        DependencyContainer::new(postgres_db, smtp_transport, printer);
+    let (tx, _rx) = tokio::sync::mpsc::channel(100);
+
+    let publisher = services::broker::TokioEventSender::new(tx);
+
+    let dependency_container = DependencyContainer::new(postgres_db, publisher);
 
     let app = app
         .di_module(dependency_container.module)

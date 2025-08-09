@@ -10,8 +10,8 @@ use crate::shared::{
 };
 
 use services::{
+    broker::{Event, EventQueue},
     hasher::PasswordHasher,
-    mailer::{MailTo, Mailer},
     templates::RawContext,
 };
 
@@ -30,7 +30,7 @@ pub struct UserServiceImpl {
     hasher: Arc<dyn PasswordHasher>,
 
     #[shaku(inject)]
-    mailer: Arc<dyn Mailer>,
+    event_queue: Arc<dyn EventQueue>,
 }
 
 #[async_trait]
@@ -77,22 +77,25 @@ impl UserService for UserServiceImpl {
             }));
         }
 
-        let context: RawContext = vec![
-            ("name", input.name.clone()),
-            ("email", input.email.clone()),
-            ("password", input.password.clone()),
-        ];
+        // let context: RawContext = vec![
+        //     ("name", input.name.clone()),
+        //     ("email", input.email.clone()),
+        //     ("password", input.password.clone()),
+        // ];
 
-        let mail_opts = MailTo {
-            subject: "Bienvenido (a) a la plataforma",
-            email: input.email.clone(),
-            template: "system:welcome",
-            context,
-        };
+        // let mail_opts = MailTo {
+        //     subject: "Bienvenido (a) a la plataforma",
+        //     email: input.email.clone(),
+        //     template: "system:welcome",
+        //     context,
+        // };
+
+        // self.mailer.send(mail_opts).await?;
+
+        self.event_queue.publish(Event::UserCreated).await;
 
         input.password = self.hasher.hash(&input.password)?;
 
-        self.mailer.send(mail_opts).await?;
         self.users.save(User::try_from(input)?).await
     }
 
