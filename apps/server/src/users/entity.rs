@@ -12,11 +12,7 @@ pub struct User {
     pub email: String,
     pub password: String,
     pub roles: Vec<Role>,
-
-    #[sqlx(rename = "deleted_at")]
     pub deleted_at: Option<DateTime<Utc>>,
-
-    #[sqlx(rename = "created_at")]
     pub created_at: DateTime<Utc>,
 }
 
@@ -28,10 +24,6 @@ impl User {
     pub fn is_teacher(&self) -> bool {
         self.roles.contains(&Role::Teacher)
     }
-
-    pub fn is_coordinator(&self) -> bool {
-        self.roles.contains(&Role::Coordinator)
-    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Type, PartialEq)]
@@ -42,5 +34,4 @@ pub enum Role {
     Student,
     Teacher,
     Secretary,
-    Coordinator,
 }

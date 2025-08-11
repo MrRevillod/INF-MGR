@@ -193,13 +193,7 @@ async fn test_create_user_invalid_role() {
 #[tokio::test]
 async fn test_create_user_valid_roles() {
     let app = init_test_app().await;
-    let valid_roles = vec![
-        "administrator",
-        "student",
-        "teacher",
-        "secretary",
-        "coordinator",
-    ];
+    let valid_roles = vec!["administrator", "student", "teacher", "secretary"];
 
     for role in valid_roles {
         let new_user = UserBuilder::new().with_roles(vec![role]).build();

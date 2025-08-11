@@ -9,7 +9,6 @@ pub struct AsignatureBuilder {
     name: String,
     evaluations: Vec<EvaluationBuilder>,
     teacher_id: String,
-    coordinator_id: String,
 }
 
 pub struct EvaluationBuilder {
@@ -18,7 +17,7 @@ pub struct EvaluationBuilder {
 }
 
 impl AsignatureBuilder {
-    pub fn new(teacher_id: &str, coordinator_id: &str) -> Self {
+    pub fn new(teacher_id: &str) -> Self {
         Self {
             year: 2024,
             code: generate_unique_code(),
@@ -38,7 +37,6 @@ impl AsignatureBuilder {
                 },
             ],
             teacher_id: teacher_id.to_string(),
-            coordinator_id: coordinator_id.to_string(),
         }
     }
 
@@ -94,7 +92,6 @@ impl AsignatureBuilder {
             "name": self.name,
             "evaluations": evaluations,
             "teacherId": self.teacher_id,
-            "coordinatorId": self.coordinator_id,
         })
     }
 }

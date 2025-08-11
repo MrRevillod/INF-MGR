@@ -1,3 +1,4 @@
+use serde_json::json;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -10,9 +11,8 @@ use crate::shared::{
 };
 
 use services::{
-    broker::{Event, EventQueue},
+    event_queue::{Event, EventQueue},
     hasher::PasswordHasher,
-    templates::RawContext,
 };
 
 use crate::users::{
@@ -52,8 +52,6 @@ impl UserService for UserServiceImpl {
         &self,
         filter: UserFilter,
     ) -> Result<Pagination<User>, AppError> {
-        let _ = self.event_queue.publish(Event::PracticeApproved).await;
-
         self.users.find_all(filter).await
     }
 
@@ -79,26 +77,21 @@ impl UserService for UserServiceImpl {
             }));
         }
 
-        // let context: RawContext = vec![
-        //     ("name", input.name.clone()),
-        //     ("email", input.email.clone()),
-        //     ("password", input.password.clone()),
-        // ];
-
-        // let mail_opts = MailTo {
-        //     subject: "Bienvenido (a) a la plataforma",
-        //     email: input.email.clone(),
-        //     template: "system:welcome",
-        //     context,
-        // };
-
-        // self.mailer.send(mail_opts).await?;
-
-        self.event_queue.publish(Event::UserCreated).await;
-
         input.password = self.hasher.hash(&input.password)?;
 
-        self.users.save(User::try_from(input)?).await
+        let user = self.users.save(User::try_from(input)?).await?;
+
+        let event_data = json!({
+            "name": user.name,
+            "email": user.email,
+            "password": user.password,
+        });
+
+        self.event_queue
+            .publish(Event::UserCreated(event_data))
+            .await;
+
+        Ok(user)
     }
 
     async fn update(
@@ -107,10 +100,7 @@ impl UserService for UserServiceImpl {
         input: UpdateUserDto,
     ) -> Result<User, AppError> {
         let Some(mut user) = self.users.find_by_id(id).await? else {
-            return Err(AppError::ResourceNotFound {
-                id: id.to_string(),
-                kind: "User",
-            });
+            return Err(AppError::ResourceNotFound(*id));
         };
 
         if let Some(e) = input.email {
@@ -140,10 +130,7 @@ impl UserService for UserServiceImpl {
 
     async fn remove(&self, id: &Uuid) -> Result<(), AppError> {
         if self.users.find_by_id(id).await?.is_none() {
-            return Err(AppError::ResourceNotFound {
-                id: id.to_string(),
-                kind: "User",
-            });
+            return Err(AppError::ResourceNotFound(*id));
         }
 
         self.users.delete(id).await

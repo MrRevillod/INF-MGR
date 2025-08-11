@@ -5,7 +5,7 @@ use crate::{
 };
 
 use services::{
-    broker::{TokioEventQueue, TokioEventSender},
+    event_queue::{TokioEventQueue, TokioEventSender},
     hasher::BcryptPasswordHasher,
 };
 

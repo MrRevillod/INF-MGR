@@ -39,17 +39,15 @@ async fn main() -> Result<(), sqlx::Error> {
     sqlx::migrate!("./config/migrations").run(&pool).await?;
 
     let teachers = teachers();
-    let coordinators = coordinators();
     let administrators = administrators();
     let secretaries = secretaries();
 
     create_users(&pool, teachers.clone()).await;
-    create_users(&pool, coordinators.clone()).await;
     create_users(&pool, administrators.clone()).await;
     create_users(&pool, secretaries.clone()).await;
 
     let mut students = vec![];
-    let info_1164_course = info_1164(&teachers, &coordinators);
+    let info_1164_course = info_1164(&teachers);
 
     create_course(&pool, info_1164_course.clone()).await;
 
@@ -72,7 +70,7 @@ async fn main() -> Result<(), sqlx::Error> {
     create_enrollments(&pool, students, info_1164_course).await;
 
     let mut students2 = vec![];
-    let info_1198_course = info_1198(&teachers, &coordinators);
+    let info_1198_course = info_1198(&teachers);
 
     create_course(&pool, info_1198_course.clone()).await;
 

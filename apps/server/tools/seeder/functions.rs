@@ -26,7 +26,7 @@ pub async fn create_users(pool: &Pool<Postgres>, users: Vec<User>) {
 
 pub async fn create_course(pool: &Pool<Postgres>, course: Course) {
     let query = r#"
-        INSERT INTO courses (id, name, code, year, teacher_id, coordinator_id, evaluations, status)
+        INSERT INTO courses (id, name, code, year, teacher_id, evaluations, course_status)
         VALUES ($1, $2, $3, $4, $5, $6, $7::course_evaluation[], $8::course_status)
     "#;
 
@@ -36,9 +36,8 @@ pub async fn create_course(pool: &Pool<Postgres>, course: Course) {
         .bind(&course.code)
         .bind(course.year)
         .bind(course.teacher_id)
-        .bind(course.coordinator_id)
         .bind(&course.evaluations)
-        .bind(course.status)
+        .bind(course.course_status)
         .execute(pool)
         .await
         .unwrap();

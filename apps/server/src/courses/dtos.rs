@@ -51,9 +51,6 @@ pub struct CreateCourseDto {
 
     #[validate(custom(function = validate_uuid))]
     pub teacher_id: String,
-
-    #[validate(custom(function = validate_uuid))]
-    pub coordinator_id: String,
 }
 
 impl From<CreateCourseDto> for Course {
@@ -70,8 +67,7 @@ impl From<CreateCourseDto> for Course {
                 .collect(),
 
             teacher_id: Uuid::parse_str(&dto.teacher_id).unwrap(),
-            coordinator_id: Uuid::parse_str(&dto.coordinator_id).unwrap(),
-            status: CourseStatus::InProgress,
+            course_status: CourseStatus::Active,
         }
     }
 }
@@ -108,11 +104,11 @@ impl FromStr for CourseStatus {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "inprogress" => Ok(CourseStatus::InProgress),
-            "ended" => Ok(CourseStatus::Ended),
+            "active" => Ok(CourseStatus::Active),
+            "completed" => Ok(CourseStatus::Completed),
             _ => Err(AppError::InvalidInput(Input {
                 field: "status".to_string(),
-                message: "El estado debe ser 'inprogress' o 'ended'.".to_string(),
+                message: "El estado debe ser 'active' o 'completed'.".to_string(),
                 value: s.to_string(),
             })),
         }
@@ -129,9 +125,6 @@ pub struct UpdateCourseDto {
     #[validate(custom(function = validate_uuid))]
     pub teacher_id: Option<String>,
 
-    #[validate(custom(function = validate_uuid))]
-    pub coordinator_id: Option<String>,
-
     #[validate(
         custom(function = validate_course_status)
     )]
@@ -142,7 +135,7 @@ pub struct UpdateCourseDto {
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>> COURSE RESPONSE DTO <<<<<<<<<<<<<<<<<<<<<<<<<<<
 // ============================================================================
 
-pub type CourseWithStaff = (Course, User, User);
+pub type CourseWithStaff = (Course, User);
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 #[serde(rename_all = "camelCase")]
@@ -151,17 +144,14 @@ pub struct CourseResponse {
     pub year: i32,
     pub code: String,
     pub name: String,
-    pub status: CourseStatus,
+    pub course_status: CourseStatus,
     pub evaluations: Vec<CourseEvaluation>,
     pub teacher_id: Uuid,
-    pub coordinator_id: Uuid,
-
     pub teacher: User,
-    pub coordinator: User,
 }
 
 impl From<CourseWithStaff> for CourseResponse {
-    fn from((course, teacher, coord): CourseWithStaff) -> Self {
+    fn from((course, teacher): CourseWithStaff) -> Self {
         CourseResponse {
             id: course.id,
             year: course.year,
@@ -169,10 +159,8 @@ impl From<CourseWithStaff> for CourseResponse {
             name: course.name,
             evaluations: course.evaluations,
             teacher_id: course.teacher_id,
-            coordinator_id: course.coordinator_id,
-            status: course.status,
+            course_status: course.course_status,
             teacher,
-            coordinator: coord,
         }
     }
 }

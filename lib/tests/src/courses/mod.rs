@@ -5,9 +5,7 @@ use crate::{
     inscriptions::utils::{
         InscriptionBuilder, create_inscription, delete_incription,
     },
-    users::utils::{
-        create_coordinator, create_student, create_teacher, delete_user,
-    },
+    users::utils::{create_student, create_teacher, delete_user},
 };
 
 use serde_json::json;
@@ -21,10 +19,8 @@ use uuid::Uuid;
 async fn test_create_asignature_should_work() {
     let app = init_test_app().await;
     let teacher_id = create_teacher(&app).await;
-    let coordinator_id = create_coordinator(&app).await;
 
-    let new_asignature =
-        AsignatureBuilder::new(&teacher_id, &coordinator_id).build();
+    let new_asignature = AsignatureBuilder::new(&teacher_id).build();
 
     let created_asignature = create_asignature(&app, &new_asignature).await;
     let created_asignature_id = extract_resource_id(&created_asignature);
@@ -40,7 +36,6 @@ async fn test_create_asignature_should_work() {
 
     delete_asignature(&app, &created_asignature_id).await;
     delete_user(&app, &teacher_id).await;
-    delete_user(&app, &coordinator_id).await;
 }
 
 #[tokio::test]
@@ -58,9 +53,8 @@ async fn test_get_asignatures() {
 async fn test_update_asignature() {
     let app = init_test_app().await;
     let teacher_id = create_teacher(&app).await;
-    let coordinator_id = create_coordinator(&app).await;
 
-    let new_asignature = AsignatureBuilder::new(&teacher_id, &coordinator_id)
+    let new_asignature = AsignatureBuilder::new(&teacher_id)
         .with_evaluations(vec![("Bitácoras Semanales", 50), ("Informe Final", 50)])
         .build();
 
@@ -68,11 +62,9 @@ async fn test_update_asignature() {
     let created_asignature_id = extract_resource_id(&created_asignature);
 
     let new_teacher_id = create_teacher(&app).await;
-    let new_coordinator_id = create_coordinator(&app).await;
 
     let update_asignature_data = json!({
         "teacherId": new_teacher_id.to_string(),
-        "coordinatorId": new_coordinator_id.to_string(),
     });
 
     let updated_asignature =
@@ -84,29 +76,19 @@ async fn test_update_asignature() {
         Some(new_teacher_id.to_string().as_str())
     );
 
-    assert_eq!(
-        updated_asignature
-            .get("coordinatorId")
-            .and_then(|c| c.as_str()),
-        Some(new_coordinator_id.to_string().as_str())
-    );
-
     delete_asignature(&app, &created_asignature_id).await;
 
     delete_user(&app, &teacher_id).await;
-    delete_user(&app, &coordinator_id).await;
 
     delete_user(&app, &new_teacher_id).await;
-    delete_user(&app, &new_coordinator_id).await;
 }
 
 #[tokio::test]
 async fn test_delete_asignature() {
     let app = init_test_app().await;
     let teacher_id = create_teacher(&app).await;
-    let coordinator_id = create_coordinator(&app).await;
 
-    let new_asignature = AsignatureBuilder::new(&teacher_id, &coordinator_id)
+    let new_asignature = AsignatureBuilder::new(&teacher_id)
         .with_single_evaluation("Test Evaluation", 100)
         .build();
 
@@ -115,16 +97,14 @@ async fn test_delete_asignature() {
 
     delete_asignature(&app, &created_asignature_id).await;
     delete_user(&app, &teacher_id).await;
-    delete_user(&app, &coordinator_id).await;
 }
 
 #[tokio::test]
 async fn test_delete_asignature_with_active_inscriptions_should_fail() {
     let app = init_test_app().await;
     let teacher_id = create_teacher(&app).await;
-    let coordinator_id = create_coordinator(&app).await;
 
-    let new_asignature = AsignatureBuilder::new(&teacher_id, &coordinator_id)
+    let new_asignature = AsignatureBuilder::new(&teacher_id)
         .with_single_evaluation("Test Evaluation", 100)
         .build();
 
@@ -150,7 +130,6 @@ async fn test_delete_asignature_with_active_inscriptions_should_fail() {
     delete_asignature(&app, &created_asignature_id).await;
     delete_user(&app, &student_id).await;
     delete_user(&app, &teacher_id).await;
-    delete_user(&app, &coordinator_id).await;
 }
 
 // // ==================== CREATE ASIGNATURE VALIDATION TESTS ====================
@@ -159,11 +138,8 @@ async fn test_delete_asignature_with_active_inscriptions_should_fail() {
 async fn test_create_asignature_invalid_year_too_low() {
     let app = init_test_app().await;
     let teacher_id = create_teacher(&app).await;
-    let coordinator_id = create_coordinator(&app).await;
 
-    let new_asignature = AsignatureBuilder::new(&teacher_id, &coordinator_id)
-        .with_year(1999)
-        .build();
+    let new_asignature = AsignatureBuilder::new(&teacher_id).with_year(1999).build();
 
     let response = app.post("/courses").json(&new_asignature).await;
     let body = response.json::<ResponseBody>();
@@ -188,14 +164,12 @@ async fn test_create_asignature_invalid_year_too_low() {
     );
 
     delete_user(&app, &teacher_id).await;
-    delete_user(&app, &coordinator_id).await;
 }
 
 #[tokio::test]
 async fn test_create_asignature_invalid_year_too_high() {
     let app = init_test_app().await;
     let teacher_id = create_teacher(&app).await;
-    let coordinator_id = create_coordinator(&app).await;
 
     let new_asignature = json!({
         "year": 2101,
@@ -208,21 +182,18 @@ async fn test_create_asignature_invalid_year_too_high() {
             }
         ],
         "teacherId": teacher_id,
-        "coordinatorId": coordinator_id
     });
 
     let response = app.post("/courses").json(&new_asignature).await;
     assert_eq!(response.status_code(), 400);
 
     delete_user(&app, &teacher_id).await;
-    delete_user(&app, &coordinator_id).await;
 }
 
 #[tokio::test]
 async fn test_create_asignature_invalid_code_format() {
     let app = init_test_app().await;
     let teacher_id = create_teacher(&app).await;
-    let coordinator_id = create_coordinator(&app).await;
 
     let new_asignature = json!({
         "year": 2024,
@@ -235,7 +206,6 @@ async fn test_create_asignature_invalid_code_format() {
             }
         ],
         "teacherId": teacher_id,
-        "coordinatorId": coordinator_id
     });
 
     let response = app.post("/courses").json(&new_asignature).await;
@@ -256,14 +226,12 @@ async fn test_create_asignature_invalid_code_format() {
     );
 
     delete_user(&app, &teacher_id).await;
-    delete_user(&app, &coordinator_id).await;
 }
 
 #[tokio::test]
 async fn test_create_asignature_invalid_code_length() {
     let app = init_test_app().await;
     let teacher_id = create_teacher(&app).await;
-    let coordinator_id = create_coordinator(&app).await;
 
     let new_asignature = json!({
         "year": 2024,
@@ -276,21 +244,18 @@ async fn test_create_asignature_invalid_code_length() {
             }
         ],
         "teacherId": teacher_id,
-        "coordinatorId": coordinator_id
     });
 
     let response = app.post("/courses").json(&new_asignature).await;
     assert_eq!(response.status_code(), 400);
 
     delete_user(&app, &teacher_id).await;
-    delete_user(&app, &coordinator_id).await;
 }
 
 #[tokio::test]
 async fn test_create_asignature_name_too_short() {
     let app = init_test_app().await;
     let teacher_id = create_teacher(&app).await;
-    let coordinator_id = create_coordinator(&app).await;
 
     let new_asignature = json!({
         "year": 2024,
@@ -303,21 +268,18 @@ async fn test_create_asignature_name_too_short() {
             }
         ],
         "teacherId": teacher_id,
-        "coordinatorId": coordinator_id
     });
 
     let response = app.post("/courses").json(&new_asignature).await;
     assert_eq!(response.status_code(), 400);
 
     delete_user(&app, &teacher_id).await;
-    delete_user(&app, &coordinator_id).await;
 }
 
 #[tokio::test]
 async fn test_create_asignature_name_too_long() {
     let app = init_test_app().await;
     let teacher_id = create_teacher(&app).await;
-    let coordinator_id = create_coordinator(&app).await;
 
     let long_name = "a".repeat(101);
 
@@ -332,21 +294,18 @@ async fn test_create_asignature_name_too_long() {
             }
         ],
         "teacherId": teacher_id,
-        "coordinatorId": coordinator_id
     });
 
     let response = app.post("/courses").json(&new_asignature).await;
     assert_eq!(response.status_code(), 400);
 
     delete_user(&app, &teacher_id).await;
-    delete_user(&app, &coordinator_id).await;
 }
 
 #[tokio::test]
 async fn test_create_asignature_no_evaluations() {
     let app = init_test_app().await;
     let teacher_id = create_teacher(&app).await;
-    let coordinator_id = create_coordinator(&app).await;
 
     let new_asignature = json!({
         "year": 2024,
@@ -354,21 +313,18 @@ async fn test_create_asignature_no_evaluations() {
         "name": generate_unique_asignature_name(),
         "evaluations": [],
         "teacherId": teacher_id,
-        "coordinatorId": coordinator_id
     });
 
     let response = app.post("/courses").json(&new_asignature).await;
     assert_eq!(response.status_code(), 400);
 
     delete_user(&app, &teacher_id).await;
-    delete_user(&app, &coordinator_id).await;
 }
 
 #[tokio::test]
 async fn test_create_asignature_evaluation_weights_not_sum_to_one() {
     let app = init_test_app().await;
     let teacher_id = create_teacher(&app).await;
-    let coordinator_id = create_coordinator(&app).await;
 
     let new_asignature = json!({
         "year": 2024,
@@ -385,21 +341,18 @@ async fn test_create_asignature_evaluation_weights_not_sum_to_one() {
             }
         ],
         "teacherId": teacher_id,
-        "coordinatorId": coordinator_id
     });
 
     let response = app.post("/courses").json(&new_asignature).await;
     assert_eq!(response.status_code(), 400);
 
     delete_user(&app, &teacher_id).await;
-    delete_user(&app, &coordinator_id).await;
 }
 
 #[tokio::test]
 async fn test_create_asignature_evaluation_name_too_short() {
     let app = init_test_app().await;
     let teacher_id = create_teacher(&app).await;
-    let coordinator_id = create_coordinator(&app).await;
 
     let new_asignature = json!({
         "year": 2024,
@@ -412,22 +365,18 @@ async fn test_create_asignature_evaluation_name_too_short() {
             }
         ],
         "teacherId": teacher_id,
-        "coordinatorId": coordinator_id
-
     });
 
     let response = app.post("/courses").json(&new_asignature).await;
     assert_eq!(response.status_code(), 400);
 
     delete_user(&app, &teacher_id).await;
-    delete_user(&app, &coordinator_id).await;
 }
 
 #[tokio::test]
 async fn test_create_asignature_evaluation_name_too_long() {
     let app = init_test_app().await;
     let teacher_id = create_teacher(&app).await;
-    let coordinator_id = create_coordinator(&app).await;
 
     let long_evaluation_name = "a".repeat(101); // 101 characters, maximum is 100
 
@@ -442,21 +391,18 @@ async fn test_create_asignature_evaluation_name_too_long() {
             }
         ],
         "teacherId": teacher_id,
-        "coordinatorId": coordinator_id
     });
 
     let response = app.post("/courses").json(&new_asignature).await;
     assert_eq!(response.status_code(), 400);
 
     delete_user(&app, &teacher_id).await;
-    delete_user(&app, &coordinator_id).await;
 }
 
 #[tokio::test]
 async fn test_create_asignature_evaluation_weight_too_low() {
     let app = init_test_app().await;
     let teacher_id = create_teacher(&app).await;
-    let coordinator_id = create_coordinator(&app).await;
 
     let new_asignature = json!({
         "year": 2024,
@@ -469,21 +415,18 @@ async fn test_create_asignature_evaluation_weight_too_low() {
             }
         ],
         "teacherId": teacher_id,
-        "coordinatorId": coordinator_id
     });
 
     let response = app.post("/courses").json(&new_asignature).await;
     assert_eq!(response.status_code(), 400);
 
     delete_user(&app, &teacher_id).await;
-    delete_user(&app, &coordinator_id).await;
 }
 
 #[tokio::test]
 async fn test_create_asignature_evaluation_weight_too_high() {
     let app = init_test_app().await;
     let teacher_id = create_teacher(&app).await;
-    let coordinator_id = create_coordinator(&app).await;
 
     let new_asignature = json!({
         "year": 2024,
@@ -496,14 +439,12 @@ async fn test_create_asignature_evaluation_weight_too_high() {
             }
         ],
         "teacherId": teacher_id,
-        "coordinatorId": coordinator_id
     });
 
     let response = app.post("/courses").json(&new_asignature).await;
     assert_eq!(response.status_code(), 400);
 
     delete_user(&app, &teacher_id).await;
-    delete_user(&app, &coordinator_id).await;
 }
 
 #[tokio::test]
@@ -521,7 +462,6 @@ async fn test_create_asignature_invalid_teacher_id() {
             }
         ],
         "teacherId": "invalid-uuid",
-        "coordinatorId": "invalid-uuid"
     });
 
     let response = app.post("/courses").json(&new_asignature).await;
@@ -532,7 +472,6 @@ async fn test_create_asignature_invalid_teacher_id() {
 async fn test_create_asignature_duplicate() {
     let app = init_test_app().await;
     let teacher_id = create_teacher(&app).await;
-    let coordinator_id = create_coordinator(&app).await;
 
     let code = generate_unique_code();
     let name = generate_unique_asignature_name();
@@ -548,7 +487,6 @@ async fn test_create_asignature_duplicate() {
             }
         ],
         "teacherId": teacher_id,
-        "coordinatorId": coordinator_id
     });
 
     // Create first asignature
@@ -566,7 +504,6 @@ async fn test_create_asignature_duplicate() {
     app.delete(&format!("/courses/{}", asignature_id)).await;
 
     delete_user(&app, &teacher_id).await;
-    delete_user(&app, &coordinator_id).await;
 }
 
 // // ==================== UPDATE ASIGNATURE VALIDATION TESTS ====================
@@ -575,7 +512,6 @@ async fn test_create_asignature_duplicate() {
 async fn test_update_asignature_invalid_teacher_id() {
     let app = init_test_app().await;
     let teacher_id = create_teacher(&app).await;
-    let coordinator_id = create_coordinator(&app).await;
 
     // Create asignature
     let new_asignature = json!({
@@ -589,7 +525,6 @@ async fn test_update_asignature_invalid_teacher_id() {
             }
         ],
         "teacherId": teacher_id,
-        "coordinatorId": coordinator_id
     });
 
     let create_response = app.post("/courses").json(&new_asignature).await;
@@ -611,7 +546,6 @@ async fn test_update_asignature_invalid_teacher_id() {
     // Cleanup
     app.delete(&format!("/courses/{}", asignature_id)).await;
     delete_user(&app, &teacher_id).await;
-    delete_user(&app, &coordinator_id).await;
 }
 
 #[tokio::test]
@@ -637,7 +571,6 @@ async fn test_update_nonexistent_asignature() {
 async fn test_create_asignature_valid_year_boundaries() {
     let app = init_test_app().await;
     let teacher_id = create_teacher(&app).await;
-    let coordinator_id = create_coordinator(&app).await;
 
     // Test minimum year (2000)
     let min_year_asignature = json!({
@@ -651,7 +584,6 @@ async fn test_create_asignature_valid_year_boundaries() {
             }
         ],
         "teacherId": teacher_id,
-        "coordinatorId": coordinator_id
     });
 
     let response = app.post("/courses").json(&min_year_asignature).await;
@@ -676,7 +608,6 @@ async fn test_create_asignature_valid_year_boundaries() {
             }
         ],
         "teacherId": teacher_id,
-        "coordinatorId": coordinator_id
     });
 
     let response = app.post("/courses").json(&min_year_asignature).await;
@@ -688,14 +619,12 @@ async fn test_create_asignature_valid_year_boundaries() {
     app.delete(&format!("/courses/{}", min_asignature_id)).await;
 
     delete_user(&app, &teacher_id).await;
-    delete_user(&app, &coordinator_id).await;
 }
 
 #[tokio::test]
 async fn test_create_asignature_valid_name_boundaries() {
     let app = init_test_app().await;
     let teacher_id = create_teacher(&app).await;
-    let coordinator_id = create_coordinator(&app).await;
 
     // Test minimum length (1 character)
     let min_name_asignature = json!({
@@ -709,7 +638,6 @@ async fn test_create_asignature_valid_name_boundaries() {
             }
         ],
         "teacherId": teacher_id,
-        "coordinatorId": coordinator_id
     });
 
     let response = app.post("/courses").json(&min_name_asignature).await;
@@ -731,7 +659,6 @@ async fn test_create_asignature_valid_name_boundaries() {
             }
         ],
         "teacherId": teacher_id,
-        "coordinatorId": coordinator_id
     });
 
     let response2 = app.post("/courses").json(&max_name_asignature).await;
@@ -745,14 +672,12 @@ async fn test_create_asignature_valid_name_boundaries() {
     app.delete(&format!("/courses/{}", max_asignature_id)).await;
 
     delete_user(&app, &teacher_id).await;
-    delete_user(&app, &coordinator_id).await;
 }
 
 #[tokio::test]
 async fn test_create_asignature_valid_evaluation_weight_boundaries() {
     let app = init_test_app().await;
     let teacher_id = create_teacher(&app).await;
-    let coordinator_id = create_coordinator(&app).await;
 
     // Test minimum weight (1)
     let min_weight_asignature = json!({
@@ -770,7 +695,6 @@ async fn test_create_asignature_valid_evaluation_weight_boundaries() {
             }
         ],
         "teacherId": teacher_id,
-        "coordinatorId": coordinator_id
     });
 
     let response = app.post("/courses").json(&min_weight_asignature).await;
@@ -783,14 +707,12 @@ async fn test_create_asignature_valid_evaluation_weight_boundaries() {
     app.delete(&format!("/courses/{}", asignature_id)).await;
 
     delete_user(&app, &teacher_id).await;
-    delete_user(&app, &coordinator_id).await;
 }
 
 #[tokio::test]
 async fn test_create_asignature_valid_evaluation_weight_boundaries_3_33() {
     let app = init_test_app().await;
     let teacher_id = create_teacher(&app).await;
-    let coordinator_id = create_coordinator(&app).await;
 
     // Test weights distribution (33-33-34)
     let min_weight_asignature = json!({
@@ -812,21 +734,18 @@ async fn test_create_asignature_valid_evaluation_weight_boundaries_3_33() {
             }
         ],
         "teacherId": teacher_id,
-        "coordinatorId": coordinator_id
     });
 
     let response = app.post("/courses").json(&min_weight_asignature).await;
     assert_eq!(response.status_code(), 400);
 
     delete_user(&app, &teacher_id).await;
-    delete_user(&app, &coordinator_id).await;
 }
 
 #[tokio::test]
 async fn test_create_asignature_valid_evaluation_but_repeated_names() {
     let app = init_test_app().await;
     let teacher_id = create_teacher(&app).await;
-    let coordinator_id = create_coordinator(&app).await;
 
     // Test repeated evaluation names
     let min_weight_asignature = json!({
@@ -848,12 +767,10 @@ async fn test_create_asignature_valid_evaluation_but_repeated_names() {
             }
         ],
         "teacherId": teacher_id,
-        "coordinatorId": coordinator_id
     });
 
     let response = app.post("/courses").json(&min_weight_asignature).await;
     assert_eq!(response.status_code(), 400);
 
     delete_user(&app, &teacher_id).await;
-    delete_user(&app, &coordinator_id).await;
 }

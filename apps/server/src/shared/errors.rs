@@ -2,6 +2,7 @@ use serde_json::json;
 use services::errors::ServiceError;
 use sword::web::HttpResponse;
 use thiserror::Error;
+use uuid::Uuid;
 
 pub type AppResult<T> = Result<T, AppError>;
 
@@ -19,8 +20,8 @@ pub enum AppError {
         source: sqlx::Error,
     },
 
-    #[error("Not found: {id} of type {kind}")]
-    ResourceNotFound { id: String, kind: &'static str },
+    #[error("Not found: {0}")]
+    ResourceNotFound(Uuid),
 
     #[error("Conflict error: {0:?}")]
     Conflict(Input),
@@ -38,8 +39,9 @@ pub enum AppError {
 impl From<AppError> for HttpResponse {
     fn from(error: AppError) -> Self {
         match error {
-            AppError::ResourceNotFound { id, kind } => HttpResponse::NotFound()
-                .message(format!("Resource not found: {id} of type {kind}")),
+            AppError::ResourceNotFound(id) => {
+                HttpResponse::NotFound().message(format!("Resource not found: {id}"))
+            }
 
             AppError::Conflict(input) => HttpResponse::Conflict().data(json!({
                 "field": input.field,

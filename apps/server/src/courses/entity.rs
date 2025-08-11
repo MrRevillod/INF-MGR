@@ -9,14 +9,9 @@ pub struct Course {
     pub year: i32,
     pub code: String,
     pub name: String,
-    pub status: CourseStatus,
+    pub course_status: CourseStatus,
     pub evaluations: Vec<CourseEvaluation>,
-
-    #[sqlx(rename = "teacher_id")]
     pub teacher_id: Uuid,
-
-    #[sqlx(rename = "coordinator_id")]
-    pub coordinator_id: Uuid,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
@@ -31,6 +26,6 @@ pub struct CourseEvaluation {
 #[sqlx(type_name = "course_status", rename_all = "lowercase")]
 #[serde(rename_all = "lowercase")]
 pub enum CourseStatus {
-    InProgress,
-    Ended,
+    Active,
+    Completed,
 }

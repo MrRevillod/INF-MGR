@@ -2,8 +2,8 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 DROP TYPE IF EXISTS course_status CASCADE;
 CREATE TYPE course_status AS ENUM (
-    'inprogress',
-    'ended'
+    'active',
+    'completed'
 );
 
 DROP TYPE IF EXISTS user_role CASCADE;

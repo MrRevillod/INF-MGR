@@ -12,7 +12,7 @@ use server::{
 };
 
 use services::{
-    broker::{EventSubscriber, SubscriberServices, TokioEventSender},
+    event_queue::{EventSubscriber, SubscriberServices, TokioEventSender},
     mailer::{Mailer, MailerConfig},
     printer::Printer,
     templates::TemplateConfig,

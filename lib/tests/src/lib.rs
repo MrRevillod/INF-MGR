@@ -1,5 +1,11 @@
 use axum_test::TestServer;
 use serde_json::Value;
+use services::{
+    event_queue::{EventSubscriber, SubscriberServices, TokioEventSender},
+    mailer::{Mailer, MailerConfig},
+    printer::Printer,
+    templates::TemplateConfig,
+};
 use sword::prelude::Application;
 
 #[cfg(test)]
@@ -14,48 +20,61 @@ use server::{
     courses::CoursesController, enrollments::EnrollmentsController,
     shared::database::PostgresDatabase, users::UsersController,
 };
-
-use services::templates::TemplateConfig;
+use tokio::sync::mpsc;
 
 pub async fn init_test_app() -> TestServer {
-    let app = Application::builder().expect("Failed to build Application");
+    let mut app =
+        Application::builder().expect("Failed to create application builder");
 
-    let pg_db_config = app.config.get::<PostgresDbConfig>().unwrap();
-    // let mailer_config = app.config.get::<MailerConfig>().unwrap();
-    // let template_config = app
-    //     .config
-    //     .get::<TemplateConfig>()
-    //     .expect("Failed to get TemplateConfig");
+    let pg_db_config = app
+        .config
+        .get::<PostgresDbConfig>()
+        .expect("Failed to get PostgresDbConfig");
 
-    let postgres_db = PostgresDatabase::new(&pg_db_config)
-        .await
-        .expect("Failed to create database connection");
+    let mailer_config = app
+        .config
+        .get::<MailerConfig>()
+        .expect("Failed to get MailerConfig");
 
-    postgres_db
-        .migrate()
-        .await
-        .expect("Failed to migrate database");
+    let tamplate_config = app
+        .config
+        .get::<TemplateConfig>()
+        .expect("Failed to get TemplateConfig");
 
-    sqlx::query("TRUNCATE users, courses, enrollments, practices, reports CASCADE")
-        .execute(&postgres_db.pool)
-        .await
-        .expect("Failed to truncate database tables");
+    let (db, mailer, printer) = {
+        let db = PostgresDatabase::new(&pg_db_config)
+            .await
+            .expect("Failed to create database connection");
 
-    // let smtp_transport = MailerService::new(&mailer_config, &template_config)
-    //     .expect("Failed to create SMTP transport");
+        db.migrate()
+            .await
+            .expect("Failed to create database connection");
 
-    // let printer = DocumentPrinter::new(&template_config)
-    //     .expect("Failed to create DocumentPrinter service");
+        let mailer = Mailer::new(&mailer_config, &tamplate_config)
+            .expect("Failed to create mailer");
 
-    let (tx, _rx) = tokio::sync::mpsc::channel(100);
+        let printer =
+            Printer::new(&tamplate_config).expect("Failed to create printer");
 
-    let publisher = services::broker::TokioEventSender::new(tx);
+        (db, mailer, printer)
+    };
 
-    let dependency_container = DependencyContainer::new(postgres_db, publisher);
+    let (tx, rx) = mpsc::channel(100);
 
-    let app = app
+    let publisher = TokioEventSender::new(tx);
+    let dependency_container = DependencyContainer::new(db, publisher);
+
+    let sub_queue = EventSubscriber::new(rx, SubscriberServices { mailer, printer });
+
+    tokio::spawn(async move {
+        if let Err(e) = sub_queue.subscribe().await {
+            eprintln!("Error in event subscriber: {}", e);
+        }
+    });
+
+    app = app
         .di_module(dependency_container.module)
-        .expect("Failed to load DI module")
+        .expect("Failed to load dependency module")
         .controller::<UsersController>()
         .controller::<CoursesController>()
         .controller::<EnrollmentsController>();

@@ -20,7 +20,6 @@ pub struct CourseFilter {
     pub code: Option<String>,
     pub name: Option<String>,
     pub teacher_id: Option<Uuid>,
-    pub coordinator_id: Option<Uuid>,
     pub year: Option<i32>,
 }
 
@@ -50,12 +49,6 @@ impl CourseRepository for PostgresCourseRepository {
             builder.push(" AND teacher_id = ").push_bind(teacher_id);
         }
 
-        if let Some(coordinator_id) = filter.coordinator_id {
-            builder
-                .push(" AND coordinator_id = ")
-                .push_bind(coordinator_id);
-        }
-
         let query = builder.build_query_as::<Course>();
 
         Ok(query.fetch_all(self.db_connection.get_pool()).await?)
@@ -74,12 +67,11 @@ impl CourseRepository for PostgresCourseRepository {
 
     async fn save(&self, course: Course) -> Result<Course, AppError> {
         let query = r#"
-            INSERT INTO Courses (id, year, code, name, status, teacher_id, coordinator_id, evaluations)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            INSERT INTO Courses (id, year, code, name, course_status, teacher_id, evaluations)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
             ON CONFLICT (id) DO UPDATE SET
                 teacher_id = EXCLUDED.teacher_id,
-                coordinator_id = EXCLUDED.coordinator_id,
-                status = EXCLUDED.status,
+                course_status = EXCLUDED.course_status,
                 evaluations = EXCLUDED.evaluations
             RETURNING *
         "#;
@@ -89,9 +81,8 @@ impl CourseRepository for PostgresCourseRepository {
             .bind(course.year)
             .bind(&course.code)
             .bind(&course.name)
-            .bind(course.status)
+            .bind(course.course_status)
             .bind(course.teacher_id)
-            .bind(course.coordinator_id)
             .bind(&course.evaluations)
             .fetch_one(self.db_connection.get_pool())
             .await?;

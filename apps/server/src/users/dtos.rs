@@ -67,7 +67,6 @@ impl FromStr for Role {
         match role.to_lowercase().as_str() {
             "administrator" => Ok(Role::Administrator),
             "teacher" => Ok(Role::Teacher),
-            "coordinator" => Ok(Role::Coordinator),
             "student" => Ok(Role::Student),
             "secretary" => Ok(Role::Secretary),
             _ => Err(AppError::InvalidInput(Input {

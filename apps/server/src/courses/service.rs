@@ -1,13 +1,12 @@
-use std::{str::FromStr, sync::Arc};
-
 use async_trait::async_trait;
 use shaku::{Component, Interface};
+use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::{
     courses::{
-        Course, CourseFilter, CourseRepository, CourseStatus, CourseWithStaff,
-        CreateCourseDto, UpdateCourseDto,
+        Course, CourseFilter, CourseRepository, CourseWithStaff, CreateCourseDto,
+        UpdateCourseDto,
     },
     enrollments::{EnrollmentFilter, EnrollmentRepository},
     shared::errors::{AppError, Input},
@@ -45,30 +44,20 @@ pub trait CourseService: Interface {
 #[async_trait]
 impl CourseService for CourseServiceImpl {
     async fn get_all(&self) -> Result<Vec<CourseWithStaff>, AppError> {
-        let mut result = Vec::new();
         let courses = self.courses.find(CourseFilter::default()).await?;
 
-        for course in courses {
-            let (teacher_exists, coordinator_exists) = tokio::join!(
-                self.users.find_by_id(&course.teacher_id),
-                self.users.find_by_id(&course.coordinator_id)
-            );
+        let teacher_ids = courses.iter().map(|c| c.teacher_id).collect::<Vec<_>>();
+        let teachers = self.users.find_by_ids(&teacher_ids).await?;
 
-            let Some(teacher) = teacher_exists? else {
-                return Err(AppError::ResourceNotFound {
-                    id: course.teacher_id.to_string(),
-                    kind: "Teacher",
-                });
-            };
+        let mut result = vec![];
 
-            let Some(coordinator) = coordinator_exists? else {
-                return Err(AppError::ResourceNotFound {
-                    id: course.coordinator_id.to_string(),
-                    kind: "Coordinator",
-                });
-            };
-
-            result.push((course, teacher, coordinator));
+        for couse in courses {
+            for teacher in &teachers {
+                if couse.teacher_id == teacher.id {
+                    result.push((couse.clone(), teacher.clone()));
+                    break;
+                }
+            }
         }
 
         Ok(result)
@@ -76,25 +65,16 @@ impl CourseService for CourseServiceImpl {
 
     async fn get_by_id(&self, id: &Uuid) -> Result<CourseWithStaff, AppError> {
         let Some(course) = self.courses.find_by_id(id).await? else {
-            return Err(AppError::ResourceNotFound {
-                id: id.to_string(),
-                kind: "Course",
-            });
+            return Err(AppError::ResourceNotFound(*id));
         };
 
-        let (teacher, coordinator) = tokio::try_join!(
-            self.users.find_by_id(&course.teacher_id),
-            self.users.find_by_id(&course.coordinator_id)
-        )?;
+        let teacher = self
+            .users
+            .find_by_id(&course.teacher_id)
+            .await?
+            .ok_or(AppError::ResourceNotFound(course.teacher_id))?;
 
-        if teacher.is_none() || coordinator.is_none() {
-            return Err(AppError::ResourceNotFound {
-                id: id.to_string(),
-                kind: "Course Staff",
-            });
-        }
-
-        Ok((course, teacher.unwrap(), coordinator.unwrap()))
+        Ok((course, teacher))
     }
 
     async fn create(&self, input: CreateCourseDto) -> Result<Course, AppError> {
@@ -105,7 +85,6 @@ impl CourseService for CourseServiceImpl {
             name: Some(course.name.clone()),
             year: Some(course.year),
             teacher_id: None,
-            coordinator_id: None,
         };
 
         if !self.courses.find(filter).await?.is_empty() {
@@ -117,10 +96,7 @@ impl CourseService for CourseServiceImpl {
         }
 
         let Some(teacher) = self.users.find_by_id(&course.teacher_id).await? else {
-            return Err(AppError::ResourceNotFound {
-                id: course.teacher_id.to_string(),
-                kind: "Teacher",
-            });
+            return Err(AppError::ResourceNotFound(course.teacher_id));
         };
 
         if !teacher.is_teacher() {
@@ -128,21 +104,6 @@ impl CourseService for CourseServiceImpl {
                 field: "teacherId".to_string(),
                 message: "El usuario no es un profesor".to_string(),
                 value: course.teacher_id.to_string(),
-            }));
-        }
-
-        let Some(c) = self.users.find_by_id(&course.coordinator_id).await? else {
-            return Err(AppError::ResourceNotFound {
-                id: course.coordinator_id.to_string(),
-                kind: "Coordinator",
-            });
-        };
-
-        if !c.is_coordinator() {
-            return Err(AppError::InvalidInput(Input {
-                field: "coordinatorId".to_string(),
-                message: "El usuario no es un coordinador".to_string(),
-                value: course.coordinator_id.to_string(),
             }));
         }
 
@@ -155,22 +116,11 @@ impl CourseService for CourseServiceImpl {
         input: UpdateCourseDto,
     ) -> Result<Course, AppError> {
         let Some(mut course) = self.courses.find_by_id(id).await? else {
-            return Err(AppError::ResourceNotFound {
-                id: id.to_string(),
-                kind: "Course",
-            });
+            return Err(AppError::ResourceNotFound(*id));
         };
 
         if let Some(teacher_id) = input.teacher_id {
             course.teacher_id = Uuid::parse_str(&teacher_id).unwrap();
-        }
-
-        if let Some(coordinator_id) = input.coordinator_id {
-            course.coordinator_id = Uuid::parse_str(&coordinator_id).unwrap()
-        }
-
-        if let Some(status) = input.status {
-            course.status = CourseStatus::from_str(&status).unwrap();
         }
 
         Ok(self.courses.save(course).await?)
@@ -178,10 +128,7 @@ impl CourseService for CourseServiceImpl {
 
     async fn remove(&self, id: &Uuid) -> Result<(), AppError> {
         let Some(course) = self.courses.find_by_id(id).await? else {
-            return Err(AppError::ResourceNotFound {
-                id: id.to_string(),
-                kind: "Course",
-            });
+            return Err(AppError::ResourceNotFound(*id));
         };
 
         let filter = EnrollmentFilter {

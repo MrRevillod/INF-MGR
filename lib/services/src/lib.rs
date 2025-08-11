@@ -10,7 +10,7 @@ pub mod templates {
     pub use files::*;
 }
 
-pub mod broker {
+pub mod event_queue {
     mod publisher;
     mod sender;
     mod subscriber;

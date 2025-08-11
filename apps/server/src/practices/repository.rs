@@ -19,6 +19,7 @@ pub struct PostgresPracticeRepository {
 #[async_trait]
 pub trait PracticeRepository: Interface {
     async fn find_by_id(&self, id: &Uuid) -> Result<Option<Practice>, AppError>;
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Practice>, AppError>;
     async fn save(&self, practice: Practice) -> Result<Practice, AppError>;
     async fn delete(&self, id: &Uuid) -> Result<(), AppError>;
 }
@@ -33,6 +34,20 @@ impl PracticeRepository for PostgresPracticeRepository {
             .await?;
 
         Ok(practice)
+    }
+
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Practice>, AppError> {
+        if ids.is_empty() {
+            return Ok(vec![]);
+        }
+
+        let query = "SELECT * FROM practices WHERE id = ANY($1)";
+        let practices = sqlx::query_as::<_, Practice>(query)
+            .bind(ids)
+            .fetch_all(self.db_connection.get_pool())
+            .await?;
+
+        Ok(practices)
     }
 
     async fn save(&self, practice: Practice) -> Result<Practice, AppError> {

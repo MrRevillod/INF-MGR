@@ -8,9 +8,7 @@ use crate::{
     inscriptions::utils::{
         InscriptionBuilder, create_inscription, delete_incription,
     },
-    users::utils::{
-        create_coordinator, create_student, create_teacher, delete_user,
-    },
+    users::utils::{create_student, create_teacher, delete_user},
 };
 
 pub mod utils;
@@ -21,10 +19,8 @@ pub async fn create_enrollment_and_practice() {
 
     let student_id = create_student(&app).await; // alu
     let teacher_id = create_teacher(&app).await;
-    let coordinator_id = create_coordinator(&app).await; //temp
 
-    let asignature_data =
-        AsignatureBuilder::new(&teacher_id, &coordinator_id).build();
+    let asignature_data = AsignatureBuilder::new(&teacher_id).build();
 
     let asignature = create_asignature(&app, &asignature_data).await;
     let asignature_id = extract_resource_id(&asignature);
@@ -75,7 +71,6 @@ pub async fn create_enrollment_and_practice() {
     delete_asignature(&app, &asignature_id).await;
     delete_user(&app, &student_id).await;
     delete_user(&app, &teacher_id).await;
-    delete_user(&app, &coordinator_id).await;
 }
 
 // #[tokio::test]

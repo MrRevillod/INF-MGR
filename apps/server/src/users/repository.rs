@@ -42,6 +42,8 @@ pub trait UserRepository: Interface {
     async fn find_by_rut(&self, rut: &str) -> Result<Option<User>, AppError>;
     async fn find_by_email(&self, email: &str) -> Result<Option<User>, AppError>;
 
+    async fn find_by_ids(&self, user_ids: &[Uuid]) -> Result<Vec<User>, AppError>;
+
     async fn save(&self, user: User) -> Result<User, AppError>;
     async fn delete(&self, user_id: &Uuid) -> Result<(), AppError>;
 }
@@ -97,6 +99,20 @@ impl UserRepository for PostgresUserRepository {
             has_next: filter.page < total_pages as i64,
             has_previous: filter.page > 1,
         })
+    }
+
+    async fn find_by_ids(&self, user_ids: &[Uuid]) -> Result<Vec<User>, AppError> {
+        if user_ids.is_empty() {
+            return Ok(vec![]);
+        }
+
+        let users =
+            sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = ANY($1)")
+                .bind(user_ids)
+                .fetch_all(self.database_connection.get_pool())
+                .await?;
+
+        Ok(users)
     }
 
     async fn find_by_id(&self, user_id: &Uuid) -> Result<Option<User>, AppError> {
