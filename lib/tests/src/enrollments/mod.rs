@@ -3,11 +3,9 @@ use serde_json::json;
 use sword::web::ResponseBody;
 
 use crate::{
-    courses::utils::{AsignatureBuilder, create_asignature, delete_asignature},
+    courses::utils::{CourseBuilder, create_course, delete_course},
+    enrollments::utils::{EnrollmentBuilder, create_enrollment, delete_enrollment},
     extract_resource_id, init_test_app,
-    inscriptions::utils::{
-        InscriptionBuilder, create_inscription, delete_incription,
-    },
     users::utils::{create_student, create_teacher, delete_user},
 };
 
@@ -20,23 +18,23 @@ pub async fn create_enrollment_and_practice() {
     let student_id = create_student(&app).await; // alu
     let teacher_id = create_teacher(&app).await;
 
-    let asignature_data = AsignatureBuilder::new(&teacher_id).build();
+    let course_data = CourseBuilder::new(&teacher_id).build();
 
-    let asignature = create_asignature(&app, &asignature_data).await;
-    let asignature_id = extract_resource_id(&asignature);
+    let course = create_course(&app, &course_data).await;
+    let course_id = extract_resource_id(&course);
 
-    let inscription_data = InscriptionBuilder::new()
+    let enrollment_data = EnrollmentBuilder::new()
         .with_student_id(&student_id)
-        .with_asignature_id(&asignature_id)
+        .with_course_id(&course_id)
         .build();
 
-    let inscription = create_inscription(&app, &inscription_data).await;
-    let inscription_id = extract_resource_id(&inscription);
+    let enrollment = create_enrollment(&app, &enrollment_data).await;
+    let enrollment_id = extract_resource_id(&enrollment);
 
     assert_eq!(
-        inscription["courseId"].as_str().unwrap(),
-        asignature_id.as_str(),
-        "Asignature ID does not match"
+        enrollment["courseId"].as_str().unwrap(),
+        course_id.as_str(),
+        "Course ID does not match"
     );
 
     let practice_data = json!({
@@ -45,10 +43,11 @@ pub async fn create_enrollment_and_practice() {
         "location": "Test Location 6AM",
         "supervisorName": "Test Supervisor 6AM",
         "supervisorEmail": "mofodak313@bizmud.com",
+        "supervisorPhone": "1234567890"
     });
 
     let create_practice_res = app
-        .post(&format!("/enrollments/{inscription_id}/practice"))
+        .post(&format!("/enrollments/{enrollment_id}/practice"))
         .json(&practice_data)
         .await;
 
@@ -57,18 +56,17 @@ pub async fn create_enrollment_and_practice() {
     let practice_id = extract_resource_id(&json);
 
     //approve practice
-    let approve_resposnse = app
+    let approve_practice_res = app
         .post(&format!(
-            "/enrollments/{inscription_id}/practice/{practice_id}/approve",
+            "/enrollments/{enrollment_id}/practice/{practice_id}/approve",
         ))
-        .json(&json!({}))
         .await;
 
-    approve_resposnse.assert_status(StatusCode::OK);
+    approve_practice_res.assert_status(StatusCode::OK);
 
     // Clean up
-    delete_incription(&app, &inscription_id).await;
-    delete_asignature(&app, &asignature_id).await;
+    delete_enrollment(&app, &enrollment_id).await;
+    delete_course(&app, &course_id).await;
     delete_user(&app, &student_id).await;
     delete_user(&app, &teacher_id).await;
 }
@@ -82,29 +80,29 @@ pub async fn create_enrollment_and_practice() {
 //     let coordinator_id = create_coordinator(&app).await;
 
 //     let asignature_data =
-//         AsignatureBuilder::new(&teacher_id, &coordinator_id).build();
+//         CourseBuilder::new(&teacher_id, &coordinator_id).build();
 
 //     dbg!("Creating asignature with data: {:?}", &asignature_data);
 
-//     let asignature = create_asignature(&app, &asignature_data).await;
-//     let asignature_id = extract_resource_id(&asignature);
+//     let asignature = create_course(&app, &asignature_data).await;
+//     let course_id = extract_resource_id(&asignature);
 
-//     let inscription_data = InscriptionBuilder::new()
+//     let enrollment_data = EnrollmentBuilder::new()
 //         .with_student_id(&student_id)
-//         .with_asignature_id(&asignature_id)
+//         .with_course_id(&course_id)
 //         .build();
 
-//     let incription = create_inscription(&app, &inscription_data).await;
-//     let inscription_id = extract_resource_id(&incription);
+//     let incription = create_enrollment(&app, &enrollment_data).await;
+//     let enrollment_id = extract_resource_id(&incription);
 
 //     assert_eq!(
 //         incription["courseId"].as_str().unwrap(),
-//         asignature_id.as_str(),
+//         course_id.as_str(),
 //         "Asignature ID does not match"
 //     );
 
-//     delete_incription(&app, &inscription_id).await;
-//     delete_asignature(&app, &asignature_id).await;
+//     delete_enrollment(&app, &enrollment_id).await;
+//     delete_course(&app, &course_id).await;
 
 //     delete_user(&app, &student_id).await;
 //     delete_user(&app, &teacher_id).await;
@@ -112,17 +110,17 @@ pub async fn create_enrollment_and_practice() {
 // }
 
 // #[tokio::test]
-// async fn create_inscription_without_asignature_should_fail() {
+// async fn create_enrollment_without_asignature_should_fail() {
 //     let app = init_test_app().await;
 
 //     let student_id = create_student(&app).await;
 
-//     let inscription_data = InscriptionBuilder::new()
+//     let enrollment_data = EnrollmentBuilder::new()
 //         .with_student_id(&student_id)
 //         .build();
 
 //     app.post("/courses")
-//         .json(&inscription_data)
+//         .json(&enrollment_data)
 //         .await
 //         .assert_status(StatusCode::BAD_REQUEST);
 
@@ -130,71 +128,71 @@ pub async fn create_enrollment_and_practice() {
 // }
 
 // #[tokio::test]
-// async fn create_inscription_without_student_should_fail() {
+// async fn create_enrollment_without_student_should_fail() {
 //     let app = init_test_app().await;
 
 //     let teacher_id = create_teacher(&app).await;
 //     let coordinator_id = create_coordinator(&app).await;
 
 //     let asignature_data =
-//         AsignatureBuilder::new(&teacher_id, &coordinator_id).build();
+//         CourseBuilder::new(&teacher_id, &coordinator_id).build();
 
-//     let asignature = create_asignature(&app, &asignature_data).await;
-//     let asignature_id = extract_resource_id(&asignature);
+//     let asignature = create_course(&app, &asignature_data).await;
+//     let course_id = extract_resource_id(&asignature);
 
-//     let inscription_data = InscriptionBuilder::new()
-//         .with_asignature_id(&asignature_id)
+//     let enrollment_data = EnrollmentBuilder::new()
+//         .with_course_id(&course_id)
 //         .build();
 
 //     app.post("/courses")
-//         .json(&inscription_data)
+//         .json(&enrollment_data)
 //         .await
 //         .assert_status(StatusCode::BAD_REQUEST);
 
-//     delete_asignature(&app, &asignature_id).await;
+//     delete_course(&app, &course_id).await;
 //     delete_user(&app, &teacher_id).await;
 //     delete_user(&app, &coordinator_id).await;
 // }
 
 // #[tokio::test]
-// async fn create_inscription_with_non_valid_uuids_should_fail() {
+// async fn create_enrollment_with_non_valid_uuids_should_fail() {
 //     let app = init_test_app().await;
 
-//     let inscription_data = InscriptionBuilder::new()
+//     let enrollment_data = EnrollmentBuilder::new()
 //         .with_student_id(&"invalid-uuid".to_string())
-//         .with_asignature_id(&"invalid-uuid".to_string())
+//         .with_course_id(&"invalid-uuid".to_string())
 //         .build();
 
 //     app.post("/inscriptions")
-//         .json(&inscription_data)
+//         .json(&enrollment_data)
 //         .await
 //         .assert_status(StatusCode::BAD_REQUEST);
 // }
 
 // #[tokio::test]
-// async fn create_inscription_with_non_existent_student_should_fail() {
+// async fn create_enrollment_with_non_existent_student_should_fail() {
 //     let app = init_test_app().await;
 
 //     let teacher_id = create_teacher(&app).await;
 //     let coordinator_id = create_coordinator(&app).await;
 
 //     let asignature_data =
-//         AsignatureBuilder::new(&teacher_id, &coordinator_id).build();
+//         CourseBuilder::new(&teacher_id, &coordinator_id).build();
 
-//     let asignature = create_asignature(&app, &asignature_data).await;
-//     let asignature_id = extract_resource_id(&asignature);
+//     let asignature = create_course(&app, &asignature_data).await;
+//     let course_id = extract_resource_id(&asignature);
 
-//     let inscription_data = InscriptionBuilder::new()
+//     let enrollment_data = EnrollmentBuilder::new()
 //         .with_student_id(&Uuid::new_v4().to_string())
-//         .with_asignature_id(&asignature_id)
+//         .with_course_id(&course_id)
 //         .build();
 
 //     app.post("/courses")
-//         .json(&inscription_data)
+//         .json(&enrollment_data)
 //         .await
 //         .assert_status(StatusCode::BAD_REQUEST);
 
-//     delete_asignature(&app, &asignature_id).await;
+//     delete_course(&app, &course_id).await;
 
 //     delete_user(&app, &teacher_id).await;
 //     delete_user(&app, &coordinator_id).await;
@@ -209,26 +207,26 @@ pub async fn create_enrollment_and_practice() {
 //     let coordinator_id = create_coordinator(&app).await;
 
 //     let asignature_data =
-//         AsignatureBuilder::new(&teacher_id, &coordinator_id).build();
+//         CourseBuilder::new(&teacher_id, &coordinator_id).build();
 
-//     let asignature = create_asignature(&app, &asignature_data).await;
-//     let asignature_id = extract_resource_id(&asignature);
+//     let asignature = create_course(&app, &asignature_data).await;
+//     let course_id = extract_resource_id(&asignature);
 
-//     let inscription_data = InscriptionBuilder::new()
+//     let enrollment_data = EnrollmentBuilder::new()
 //         .with_student_id(&student_id)
-//         .with_asignature_id(&asignature_id)
+//         .with_course_id(&course_id)
 //         .build();
 
-//     let inscription = create_inscription(&app, &inscription_data).await;
-//     let inscription_id = extract_resource_id(&inscription);
+//     let inscription = create_enrollment(&app, &enrollment_data).await;
+//     let enrollment_id = extract_resource_id(&inscription);
 
 //     app.post("/inscriptions")
-//         .json(&inscription_data)
+//         .json(&enrollment_data)
 //         .await
 //         .assert_status(StatusCode::CONFLICT);
 
-//     delete_incription(&app, &inscription_id).await;
-//     delete_asignature(&app, &asignature_id).await;
+//     delete_enrollment(&app, &enrollment_id).await;
+//     delete_course(&app, &course_id).await;
 
 //     delete_user(&app, &student_id).await;
 //     delete_user(&app, &teacher_id).await;

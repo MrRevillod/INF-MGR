@@ -3,7 +3,7 @@ use serde_json::{Value, json};
 use sword::web::ResponseBody;
 use uuid::Uuid;
 
-pub struct AsignatureBuilder {
+pub struct CourseBuilder {
     year: i32,
     code: String,
     name: String,
@@ -16,12 +16,12 @@ pub struct EvaluationBuilder {
     weight: i32,
 }
 
-impl AsignatureBuilder {
+impl CourseBuilder {
     pub fn new(teacher_id: &str) -> Self {
         Self {
             year: 2024,
             code: generate_unique_code(),
-            name: generate_unique_asignature_name(),
+            name: generate_unique_course_name(),
             evaluations: vec![
                 EvaluationBuilder {
                     name: "Bitácoras Semanales".to_string(),
@@ -111,34 +111,34 @@ pub fn generate_unique_code() -> String {
     format!("INFO{:04}", four_digits)
 }
 
-pub fn generate_unique_asignature_name() -> String {
+pub fn generate_unique_course_name() -> String {
     format!(
-        "Test Asignature {}",
+        "Test Course {}",
         Uuid::new_v4().to_string()[0..16].to_uppercase()
     )
 }
 
-pub async fn create_asignature(server: &TestServer, asignature: &Value) -> Value {
-    let response = server.post("/courses").json(&asignature).await;
+pub async fn create_course(server: &TestServer, course: &Value) -> Value {
+    let response = server.post("/courses").json(&course).await;
     let body = response.json::<ResponseBody>();
 
     assert_eq!(
         response.status_code(),
         201,
         "{}",
-        format!("Failed to create asignature: {:?}", body.data)
+        format!("Failed to create course: {:?}", body.data)
     );
 
     body.data
 }
 
-pub async fn update_asignature(
+pub async fn update_course(
     server: &TestServer,
-    asignature_id: &str,
+    course_id: &str,
     update_data: &Value,
 ) -> Value {
     let response = server
-        .patch(&format!("/courses/{}", asignature_id))
+        .patch(&format!("/courses/{}", course_id))
         .json(update_data)
         .await;
 
@@ -148,14 +148,14 @@ pub async fn update_asignature(
         response.status_code(),
         200,
         "{}",
-        format!("Failed to update asignature: {:?}", body.data)
+        format!("Failed to update course: {:?}", body.data)
     );
 
     body.data
 }
 
-pub async fn delete_asignature(server: &TestServer, asignature_id: &str) {
-    let response = server.delete(&format!("/courses/{}", asignature_id)).await;
+pub async fn delete_course(server: &TestServer, course_id: &str) {
+    let response = server.delete(&format!("/courses/{}", course_id)).await;
 
     let body = response.json::<ResponseBody>();
 
@@ -163,6 +163,6 @@ pub async fn delete_asignature(server: &TestServer, asignature_id: &str) {
         response.status_code(),
         200,
         "{}",
-        format!("Failed to delete asignature: {:?}", body.data)
+        format!("Failed to delete course: {:?}", body.data)
     );
 }

@@ -115,7 +115,7 @@ pub struct GetUsersQueryDto {
     #[validate(length(
         min = 1,
         max = 100,
-        message = "El término de búsqueda debe tener entre 3 y 100 caracteres."
+        message = "El término de búsqueda debe tener entre 1 y 100 caracteres."
     ))]
     pub search: Option<String>,
 

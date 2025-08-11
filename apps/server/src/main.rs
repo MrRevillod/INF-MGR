@@ -30,7 +30,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cors_config = app.config.get::<CorsConfig>()?;
     let pg_db_config = app.config.get::<PostgresDbConfig>()?;
     let mailer_config = app.config.get::<MailerConfig>()?;
-    let tamplate_config = app.config.get::<TemplateConfig>()?;
+    let template_config = app.config.get::<TemplateConfig>()?;
 
     let (db, mailer, printer) = {
         let db = PostgresDatabase::new(&pg_db_config)
@@ -41,11 +41,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .await
             .expect("Failed to create database connection");
 
-        let mailer = Mailer::new(&mailer_config, &tamplate_config)
+        let mailer = Mailer::new(&mailer_config, &template_config)
             .expect("Failed to create mailer");
 
         let printer =
-            Printer::new(&tamplate_config).expect("Failed to create printer");
+            Printer::new(&template_config).expect("Failed to create printer");
 
         (db, mailer, printer)
     };

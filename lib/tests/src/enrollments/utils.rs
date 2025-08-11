@@ -2,16 +2,16 @@ use axum_test::TestServer;
 use serde_json::{Value, json};
 use sword::web::ResponseBody;
 
-pub struct InscriptionBuilder {
+pub struct EnrollmentBuilder {
     pub student_id: Option<String>,
-    pub asignature_id: Option<String>,
+    pub course_id: Option<String>,
 }
 
-impl InscriptionBuilder {
+impl EnrollmentBuilder {
     pub fn new() -> Self {
         Self {
             student_id: None,
-            asignature_id: None,
+            course_id: None,
         }
     }
 
@@ -20,36 +20,36 @@ impl InscriptionBuilder {
         self
     }
 
-    pub fn with_asignature_id(mut self, asignature_id: &String) -> Self {
-        self.asignature_id = Some(asignature_id.clone());
+    pub fn with_course_id(mut self, course_id: &String) -> Self {
+        self.course_id = Some(course_id.clone());
         self
     }
 
     pub fn build(self) -> Value {
         json!({
             "studentId": self.student_id,
-            "courseId": self.asignature_id
+            "courseId": self.course_id
         })
     }
 }
 
-pub async fn create_inscription(app: &TestServer, inscription: &Value) -> Value {
-    let response = app.post("/courses/enroll").json(inscription).await;
+pub async fn create_enrollment(app: &TestServer, enrollment: &Value) -> Value {
+    let response = app.post("/courses/enroll").json(enrollment).await;
     let body = response.json::<ResponseBody>();
 
     assert_eq!(
         response.status_code(),
         201,
-        "Failed to create inscription: {}",
+        "Failed to create enrollment: {}",
         body.data
     );
 
     body.data
 }
 
-pub async fn delete_incription(app: &TestServer, inscription_id: &str) {
+pub async fn delete_enrollment(app: &TestServer, enrollment_id: &str) {
     let response = app
-        .delete(&format!("/courses/enrollments/{}", inscription_id))
+        .delete(&format!("/courses/enrollments/{}", enrollment_id))
         .await;
 
     assert_eq!(response.status_code(), 200);

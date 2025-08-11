@@ -54,9 +54,9 @@ impl PracticeRepository for PostgresPracticeRepository {
         let query = "
             INSERT INTO practices (
                 id, enterprise_name, location,
-                description, supervisor_name, supervisor_email,
+                description, supervisor_name, supervisor_email, supervisor_phone,
                 start_date, end_date, is_approved
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             ON CONFLICT (id) DO UPDATE SET
                 enterprise_name = EXCLUDED.enterprise_name,
                 location = EXCLUDED.location,
@@ -75,6 +75,7 @@ impl PracticeRepository for PostgresPracticeRepository {
             .bind(practice.description)
             .bind(practice.supervisor_name)
             .bind(practice.supervisor_email)
+            .bind(practice.supervisor_phone)
             .bind(practice.start_date)
             .bind(practice.end_date)
             .bind(practice.is_approved)

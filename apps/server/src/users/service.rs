@@ -79,12 +79,12 @@ impl UserService for UserServiceImpl {
 
         input.password = self.hasher.hash(&input.password)?;
 
-        let user = self.users.save(User::try_from(input)?).await?;
+        let user = self.users.save(User::try_from(input.clone())?).await?;
 
         let event_data = json!({
             "name": user.name,
             "email": user.email,
-            "password": user.password,
+            "password": input.password
         });
 
         self.event_queue

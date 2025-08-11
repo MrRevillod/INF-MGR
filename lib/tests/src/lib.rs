@@ -11,7 +11,7 @@ use sword::prelude::Application;
 #[cfg(test)]
 pub mod courses;
 #[cfg(test)]
-pub mod inscriptions;
+pub mod enrollments;
 #[cfg(test)]
 pub mod users;
 

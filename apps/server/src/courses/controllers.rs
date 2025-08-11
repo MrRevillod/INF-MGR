@@ -123,10 +123,10 @@ impl CoursesController {
 
     #[delete("/enrollments/{enrollment_id}")]
     async fn remove_enrollment(ctx: Context) -> HttpResult<HttpResponse> {
-        let enrollmet_id = ctx.param::<Uuid>("enrollment_id")?;
+        let enrollment_id = ctx.param::<Uuid>("enrollment_id")?;
         let service = ctx.get_dependency::<AppModule, dyn EnrollmentService>()?;
 
-        service.remove(&enrollmet_id).await?;
+        service.remove(&enrollment_id).await?;
 
         Ok(HttpResponse::Ok())
     }

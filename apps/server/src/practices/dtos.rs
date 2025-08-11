@@ -42,6 +42,8 @@ pub struct CreatePracticeDto {
     ))]
     pub supervisor_email: String,
 
+    pub supervisor_phone: String,
+
     pub start_date: Option<DateTime<Utc>>,
     pub end_date: Option<DateTime<Utc>>,
 }
@@ -55,6 +57,7 @@ impl From<CreatePracticeDto> for Practice {
             location: dto.location,
             supervisor_name: dto.supervisor_name,
             supervisor_email: dto.supervisor_email,
+            supervisor_phone: dto.supervisor_phone,
             start_date: dto.start_date,
             end_date: dto.end_date,
             is_approved: false,

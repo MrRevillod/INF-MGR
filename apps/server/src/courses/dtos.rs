@@ -193,9 +193,9 @@ fn validate_evaluation_weights(
 }
 
 fn validate_course_status(status: &String) -> Result<(), ValidationError> {
-    if status != "inprogress" && status != "ended" {
+    if status != "active" && status != "completed" {
         return Err(ValidationError::new(
-            "El estado de la asignatura debe ser 'inprogress' o 'ended'.",
+            "El estado de la asignatura debe ser 'active' o 'completed'.",
         ));
     }
 

@@ -95,7 +95,7 @@ pub async fn create_administrator(server: &TestServer) -> String {
 pub async fn create_student(server: &TestServer) -> String {
     let user = UserBuilder::new()
         .with_roles(vec!["student"])
-        .with_email("lrevillod2022@alu.uct.cl")
+        .with_email(&generate_unique_email())
         .build();
     let data = create_user(server, user).await;
 
