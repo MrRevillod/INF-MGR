@@ -35,7 +35,7 @@ pub trait CourseRepository: Interface {
 impl CourseRepository for PostgresCourseRepository {
     async fn find(&self, filter: CourseFilter) -> Result<Vec<Course>, AppError> {
         let mut builder =
-            QueryBuilder::<Postgres>::new("SELECT * FROM Courses WHERE 1=1");
+            QueryBuilder::<Postgres>::new("SELECT * FROM courses WHERE 1=1");
 
         if let Some(ref code) = filter.code {
             builder.push(" AND code = ").push_bind(code);
@@ -55,7 +55,7 @@ impl CourseRepository for PostgresCourseRepository {
     }
 
     async fn find_by_id(&self, id: &Uuid) -> Result<Option<Course>, AppError> {
-        let query = r#"SELECT * FROM Courses WHERE id = $1"#;
+        let query = r#"SELECT * FROM courses WHERE id = $1"#;
 
         let model = sqlx::query_as::<_, Course>(query)
             .bind(id)
@@ -67,7 +67,7 @@ impl CourseRepository for PostgresCourseRepository {
 
     async fn save(&self, course: Course) -> Result<Course, AppError> {
         let query = r#"
-            INSERT INTO Courses (id, year, code, name, course_status, teacher_id, evaluations)
+            INSERT INTO courses (id, year, code, name, course_status, teacher_id, evaluations)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             ON CONFLICT (id) DO UPDATE SET
                 teacher_id = EXCLUDED.teacher_id,
@@ -91,7 +91,7 @@ impl CourseRepository for PostgresCourseRepository {
     }
 
     async fn delete(&self, id: &Uuid) -> Result<(), AppError> {
-        sqlx::query("DELETE FROM Courses WHERE id = $1")
+        sqlx::query("DELETE FROM courses WHERE id = $1")
             .bind(id)
             .execute(self.db_connection.get_pool())
             .await?;
