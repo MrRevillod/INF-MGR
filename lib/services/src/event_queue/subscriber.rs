@@ -74,7 +74,7 @@ impl EventSubscriber {
                 //     context,
                 // };
 
-                // self.mailer.send(mail_opts).await?;
+                // mailer.send(mail_opts).await?;
             } // ==================
 
               // let email_context: RawContext = vec![

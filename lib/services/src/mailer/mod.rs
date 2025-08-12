@@ -42,7 +42,7 @@ impl Mailer {
         })
     }
 
-    async fn send(&self, mail_to: MailTo) -> Result<(), ServiceError> {
+    pub async fn send(&self, mail_to: MailTo) -> Result<(), ServiceError> {
         let email_from = self.config.smtp_username.clone();
         let email_from_fmt = format!("Prácticas y Tesis <{email_from}>");
 
