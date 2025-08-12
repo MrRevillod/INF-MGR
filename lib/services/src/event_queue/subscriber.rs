@@ -1,7 +1,13 @@
+use serde_json::Value;
 use std::sync::Arc;
 use tokio::sync::{Mutex, mpsc::Receiver};
 
-use crate::{event_queue::Event, mailer::Mailer, printer::Printer};
+use crate::{
+    event_queue::{Event, get_json},
+    mailer::{MailTo, Mailer},
+    printer::Printer,
+    templates::RawContext,
+};
 
 pub struct SubscriberServices {
     pub mailer: Mailer,
@@ -40,7 +46,7 @@ impl EventSubscriber {
 
     async fn handle(
         event: Event,
-        _: Arc<Mailer>,
+        mailer: Arc<Mailer>,
         _: Arc<Printer>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         match event {
@@ -53,28 +59,24 @@ impl EventSubscriber {
             }
 
             Event::UserCreated(data) => {
-                println!("User created: {data:?}");
+                let name = get_json::<String>(&data, "name")?;
+                let email = get_json::<String>(&data, "email")?;
+                let password = get_json::<String>(&data, "password")?;
 
-                // let context: RawContext = vec![
-                //     ("name", data.get("name").unwrap_or(&Value::Null).to_string()),
-                //     (
-                //         "email",
-                //         data.get("email").unwrap_or(&Value::Null).to_string(),
-                //     ),
-                //     (
-                //         "password",
-                //         data.get("password").unwrap_or(&Value::Null).to_string(),
-                //     ),
-                // ];
+                let context: RawContext = vec![
+                    ("name", name),
+                    ("email", email.clone()),
+                    ("password", password),
+                ];
 
-                // let mail_opts = MailTo {
-                //     subject: "Bienvenido (a) a la plataforma",
-                //     email: input.email.clone(),
-                //     template: "system:welcome",
-                //     context,
-                // };
+                let mail_opts = MailTo {
+                    subject: "Bienvenido (a) a la plataforma",
+                    email,
+                    template: "system:welcome",
+                    context,
+                };
 
-                // mailer.send(mail_opts).await?;
+                mailer.send(mail_opts).await?;
             } // ==================
 
               // let email_context: RawContext = vec![

@@ -401,3 +401,16 @@ async fn test_create_user_password_boundary_maximum() {
         delete_user(&app, user_id).await;
     }
 }
+
+#[tokio::test]
+async fn test_create_user_extract_json() {
+    let app = init_test_app().await;
+    let new_user = UserBuilder::new()
+        .with_email("bespinoza2021@alu.uct.cl")
+        .build();
+
+    let body = create_user(&app, new_user).await;
+    let user_id = body.get("id").and_then(|id| id.as_str()).unwrap();
+
+    delete_user(&app, user_id).await;
+}
