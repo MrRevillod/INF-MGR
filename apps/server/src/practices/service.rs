@@ -158,11 +158,11 @@ impl PracticeService for PracticeServiceImpl {
         }
 
         if let Some(start_date) = input.start_date {
-            practice.start_date = Some(start_date);
+            practice.start_date = start_date;
         }
 
         if let Some(end_date) = input.end_date {
-            practice.end_date = Some(end_date);
+            practice.end_date = end_date;
         }
 
         self.practices.save(practice).await
@@ -174,12 +174,6 @@ impl PracticeService for PracticeServiceImpl {
             .find_by_id(id)
             .await?
             .ok_or(AppError::ResourceNotFound(*id))?;
-
-        if practice.start_date.is_some_and(|date| date < Utc::now()) {
-            return Err(AppError::InvalidOperation(
-                "No se puede eliminar una práctica que ya ha comenzado.".to_string(),
-            ));
-        }
 
         self.practices.delete(id).await
     }

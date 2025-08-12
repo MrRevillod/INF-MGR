@@ -97,11 +97,6 @@ pub mod shared {
             Ok(())
         }
     }
-
-    pub fn format_date(date: Option<DateTime<Utc>>) -> String {
-        date.map(|date| date.with_timezone(&Santiago).format("%d/%m/%y").to_string())
-            .unwrap_or_default()
-    }
 }
 
 pub mod container;

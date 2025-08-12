@@ -44,8 +44,8 @@ pub struct CreatePracticeDto {
 
     pub supervisor_phone: String,
 
-    pub start_date: Option<DateTime<Utc>>,
-    pub end_date: Option<DateTime<Utc>>,
+    pub start_date: DateTime<Utc>,
+    pub end_date: DateTime<Utc>,
 }
 
 impl From<CreatePracticeDto> for Practice {
@@ -109,7 +109,7 @@ pub struct UpdatePracticeDto {
 fn validate_create_practice_dates(
     schema: &CreatePracticeDto,
 ) -> Result<(), ValidationError> {
-    validate_dates(schema.start_date, schema.end_date)
+    validate_dates(Some(schema.start_date), Some(schema.end_date))
 }
 
 fn validate_update_practice_dates(

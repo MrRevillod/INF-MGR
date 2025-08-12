@@ -3,7 +3,7 @@ use std::sync::Arc;
 use tokio::sync::{Mutex, mpsc::Receiver};
 
 use crate::{
-    event_queue::{Event, get_json},
+    event_queue::{Event, format_date, get_json},
     mailer::{MailTo, Mailer},
     printer::Printer,
     templates::RawContext,
@@ -55,7 +55,68 @@ impl EventSubscriber {
             }
 
             Event::PracticeCreated(data) => {
-                println!("Practice created: {data:?}");
+                let student = get_json::<Value>(&data, "student")?;
+                let practice = get_json::<Value>(&data, "practice")?;
+                let course = get_json::<Value>(&data, "course")?;
+                let enrollment = get_json::<Value>(&data, "enrollment")?;
+                let start_date = get_json::<String>(&practice, "start_date")?;
+                let end_date = get_json::<String>(&practice, "end_date")?;
+                let email_student = get_json::<String>(&student, "email")?;
+                let email_supervisor =
+                    get_json::<String>(&practice, "supervisor_email")?;
+
+                let email_context: RawContext = vec![
+                    (
+                        "student_name",
+                        get_json::<String>(&student, "student_name")?,
+                    ),
+                    ("student_email", email_student.clone()),
+                    (
+                        "enterprise_name",
+                        get_json::<String>(&practice, "enterprise_name")?,
+                    ),
+                    (
+                        "supervisor_name",
+                        get_json::<String>(&practice, "supervisor_name")?,
+                    ),
+                    ("supervisor_email", email_supervisor.clone()),
+                    ("course_name", get_json::<String>(&course, "name")?),
+                    ("course_code", get_json::<String>(&course, "code")?),
+                    ("location", get_json::<String>(&practice, "location")?),
+                    ("start_date", format_date(start_date)),
+                    ("end_date", format_date(end_date)),
+                    (
+                        "approval_link",
+                        format!(
+                            "/enrollments/{}/practice/{}/approve",
+                            get_json::<String>(&enrollment, "id")?,
+                            get_json::<String>(&enrollment, "practice_id")?
+                        ),
+                    ),
+                    (
+                        "rejection_link",
+                        format!(
+                            "/enrollments/{}/practice/{}/reject",
+                            get_json::<String>(&enrollment, "id")?,
+                            get_json::<String>(&enrollment, "practice_id")?
+                        ),
+                    ),
+                ];
+
+                tokio::try_join!(
+                    mailer.send(MailTo {
+                        email: email_supervisor,
+                        subject: "Solicitud de Inscripción de Práctica",
+                        template: "practice:creation:supervisor",
+                        context: email_context.clone(),
+                    }),
+                    mailer.send(MailTo {
+                        email: email_student,
+                        subject: "Inscripción a Práctica Aprobada",
+                        template: "practice:creation:student",
+                        context: email_context,
+                    })
+                )?;
             }
 
             Event::UserCreated(data) => {
@@ -78,48 +139,6 @@ impl EventSubscriber {
 
                 mailer.send(mail_opts).await?;
             } // ==================
-
-              // let email_context: RawContext = vec![
-              //     ("student_name", student.name.clone()),
-              //     ("student_email", student.email.clone()),
-              //     ("enterprise_name", practice.enterprise_name.clone()),
-              //     ("supervisor_name", practice.supervisor_name.clone()),
-              //     ("supervisor_email", practice.supervisor_email.clone()),
-              //     ("course_name", course.name.clone()),
-              //     ("course_code", course.code.clone()),
-              //     ("location", practice.location.clone()),
-              //     ("start_date", start_date.unwrap_or_default()),
-              //     ("end_date", end_date.unwrap_or_default()),
-              //     (
-              //         "approval_link",
-              //         format!(
-              //             "/enrollments/{}/practice/{}/approve",
-              //             enrollment.id, practice.id
-              //         ),
-              //     ),
-              //     (
-              //         "rejection_link",
-              //         format!(
-              //             "/enrollments/{}/practice/{}/reject",
-              //             enrollment.id, practice.id
-              //         ),
-              //     ),
-              // ];
-
-              // tokio::try_join!(
-              //     self.mailer.send(MailTo {
-              //         email: practice.supervisor_email.clone(),
-              //         subject: "Solicitud de Inscripción de Práctica",
-              //         template: "practice:creation:supervisor",
-              //         context: email_context.clone(),
-              //     }),
-              //     self.mailer.send(MailTo {
-              //         email: student.email.clone(),
-              //         subject: "Inscripción a Práctica Aprobada",
-              //         template: "practice:creation:student",
-              //         context: email_context,
-              //     })
-              // )?;
 
               // ==================
 
