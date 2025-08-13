@@ -1,7 +1,5 @@
 use crate::container::AppModule;
-use crate::users::{
-    CreateUserDto, GetUsersQueryDto, UpdateUserDto, UserResponse, UserService,
-};
+use crate::users::{CreateUserDto, GetUsersQueryDto, UpdateUserDto, UserResponse, UserService};
 
 use serde_json::json;
 use sword::{prelude::*, web::HttpResult};
@@ -51,7 +49,7 @@ impl UsersController {
         let user_data = ctx.validated_body::<UpdateUserDto>()?;
 
         let service = ctx.get_dependency::<AppModule, dyn UserService>()?;
-        let user = service.update(&id, user_data).await?;
+        let user = service.update(id, user_data).await?;
 
         Ok(HttpResponse::Ok().data(UserResponse::from(user)))
     }
@@ -61,7 +59,7 @@ impl UsersController {
         let id = ctx.param::<Uuid>("id")?;
         let service = ctx.get_dependency::<AppModule, dyn UserService>()?;
 
-        service.remove(&id).await?;
+        service.remove(id).await?;
 
         Ok(HttpResponse::Ok())
     }

@@ -1,11 +1,13 @@
 use async_trait::async_trait;
+use sea_query::{Expr, ExprTrait, PostgresQueryBuilder, Query};
+use sea_query_sqlx::SqlxBinder;
 use shaku::{Component, Interface};
-use sqlx::Postgres;
+use sqlx::{query_as_with as sqlx_query, Postgres};
 use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::{
-    enrollments::Enrollment,
+    enrollments::{entity::Enrollments, Enrollment},
     shared::{database::DatabaseConnection, errors::AppError},
 };
 
@@ -24,7 +26,7 @@ pub struct EnrollmentFilter {
 
 #[async_trait]
 pub trait EnrollmentRepository: Interface {
-    async fn find_all(
+    async fn find_many(
         &self,
         filter: EnrollmentFilter,
     ) -> Result<Vec<Enrollment>, AppError>;
@@ -36,33 +38,36 @@ pub trait EnrollmentRepository: Interface {
 
 #[async_trait]
 impl EnrollmentRepository for PostgresEnrollmentRepository {
-    async fn find_all(
+    async fn find_many(
         &self,
         filter: EnrollmentFilter,
     ) -> Result<Vec<Enrollment>, AppError> {
-        let mut builder = sqlx::QueryBuilder::<Postgres>::new(
-            "SELECT * FROM enrollments WHERE 1=1",
-        );
+        let mut query = Query::select().from(Enrollments::Table).to_owned();
 
         if let Some(user_id) = filter.student_id {
-            builder.push(" AND student_id = ").push_bind(user_id);
+            query.and_where(Expr::col(Enrollments::StudentId).eq(user_id));
         }
 
         if let Some(course_id) = filter.course_id {
-            builder.push(" AND course_id = ").push_bind(course_id);
+            query.and_where(Expr::col(Enrollments::CourseId).eq(course_id));
         }
 
-        let query = builder.build_query_as::<Enrollment>();
-        let result = query.fetch_all(self.db_connection.get_pool()).await?;
+        let (sql, values) = query.build_sqlx(PostgresQueryBuilder);
+
+        let result = sqlx_query::<Postgres, Enrollment, _>(&sql, values)
+            .fetch_all(self.db_connection.get_pool())
+            .await?;
 
         Ok(result)
     }
 
     async fn find_by_id(&self, id: &Uuid) -> Result<Option<Enrollment>, AppError> {
-        let query = r#"SELECT * FROM enrollments WHERE id = $1"#;
+        let (sql, values) = Query::select()
+            .from(Enrollments::Table)
+            .and_where(Expr::col(Enrollments::Id).eq(*id))
+            .build_sqlx(PostgresQueryBuilder);
 
-        let model = sqlx::query_as::<_, Enrollment>(query)
-            .bind(id)
+        let model = sqlx_query::<Postgres, Enrollment, _>(&sql, values)
             .fetch_optional(self.db_connection.get_pool())
             .await?;
 
@@ -74,9 +79,6 @@ impl EnrollmentRepository for PostgresEnrollmentRepository {
             INSERT INTO enrollments (id, student_id, course_id, practice_id, student_scores)
             VALUES ($1, $2, $3, $4, $5)
             ON CONFLICT (id) DO UPDATE SET
-                student_id = EXCLUDED.student_id,
-                course_id = EXCLUDED.course_id,
-                practice_id = EXCLUDED.practice_id,
                 student_scores = EXCLUDED.student_scores
             RETURNING *
         "#;
@@ -94,8 +96,12 @@ impl EnrollmentRepository for PostgresEnrollmentRepository {
     }
 
     async fn delete(&self, id: &Uuid) -> Result<(), AppError> {
-        sqlx::query("DELETE FROM enrollments WHERE id = $1")
-            .bind(id)
+        let (sql, values) = Query::delete()
+            .from_table(Enrollments::Table)
+            .and_where(Expr::col(Enrollments::Id).eq(*id))
+            .build_sqlx(PostgresQueryBuilder);
+
+        sqlx::query_with(&sql, values)
             .execute(self.db_connection.get_pool())
             .await?;
 

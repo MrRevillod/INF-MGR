@@ -5,9 +5,11 @@ use uuid::Uuid;
 
 use crate::{
     courses::CourseRepository,
-    practices::PracticeRepository,
+    enrollment_filter, practice_filter,
+    practices::{PracticeFilter, PracticeRepository},
     shared::errors::{AppError, Input},
-    users::UserRepository,
+    user_filter,
+    users::{UserFilter, UserRepository},
 };
 
 use crate::enrollments::{
@@ -54,7 +56,6 @@ pub trait EnrollmentService: Interface {
         input: UpdateEnrollmentDto,
     ) -> Result<Enrollment, AppError>;
 
-    async fn save(&self, enrollment: Enrollment) -> Result<Enrollment, AppError>;
     async fn remove(&self, id: &Uuid) -> Result<(), AppError>;
 }
 
@@ -65,19 +66,18 @@ impl EnrollmentService for EnrollmentServiceImpl {
         filter: EnrollmentFilter,
     ) -> Result<Vec<EnrollmentWithStudentAndPractice>, AppError> {
         let mut result = Vec::new();
+        let enrollments = self.enrollments.find_many(filter).await?;
 
-        let enrollments = self.enrollments.find_all(filter).await?;
+        let student_filter = user_filter! {
+            ids: enrollments.iter().map(|e| e.student_id).collect::<Vec<_>>()
+        };
 
-        let student_ids =
-            enrollments.iter().map(|e| e.student_id).collect::<Vec<_>>();
+        let practice_filter = practice_filter! {
+            ids: enrollments.iter().filter_map(|e| e.practice_id).collect::<Vec<_>>()
+        };
 
-        let practice_ids = enrollments
-            .iter()
-            .filter_map(|e| e.practice_id)
-            .collect::<Vec<_>>();
-
-        let students = self.users.find_by_ids(&student_ids).await?;
-        let practices = self.practices.find_by_ids(&practice_ids).await?;
+        let students = self.users.find_many(student_filter).await?;
+        let practices = self.practices.find_many(practice_filter).await?;
 
         for enrollment in enrollments {
             let student = students
@@ -128,12 +128,12 @@ impl EnrollmentService for EnrollmentServiceImpl {
     ) -> Result<Enrollment, AppError> {
         let enrollment = Enrollment::from(input);
 
-        let filter = EnrollmentFilter {
-            student_id: Some(enrollment.student_id),
-            course_id: Some(enrollment.course_id),
+        let filter = enrollment_filter! {
+            student_id: enrollment.student_id,
+            course_id: enrollment.course_id,
         };
 
-        if !self.enrollments.find_all(filter).await?.is_empty() {
+        if !self.enrollments.find_many(filter).await?.is_empty() {
             return Err(AppError::Conflict(Input {
                 message: "El estudiante ya está inscrito en este curso.".to_string(),
                 ..Input::default()
@@ -165,10 +165,6 @@ impl EnrollmentService for EnrollmentServiceImpl {
             }));
         }
 
-        self.enrollments.save(enrollment).await
-    }
-
-    async fn save(&self, enrollment: Enrollment) -> Result<Enrollment, AppError> {
         self.enrollments.save(enrollment).await
     }
 

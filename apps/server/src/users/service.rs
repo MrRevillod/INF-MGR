@@ -1,23 +1,25 @@
-use serde_json::json;
-use std::sync::Arc;
-use uuid::Uuid;
-
 use async_trait::async_trait;
-use shaku::{Component, Interface};
-
-use crate::shared::{
-    entities::Pagination,
-    errors::{AppError, Input},
-};
+use serde_json::json;
 
 use services::{
     event_queue::{Event, EventQueue},
     hasher::PasswordHasher,
 };
 
-use crate::users::{
-    dtos::from_string_vec_roles, CreateUserDto, UpdateUserDto, User, UserFilter,
-    UserRepository,
+use shaku::{Component, Interface};
+use std::sync::Arc;
+use uuid::Uuid;
+
+use crate::{
+    shared::{
+        entities::{Pagination, DEFAULT_PAGE_SIZE},
+        errors::{AppError, Input},
+    },
+    user_filter,
+    users::{
+        dtos::from_string_vec_roles, CreateUserDto, UpdateUserDto, User, UserFilter,
+        UserRepository,
+    },
 };
 
 #[derive(Component)]
@@ -41,9 +43,8 @@ pub trait UserService: Interface {
     ) -> Result<Pagination<User>, AppError>;
 
     async fn create(&self, user: CreateUserDto) -> Result<User, AppError>;
-    async fn update(&self, id: &Uuid, user: UpdateUserDto)
-        -> Result<User, AppError>;
-    async fn remove(&self, id: &Uuid) -> Result<(), AppError>;
+    async fn update(&self, id: Uuid, user: UpdateUserDto) -> Result<User, AppError>;
+    async fn remove(&self, id: Uuid) -> Result<(), AppError>;
 }
 
 #[async_trait]
@@ -52,13 +53,28 @@ impl UserService for UserServiceImpl {
         &self,
         filter: UserFilter,
     ) -> Result<Pagination<User>, AppError> {
-        self.users.find_all(filter).await
+        let results = self.users.find_many(filter.clone()).await?;
+        let total = self.users.count(filter.clone()).await?;
+
+        let total_pages = (total as f64 / DEFAULT_PAGE_SIZE as f64).ceil() as u64;
+
+        Ok(Pagination {
+            total_pages,
+            items: results,
+            current_page: filter.page,
+            has_previous: filter.page > 1,
+            has_next: filter.page < total_pages,
+        })
     }
 
     async fn create(&self, mut input: CreateUserDto) -> Result<User, AppError> {
         let (user_by_rut, user_by_email) = tokio::try_join!(
-            self.users.find_by_rut(&input.rut),
-            self.users.find_by_email(&input.email)
+            self.users.find_one(user_filter! {
+                rut: input.rut.clone(),
+            }),
+            self.users.find_one(user_filter! {
+                email: input.email.clone()
+            })
         )?;
 
         if user_by_rut.is_some() {
@@ -97,15 +113,19 @@ impl UserService for UserServiceImpl {
 
     async fn update(
         &self,
-        id: &Uuid,
+        id: Uuid,
         input: UpdateUserDto,
     ) -> Result<User, AppError> {
-        let Some(mut user) = self.users.find_by_id(id).await? else {
-            return Err(AppError::ResourceNotFound(*id));
+        let Some(mut user) = self.users.find_by_id(&id).await? else {
+            return Err(AppError::ResourceNotFound(id));
         };
 
         if let Some(e) = input.email {
-            let email_exists = self.users.find_by_email(&e).await?.is_some();
+            let email_exists = self
+                .users
+                .find_one(user_filter! { email: e.clone() })
+                .await?
+                .is_some();
 
             if email_exists && user.email != e {
                 return Err(AppError::Conflict(Input {
@@ -129,11 +149,11 @@ impl UserService for UserServiceImpl {
         self.users.save(user).await
     }
 
-    async fn remove(&self, id: &Uuid) -> Result<(), AppError> {
-        if self.users.find_by_id(id).await?.is_none() {
-            return Err(AppError::ResourceNotFound(*id));
+    async fn remove(&self, id: Uuid) -> Result<(), AppError> {
+        if self.users.find_by_id(&id).await?.is_none() {
+            return Err(AppError::ResourceNotFound(id));
         }
 
-        self.users.delete(id).await
+        self.users.delete(&id).await
     }
 }

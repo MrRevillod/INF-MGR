@@ -1,3 +1,4 @@
+use sea_query::Iden;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Type};
 use uuid::Uuid;
@@ -6,17 +7,9 @@ use uuid::Uuid;
 #[serde(rename_all = "camelCase")]
 pub struct Enrollment {
     pub id: Uuid,
-
-    #[sqlx(rename = "student_id")]
     pub student_id: Uuid,
-
-    #[sqlx(rename = "course_id")]
     pub course_id: Uuid,
-
-    #[sqlx(rename = "practice_id")]
     pub practice_id: Option<Uuid>,
-
-    #[sqlx(rename = "student_scores")]
     pub student_scores: Vec<StudentScore>,
 }
 
@@ -27,3 +20,35 @@ pub struct StudentScore {
     pub evaluation_id: Uuid,
     pub score: f64,
 }
+
+pub enum Enrollments {
+    Table,
+    Id,
+    StudentId,
+    CourseId,
+    PracticeId,
+    StudentScores,
+}
+
+impl Iden for Enrollments {
+    fn unquoted(&self) -> &str {
+        match self {
+            Enrollments::Table => "enrollments",
+            Enrollments::Id => "id",
+            Enrollments::StudentId => "student_id",
+            Enrollments::CourseId => "course_id",
+            Enrollments::PracticeId => "practice_id",
+            Enrollments::StudentScores => "student_scores",
+        }
+    }
+}
+
+pub const ENROLLMENT_INSERT_COLUMNS: [Enrollments; 5] = [
+    Enrollments::Id,
+    Enrollments::StudentId,
+    Enrollments::CourseId,
+    Enrollments::PracticeId,
+    Enrollments::StudentScores,
+];
+
+pub const ENROLLMENT_UPDATE_COLUMNS: [Enrollments; 1] = [Enrollments::StudentScores];

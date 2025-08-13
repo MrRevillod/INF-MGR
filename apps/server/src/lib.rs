@@ -10,9 +10,7 @@ pub mod users {
     pub use controllers::UsersController;
     pub use dtos::{CreateUserDto, GetUsersQueryDto, UpdateUserDto, UserResponse};
     pub use entity::{Role, User};
-    pub use repository::{
-        PostgresUserRepository, UserFilter, UserRepository, UserWithCount,
-    };
+    pub use repository::{PostgresUserRepository, UserFilter, UserRepository};
 
     pub use service::{UserService, UserServiceImpl};
 }
@@ -66,7 +64,9 @@ pub mod practices {
 
     pub use dtos::{CreatePracticeDto, UpdatePracticeDto};
     pub use entity::Practice;
-    pub use repository::{PostgresPracticeRepository, PracticeRepository};
+    pub use repository::{
+        PostgresPracticeRepository, PracticeFilter, PracticeRepository,
+    };
     pub use service::{PracticeService, PracticeServiceImpl};
 }
 
@@ -74,9 +74,9 @@ pub mod shared {
     pub mod entities;
     pub mod errors;
 
-    use chrono::{DateTime, Utc};
-    use chrono_tz::America::Santiago;
     pub use errors::{AppError, AppResult};
+
+    pub mod macros;
 
     pub mod database;
     pub mod layers;
@@ -96,11 +96,6 @@ pub mod shared {
 
             Ok(())
         }
-    }
-
-    pub fn format_date(date: Option<DateTime<Utc>>) -> String {
-        date.map(|date| date.with_timezone(&Santiago).format("%d/%m/%y").to_string())
-            .unwrap_or_default()
     }
 }
 
