@@ -28,16 +28,16 @@ pub static MAILER_TEMPLATES: LazyLock<Templates> = LazyLock::new(|| {
             include_str!("../mailer/templates/practice/approval/supervisor.html"),
         ),
         (
-            "practice:approval:coordinator.html",
-            include_str!("../mailer/templates/practice/approval/coordinator.html"),
+            "practice:approval:teacher.html",
+            include_str!("../mailer/templates/practice/approval/teacher.html"),
         ),
         (
             "practice:approval:student.html",
             include_str!("../mailer/templates/practice/approval/student.html"),
         ),
         (
-            "practice:rejection:coordinator.html",
-            include_str!("../mailer/templates/practice/rejection/coordinator.html"),
+            "practice:rejection:teacher.html",
+            include_str!("../mailer/templates/practice/rejection/teacher.html"),
         ),
         (
             "practice:rejection:student.html",

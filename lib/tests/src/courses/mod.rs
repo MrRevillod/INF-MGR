@@ -16,7 +16,7 @@ use uuid::Uuid;
 #[tokio::test]
 async fn test_create_course_should_work() {
     let app = init_test_app().await;
-    let teacher_id = create_teacher(&app).await;
+    let teacher_id = create_teacher(&app, None).await;
 
     let new_course = CourseBuilder::new(&teacher_id).build();
 
@@ -50,7 +50,7 @@ async fn test_get_courses() {
 #[tokio::test]
 async fn test_update_course() {
     let app = init_test_app().await;
-    let teacher_id = create_teacher(&app).await;
+    let teacher_id = create_teacher(&app, None).await;
 
     let new_course = CourseBuilder::new(&teacher_id)
         .with_evaluations(vec![("Bitácoras Semanales", 50), ("Informe Final", 50)])
@@ -59,7 +59,7 @@ async fn test_update_course() {
     let created_course = create_course(&app, &new_course).await;
     let created_course_id = extract_resource_id(&created_course);
 
-    let new_teacher_id = create_teacher(&app).await;
+    let new_teacher_id = create_teacher(&app, None).await;
 
     let update_course_data = json!({
         "teacherId": new_teacher_id.to_string(),
@@ -83,7 +83,7 @@ async fn test_update_course() {
 #[tokio::test]
 async fn test_delete_course() {
     let app = init_test_app().await;
-    let teacher_id = create_teacher(&app).await;
+    let teacher_id = create_teacher(&app, None).await;
 
     let new_course = CourseBuilder::new(&teacher_id)
         .with_single_evaluation("Test Evaluation", 100)
@@ -99,7 +99,7 @@ async fn test_delete_course() {
 #[tokio::test]
 async fn test_delete_course_with_active_inscriptions_should_fail() {
     let app = init_test_app().await;
-    let teacher_id = create_teacher(&app).await;
+    let teacher_id = create_teacher(&app, None).await;
 
     let new_course = CourseBuilder::new(&teacher_id)
         .with_single_evaluation("Test Evaluation", 100)
@@ -108,7 +108,7 @@ async fn test_delete_course_with_active_inscriptions_should_fail() {
     let created_course = create_course(&app, &new_course).await;
     let created_course_id = extract_resource_id(&created_course);
 
-    let student_id = create_student(&app).await;
+    let student_id = create_student(&app, None).await;
     let enrollment_data = EnrollmentBuilder::new()
         .with_student_id(&student_id)
         .with_course_id(&created_course_id)
@@ -132,7 +132,7 @@ async fn test_delete_course_with_active_inscriptions_should_fail() {
 #[tokio::test]
 async fn test_create_course_invalid_year_too_low() {
     let app = init_test_app().await;
-    let teacher_id = create_teacher(&app).await;
+    let teacher_id = create_teacher(&app, None).await;
 
     let new_course = CourseBuilder::new(&teacher_id).with_year(1999).build();
 
@@ -164,7 +164,7 @@ async fn test_create_course_invalid_year_too_low() {
 #[tokio::test]
 async fn test_create_course_invalid_year_too_high() {
     let app = init_test_app().await;
-    let teacher_id = create_teacher(&app).await;
+    let teacher_id = create_teacher(&app, None).await;
 
     let new_course = json!({
         "year": 2101,
@@ -188,7 +188,7 @@ async fn test_create_course_invalid_year_too_high() {
 #[tokio::test]
 async fn test_create_course_invalid_code_format() {
     let app = init_test_app().await;
-    let teacher_id = create_teacher(&app).await;
+    let teacher_id = create_teacher(&app, None).await;
 
     let new_course = json!({
         "year": 2024,
@@ -226,7 +226,7 @@ async fn test_create_course_invalid_code_format() {
 #[tokio::test]
 async fn test_create_course_invalid_code_length() {
     let app = init_test_app().await;
-    let teacher_id = create_teacher(&app).await;
+    let teacher_id = create_teacher(&app, None).await;
 
     let new_course = json!({
         "year": 2024,
@@ -250,7 +250,7 @@ async fn test_create_course_invalid_code_length() {
 #[tokio::test]
 async fn test_create_course_name_too_short() {
     let app = init_test_app().await;
-    let teacher_id = create_teacher(&app).await;
+    let teacher_id = create_teacher(&app, None).await;
 
     let new_course = json!({
         "year": 2024,
@@ -274,7 +274,7 @@ async fn test_create_course_name_too_short() {
 #[tokio::test]
 async fn test_create_course_name_too_long() {
     let app = init_test_app().await;
-    let teacher_id = create_teacher(&app).await;
+    let teacher_id = create_teacher(&app, None).await;
 
     let long_name = "a".repeat(101);
 
@@ -300,7 +300,7 @@ async fn test_create_course_name_too_long() {
 #[tokio::test]
 async fn test_create_course_no_evaluations() {
     let app = init_test_app().await;
-    let teacher_id = create_teacher(&app).await;
+    let teacher_id = create_teacher(&app, None).await;
 
     let new_course = json!({
         "year": 2024,
@@ -319,7 +319,7 @@ async fn test_create_course_no_evaluations() {
 #[tokio::test]
 async fn test_create_course_evaluation_weights_not_sum_to_one() {
     let app = init_test_app().await;
-    let teacher_id = create_teacher(&app).await;
+    let teacher_id = create_teacher(&app, None).await;
 
     let new_course = json!({
         "year": 2024,
@@ -347,7 +347,7 @@ async fn test_create_course_evaluation_weights_not_sum_to_one() {
 #[tokio::test]
 async fn test_create_course_evaluation_name_too_short() {
     let app = init_test_app().await;
-    let teacher_id = create_teacher(&app).await;
+    let teacher_id = create_teacher(&app, None).await;
 
     let new_course = json!({
         "year": 2024,
@@ -371,7 +371,7 @@ async fn test_create_course_evaluation_name_too_short() {
 #[tokio::test]
 async fn test_create_course_evaluation_name_too_long() {
     let app = init_test_app().await;
-    let teacher_id = create_teacher(&app).await;
+    let teacher_id = create_teacher(&app, None).await;
 
     let long_evaluation_name = "a".repeat(101); // 101 characters, maximum is 100
 
@@ -397,7 +397,7 @@ async fn test_create_course_evaluation_name_too_long() {
 #[tokio::test]
 async fn test_create_course_evaluation_weight_too_low() {
     let app = init_test_app().await;
-    let teacher_id = create_teacher(&app).await;
+    let teacher_id = create_teacher(&app, None).await;
 
     let new_course = json!({
         "year": 2024,
@@ -421,7 +421,7 @@ async fn test_create_course_evaluation_weight_too_low() {
 #[tokio::test]
 async fn test_create_course_evaluation_weight_too_high() {
     let app = init_test_app().await;
-    let teacher_id = create_teacher(&app).await;
+    let teacher_id = create_teacher(&app, None).await;
 
     let new_course = json!({
         "year": 2024,
@@ -466,7 +466,7 @@ async fn test_create_course_invalid_teacher_id() {
 #[tokio::test]
 async fn test_create_course_duplicate() {
     let app = init_test_app().await;
-    let teacher_id = create_teacher(&app).await;
+    let teacher_id = create_teacher(&app, None).await;
 
     let code = generate_unique_code();
     let name = generate_unique_course_name();
@@ -506,7 +506,7 @@ async fn test_create_course_duplicate() {
 #[tokio::test]
 async fn test_update_course_invalid_teacher_id() {
     let app = init_test_app().await;
-    let teacher_id = create_teacher(&app).await;
+    let teacher_id = create_teacher(&app, None).await;
 
     // Create asignature
     let new_course = json!({
@@ -565,7 +565,7 @@ async fn test_update_nonexistent_asignature() {
 #[tokio::test]
 async fn test_create_course_valid_year_boundaries() {
     let app = init_test_app().await;
-    let teacher_id = create_teacher(&app).await;
+    let teacher_id = create_teacher(&app, None).await;
 
     // Test minimum year (2000)
     let min_year_asignature = json!({
@@ -619,7 +619,7 @@ async fn test_create_course_valid_year_boundaries() {
 #[tokio::test]
 async fn test_create_course_valid_name_boundaries() {
     let app = init_test_app().await;
-    let teacher_id = create_teacher(&app).await;
+    let teacher_id = create_teacher(&app, None).await;
 
     // Test minimum length (1 character)
     let min_name_asignature = json!({
@@ -672,7 +672,7 @@ async fn test_create_course_valid_name_boundaries() {
 #[tokio::test]
 async fn test_create_course_valid_evaluation_weight_boundaries() {
     let app = init_test_app().await;
-    let teacher_id = create_teacher(&app).await;
+    let teacher_id = create_teacher(&app, None).await;
 
     // Test minimum weight (1)
     let min_weight_asignature = json!({
@@ -707,7 +707,7 @@ async fn test_create_course_valid_evaluation_weight_boundaries() {
 #[tokio::test]
 async fn test_create_course_valid_evaluation_weight_boundaries_3_33() {
     let app = init_test_app().await;
-    let teacher_id = create_teacher(&app).await;
+    let teacher_id = create_teacher(&app, None).await;
 
     // Test weights distribution (33-33-34)
     let min_weight_asignature = json!({
@@ -740,7 +740,7 @@ async fn test_create_course_valid_evaluation_weight_boundaries_3_33() {
 #[tokio::test]
 async fn test_create_course_valid_evaluation_but_repeated_names() {
     let app = init_test_app().await;
-    let teacher_id = create_teacher(&app).await;
+    let teacher_id = create_teacher(&app, None).await;
 
     // Test repeated evaluation names
     let min_weight_asignature = json!({

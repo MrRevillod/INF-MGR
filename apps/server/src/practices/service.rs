@@ -1,5 +1,4 @@
 use async_trait::async_trait;
-use chrono::Utc;
 use serde_json::json;
 use services::event_queue::{Event, EventQueue};
 
@@ -110,12 +109,14 @@ impl PracticeService for PracticeServiceImpl {
             return Err(AppError::ResourceNotFound(*practice_id));
         }
 
-        let (course, _) = self.courses.get_by_id(&enrollment.course_id).await?;
+        let (course, teacher) =
+            self.courses.get_by_id(&enrollment.course_id).await?;
 
         let event_data = json!({
             "student": student,
             "practice": practice,
             "course": course,
+            "teacher": teacher,
         });
 
         self.event_queue

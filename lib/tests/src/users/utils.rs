@@ -78,9 +78,14 @@ pub async fn create_user(server: &TestServer, user: Value) -> Value {
     body.data
 }
 
-pub async fn create_teacher(server: &TestServer) -> String {
-    let user = UserBuilder::new().with_roles(vec!["teacher"]).build();
-    let data = create_user(server, user).await;
+pub async fn create_teacher(server: &TestServer, email: Option<String>) -> String {
+    let mut user = UserBuilder::new().with_roles(vec!["teacher"]);
+
+    if let Some(email) = email {
+        user = user.with_email(&email);
+    }
+
+    let data = create_user(server, user.build()).await;
 
     extract_resource_id(&data)
 }
@@ -92,12 +97,15 @@ pub async fn create_administrator(server: &TestServer) -> String {
     extract_resource_id(&data)
 }
 
-pub async fn create_student(server: &TestServer) -> String {
-    let user = UserBuilder::new()
+pub async fn create_student(server: &TestServer, email: Option<String>) -> String {
+    let mut user = UserBuilder::new()
         .with_roles(vec!["student"])
-        .with_email(&generate_unique_email())
-        .build();
-    let data = create_user(server, user).await;
+        .with_email(&generate_unique_email());
+
+    if let Some(email) = email {
+        user = user.with_email(&email);
+    }
+    let data = create_user(server, user.build()).await;
 
     extract_resource_id(&data)
 }

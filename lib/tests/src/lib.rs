@@ -83,6 +83,7 @@ pub async fn init_test_app() -> TestServer {
 }
 
 pub fn extract_resource_id(data: &Value) -> String {
+    dbg!(data);
     data.get("id")
         .and_then(|id| id.as_str())
         .map(String::from)

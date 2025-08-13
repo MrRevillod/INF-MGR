@@ -15,8 +15,10 @@ pub mod utils;
 pub async fn create_enrollment_and_practice() {
     let app = init_test_app().await;
 
-    let student_id = create_student(&app).await; // alu
-    let teacher_id = create_teacher(&app).await;
+    let student_id =
+        create_student(&app, Some("benjamintwo2002@gmail.com".to_string())).await; // alu
+    let teacher_id =
+        create_teacher(&app, Some("benjatwo2002@gmail.com".to_string())).await;
 
     let course_data = CourseBuilder::new(&teacher_id).build();
 
@@ -42,8 +44,10 @@ pub async fn create_enrollment_and_practice() {
         "description": "Test Description 6AM",
         "location": "Test Location 6AM",
         "supervisorName": "Test Supervisor 6AM",
-        "supervisorEmail": "mofodak313@bizmud.com",
-        "supervisorPhone": "1234567890"
+        "supervisorEmail": "bespinoza2021@alu.uct.cl",
+        "supervisorPhone": "1234567890",
+        "startDate": "2024-09-01T00:00:00Z",
+        "endDate": "2024-12-15T00:00:00Z",
     });
 
     let create_practice_res = app

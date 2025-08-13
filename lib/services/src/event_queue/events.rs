@@ -17,7 +17,9 @@ pub fn get_json<T: DeserializeOwned>(
     if let Some(v) = data.get(key) {
         return serde_json::from_value::<T>(v.clone());
     }
-    Err(serde_json::Error::custom("No se encontro la key"))
+    Err(serde_json::Error::custom(format!(
+        "{key}-No se encontro la key"
+    )))
 }
 
 pub fn format_date(date: String) -> String {
