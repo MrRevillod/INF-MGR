@@ -182,6 +182,10 @@ impl EnrollmentService for EnrollmentServiceImpl {
                 scores.into_iter().map(StudentScore::from).collect();
         }
 
+        if let Some(practice_id) = input.practice_id {
+            enrollment.practice_id = Some(Uuid::parse_str(&practice_id).unwrap());
+        }
+
         self.enrollments.save(enrollment).await
     }
 

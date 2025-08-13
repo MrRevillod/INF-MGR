@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use sea_query::Iden;
 use serde::{Deserialize, Serialize};
-use sqlx::{prelude::Type, FromRow};
+use sqlx::{FromRow, Type};
 use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, FromRow, Debug, Clone)]
@@ -45,17 +45,7 @@ pub enum Role {
     Secretary,
 }
 
-impl Role {
-    fn as_str(&self) -> &'static str {
-        match self {
-            Role::Administrator => "administrator",
-            Role::Student => "student",
-            Role::Teacher => "teacher",
-            Role::Secretary => "secretary",
-        }
-    }
-}
-
+#[allow(dead_code)]
 pub enum Users {
     Table,
     Id,

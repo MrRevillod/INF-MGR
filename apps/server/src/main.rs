@@ -21,8 +21,6 @@ use services::{
 use server::config::{CorsConfig, PostgresDbConfig};
 use server::container::DependencyContainer;
 
-pub const DEFAULT_PAGE_SIZE: usize = 10;
-
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let app = Application::builder()?;
@@ -59,7 +57,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     tokio::spawn(async move {
         if let Err(e) = sub_queue.subscribe().await {
-            eprintln!("Error in event subscriber: {}", e);
+            eprintln!("Error in event subscriber: {e}");
         }
     });
 

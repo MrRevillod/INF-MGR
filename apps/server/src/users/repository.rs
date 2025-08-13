@@ -48,7 +48,10 @@ pub trait UserRepository: Interface {
 #[async_trait]
 impl UserRepository for PostgresUserRepository {
     async fn find_many(&self, filter: UserFilter) -> Result<Vec<User>, AppError> {
-        let mut query = Query::select().from(Users::Table).to_owned();
+        let mut query = Query::select()
+            .expr(Expr::cust("*"))
+            .from(Users::Table)
+            .to_owned();
 
         if let Some(ids) = &filter.ids {
             query.and_where(Expr::col(Users::Id).is_in(ids.clone()));
@@ -67,7 +70,8 @@ impl UserRepository for PostgresUserRepository {
 
         query.order_by(Users::CreatedAt, Order::Desc);
         query.limit(DEFAULT_PAGE_SIZE);
-        query.offset((filter.page - 1) * DEFAULT_PAGE_SIZE);
+        // Avoid underflow when page == 0
+        query.offset(filter.page.saturating_sub(1) * DEFAULT_PAGE_SIZE);
 
         let (sql, values) = query.build_sqlx(PostgresQueryBuilder);
 
@@ -80,6 +84,7 @@ impl UserRepository for PostgresUserRepository {
 
     async fn find_one(&self, filter: UserFilter) -> Result<Option<User>, AppError> {
         let (sql, values) = Query::select()
+            .expr(Expr::cust("*"))
             .from(Users::Table)
             .apply_if(filter.id, |q, value| {
                 q.and_where(Expr::col(Users::Id).eq(value));
@@ -101,6 +106,7 @@ impl UserRepository for PostgresUserRepository {
 
     async fn find_by_id(&self, user_id: &Uuid) -> Result<Option<User>, AppError> {
         let (sql, values) = Query::select()
+            .expr(Expr::cust("*"))
             .from(Users::Table)
             .and_where(Expr::col(Users::Id).eq(*user_id))
             .build_sqlx(PostgresQueryBuilder);
@@ -163,7 +169,7 @@ impl UserRepository for PostgresUserRepository {
             .to_owned();
 
         if let Some(search) = filter.search {
-            let search_pattern = format!("%{}%", search);
+            let search_pattern = format!("%{search}%");
             query = query
                 .and_where(
                     Expr::col(Users::Name)

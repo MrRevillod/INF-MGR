@@ -41,7 +41,10 @@ impl CourseRepository for PostgresCourseRepository {
         &self,
         filter: CourseFilter,
     ) -> Result<Vec<Course>, AppError> {
-        let mut query = Query::select().from(Courses::Table).to_owned();
+        let mut query = Query::select()
+            .expr(Expr::cust("*"))
+            .from(Courses::Table)
+            .to_owned();
 
         if let Some(code) = filter.code {
             query.and_where(Expr::col(Courses::Code).eq(code));
@@ -68,6 +71,7 @@ impl CourseRepository for PostgresCourseRepository {
 
     async fn find_by_id(&self, id: &Uuid) -> Result<Option<Course>, AppError> {
         let (sql, values) = Query::select()
+            .expr(Expr::cust("*"))
             .from(Courses::Table)
             .and_where(Expr::col(Courses::Id).eq(*id))
             .build_sqlx(PostgresQueryBuilder);

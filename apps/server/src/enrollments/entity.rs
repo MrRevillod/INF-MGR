@@ -21,6 +21,7 @@ pub struct StudentScore {
     pub score: f64,
 }
 
+#[allow(dead_code)]
 pub enum Enrollments {
     Table,
     Id,
@@ -42,13 +43,3 @@ impl Iden for Enrollments {
         }
     }
 }
-
-pub const ENROLLMENT_INSERT_COLUMNS: [Enrollments; 5] = [
-    Enrollments::Id,
-    Enrollments::StudentId,
-    Enrollments::CourseId,
-    Enrollments::PracticeId,
-    Enrollments::StudentScores,
-];
-
-pub const ENROLLMENT_UPDATE_COLUMNS: [Enrollments; 1] = [Enrollments::StudentScores];

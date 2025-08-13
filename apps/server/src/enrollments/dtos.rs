@@ -74,6 +74,9 @@ impl From<CreateEnrollmentDto> for Enrollment {
 pub struct UpdateEnrollmentDto {
     #[validate(nested)]
     pub student_scores: Option<Vec<StudentScoreDto>>,
+
+    #[validate(custom(function = validate_uuid))]
+    pub practice_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]

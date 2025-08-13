@@ -42,7 +42,10 @@ impl EnrollmentRepository for PostgresEnrollmentRepository {
         &self,
         filter: EnrollmentFilter,
     ) -> Result<Vec<Enrollment>, AppError> {
-        let mut query = Query::select().from(Enrollments::Table).to_owned();
+        let mut query = Query::select()
+            .expr(Expr::cust("*"))
+            .from(Enrollments::Table)
+            .to_owned();
 
         if let Some(user_id) = filter.student_id {
             query.and_where(Expr::col(Enrollments::StudentId).eq(user_id));
@@ -63,6 +66,7 @@ impl EnrollmentRepository for PostgresEnrollmentRepository {
 
     async fn find_by_id(&self, id: &Uuid) -> Result<Option<Enrollment>, AppError> {
         let (sql, values) = Query::select()
+            .expr(Expr::cust("*"))
             .from(Enrollments::Table)
             .and_where(Expr::col(Enrollments::Id).eq(*id))
             .build_sqlx(PostgresQueryBuilder);
@@ -79,6 +83,7 @@ impl EnrollmentRepository for PostgresEnrollmentRepository {
             INSERT INTO enrollments (id, student_id, course_id, practice_id, student_scores)
             VALUES ($1, $2, $3, $4, $5)
             ON CONFLICT (id) DO UPDATE SET
+                practice_id = EXCLUDED.practice_id,
                 student_scores = EXCLUDED.student_scores
             RETURNING *
         "#;

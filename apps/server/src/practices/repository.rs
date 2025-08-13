@@ -44,7 +44,10 @@ impl PracticeRepository for PostgresPracticeRepository {
         &self,
         filter: PracticeFilter,
     ) -> Result<Vec<Practice>, AppError> {
-        let mut query = Query::select().from(Practices::Table).to_owned();
+        let mut query = Query::select()
+            .expr(Expr::cust("*"))
+            .from(Practices::Table)
+            .to_owned();
 
         if let Some(ids) = &filter.ids {
             query.and_where(Expr::col(Practices::Id).is_in(ids.clone()));
@@ -61,6 +64,7 @@ impl PracticeRepository for PostgresPracticeRepository {
 
     async fn find_by_id(&self, id: &Uuid) -> Result<Option<Practice>, AppError> {
         let (sql, values) = Query::select()
+            .expr(Expr::cust("*"))
             .from(Practices::Table)
             .and_where(Expr::col(Practices::Id).eq(*id))
             .build_sqlx(PostgresQueryBuilder);

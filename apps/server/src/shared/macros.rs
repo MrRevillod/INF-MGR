@@ -4,7 +4,7 @@ macro_rules! filter {
         {
             let mut filter = $struct_name::default();
             $(
-                filter.$field = Some(crate::filter!(@assign $field $(: $value)?));
+                filter.$field = Some($crate::filter!(@assign $field $(: $value)?));
             )*
             filter
         }
@@ -30,27 +30,27 @@ macro_rules! filter {
 #[macro_export]
 macro_rules! user_filter {
     ($($field:ident $(: $value:expr)?),* $(,)?) => {
-        crate::filter!(UserFilter, { $($field $(: $value)?),* })
+        $crate::filter!(UserFilter, { $($field $(: $value)?),* })
     };
 }
 
 #[macro_export]
 macro_rules! practice_filter {
     ($($field:ident $(: $value:expr)?),* $(,)?) => {
-        crate::filter!(PracticeFilter, { $($field $(: $value)?),* })
+        $crate::filter!(PracticeFilter, { $($field $(: $value)?),* })
     };
 }
 
 #[macro_export]
 macro_rules! enrollment_filter {
     ($($field:ident $(: $value:expr)?),* $(,)?) => {
-        crate::filter!(EnrollmentFilter, { $($field $(: $value)?),* })
+        $crate::filter!(EnrollmentFilter, { $($field $(: $value)?),* })
     };
 }
 
 #[macro_export]
 macro_rules! course_filter {
     ($($field:ident $(: $value:expr)?),* $(,)?) => {
-        crate::filter!(CourseFilter, { $($field $(: $value)?),* })
+        $crate::filter!(CourseFilter, { $($field $(: $value)?),* })
     };
 }
