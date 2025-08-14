@@ -68,7 +68,7 @@ pub async fn init_test_app() -> TestServer {
 
     tokio::spawn(async move {
         if let Err(e) = sub_queue.subscribe().await {
-            eprintln!("Error in event subscriber: {}", e);
+            eprintln!("Error in event subscriber: {e}");
         }
     });
 

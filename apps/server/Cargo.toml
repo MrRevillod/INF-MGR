@@ -20,15 +20,12 @@ sword = { git = "https://github.com/MrRevillod/sword", branch = "dev" }
 services = { path = "../../lib/services" }
 
 chrono = { version = "0.4.41", features = ["serde"] }
-chrono-tz = "0.10.4"
-
 uuid = { version = "1.17.0", features = ["serde", "v4"] }
-
-jsonwebtoken = "9.3.1"
 
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.140"
 
+sea-query = { version = "1.0.0-rc.1", features = ["derive"] }
 sqlx = { version = "0.8.5", features = [
     "runtime-tokio",
     "postgres",
@@ -36,6 +33,15 @@ sqlx = { version = "0.8.5", features = [
     "uuid",
     "derive",
     "migrate",
+] }
+
+sea-query-sqlx = { version = "0.8.0-rc.8", features = [
+    "sqlx-postgres",
+    "with-chrono",
+    "with-uuid",
+    "runtime-tokio",
+    "postgres-array",
+    "postgres-vector",
 ] }
 
 tower-http = { version = "0.6.6", features = ["trace", "cors"] }

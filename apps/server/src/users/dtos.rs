@@ -127,7 +127,8 @@ impl From<GetUsersQueryDto> for UserFilter {
     fn from(dto: GetUsersQueryDto) -> Self {
         UserFilter {
             search: dto.search,
-            page: dto.page.unwrap_or(1) as i64,
+            page: dto.page.unwrap_or(1) as u64,
+            ..UserFilter::default()
         }
     }
 }

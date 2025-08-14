@@ -1,16 +1,19 @@
 use async_trait::async_trait;
 use shaku::{Component, Interface};
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 use uuid::Uuid;
 
 use crate::{
+    course_filter,
     courses::{
         Course, CourseFilter, CourseRepository, CourseWithStaff, CreateCourseDto,
         UpdateCourseDto,
     },
+    enrollment_filter,
     enrollments::{EnrollmentFilter, EnrollmentRepository},
     shared::errors::{AppError, Input},
-    users::UserRepository,
+    user_filter,
+    users::{User, UserFilter, UserRepository},
 };
 
 #[derive(Component)]
@@ -44,19 +47,22 @@ pub trait CourseService: Interface {
 #[async_trait]
 impl CourseService for CourseServiceImpl {
     async fn get_all(&self) -> Result<Vec<CourseWithStaff>, AppError> {
-        let courses = self.courses.find(CourseFilter::default()).await?;
-
+        let courses = self.courses.find_many(CourseFilter::default()).await?;
         let teacher_ids = courses.iter().map(|c| c.teacher_id).collect::<Vec<_>>();
-        let teachers = self.users.find_by_ids(&teacher_ids).await?;
+
+        let teachers = self
+            .users
+            .find_many(user_filter! { ids: teacher_ids })
+            .await?;
+
+        let teachers_map: HashMap<Uuid, &User> =
+            teachers.iter().map(|t| (t.id, t)).collect();
 
         let mut result = vec![];
 
-        for couse in courses {
-            for teacher in &teachers {
-                if couse.teacher_id == teacher.id {
-                    result.push((couse.clone(), teacher.clone()));
-                    break;
-                }
+        for course in courses {
+            if let Some(teacher) = teachers_map.get(&course.teacher_id) {
+                result.push((course, (*teacher).clone()));
             }
         }
 
@@ -80,14 +86,13 @@ impl CourseService for CourseServiceImpl {
     async fn create(&self, input: CreateCourseDto) -> Result<Course, AppError> {
         let course = Course::from(input);
 
-        let filter = CourseFilter {
-            code: Some(course.code.clone()),
-            name: Some(course.name.clone()),
-            year: Some(course.year),
-            teacher_id: None,
+        let filter = course_filter! {
+            code: course.code.clone(),
+            name: course.name.clone(),
+            year: course.year,
         };
 
-        if !self.courses.find(filter).await?.is_empty() {
+        if !self.courses.find_many(filter).await?.is_empty() {
             return Err(AppError::Conflict(Input {
                 message: "Ya existe un curso con el mismo código o nombre y año"
                     .to_string(),
@@ -131,12 +136,11 @@ impl CourseService for CourseServiceImpl {
             return Err(AppError::ResourceNotFound(*id));
         };
 
-        let filter = EnrollmentFilter {
-            course_id: Some(course.id),
-            ..Default::default()
+        let filter = enrollment_filter! {
+            course_id: course.id,
         };
 
-        if !self.enrollments.find_all(filter).await?.is_empty() {
+        if !self.enrollments.find_many(filter).await?.is_empty() {
             return Err(AppError::InvalidInput(Input {
                 field: "courseId".to_string(),
                 message: "No se puede eliminar un curso con inscripciones activas"

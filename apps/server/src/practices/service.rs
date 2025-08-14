@@ -9,7 +9,7 @@ use uuid::Uuid;
 
 use crate::{
     courses::CourseService,
-    enrollments::EnrollmentService,
+    enrollments::{EnrollmentService, UpdateEnrollmentDto},
     practices::{
         CreatePracticeDto, Practice, PracticeRepository, UpdatePracticeDto,
     },
@@ -49,7 +49,6 @@ pub trait PracticeService: Interface {
     ) -> Result<Practice, AppError>;
 
     async fn remove(&self, id: &Uuid) -> Result<(), AppError>;
-    async fn practice_exists(&self, id: &Uuid) -> Result<bool, AppError>;
 
     async fn approve(
         &self,
@@ -71,15 +70,21 @@ impl PracticeService for PracticeServiceImpl {
     ) -> Result<Practice, AppError> {
         let practice = Practice::from(input);
 
-        let (mut enrollment, student, _) =
-            self.enrollments.get_by_id(&enrollment_id).await?;
+        let (enrollment, student, _) =
+            self.enrollments.get_by_id(enrollment_id).await?;
 
         let (course, _) = self.courses.get_by_id(&enrollment.course_id).await?;
 
         let practice = self.practices.save(practice).await?;
 
-        enrollment.practice_id = Some(practice.id);
-        let enrollment = self.enrollments.save(enrollment).await?;
+        let enrollment = {
+            let data = UpdateEnrollmentDto {
+                practice_id: Some(practice.id.to_string()),
+                student_scores: None,
+            };
+
+            self.enrollments.update(enrollment_id, data).await?
+        };
 
         let event_data = json!({
             "student": student,
@@ -102,6 +107,8 @@ impl PracticeService for PracticeServiceImpl {
     ) -> AppResult<Practice> {
         let (enrollment, student, practice) =
             self.enrollments.get_by_id(enrollment_id).await?;
+
+        dbg!(&practice);
 
         let mut practice =
             practice.ok_or(AppError::ResourceNotFound(*practice_id))?;
@@ -182,12 +189,5 @@ impl PracticeService for PracticeServiceImpl {
         }
 
         self.practices.delete(id).await
-    }
-
-    async fn practice_exists(&self, id: &Uuid) -> Result<bool, AppError> {
-        match self.practices.find_by_id(id).await? {
-            Some(_) => Ok(true),
-            None => Ok(false),
-        }
     }
 }

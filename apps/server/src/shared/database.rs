@@ -32,7 +32,7 @@ impl PostgresDatabase {
             .run(self.get_pool())
             .await
         {
-            eprintln!("Error running migrations: {e}");
+            tracing::error!("Error running migrations: {e}");
         };
 
         Ok(())

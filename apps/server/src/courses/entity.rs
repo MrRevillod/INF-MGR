@@ -1,3 +1,4 @@
+use sea_query::Iden;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Type};
 use uuid::Uuid;
@@ -28,4 +29,29 @@ pub struct CourseEvaluation {
 pub enum CourseStatus {
     Active,
     Completed,
+}
+
+#[allow(dead_code)]
+pub enum Courses {
+    Table,
+    Id,
+    Year,
+    Code,
+    Name,
+    CourseStatus,
+    TeacherId,
+}
+
+impl Iden for Courses {
+    fn unquoted(&self) -> &str {
+        match self {
+            Courses::Table => "courses",
+            Courses::Id => "id",
+            Courses::Year => "year",
+            Courses::Code => "code",
+            Courses::Name => "name",
+            Courses::CourseStatus => "course_status",
+            Courses::TeacherId => "teacher_id",
+        }
+    }
 }

@@ -1,6 +1,7 @@
 use chrono::{DateTime, Utc};
+use sea_query::Iden;
 use serde::{Deserialize, Serialize};
-use sqlx::{prelude::Type, FromRow};
+use sqlx::{FromRow, Type};
 use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, FromRow, Debug, Clone)]
@@ -24,6 +25,14 @@ impl User {
     pub fn is_teacher(&self) -> bool {
         self.roles.contains(&Role::Teacher)
     }
+
+    pub fn is_administrator(&self) -> bool {
+        self.roles.contains(&Role::Administrator)
+    }
+
+    pub fn is_secretary(&self) -> bool {
+        self.roles.contains(&Role::Secretary)
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Type, PartialEq)]
@@ -34,4 +43,33 @@ pub enum Role {
     Student,
     Teacher,
     Secretary,
+}
+
+#[allow(dead_code)]
+pub enum Users {
+    Table,
+    Id,
+    Rut,
+    Name,
+    Email,
+    Password,
+    Roles,
+    CreatedAt,
+    DeletedAt,
+}
+
+impl Iden for Users {
+    fn unquoted(&self) -> &str {
+        match self {
+            Users::Table => "users",
+            Users::Id => "id",
+            Users::Rut => "rut",
+            Users::Name => "name",
+            Users::Email => "email",
+            Users::Password => "password",
+            Users::Roles => "roles",
+            Users::CreatedAt => "created_at",
+            Users::DeletedAt => "deleted_at",
+        }
+    }
 }
