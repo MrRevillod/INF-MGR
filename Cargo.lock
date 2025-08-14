@@ -2247,6 +2247,8 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "bcrypt",
+ "chrono",
+ "chrono-tz 0.10.4",
  "lettre",
  "serde",
  "serde_json",
@@ -2753,6 +2755,7 @@ version = "0.1.0"
 dependencies = [
  "axum",
  "axum-test",
+ "chrono",
  "rand 0.9.1",
  "serde",
  "serde_json",

@@ -13,6 +13,8 @@ pub mod courses;
 #[cfg(test)]
 pub mod enrollments;
 #[cfg(test)]
+pub mod practices;
+#[cfg(test)]
 pub mod users;
 
 use server::{
@@ -83,6 +85,7 @@ pub async fn init_test_app() -> TestServer {
 }
 
 pub fn extract_resource_id(data: &Value) -> String {
+    dbg!(data);
     data.get("id")
         .and_then(|id| id.as_str())
         .map(String::from)

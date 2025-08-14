@@ -17,8 +17,8 @@ pub struct Practice {
     pub supervisor_email: String,
     pub supervisor_phone: String,
 
-    pub start_date: Option<DateTime<Utc>>,
-    pub end_date: Option<DateTime<Utc>>,
+    pub start_date: DateTime<Utc>,
+    pub end_date: DateTime<Utc>,
 
     pub is_approved: bool,
 }
