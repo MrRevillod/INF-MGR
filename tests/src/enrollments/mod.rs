@@ -6,7 +6,9 @@ use crate::{
     courses::utils::{CourseBuilder, create_course, delete_course},
     enrollments::utils::{EnrollmentBuilder, create_enrollment, delete_enrollment},
     extract_resource_id, init_test_app,
-    users::utils::{create_student, create_teacher, delete_user},
+    users::utils::{
+        create_student, create_teacher, delete_user, generate_unique_email,
+    },
 };
 
 pub mod utils;
@@ -15,10 +17,8 @@ pub mod utils;
 pub async fn create_enrollment_and_practice() {
     let app = init_test_app().await;
 
-    let student_id =
-        create_student(&app, Some("benjamintwo2002@gmail.com".to_string())).await; // alu
-    let teacher_id =
-        create_teacher(&app, Some("benjatwo2002@gmail.com".to_string())).await;
+    let student_id = create_student(&app, Some(generate_unique_email())).await; // alu
+    let teacher_id = create_teacher(&app, Some(generate_unique_email())).await;
 
     let course_data = CourseBuilder::new(&teacher_id).build();
 
@@ -44,8 +44,8 @@ pub async fn create_enrollment_and_practice() {
         "description": "Test Description 6AM",
         "location": "Test Location 6AM",
         "supervisorName": "Test Supervisor 6AM",
-        "supervisorEmail": "bespinoza2021@alu.uct.cl",
-        "supervisorPhone": "1234567890",
+        "supervisorEmail": generate_unique_email(),
+        "supervisorPhone": "+56912345678",
         "startDate": "2024-09-01T00:00:00Z",
         "endDate": "2024-12-15T00:00:00Z",
     });

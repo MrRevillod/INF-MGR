@@ -5,8 +5,7 @@ edition = "2024"
 
 [dependencies]
 
-server = { path = "../../apps/server" }
-services = { path = "../services" }
+server = { path = "../apps/server" }
 tokio = { version = "1.46.1", features = ["full"] }
 sword = { git = "https://github.com/MrRevillod/sword", branch = "dev" }
 axum = "0.8.4"
@@ -27,4 +26,5 @@ sqlx = { version = "0.8.5", features = [
     "derive",
     "migrate",
 ] }
+
 chrono = "0.4.41"

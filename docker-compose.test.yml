@@ -3,7 +3,7 @@ services:
     container_name: inf_mgr_backend_test
     build:
       context: .
-      dockerfile: ./lib/tests/Dockerfile
+      dockerfile: ./tests/Dockerfile
     env_file:
       - .env.test
     ports:
@@ -19,7 +19,7 @@ services:
       - ./documents:/app/documents
     environment:
       - DOCUMENTS_DIR=/app/documents
-    command: sh -c "cd /app/lib/tests && ln -sf ../../apps/server/config config && tail -f /dev/null"
+    command: sh -c "cd /app/tests && ln -sf ../apps/server/config config && tail -f /dev/null"
 
   postgres_test:
     container_name: inf_mgr_postgres_test

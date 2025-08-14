@@ -11,7 +11,7 @@ use server::{
     users::UsersController,
 };
 
-use services::{
+use server::shared::services::{
     event_queue::{EventSubscriber, SubscriberServices, TokioEventSender},
     mailer::{Mailer, MailerConfig},
     printer::Printer,

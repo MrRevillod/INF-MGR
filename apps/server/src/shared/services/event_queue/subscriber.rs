@@ -1,9 +1,9 @@
 use serde_json::Value;
 use std::sync::Arc;
-use tokio::sync::{Mutex, mpsc::Receiver};
+use tokio::sync::{mpsc::Receiver, Mutex};
 
-use crate::{
-    event_queue::{Event, format_date, get_json},
+use crate::shared::services::{
+    event_queue::{format_date, get_json, Event},
     mailer::{MailTo, Mailer},
     printer::{PrintOptions, Printer},
     templates::RawContext,

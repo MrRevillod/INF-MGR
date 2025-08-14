@@ -1,11 +1,13 @@
 use axum_test::TestServer;
 use serde_json::Value;
-use services::{
+
+use server::shared::services::{
     event_queue::{EventSubscriber, SubscriberServices, TokioEventSender},
     mailer::{Mailer, MailerConfig},
     printer::Printer,
     templates::TemplateConfig,
 };
+
 use sword::prelude::Application;
 
 #[cfg(test)]
@@ -85,7 +87,6 @@ pub async fn init_test_app() -> TestServer {
 }
 
 pub fn extract_resource_id(data: &Value) -> String {
-    dbg!(data);
     data.get("id")
         .and_then(|id| id.as_str())
         .map(String::from)

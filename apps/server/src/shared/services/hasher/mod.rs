@@ -1,4 +1,4 @@
-use crate::errors::{HasherError, ServiceError};
+use crate::shared::services::errors::{HasherError, ServiceError};
 use shaku::{Component, Interface};
 
 const PASSWORD_HASH_COST: u32 = 10;

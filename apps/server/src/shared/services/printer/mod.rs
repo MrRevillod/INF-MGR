@@ -1,6 +1,6 @@
 use std::{env::var, fs, path::Path, process::Command};
 
-use crate::{
+use crate::shared::services::{
     errors::{PrinterError, ServiceError},
     templates::*,
 };
@@ -29,9 +29,19 @@ impl Printer {
         let template = self.template_ctx.render(opts.template, opts.context)?;
 
         let template_dir =
-            Path::new(env!("CARGO_MANIFEST_DIR")).join("src/printer/templates");
+            Path::new("/app/apps/server/src/shared/services/printer/templates");
 
         let temp_file = template_dir.join(format!("{}.typ", opts.doc_id));
+
+        if !template_dir.exists() {
+            return Err(ServiceError::Printer {
+                source: std::io::Error::new(
+                    std::io::ErrorKind::NotFound,
+                    format!("Template directory not found: {:?}", template_dir),
+                )
+                .into(),
+            });
+        }
 
         let out_file = format!(
             "{}/{}.pdf",

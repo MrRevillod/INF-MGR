@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use shaku::{Component, Interface};
 use tokio::sync::mpsc::Sender;
 
-use crate::event_queue::Event;
+use crate::shared::services::event_queue::Event;
 
 #[derive(Component)]
 #[shaku(interface = EventSender)]

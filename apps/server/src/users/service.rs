@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use serde_json::json;
 
-use services::{
+use crate::shared::services::{
     event_queue::{Event, EventQueue},
     hasher::PasswordHasher,
 };
