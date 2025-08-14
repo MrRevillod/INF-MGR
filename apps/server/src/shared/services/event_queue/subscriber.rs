@@ -99,7 +99,7 @@ impl EventSubscriber {
                     mailer.send(MailTo {
                         subject: "Práctica Aprobada",
                         template: "practice:approval:teacher",
-                        email: teacher.name,
+                        email: teacher.email,
                         context: email_context.clone(),
                     }),
                 )?;
