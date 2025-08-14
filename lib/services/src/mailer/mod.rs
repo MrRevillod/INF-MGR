@@ -2,7 +2,8 @@ mod context;
 pub use context::{MailTo, MailerConfig};
 
 use lettre::{
-    Message, SmtpTransport, Transport, message::header::ContentType,
+    Message, SmtpTransport, Transport,
+    message::{Mailbox, header::ContentType},
     transport::smtp::authentication::Credentials,
 };
 
@@ -49,9 +50,18 @@ impl Mailer {
         let template_name = format!("{}.html", mail_to.template);
         let template = self.template_ctx.render(&template_name, mail_to.context)?;
 
+        let from = email_from_fmt
+            .parse::<Mailbox>()
+            .map_err(|source| MailerError::Address { source })?;
+
+        let to = mail_to
+            .email
+            .parse::<Mailbox>()
+            .map_err(|source| MailerError::Address { source })?;
+
         let message = Message::builder()
-            .from(email_from_fmt.parse().unwrap())
-            .to(mail_to.email.parse().unwrap())
+            .from(from)
+            .to(to)
             .subject(mail_to.subject)
             .header(ContentType::TEXT_HTML)
             .body(template)

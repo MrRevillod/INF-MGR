@@ -57,7 +57,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     tokio::spawn(async move {
         if let Err(e) = sub_queue.subscribe().await {
-            eprintln!("Error in event subscriber: {e}");
+            tracing::error!("Error in event subscriber: {e}");
         }
     });
 

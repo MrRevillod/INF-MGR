@@ -1,7 +1,10 @@
 use bcrypt::BcryptError;
-use lettre::address::AddressError;
-use lettre::error::Error as LettreError;
-use lettre::transport::smtp::Error as SmtpError;
+
+use lettre::{
+    address::AddressError, error::Error as LettreError,
+    transport::smtp::Error as SmtpError,
+};
+
 use tera::Error as TeraError;
 use thiserror::Error;
 

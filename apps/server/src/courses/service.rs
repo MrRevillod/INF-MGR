@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use shaku::{Component, Interface};
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 use uuid::Uuid;
 
 use crate::{
@@ -13,7 +13,7 @@ use crate::{
     enrollments::{EnrollmentFilter, EnrollmentRepository},
     shared::errors::{AppError, Input},
     user_filter,
-    users::{UserFilter, UserRepository},
+    users::{User, UserFilter, UserRepository},
 };
 
 #[derive(Component)]
@@ -55,14 +55,14 @@ impl CourseService for CourseServiceImpl {
             .find_many(user_filter! { ids: teacher_ids })
             .await?;
 
+        let teachers_map: HashMap<Uuid, &User> =
+            teachers.iter().map(|t| (t.id, t)).collect();
+
         let mut result = vec![];
 
-        for couse in courses {
-            for teacher in &teachers {
-                if couse.teacher_id == teacher.id {
-                    result.push((couse.clone(), teacher.clone()));
-                    break;
-                }
+        for course in courses {
+            if let Some(teacher) = teachers_map.get(&course.teacher_id) {
+                result.push((course, (*teacher).clone()));
             }
         }
 

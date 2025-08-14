@@ -80,6 +80,8 @@ impl PracticeRepository for PostgresPracticeRepository {
         let (sql, values) = Query::insert()
             .into_table(Practices::Table)
             .columns(PRACTICE_INSERT_COLUMNS)
+            // SAFETY: values_panic is safe here because we control the input data
+            // and ensure proper types. Consider refactoring to use values() with proper error handling
             .values_panic(vec![
                 practice.id.into(),
                 practice.enterprise_name.into(),

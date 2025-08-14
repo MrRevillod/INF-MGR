@@ -62,7 +62,7 @@ impl From<AppError> for HttpResponse {
             }
 
             _ => {
-                eprintln!("Internal AppError: {error:?}");
+                tracing::error!("Internal AppError: {error:?}");
 
                 HttpResponse::InternalServerError()
                     .data(json!({ "error": "Error interno del servidor" }))

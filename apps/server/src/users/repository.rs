@@ -70,7 +70,7 @@ impl UserRepository for PostgresUserRepository {
 
         query.order_by(Users::CreatedAt, Order::Desc);
         query.limit(DEFAULT_PAGE_SIZE);
-        // Avoid underflow when page == 0
+
         query.offset(filter.page.saturating_sub(1) * DEFAULT_PAGE_SIZE);
 
         let (sql, values) = query.build_sqlx(PostgresQueryBuilder);
