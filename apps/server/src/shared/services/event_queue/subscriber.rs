@@ -1,9 +1,9 @@
-use serde_json::Value;
 use std::sync::Arc;
 use tokio::sync::{mpsc::Receiver, Mutex};
+use uuid::Uuid;
 
 use crate::shared::services::{
-    event_queue::{format_date, get_json, Event},
+    event_queue::{format_date, Event},
     mailer::{MailTo, Mailer},
     printer::{PrintOptions, Printer},
     templates::RawContext,
@@ -50,55 +50,30 @@ impl EventSubscriber {
         printer: Arc<Printer>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         match event {
-            Event::PracticeApproved(data) => {
-                let student = get_json::<Value>(&data, "student")?;
-                let practice = get_json::<Value>(&data, "practice")?;
-                let course = get_json::<Value>(&data, "course")?;
-                let teacher = get_json::<Value>(&data, "teacher")?;
-                let email_student = get_json::<String>(&student, "email")?;
-                let email_teacher = get_json::<String>(&teacher, "email")?;
-                let email_supervisor =
-                    get_json::<String>(&practice, "supervisorEmail")?;
-
+            Event::PracticeApproved((student, practice, course, teacher)) => {
                 let enterprise_auth_pdf_ctx: RawContext = vec![
-                    ("student_name", get_json::<String>(&student, "name")?),
-                    ("course_name", get_json::<String>(&course, "name")?),
-                    ("course_code", get_json::<String>(&course, "code")?),
-                    (
-                        "enterprise_name",
-                        get_json::<String>(&practice, "enterpriseName")?,
-                    ),
-                    ("location", get_json::<String>(&practice, "location")?),
-                    (
-                        "start_date",
-                        format_date(get_json::<String>(&practice, "startDate")?),
-                    ),
-                    (
-                        "end_date",
-                        format_date(get_json::<String>(&practice, "endDate")?),
-                    ),
-                    (
-                        "supervisor_name",
-                        get_json::<String>(&practice, "supervisorName")?,
-                    ),
-                    (
-                        "supervisor_email",
-                        get_json::<String>(&practice, "supervisorEmail")?,
-                    ),
-                    ("teacher_name", get_json::<String>(&teacher, "name")?),
+                    ("student_name", student.name),
+                    ("course_name", course.name),
+                    ("course_code", course.code),
+                    ("enterprise_name", practice.enterprise_name),
+                    ("location", practice.location),
+                    ("start_date", format_date(practice.start_date.to_string())),
+                    ("end_date", format_date(practice.end_date.to_string())),
+                    ("supervisor_name", practice.supervisor_name),
+                    ("supervisor_email", practice.supervisor_email.clone()),
+                    ("teacher_name", teacher.name.clone()),
                 ];
 
                 let pdf_url = printer
                     .print(PrintOptions {
-                        doc_id: get_json::<String>(&practice, "id")?,
+                        doc_id: practice.id.to_string(),
                         template: "document:practice:authorization",
                         context: enterprise_auth_pdf_ctx.clone(),
                     })
                     .await?;
-                let supervisor_evaluation_url = format!(
-                    "/practices/{}/evaluation/supervisor",
-                    get_json::<String>(&practice, "id")?
-                );
+
+                let supervisor_evaluation_url =
+                    format!("/practices/{}/evaluation/supervisor", practice.id);
 
                 let mut email_context = enterprise_auth_pdf_ctx.clone();
 
@@ -111,82 +86,67 @@ impl EventSubscriber {
                 tokio::try_join!(
                     mailer.send(MailTo {
                         subject: "Información de Práctica Aprobada",
-                        email: email_supervisor,
                         template: "practice:approval:supervisor",
+                        email: practice.supervisor_email.clone(),
                         context: email_context.clone(),
                     }),
                     mailer.send(MailTo {
                         subject: "Práctica Aprobada",
-                        email: email_student,
                         template: "practice:approval:student",
+                        email: student.email,
                         context: email_context.clone(),
                     }),
                     mailer.send(MailTo {
                         subject: "Práctica Aprobada",
-                        email: email_teacher,
                         template: "practice:approval:teacher",
+                        email: teacher.name,
                         context: email_context.clone(),
                     }),
                 )?;
-
-                println!("Practice approved: {student:?}, {practice:?}, {course:?}");
             }
 
-            Event::PracticeCreated(data) => {
-                let student = get_json::<Value>(&data, "student")?;
-                let practice = get_json::<Value>(&data, "practice")?;
-                let course = get_json::<Value>(&data, "course")?;
-                let enrollment = get_json::<Value>(&data, "enrollment")?;
-                let start_date = get_json::<String>(&practice, "startDate")?;
-                let end_date = get_json::<String>(&practice, "endDate")?;
-                let email_student = get_json::<String>(&student, "email")?;
-                let email_supervisor =
-                    get_json::<String>(&practice, "supervisorEmail")?;
+            Event::PracticeCreated((student, practice, course, enrollment)) => {
+                let start_date = format_date(practice.start_date.to_string());
+                let end_date = format_date(practice.end_date.to_string());
 
                 let email_context: RawContext = vec![
-                    ("student_name", get_json::<String>(&student, "name")?),
-                    ("student_email", email_student.clone()),
-                    (
-                        "enterprise_name",
-                        get_json::<String>(&practice, "enterpriseName")?,
-                    ),
-                    (
-                        "supervisor_name",
-                        get_json::<String>(&practice, "supervisorName")?,
-                    ),
-                    ("supervisor_email", email_supervisor.clone()),
-                    ("course_name", get_json::<String>(&course, "name")?),
-                    ("course_code", get_json::<String>(&course, "code")?),
-                    ("location", get_json::<String>(&practice, "location")?),
-                    ("start_date", format_date(start_date)),
-                    ("end_date", format_date(end_date)),
+                    ("student_name", student.name),
+                    ("student_email", student.email),
+                    ("enterprise_name", practice.enterprise_name),
+                    ("supervisor_name", practice.supervisor_name),
+                    ("supervisor_email", practice.supervisor_email.clone()),
+                    ("course_name", course.name),
+                    ("course_code", course.code),
+                    ("location", practice.location),
+                    ("start_date", start_date.clone()),
+                    ("end_date", end_date.clone()),
                     (
                         "approval_link",
                         format!(
                             "/enrollments/{}/practice/{}/approve",
-                            get_json::<String>(&enrollment, "id")?,
-                            get_json::<String>(&enrollment, "practiceId")?
+                            enrollment.id,
+                            enrollment.practice_id.unwrap_or(Uuid::new_v4())
                         ),
                     ),
                     (
                         "rejection_link",
                         format!(
                             "/enrollments/{}/practice/{}/reject",
-                            get_json::<String>(&enrollment, "id")?,
-                            get_json::<String>(&enrollment, "practiceId")?
+                            enrollment.id,
+                            enrollment.practice_id.unwrap_or(Uuid::new_v4())
                         ),
                     ),
                 ];
 
                 tokio::try_join!(
                     mailer.send(MailTo {
-                        email: email_supervisor,
+                        email: practice.supervisor_email.clone(),
                         subject: "Solicitud de Inscripción de Práctica",
                         template: "practice:creation:supervisor",
                         context: email_context.clone(),
                     }),
                     mailer.send(MailTo {
-                        email: email_student,
+                        email: practice.supervisor_email.clone(),
                         subject: "Inscripción a Práctica Aprobada",
                         template: "practice:creation:student",
                         context: email_context,
@@ -194,11 +154,7 @@ impl EventSubscriber {
                 )?;
             }
 
-            Event::UserCreated(data) => {
-                let name = get_json::<String>(&data, "name")?;
-                let email = get_json::<String>(&data, "email")?;
-                let password = get_json::<String>(&data, "password")?;
-
+            Event::UserCreated((name, email, password)) => {
                 let context: RawContext = vec![
                     ("name", name),
                     ("email", email.clone()),

@@ -16,14 +16,11 @@ COPY Cargo.toml Cargo.lock ./
 COPY tests/Cargo.toml ./tests/
 COPY apps/server/Cargo.toml apps/server/Cargo.lock ./apps/server/
 
-# Create dummy files for dependency caching
 RUN mkdir -p ./tests/src && echo 'fn main() {}' > ./tests/src/lib.rs
 RUN mkdir -p ./apps/server/src && echo 'fn main() { println!("Caching dependencies"); }' > ./apps/server/src/main.rs
 
 RUN cd apps/server && cargo build --release
 RUN rm -rf ./tests/src ./apps/server/src ./apps/server/target/release/deps/server*
-
-# Build entire application
 
 COPY apps/server/src ./apps/server/src
 COPY apps/server/tools ./apps/server/tools

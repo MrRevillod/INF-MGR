@@ -1,6 +1,5 @@
 use crate::shared::services::event_queue::{Event, EventQueue};
 use async_trait::async_trait;
-use serde_json::json;
 
 use shaku::{Component, Interface};
 use std::sync::Arc;
@@ -85,12 +84,7 @@ impl PracticeService for PracticeServiceImpl {
             self.enrollments.update(enrollment_id, data).await?
         };
 
-        let event_data = json!({
-            "student": student,
-            "practice": practice,
-            "course": course,
-            "enrollment": enrollment,
-        });
+        let event_data = (student, practice.clone(), course, enrollment);
 
         self.event_queue
             .publish(Event::PracticeCreated(event_data))
@@ -117,12 +111,7 @@ impl PracticeService for PracticeServiceImpl {
         let (course, teacher) =
             self.courses.get_by_id(&enrollment.course_id).await?;
 
-        let event_data = json!({
-            "student": student,
-            "practice": practice,
-            "course": course,
-            "teacher": teacher,
-        });
+        let event_data = (student, practice.clone(), course, teacher);
 
         self.event_queue
             .publish(Event::PracticeApproved(event_data))

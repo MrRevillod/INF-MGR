@@ -3,11 +3,15 @@ use chrono_tz::America::Santiago;
 use serde::de::{DeserializeOwned, Error};
 use serde_json::Value;
 
+use crate::{
+    courses::Course, enrollments::Enrollment, practices::Practice, users::User,
+};
+
 #[derive(Debug, Clone)]
 pub enum Event {
-    PracticeCreated(Value),
-    PracticeApproved(Value),
-    UserCreated(Value),
+    PracticeCreated((User, Practice, Course, Enrollment)),
+    PracticeApproved((User, Practice, Course, User)),
+    UserCreated((String, String, String)),
 }
 
 pub fn get_json<T: DeserializeOwned>(

@@ -1,11 +1,9 @@
-use async_trait::async_trait;
-use serde_json::json;
-
 use crate::shared::services::{
     event_queue::{Event, EventQueue},
     hasher::PasswordHasher,
 };
 
+use async_trait::async_trait;
 use shaku::{Component, Interface};
 use std::sync::Arc;
 use uuid::Uuid;
@@ -98,11 +96,11 @@ impl UserService for UserServiceImpl {
         input.password = self.hasher.hash(&input.password)?;
         let user = self.users.save(User::try_from(input.clone())?).await?;
 
-        let event_data = json!({
-            "name": user.name,
-            "email": user.email,
-            "password": unhashed_password,
-        });
+        let event_data = (
+            user.name.clone(),
+            user.email.clone(),
+            unhashed_password.clone(),
+        );
 
         self.event_queue
             .publish(Event::UserCreated(event_data))
