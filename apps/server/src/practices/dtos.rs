@@ -3,6 +3,9 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use validator::{Validate, ValidationError};
 
+use regex::Regex;
+use std::sync::LazyLock;
+
 use crate::practices::Practice;
 
 #[derive(Serialize, Deserialize, Validate)]
@@ -42,6 +45,10 @@ pub struct CreatePracticeDto {
     ))]
     pub supervisor_email: String,
 
+    #[validate(regex(
+        path = *PHONE_REGEX,
+        message = "El teléfono del supervisor debe ser un número válido."
+    ))]
     pub supervisor_phone: String,
 
     pub start_date: DateTime<Utc>,
@@ -106,6 +113,9 @@ pub struct UpdatePracticeDto {
     pub end_date: Option<DateTime<Utc>>,
 }
 
+static PHONE_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^(?:\+56)?\s?(?:9\d{8}|\d{1}\d{8})$").unwrap());
+
 fn validate_create_practice_dates(
     schema: &CreatePracticeDto,
 ) -> Result<(), ValidationError> {
@@ -138,6 +148,11 @@ fn validate_dates(
         if start > end {
             return Err(ValidationError::new(
                 "La fecha de inicio no puede ser posterior a la fecha de finalización.",
+            ));
+        }
+        if start == end {
+            return Err(ValidationError::new(
+                "La fecha de inicio no puede ser igual a la fecha de finalización.",
             ));
         }
     }

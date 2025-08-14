@@ -13,6 +13,8 @@ pub mod courses;
 #[cfg(test)]
 pub mod enrollments;
 #[cfg(test)]
+pub mod practices;
+#[cfg(test)]
 pub mod users;
 
 use server::{
