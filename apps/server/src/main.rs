@@ -2,6 +2,7 @@ use sword::prelude::Application;
 use tokio::sync::mpsc;
 
 use server::{
+    config::ApplicationConfig,
     courses::CoursesController,
     enrollments::EnrollmentsController,
     shared::{
@@ -25,6 +26,7 @@ use server::container::DependencyContainer;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let app = Application::builder()?;
 
+    let app_config = app.config.get::<ApplicationConfig>()?;
     let cors_config = app.config.get::<CorsConfig>()?;
     let pg_db_config = app.config.get::<PostgresDbConfig>()?;
     let mailer_config = app.config.get::<MailerConfig>()?;
@@ -48,7 +50,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         (db, mailer, printer)
     };
 
-    let (tx, rx) = mpsc::channel(100);
+    let (tx, rx) = mpsc::channel(app_config.event_queue_buffer_size);
 
     let publisher = TokioEventSender::new(tx);
     let dependency_container = DependencyContainer::new(db, publisher);
