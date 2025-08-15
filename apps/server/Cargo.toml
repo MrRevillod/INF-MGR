@@ -59,7 +59,10 @@ bcrypt = "0.17.0"
 
 fake = { version = "4.3.0", optional = true }
 rand = { version = "0.9.1", optional = true }
+
 thiserror = "2.0.14"
+
+passwords = "3.1.16"
 
 [dev-dependencies]
 axum-test = "17.3.0"

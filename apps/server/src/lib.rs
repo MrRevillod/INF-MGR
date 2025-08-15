@@ -8,7 +8,10 @@ pub mod users {
     mod service;
 
     pub use controllers::UsersController;
-    pub use dtos::{CreateUserDto, GetUsersQueryDto, UpdateUserDto, UserResponse};
+    pub use dtos::{
+        role_validator, validate_rut_id, CreateUserDto, GetUsersQueryDto,
+        UpdateUserDto, UserResponse,
+    };
     pub use entity::{Role, User};
     pub use repository::{PostgresUserRepository, UserFilter, UserRepository};
 
@@ -32,6 +35,12 @@ pub mod courses {
 
     pub use repository::{CourseFilter, CourseRepository, PostgresCourseRepository};
     pub use service::{CourseService, CourseServiceImpl};
+}
+
+pub mod imports {
+    mod controllers;
+    mod dtos;
+    mod service;
 }
 
 pub mod enrollments {

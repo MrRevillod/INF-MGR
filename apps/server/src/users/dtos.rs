@@ -234,7 +234,7 @@ fn password_schema(password: &str) -> Result<(), ValidationError> {
 
 /// Valida si el RUT chileno es válido
 /// Formato esperado: "12345678-5" (con guion y dígito verificador)
-fn validate_rut_id(rut: &str) -> Result<(), ValidationError> {
+pub fn validate_rut_id(rut: &str) -> Result<(), ValidationError> {
     let Some((number_part, dv_part)) = rut.split_once('-') else {
         return Err(ValidationError::new("invalid_rut_format"));
     };
@@ -273,7 +273,7 @@ fn compute_rut_dv(mut rut: u32) -> String {
 }
 
 /// Valida que la lista de roles sea válida
-fn role_validator(roles: &Vec<String>) -> Result<(), ValidationError> {
+pub fn role_validator(roles: &Vec<String>) -> Result<(), ValidationError> {
     if roles.is_empty() {
         return Err(ValidationError::new(
             "La lista de roles no pueden estar vacía",
