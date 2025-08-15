@@ -1,0 +1,43 @@
+---
+config:
+  theme: redux
+---
+sequenceDiagram    
+    participant S as Secretaria
+    participant Sis as Sistema/Plataforma
+    participant E as Estudiante
+    participant P as Profesor
+    participant Em as Empresa
+    S->>Sis: 1. Subir listado estudiantes/profesor (CSV)
+    Note over S,Sis: Listado con inscritos al curso
+    Sis->>Sis: Generación automática perfiles
+    Sis->>E: 2. Credenciales + introducción (email)
+    Note over Sis,E: Correo institucional
+    Sis->>P: Incorporación perfil docente
+    Note over Sis,P: Perfil con curso y estudiantes asociados
+    E->>Sis: 3. Acceso plataforma web
+    Sis->>E: Vista personalizada + recursos
+    Note over Sis,E: Rúbricas y documentos disponibles
+    E->>P: 4. Solicitud reunión registro empresa
+    Note over E,P: Protocolo nota pendiente
+    P->>Sis: 5. Registro empresa en sistema
+    Sis->>Em: Notificación registro + opción aceptar/denegar (email)
+    Em->>Sis: 6. Aceptación solicitud
+    Sis->>Sis: Generación documento autorización
+    Sis->>Em: Instrucciones firmado/timbrado + enlace evaluación (email)
+    Note over Sis,Em: Enlace incluye formulario y rúbrica
+    loop Duración de la práctica
+        E->>E: 7. Redactar bitácoras semanales
+        Note over E: Para anexar en informe final
+    end
+    E->>Sis: 8. Subida informe final PDF + enlace solo lectura
+    Note over E,Sis: Verificación autoría y evolución
+    Em->>Sis: 9. Evaluación empresa (formulario web)
+    Note over Em,Sis: Formulario con rúbrica integrada
+    P->>Sis: 10. Evaluación académica
+    Note over P,Sis: Revisión informe según rúbricas
+    Sis->>Sis: 11. Cálculo automático promedio
+    Sis->>P: Notificación estado actualizado
+    P->>P: 12. Registro nota portal académico
+    Note over S,P: Historial permanente en sistema
+    Note over S,P: Acceso post-semestre para auditorías
