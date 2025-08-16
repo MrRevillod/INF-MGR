@@ -1,6 +1,6 @@
 use std::sync::LazyLock;
 
-use crate::templates::Templates;
+use crate::shared::services::templates::Templates;
 
 pub static PRINTER_TEMPLATES: LazyLock<Templates> = LazyLock::new(|| {
     vec![(

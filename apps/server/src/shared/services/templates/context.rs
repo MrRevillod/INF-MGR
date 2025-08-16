@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use sword::prelude::config;
 use tera::{Context, Tera};
 
-use crate::errors::ServiceError;
+use crate::shared::services::errors::ServiceError;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[config(key = "template-context")]

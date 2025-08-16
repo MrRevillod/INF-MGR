@@ -4,7 +4,7 @@ use crate::{
     courses, enrollments, practices, shared::database::PostgresDatabase, users,
 };
 
-use services::{
+use crate::shared::services::{
     event_queue::{TokioEventQueue, TokioEventSender},
     hasher::BcryptPasswordHasher,
 };

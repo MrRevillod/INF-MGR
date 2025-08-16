@@ -1,6 +1,6 @@
 use std::{env::var, fs, path::Path, process::Command};
 
-use crate::{
+use crate::shared::services::{
     errors::{PrinterError, ServiceError},
     templates::*,
 };
@@ -28,8 +28,8 @@ impl Printer {
     pub async fn print(&self, opts: PrintOptions) -> Result<String, ServiceError> {
         let template = self.template_ctx.render(opts.template, opts.context)?;
 
-        let template_dir =
-            Path::new(env!("CARGO_MANIFEST_DIR")).join("src/printer/templates");
+        let template_dir = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("src/shared/services/printer/templates");
 
         let temp_file = template_dir.join(format!("{}.typ", opts.doc_id));
 
@@ -39,15 +39,27 @@ impl Printer {
             opts.doc_id
         );
 
-        fs::write(&temp_file, template).map_err(|source| ServiceError::Printer {
-            source: source.into(),
+        fs::write(&temp_file, template).map_err(|source| {
+            eprintln!("Failed to write temp file: {}", source);
+            eprintln!("Path: {:?}", temp_file);
+            ServiceError::Printer {
+                source: source.into(),
+            }
         })?;
 
         let output = Command::new("typst")
             .args(["compile", temp_file.to_str().unwrap(), &out_file])
             .output()
-            .map_err(|source| ServiceError::Printer {
-                source: source.into(),
+            .map_err(|source| {
+                eprintln!("Failed to execute typst command: {}", source);
+                eprintln!(
+                    "Command: typst compile {} {}",
+                    temp_file.display(),
+                    out_file
+                );
+                ServiceError::Printer {
+                    source: source.into(),
+                }
             })?;
 
         if !output.status.success() {

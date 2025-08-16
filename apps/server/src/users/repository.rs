@@ -41,6 +41,7 @@ pub trait UserRepository: Interface {
     async fn find_by_id(&self, user_id: &Uuid) -> Result<Option<User>, AppError>;
 
     async fn save(&self, user: User) -> Result<User, AppError>;
+    async fn create_many(&self, users: Vec<User>) -> Result<Vec<User>, AppError>;
     async fn delete(&self, user_id: &Uuid) -> Result<(), AppError>;
     async fn count(&self, filter: UserFilter) -> Result<i64, AppError>;
 }
@@ -146,6 +147,61 @@ impl UserRepository for PostgresUserRepository {
             .await?;
 
         Ok(saved_user)
+    }
+
+    async fn create_many(&self, users: Vec<User>) -> Result<Vec<User>, AppError> {
+        if users.is_empty() {
+            return Ok(vec![]);
+        }
+
+        let mut query_values = Vec::new();
+        let mut arg_index = 1;
+
+        for _user in &users {
+            query_values.push(format!(
+                "({}, {}, {}, {}, {}, {}, {}, {})",
+                format!("${}", arg_index),     // id
+                format!("${}", arg_index + 1), // rut
+                format!("${}", arg_index + 2), // name
+                format!("${}", arg_index + 3), // email
+                format!("${}", arg_index + 4), // password
+                format!("${}", arg_index + 5), // roles
+                format!("${}", arg_index + 6), // created_at
+                format!("${}", arg_index + 7)  // deleted_at
+            ));
+            arg_index += 8;
+        }
+
+        let query = format!(
+            r#"
+            INSERT INTO users (id, rut, name, email, password, roles, created_at, deleted_at)
+            VALUES {}
+            ON CONFLICT (id) DO NOTHING
+            RETURNING *
+            "#,
+            query_values.join(", ")
+        );
+
+        let mut sqlx_query = sqlx::query_as::<_, User>(&query);
+
+        // Bind all parameters for all users
+        for user in &users {
+            sqlx_query = sqlx_query
+                .bind(&user.id)
+                .bind(&user.rut)
+                .bind(&user.name)
+                .bind(&user.email)
+                .bind(&user.password)
+                .bind(&user.roles)
+                .bind(&user.created_at)
+                .bind(&user.deleted_at);
+        }
+
+        let results = sqlx_query
+            .fetch_all(self.database_connection.get_pool())
+            .await?;
+
+        Ok(results)
     }
 
     async fn delete(&self, user_id: &Uuid) -> Result<(), AppError> {

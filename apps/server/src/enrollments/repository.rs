@@ -33,6 +33,10 @@ pub trait EnrollmentRepository: Interface {
 
     async fn find_by_id(&self, id: &Uuid) -> Result<Option<Enrollment>, AppError>;
     async fn save(&self, enrollment: Enrollment) -> Result<Enrollment, AppError>;
+    async fn create_many(
+        &self,
+        enrollments: Vec<Enrollment>,
+    ) -> Result<Vec<Enrollment>, AppError>;
     async fn delete(&self, id: &Uuid) -> Result<(), AppError>;
 }
 
@@ -98,6 +102,56 @@ impl EnrollmentRepository for PostgresEnrollmentRepository {
             .await?;
 
         Ok(result)
+    }
+
+    async fn create_many(
+        &self,
+        enrollments: Vec<Enrollment>,
+    ) -> Result<Vec<Enrollment>, AppError> {
+        if enrollments.is_empty() {
+            return Ok(vec![]);
+        }
+
+        let mut query_values = Vec::new();
+        let mut arg_index = 1;
+
+        for _enrollment in &enrollments {
+            query_values.push(format!(
+                "({}, {}, {}, {}, {})",
+                format!("${}", arg_index),     // id
+                format!("${}", arg_index + 1), // student_id
+                format!("${}", arg_index + 2), // course_id
+                format!("${}", arg_index + 3), // practice_id
+                format!("${}", arg_index + 4)  // student_scores
+            ));
+            arg_index += 5;
+        }
+
+        let query = format!(
+            r#"
+            INSERT INTO enrollments (id, student_id, course_id, practice_id, student_scores)
+            VALUES {}
+            ON CONFLICT (id) DO NOTHING
+            RETURNING *
+            "#,
+            query_values.join(", ")
+        );
+
+        let mut sqlx_query = sqlx::query_as::<_, Enrollment>(&query);
+
+        // Bind all parameters for all enrollments
+        for enrollment in &enrollments {
+            sqlx_query = sqlx_query
+                .bind(&enrollment.id)
+                .bind(&enrollment.student_id)
+                .bind(&enrollment.course_id)
+                .bind(&enrollment.practice_id)
+                .bind(&enrollment.student_scores);
+        }
+
+        let results = sqlx_query.fetch_all(self.db_connection.get_pool()).await?;
+
+        Ok(results)
     }
 
     async fn delete(&self, id: &Uuid) -> Result<(), AppError> {

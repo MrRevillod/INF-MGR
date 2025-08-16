@@ -1,6 +1,7 @@
 [application]
 port = 8000
 host = "0.0.0.0"
+event_queue_buffer_size = 100
 
 [career]
 career_name = "${CAREER_NAME:Ingeniería en Informática}"

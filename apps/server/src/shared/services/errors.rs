@@ -42,6 +42,9 @@ pub enum HasherError {
 
     #[error("Verify error: {source}")]
     Verify { source: BcryptError },
+
+    #[error("Password generation error: {message}")]
+    PasswordGeneration { message: String },
 }
 
 impl HasherError {
@@ -51,6 +54,10 @@ impl HasherError {
 
     pub fn verify(source: BcryptError) -> Self {
         Self::Verify { source }
+    }
+
+    pub fn password_generation(message: String) -> Self {
+        Self::PasswordGeneration { message }
     }
 }
 

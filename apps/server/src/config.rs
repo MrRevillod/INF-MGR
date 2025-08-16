@@ -2,6 +2,14 @@ use serde::Deserialize;
 use sword::prelude::config;
 
 #[derive(Debug, Deserialize)]
+#[config(key = "application")]
+pub struct ApplicationConfig {
+    pub port: u16,
+    pub host: String,
+    pub event_queue_buffer_size: usize,
+}
+
+#[derive(Debug, Deserialize)]
 #[config(key = "postgres-db")]
 pub struct PostgresDbConfig {
     pub url: String,

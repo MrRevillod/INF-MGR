@@ -16,43 +16,4 @@
     ],
     "description": "Repository trait definition in Rust"
   },
-  "UseCaseTrait": {
-    "scope": "rust",
-    "prefix": "usecase_trait",
-    "body": [
-      "use async_trait::async_trait;",
-      "use shaku::Interface;",
-      "",
-      "#[async_trait]",
-      "pub trait ${1:UseCaseName}: Interface {",
-      "    async fn execute(&self, ${2:input}: ${3:InputType}) -> Result<${4:OutputType}, ${5:Error}>;",
-      "}"
-    ],
-    "description": "Use case trait definition using async_trait and shaku"
-  },
-  "UseCaseImplementation": {
-    "scope": "rust",
-    "prefix": "usecase_impl",
-    "body": [
-      "use async_trait::async_trait;",
-      "use shaku::Component;",
-      "use std::sync::Arc;",
-      "",
-      "#[derive(Component)]",
-      "#[shaku(interface = ${2:UseCaseTrait})]",
-      "pub struct ${1:UseCaseImpl} {",
-      "    #[shaku(inject)]",
-      "    repository: Arc<dyn ${3:RepositoryTrait}>,",
-      "}",
-      "",
-      "#[async_trait]",
-      "impl ${2:UseCaseTrait} for ${1:UseCaseImpl} {",
-      "    async fn execute(&self, input: ${4:InputDto}) -> Result<${5:Entity}, ${6:Error}> {",
-      "        // TODO: implement use case logic",
-      "        todo!()",
-      "    }",
-      "}"
-    ],
-    "description": "Simplified use case implementation with shaku and async_trait"
-  }
 }

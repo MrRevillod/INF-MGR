@@ -1,6 +1,5 @@
+use crate::shared::services::event_queue::{Event, EventQueue};
 use async_trait::async_trait;
-use serde_json::json;
-use services::event_queue::{Event, EventQueue};
 
 use shaku::{Component, Interface};
 use std::sync::Arc;
@@ -85,12 +84,7 @@ impl PracticeService for PracticeServiceImpl {
             self.enrollments.update(enrollment_id, data).await?
         };
 
-        let event_data = json!({
-            "student": student,
-            "practice": practice,
-            "course": course,
-            "enrollment": enrollment,
-        });
+        let event_data = (student, practice.clone(), course, enrollment);
 
         self.event_queue
             .publish(Event::PracticeCreated(event_data))
@@ -107,8 +101,6 @@ impl PracticeService for PracticeServiceImpl {
         let (enrollment, student, practice) =
             self.enrollments.get_by_id(enrollment_id).await?;
 
-        dbg!(&practice);
-
         let mut practice =
             practice.ok_or(AppError::ResourceNotFound(*practice_id))?;
 
@@ -119,12 +111,7 @@ impl PracticeService for PracticeServiceImpl {
         let (course, teacher) =
             self.courses.get_by_id(&enrollment.course_id).await?;
 
-        let event_data = json!({
-            "student": student,
-            "practice": practice,
-            "course": course,
-            "teacher": teacher,
-        });
+        let event_data = (student, practice.clone(), course, teacher);
 
         self.event_queue
             .publish(Event::PracticeApproved(event_data))
@@ -183,6 +170,6 @@ impl PracticeService for PracticeServiceImpl {
             .await?
             .ok_or(AppError::ResourceNotFound(*id))?;
 
-        self.practices.delete(id).await
+        self.practices.delete(&practice.id).await
     }
 }

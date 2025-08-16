@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use shaku::{Component, Interface};
 use std::sync::Arc;
 
-use crate::event_queue::{Event, EventSender};
+use crate::shared::services::event_queue::{Event, EventSender};
 
 #[derive(Component)]
 #[shaku(interface = EventQueue)]

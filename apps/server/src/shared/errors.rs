@@ -1,5 +1,5 @@
+use crate::shared::services::errors::ServiceError;
 use serde_json::json;
-use services::errors::ServiceError;
 use sword::web::HttpResponse;
 use thiserror::Error;
 use uuid::Uuid;
