@@ -5,8 +5,8 @@ use crate::{
     container::AppModule,
     courses::{CourseResponse, CourseService, CreateCourseDto, UpdateCourseDto},
     enrollments::{
-        CreateEnrollmentDto, EnrollmentFilter, EnrollmentResponse,
-        EnrollmentService, UpdateEnrollmentDto,
+        CreateEnrollmentDto, EnrollmentFilter, EnrollmentResponse, EnrollmentService,
+        UpdateEnrollmentDto,
     },
 };
 

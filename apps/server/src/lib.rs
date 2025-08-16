@@ -9,8 +9,8 @@ pub mod users {
 
     pub use controllers::UsersController;
     pub use dtos::{
-        role_validator, validate_rut_id, CreateUserDto, GetUsersQueryDto,
-        UpdateUserDto, UserResponse,
+        role_validator, validate_rut_id, CreateUserDto, GetUsersQueryDto, UpdateUserDto,
+        UserResponse,
     };
     pub use entity::{Role, User};
     pub use repository::{PostgresUserRepository, UserFilter, UserRepository};
@@ -27,8 +27,7 @@ pub mod courses {
 
     pub use controllers::CoursesController;
     pub use dtos::{
-        CourseEvaluationDto, CourseResponse, CourseWithStaff, CreateCourseDto,
-        UpdateCourseDto,
+        CourseEvaluationDto, CourseResponse, CourseWithStaff, CreateCourseDto, UpdateCourseDto,
     };
 
     pub use entity::{Course, CourseEvaluation, CourseStatus};
@@ -41,6 +40,10 @@ pub mod imports {
     mod controllers;
     mod dtos;
     mod service;
+
+    pub use controllers::ImportsController;
+    pub use dtos::{ImportCourseDto, ImportUserDto, ImportedUser};
+    pub use service::{ImportService, ImportServiceImpl};
 }
 
 pub mod enrollments {
@@ -58,9 +61,7 @@ pub mod enrollments {
 
     pub use entity::{Enrollment, StudentScore};
 
-    pub use repository::{
-        EnrollmentFilter, EnrollmentRepository, PostgresEnrollmentRepository,
-    };
+    pub use repository::{EnrollmentFilter, EnrollmentRepository, PostgresEnrollmentRepository};
 
     pub use service::{EnrollmentService, EnrollmentServiceImpl};
 }
@@ -73,9 +74,7 @@ pub mod practices {
 
     pub use dtos::{CreatePracticeDto, UpdatePracticeDto};
     pub use entity::Practice;
-    pub use repository::{
-        PostgresPracticeRepository, PracticeFilter, PracticeRepository,
-    };
+    pub use repository::{PostgresPracticeRepository, PracticeFilter, PracticeRepository};
     pub use service::{PracticeService, PracticeServiceImpl};
 }
 
@@ -94,9 +93,7 @@ pub mod shared {
 
         pub fn validate_uuid(uuid: &str) -> Result<(), ValidationError> {
             if uuid.is_empty() {
-                return Err(ValidationError::new(
-                    "La identificación no puede estar vacía.",
-                ));
+                return Err(ValidationError::new("La identificación no puede estar vacía."));
             }
 
             if uuid::Uuid::parse_str(uuid).is_err() {

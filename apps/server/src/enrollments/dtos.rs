@@ -124,9 +124,7 @@ pub struct EnrollmentResponse {
 pub type EnrollmentWithStudentAndPractice = (Enrollment, User, Option<Practice>);
 
 impl From<EnrollmentWithStudentAndPractice> for EnrollmentResponse {
-    fn from(
-        (enrollment, student, practice): EnrollmentWithStudentAndPractice,
-    ) -> Self {
+    fn from((enrollment, student, practice): EnrollmentWithStudentAndPractice) -> Self {
         EnrollmentResponse {
             id: enrollment.id.to_string(),
             student_id: enrollment.student_id.to_string(),

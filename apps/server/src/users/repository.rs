@@ -6,14 +6,10 @@ use sqlx::{query_as_with as sqlx_query, Postgres};
 use std::sync::Arc;
 use uuid::Uuid;
 
-use sea_query::{
-    extension::postgres::PgExpr, Expr, ExprTrait, Order, PostgresQueryBuilder, Query,
-};
+use sea_query::{extension::postgres::PgExpr, Expr, ExprTrait, Order, PostgresQueryBuilder, Query};
 
 use crate::{
-    shared::{
-        database::DatabaseConnection, entities::DEFAULT_PAGE_SIZE, errors::AppError,
-    },
+    shared::{database::DatabaseConnection, entities::DEFAULT_PAGE_SIZE, errors::AppError},
     users::entity::{User, Users},
 };
 
@@ -32,6 +28,7 @@ pub struct UserFilter {
     pub rut: Option<String>,
     pub email: Option<String>,
     pub ids: Option<Vec<Uuid>>,
+    pub ruts: Option<Vec<String>>,
 }
 
 #[async_trait]
@@ -49,13 +46,14 @@ pub trait UserRepository: Interface {
 #[async_trait]
 impl UserRepository for PostgresUserRepository {
     async fn find_many(&self, filter: UserFilter) -> Result<Vec<User>, AppError> {
-        let mut query = Query::select()
-            .expr(Expr::cust("*"))
-            .from(Users::Table)
-            .to_owned();
+        let mut query = Query::select().expr(Expr::cust("*")).from(Users::Table).to_owned();
 
         if let Some(ids) = &filter.ids {
             query.and_where(Expr::col(Users::Id).is_in(ids.clone()));
+        }
+
+        if let Some(ruts) = &filter.ruts {
+            query.and_where(Expr::col(Users::Rut).is_in(ruts.clone()));
         }
 
         if let Some(search) = &filter.search {
@@ -157,49 +155,47 @@ impl UserRepository for PostgresUserRepository {
         let mut query_values = Vec::new();
         let mut arg_index = 1;
 
-        for _user in &users {
+        for _ in &users {
             query_values.push(format!(
-                "({}, {}, {}, {}, {}, {}, {}, {})",
-                format!("${}", arg_index),     // id
-                format!("${}", arg_index + 1), // rut
-                format!("${}", arg_index + 2), // name
-                format!("${}", arg_index + 3), // email
-                format!("${}", arg_index + 4), // password
-                format!("${}", arg_index + 5), // roles
-                format!("${}", arg_index + 6), // created_at
-                format!("${}", arg_index + 7)  // deleted_at
+                "(${}, ${}, ${}, ${}, ${}, ${}, ${}, ${})",
+                arg_index,     // id
+                arg_index + 1, // rut
+                arg_index + 2, // name
+                arg_index + 3, // email
+                arg_index + 4, // password
+                arg_index + 5, // roles
+                arg_index + 6, // created_at
+                arg_index + 7, // deleted_at
             ));
+
             arg_index += 8;
         }
 
         let query = format!(
-            r#"
-            INSERT INTO users (id, rut, name, email, password, roles, created_at, deleted_at)
-            VALUES {}
-            ON CONFLICT (id) DO NOTHING
-            RETURNING *
+            r#" 
+                INSERT INTO users (id, rut, name, email, password, roles, created_at, deleted_at)
+                VALUES {}
+                ON CONFLICT (id) DO NOTHING
+                RETURNING *
             "#,
             query_values.join(", ")
         );
 
         let mut sqlx_query = sqlx::query_as::<_, User>(&query);
 
-        // Bind all parameters for all users
         for user in &users {
             sqlx_query = sqlx_query
-                .bind(&user.id)
+                .bind(user.id)
                 .bind(&user.rut)
                 .bind(&user.name)
                 .bind(&user.email)
                 .bind(&user.password)
                 .bind(&user.roles)
-                .bind(&user.created_at)
-                .bind(&user.deleted_at);
+                .bind(user.created_at)
+                .bind(user.deleted_at);
         }
 
-        let results = sqlx_query
-            .fetch_all(self.database_connection.get_pool())
-            .await?;
+        let results = sqlx_query.fetch_all(self.database_connection.get_pool()).await?;
 
         Ok(results)
     }

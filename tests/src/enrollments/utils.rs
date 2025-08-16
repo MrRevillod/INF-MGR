@@ -37,20 +37,13 @@ pub async fn create_enrollment(app: &TestServer, enrollment: &Value) -> Value {
     let response = app.post("/courses/enroll").json(enrollment).await;
     let body = response.json::<ResponseBody>();
 
-    assert_eq!(
-        response.status_code(),
-        201,
-        "Failed to create enrollment: {}",
-        body.data
-    );
+    assert_eq!(response.status_code(), 201, "Failed to create enrollment: {}", body.data);
 
     body.data
 }
 
 pub async fn delete_enrollment(app: &TestServer, enrollment_id: &str) {
-    let response = app
-        .delete(&format!("/courses/enrollments/{}", enrollment_id))
-        .await;
+    let response = app.delete(&format!("/courses/enrollments/{}", enrollment_id)).await;
 
     assert_eq!(response.status_code(), 200);
 }

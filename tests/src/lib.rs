@@ -1,11 +1,14 @@
 use axum_test::TestServer;
 use serde_json::Value;
 
-use server::shared::services::{
-    event_queue::{EventSubscriber, SubscriberServices, TokioEventSender},
-    mailer::{Mailer, MailerConfig},
-    printer::Printer,
-    templates::TemplateConfig,
+use server::{
+    imports::ImportsController,
+    shared::services::{
+        event_queue::{EventSubscriber, SubscriberServices, TokioEventSender},
+        mailer::{Mailer, MailerConfig},
+        printer::Printer,
+        templates::TemplateConfig,
+    },
 };
 
 use sword::prelude::Application;
@@ -19,46 +22,36 @@ pub mod practices;
 #[cfg(test)]
 pub mod users;
 
+#[cfg(test)]
+pub mod imports;
+
 use server::{
-    config::PostgresDbConfig, container::DependencyContainer,
-    courses::CoursesController, enrollments::EnrollmentsController,
-    shared::database::PostgresDatabase, users::UsersController,
+    config::PostgresDbConfig, container::DependencyContainer, courses::CoursesController,
+    enrollments::EnrollmentsController, shared::database::PostgresDatabase, users::UsersController,
 };
 use tokio::sync::mpsc;
 
 pub async fn init_test_app() -> TestServer {
-    let mut app =
-        Application::builder().expect("Failed to create application builder");
+    let mut app = Application::builder().expect("Failed to create application builder");
 
-    let pg_db_config = app
-        .config
-        .get::<PostgresDbConfig>()
-        .expect("Failed to get PostgresDbConfig");
+    let pg_db_config =
+        app.config.get::<PostgresDbConfig>().expect("Failed to get PostgresDbConfig");
 
-    let mailer_config = app
-        .config
-        .get::<MailerConfig>()
-        .expect("Failed to get MailerConfig");
+    let mailer_config = app.config.get::<MailerConfig>().expect("Failed to get MailerConfig");
 
-    let tamplate_config = app
-        .config
-        .get::<TemplateConfig>()
-        .expect("Failed to get TemplateConfig");
+    let tamplate_config = app.config.get::<TemplateConfig>().expect("Failed to get TemplateConfig");
 
     let (db, mailer, printer) = {
         let db = PostgresDatabase::new(&pg_db_config)
             .await
             .expect("Failed to create database connection");
 
-        db.migrate()
-            .await
-            .expect("Failed to create database connection");
+        db.migrate().await.expect("Failed to create database connection");
 
-        let mailer = Mailer::new(&mailer_config, &tamplate_config)
-            .expect("Failed to create mailer");
+        let mailer =
+            Mailer::new(&mailer_config, &tamplate_config).expect("Failed to create mailer");
 
-        let printer =
-            Printer::new(&tamplate_config).expect("Failed to create printer");
+        let printer = Printer::new(&tamplate_config).expect("Failed to create printer");
 
         (db, mailer, printer)
     };
@@ -81,7 +74,8 @@ pub async fn init_test_app() -> TestServer {
         .expect("Failed to load dependency module")
         .controller::<UsersController>()
         .controller::<CoursesController>()
-        .controller::<EnrollmentsController>();
+        .controller::<EnrollmentsController>()
+        .controller::<ImportsController>();
 
     TestServer::new(app.router()).expect("Failed to start test server")
 }

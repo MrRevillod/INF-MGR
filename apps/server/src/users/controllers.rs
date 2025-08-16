@@ -1,7 +1,5 @@
 use crate::container::AppModule;
-use crate::users::{
-    CreateUserDto, GetUsersQueryDto, UpdateUserDto, UserResponse, UserService,
-};
+use crate::users::{CreateUserDto, GetUsersQueryDto, UpdateUserDto, UserResponse, UserService};
 
 use serde_json::json;
 use sword::{prelude::*, web::HttpResult};
@@ -18,11 +16,7 @@ impl UsersController {
         let service = ctx.get_dependency::<AppModule, dyn UserService>()?;
 
         let data = service.get_all(query.into()).await?;
-        let users = data
-            .items
-            .into_iter()
-            .map(UserResponse::from)
-            .collect::<Vec<_>>();
+        let users = data.items.into_iter().map(UserResponse::from).collect::<Vec<_>>();
 
         let json = json!({
             "users": users,

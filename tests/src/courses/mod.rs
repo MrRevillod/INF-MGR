@@ -23,10 +23,7 @@ async fn test_create_course_should_work() {
     let created_course = create_course(&app, &new_course).await;
     let created_course_id = extract_resource_id(&created_course);
 
-    assert_eq!(
-        created_course.get("year").and_then(|y| y.as_i64()),
-        Some(2024)
-    );
+    assert_eq!(created_course.get("year").and_then(|y| y.as_i64()), Some(2024));
     assert_eq!(
         created_course.get("code").and_then(|c| c.as_str()),
         new_course.get("code").and_then(|c| c.as_str())
@@ -65,8 +62,7 @@ async fn test_update_course() {
         "teacherId": new_teacher_id.to_string(),
     });
 
-    let updated_asignature =
-        update_course(&app, &created_course_id, &update_course_data).await;
+    let updated_asignature = update_course(&app, &created_course_id, &update_course_data).await;
 
     assert_eq!(
         updated_asignature.get("teacherId").and_then(|t| t.as_str()),
@@ -153,10 +149,7 @@ async fn test_create_course_invalid_year_too_low() {
         .iter()
         .find(|err| err.get("field").and_then(|m| m.as_str()) == Some("year"));
 
-    assert!(
-        year_error.is_some(),
-        "Expected a validation error for 'year'"
-    );
+    assert!(year_error.is_some(), "Expected a validation error for 'year'");
 
     delete_user(&app, &teacher_id).await;
 }
@@ -215,10 +208,7 @@ async fn test_create_course_invalid_code_format() {
         .expect("Response data should be an array");
 
     assert!(!error_arr.is_empty(), "Expected validation errors");
-    assert_eq!(
-        error_arr[0].get("field").and_then(|m| m.as_str()),
-        Some("code"),
-    );
+    assert_eq!(error_arr[0].get("field").and_then(|m| m.as_str()), Some("code"),);
 
     delete_user(&app, &teacher_id).await;
 }
@@ -531,10 +521,7 @@ async fn test_update_course_invalid_teacher_id() {
         "teacherId": "invalid-uuid"
     });
 
-    let update_response = app
-        .patch(&format!("/courses/{}", course_id))
-        .json(&update_course)
-        .await;
+    let update_response = app.patch(&format!("/courses/{}", course_id)).json(&update_course).await;
 
     assert_eq!(update_response.status_code(), 400);
 
@@ -552,10 +539,7 @@ async fn test_update_nonexistent_asignature() {
     });
 
     let fake_id = Uuid::new_v4();
-    let update_response = app
-        .patch(&format!("/courses/{}", fake_id))
-        .json(&update_course)
-        .await;
+    let update_response = app.patch(&format!("/courses/{}", fake_id)).json(&update_course).await;
 
     assert_eq!(update_response.status_code(), 404);
 }

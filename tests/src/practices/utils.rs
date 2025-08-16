@@ -84,12 +84,7 @@ pub async fn create_practice(app: &TestServer, practice: &Value) -> Value {
     let response = app.post("/practices").json(practice).await;
     let body = response.json::<ResponseBody>();
 
-    assert_eq!(
-        response.status_code(),
-        201,
-        "Failed to create practice: {}",
-        body.data
-    );
+    assert_eq!(response.status_code(), 201, "Failed to create practice: {}", body.data);
 
     body.data
 }

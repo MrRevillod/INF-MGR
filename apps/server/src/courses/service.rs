@@ -6,12 +6,14 @@ use uuid::Uuid;
 use crate::{
     course_filter,
     courses::{
-        Course, CourseFilter, CourseRepository, CourseWithStaff, CreateCourseDto,
-        UpdateCourseDto,
+        Course, CourseFilter, CourseRepository, CourseWithStaff, CreateCourseDto, UpdateCourseDto,
     },
     enrollment_filter,
     enrollments::{EnrollmentFilter, EnrollmentRepository},
-    shared::errors::{AppError, Input},
+    shared::{
+        errors::{AppError, Input},
+        services::event_queue::{Event, EventQueue},
+    },
     user_filter,
     users::{User, UserFilter, UserRepository},
 };
@@ -27,6 +29,9 @@ pub struct CourseServiceImpl {
 
     #[shaku(inject)]
     enrollments: Arc<dyn EnrollmentRepository>,
+
+    #[shaku(inject)]
+    event_queue: Arc<dyn EventQueue>,
 }
 
 #[async_trait]
@@ -37,11 +42,7 @@ pub trait CourseService: Interface {
     async fn create(&self, input: CreateCourseDto) -> Result<Course, AppError>;
     async fn remove(&self, id: &Uuid) -> Result<(), AppError>;
 
-    async fn update(
-        &self,
-        id: &Uuid,
-        input: UpdateCourseDto,
-    ) -> Result<Course, AppError>;
+    async fn update(&self, id: &Uuid, input: UpdateCourseDto) -> Result<Course, AppError>;
 }
 
 #[async_trait]
@@ -50,13 +51,9 @@ impl CourseService for CourseServiceImpl {
         let courses = self.courses.find_many(CourseFilter::default()).await?;
         let teacher_ids = courses.iter().map(|c| c.teacher_id).collect::<Vec<_>>();
 
-        let teachers = self
-            .users
-            .find_many(user_filter! { ids: teacher_ids })
-            .await?;
+        let teachers = self.users.find_many(user_filter! { ids: teacher_ids }).await?;
 
-        let teachers_map: HashMap<Uuid, &User> =
-            teachers.iter().map(|t| (t.id, t)).collect();
+        let teachers_map: HashMap<Uuid, &User> = teachers.iter().map(|t| (t.id, t)).collect();
 
         let mut result = vec![];
 
@@ -94,8 +91,7 @@ impl CourseService for CourseServiceImpl {
 
         if !self.courses.find_many(filter).await?.is_empty() {
             return Err(AppError::Conflict(Input {
-                message: "Ya existe un curso con el mismo código o nombre y año"
-                    .to_string(),
+                message: "Ya existe un curso con el mismo código o nombre y año".to_string(),
                 ..Default::default()
             }));
         }
@@ -112,14 +108,14 @@ impl CourseService for CourseServiceImpl {
             }));
         }
 
+        let event_data = (course.clone(), teacher.clone());
+
+        self.event_queue.publish(Event::CourseCreated(event_data)).await;
+
         Ok(self.courses.save(course).await?)
     }
 
-    async fn update(
-        &self,
-        id: &Uuid,
-        input: UpdateCourseDto,
-    ) -> Result<Course, AppError> {
+    async fn update(&self, id: &Uuid, input: UpdateCourseDto) -> Result<Course, AppError> {
         let Some(mut course) = self.courses.find_by_id(id).await? else {
             return Err(AppError::ResourceNotFound(*id));
         };
@@ -143,8 +139,7 @@ impl CourseService for CourseServiceImpl {
         if !self.enrollments.find_many(filter).await?.is_empty() {
             return Err(AppError::InvalidInput(Input {
                 field: "courseId".to_string(),
-                message: "No se puede eliminar un curso con inscripciones activas"
-                    .to_string(),
+                message: "No se puede eliminar un curso con inscripciones activas".to_string(),
                 value: course.id.to_string(),
             }));
         }

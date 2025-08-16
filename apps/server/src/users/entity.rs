@@ -73,3 +73,18 @@ impl Iden for Users {
         }
     }
 }
+
+impl Default for User {
+    fn default() -> Self {
+        Self {
+            id: Uuid::new_v4(),
+            rut: String::default(),
+            name: String::default(),
+            email: String::default(),
+            password: String::default(),
+            roles: vec![Role::Student],
+            deleted_at: None,
+            created_at: Utc::now(),
+        }
+    }
+}

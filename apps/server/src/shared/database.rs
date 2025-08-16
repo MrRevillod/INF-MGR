@@ -28,10 +28,7 @@ impl PostgresDatabase {
     }
 
     pub async fn migrate(&self) -> Result<(), sqlx::Error> {
-        if let Err(e) = sqlx::migrate!("./config/migrations")
-            .run(self.get_pool())
-            .await
-        {
+        if let Err(e) = sqlx::migrate!("./config/migrations").run(self.get_pool()).await {
             tracing::error!("Error running migrations: {e}");
         };
 

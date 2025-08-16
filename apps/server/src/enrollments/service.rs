@@ -5,16 +5,13 @@ use uuid::Uuid;
 
 use crate::{
     courses::CourseRepository,
-    enrollment_filter, practice_filter,
+    enrollment_filter,
+    enrollments::*,
+    practice_filter,
     practices::{PracticeFilter, PracticeRepository},
     shared::errors::{AppError, Input},
     user_filter,
     users::{UserFilter, UserRepository},
-};
-
-use crate::enrollments::{
-    CreateEnrollmentDto, Enrollment, EnrollmentFilter, EnrollmentRepository,
-    EnrollmentWithStudentAndPractice, StudentScore, UpdateEnrollmentDto,
 };
 
 #[derive(Component)]
@@ -40,21 +37,13 @@ pub trait EnrollmentService: Interface {
         filter: EnrollmentFilter,
     ) -> Result<Vec<EnrollmentWithStudentAndPractice>, AppError>;
 
-    async fn get_by_id(
-        &self,
-        id: &Uuid,
-    ) -> Result<EnrollmentWithStudentAndPractice, AppError>;
+    async fn get_by_id(&self, id: &Uuid) -> Result<EnrollmentWithStudentAndPractice, AppError>;
 
-    async fn create(
-        &self,
-        input: CreateEnrollmentDto,
-    ) -> Result<Enrollment, AppError>;
+    async fn create(&self, input: CreateEnrollmentDto) -> Result<Enrollment, AppError>;
 
-    async fn update(
-        &self,
-        id: &Uuid,
-        input: UpdateEnrollmentDto,
-    ) -> Result<Enrollment, AppError>;
+    async fn create_many(&self, course_id: &Uuid, students: Vec<Uuid>) -> Result<(), AppError>;
+
+    async fn update(&self, id: &Uuid, input: UpdateEnrollmentDto) -> Result<Enrollment, AppError>;
 
     async fn remove(&self, id: &Uuid) -> Result<(), AppError>;
 }
@@ -98,15 +87,9 @@ impl EnrollmentService for EnrollmentServiceImpl {
         Ok(result)
     }
 
-    async fn get_by_id(
-        &self,
-        id: &Uuid,
-    ) -> Result<EnrollmentWithStudentAndPractice, AppError> {
-        let enrollment = self
-            .enrollments
-            .find_by_id(id)
-            .await?
-            .ok_or(AppError::ResourceNotFound(*id))?;
+    async fn get_by_id(&self, id: &Uuid) -> Result<EnrollmentWithStudentAndPractice, AppError> {
+        let enrollment =
+            self.enrollments.find_by_id(id).await?.ok_or(AppError::ResourceNotFound(*id))?;
 
         let student = self
             .users
@@ -122,10 +105,7 @@ impl EnrollmentService for EnrollmentServiceImpl {
         Ok((enrollment, student, practice))
     }
 
-    async fn create(
-        &self,
-        input: CreateEnrollmentDto,
-    ) -> Result<Enrollment, AppError> {
+    async fn create(&self, input: CreateEnrollmentDto) -> Result<Enrollment, AppError> {
         let enrollment = Enrollment::from(input);
 
         let filter = enrollment_filter! {
@@ -168,18 +148,30 @@ impl EnrollmentService for EnrollmentServiceImpl {
         self.enrollments.save(enrollment).await
     }
 
-    async fn update(
-        &self,
-        id: &Uuid,
-        input: UpdateEnrollmentDto,
-    ) -> Result<Enrollment, AppError> {
+    async fn create_many(&self, couse_id: &Uuid, students: Vec<Uuid>) -> Result<(), AppError> {
+        for student_id in students {
+            let input = CreateEnrollmentDto {
+                student_id: student_id.to_string(),
+                course_id: couse_id.to_string(),
+            };
+
+            if let Err(e) = self.create(input).await {
+                tracing::error!("Error creating enrollment for student {student_id}: {e}");
+
+                continue;
+            }
+        }
+
+        Ok(())
+    }
+
+    async fn update(&self, id: &Uuid, input: UpdateEnrollmentDto) -> Result<Enrollment, AppError> {
         let Some(mut enrollment) = self.enrollments.find_by_id(id).await? else {
             return Err(AppError::ResourceNotFound(*id));
         };
 
         if let Some(scores) = input.student_scores {
-            enrollment.student_scores =
-                scores.into_iter().map(StudentScore::from).collect();
+            enrollment.student_scores = scores.into_iter().map(StudentScore::from).collect();
         }
 
         if let Some(practice_id) = input.practice_id {
