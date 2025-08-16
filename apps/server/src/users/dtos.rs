@@ -167,9 +167,8 @@ impl From<User> for UserResponse {
 static SPECIAL_CHAR_REGEX: OnceLock<Regex> = OnceLock::new();
 
 fn get_special_char_regex() -> &'static Regex {
-    SPECIAL_CHAR_REGEX.get_or_init(|| {
-        Regex::new(r#"[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]"#).unwrap()
-    })
+    SPECIAL_CHAR_REGEX
+        .get_or_init(|| Regex::new(r#"[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]"#).unwrap())
 }
 
 fn validate_password_pairs(dto: &CreateUserDto) -> Result<(), ValidationError> {
@@ -179,25 +178,19 @@ fn validate_password_pairs(dto: &CreateUserDto) -> Result<(), ValidationError> {
     Ok(())
 }
 
-fn validate_optional_password_pairs(
-    dto: &UpdateUserDto,
-) -> Result<(), ValidationError> {
+fn validate_optional_password_pairs(dto: &UpdateUserDto) -> Result<(), ValidationError> {
     match (&dto.password, &dto.confirm_password) {
-        (Some(pwd), Some(conf)) if pwd != conf => {
-            Err(ValidationError::new("Passwords must match"))
+        (Some(pwd), Some(conf)) if pwd != conf => Err(ValidationError::new("Passwords must match")),
+        (Some(_), None) | (None, Some(_)) => {
+            Err(ValidationError::new("Either provide both password fields or neither"))
         }
-        (Some(_), None) | (None, Some(_)) => Err(ValidationError::new(
-            "Either provide both password fields or neither",
-        )),
         _ => Ok(()),
     }
 }
 
 fn password_schema(password: &str) -> Result<(), ValidationError> {
     if password.len() < 8 || password.len() > 100 {
-        return Err(ValidationError::new(
-            "Password must be 8-100 characters long",
-        ));
+        return Err(ValidationError::new("Password must be 8-100 characters long"));
     }
 
     let has_uppercase = password.chars().any(|c| c.is_ascii_uppercase());
@@ -206,21 +199,15 @@ fn password_schema(password: &str) -> Result<(), ValidationError> {
     let has_special = get_special_char_regex().is_match(password);
 
     if !has_uppercase {
-        return Err(ValidationError::new(
-            "Password must contain at least one uppercase letter",
-        ));
+        return Err(ValidationError::new("Password must contain at least one uppercase letter"));
     }
 
     if !has_lowercase {
-        return Err(ValidationError::new(
-            "Password must contain at least one lowercase letter",
-        ));
+        return Err(ValidationError::new("Password must contain at least one lowercase letter"));
     }
 
     if !has_digit {
-        return Err(ValidationError::new(
-            "Password must contain at least one digit",
-        ));
+        return Err(ValidationError::new("Password must contain at least one digit"));
     }
 
     if !has_special {
@@ -275,9 +262,7 @@ fn compute_rut_dv(mut rut: u32) -> String {
 /// Valida que la lista de roles sea válida
 pub fn role_validator(roles: &Vec<String>) -> Result<(), ValidationError> {
     if roles.is_empty() {
-        return Err(ValidationError::new(
-            "La lista de roles no pueden estar vacía",
-        ));
+        return Err(ValidationError::new("La lista de roles no pueden estar vacía"));
     }
 
     for role in roles {

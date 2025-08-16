@@ -23,18 +23,14 @@ impl Mailer {
         config: &MailerConfig,
         template_config: &TemplateConfig,
     ) -> Result<Self, ServiceError> {
-        let creds = Credentials::new(
-            config.smtp_username.clone(),
-            config.smtp_password.clone(),
-        );
+        let creds = Credentials::new(config.smtp_username.clone(), config.smtp_password.clone());
 
         let transporter = SmtpTransport::relay(&config.smtp_host)
             .map_err(|source| MailerError::SmtpTransport { source })?
             .credentials(creds)
             .build();
 
-        let templates =
-            TemplateContext::new(MAILER_TEMPLATES.clone(), template_config.clone())?;
+        let templates = TemplateContext::new(MAILER_TEMPLATES.clone(), template_config.clone())?;
 
         Ok(Mailer {
             transport: transporter,

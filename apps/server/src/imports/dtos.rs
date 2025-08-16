@@ -2,9 +2,9 @@ use serde::{Deserialize, Serialize};
 use validator::Validate;
 
 use crate::shared::validators::validate_uuid;
-use crate::users::{role_validator, validate_rut_id};
+use crate::users::{validate_rut_id, User};
 
-#[derive(Debug, Serialize, Deserialize, Validate)]
+#[derive(Debug, Serialize, Deserialize, Validate, Clone)]
 pub struct ImportUserDto {
     #[validate(custom(function = validate_rut_id))]
     pub rut: String,
@@ -18,17 +18,21 @@ pub struct ImportUserDto {
 
     #[validate(email(message = "El email debe ser válido."))]
     pub email: String,
-
-    #[validate(custom(function = role_validator))]
-    pub roles: Vec<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Validate)]
+#[derive(Debug, Serialize, Deserialize, Validate, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct ImportCourseDataDto {
+pub struct ImportCourseDto {
     #[validate(nested)]
-    pub users: Vec<ImportUserDto>,
+    pub students: Vec<ImportUserDto>,
 
     #[validate(custom(function = validate_uuid))]
-    pub course_id: String,
+    pub id: String,
+}
+
+/// This struct is a temporal dto to map over the raw data
+/// and preserve plain password to use in related Events
+pub struct ImportedUser {
+    pub entity: User,
+    pub plain_password: String,
 }

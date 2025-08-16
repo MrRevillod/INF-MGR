@@ -1,8 +1,6 @@
 use shaku::module;
 
-use crate::{
-    courses, enrollments, practices, shared::database::PostgresDatabase, users,
-};
+use crate::{courses, enrollments, imports, practices, shared::database::PostgresDatabase, users};
 
 use crate::shared::services::{
     event_queue::{TokioEventQueue, TokioEventSender},
@@ -42,6 +40,8 @@ module! {
 
             users::PostgresUserRepository,
             users::UserServiceImpl,
+
+            imports::ImportServiceImpl,
 
             practices::PostgresPracticeRepository,
             practices::PracticeServiceImpl,

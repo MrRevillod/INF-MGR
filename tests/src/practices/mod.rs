@@ -15,12 +15,8 @@ async fn create_practice_with_valid_phone_should_work() {
     let app = init_test_app().await;
 
     // Crear student y teacher
-    let student_id =
-        create_student(&app, Some("validphone_student@example.com".to_string()))
-            .await;
-    let teacher_id =
-        create_teacher(&app, Some("validphone_teacher@example.com".to_string()))
-            .await;
+    let student_id = create_student(&app, Some("validphone_student@example.com".to_string())).await;
+    let teacher_id = create_teacher(&app, Some("validphone_teacher@example.com".to_string())).await;
 
     // Crear course
     let course_data = CourseBuilder::new(&teacher_id).build();
@@ -68,11 +64,9 @@ async fn create_practice_with_invalid_phone_should_fail() {
     let app = init_test_app().await;
 
     let student_id =
-        create_student(&app, Some("invalidphone_student@example.com".to_string()))
-            .await;
+        create_student(&app, Some("invalidphone_student@example.com".to_string())).await;
     let teacher_id =
-        create_teacher(&app, Some("invalidphone_teacher@example.com".to_string()))
-            .await;
+        create_teacher(&app, Some("invalidphone_teacher@example.com".to_string())).await;
 
     // Crear course
     let course_data = CourseBuilder::new(&teacher_id).build();
@@ -117,16 +111,10 @@ async fn create_practice_with_invalid_phone_should_fail() {
 async fn create_practice_with_invalid_enterprise_name_should_fail() {
     let app = init_test_app().await;
 
-    let student_id = create_student(
-        &app,
-        Some("invalid_enterprise_student@example.com".to_string()),
-    )
-    .await;
-    let teacher_id = create_teacher(
-        &app,
-        Some("invalid_enterprise_teacher@example.com".to_string()),
-    )
-    .await;
+    let student_id =
+        create_student(&app, Some("invalid_enterprise_student@example.com".to_string())).await;
+    let teacher_id =
+        create_teacher(&app, Some("invalid_enterprise_teacher@example.com".to_string())).await;
 
     // Crear course
     let course_data = CourseBuilder::new(&teacher_id).build();
@@ -172,11 +160,9 @@ async fn create_practice_with_invalid_description_should_fail() {
     let app = init_test_app().await;
 
     let student_id =
-        create_student(&app, Some("description_student@example.com".to_string()))
-            .await;
+        create_student(&app, Some("description_student@example.com".to_string())).await;
     let teacher_id =
-        create_teacher(&app, Some("description_teacher@example.com".to_string()))
-            .await;
+        create_teacher(&app, Some("description_teacher@example.com".to_string())).await;
 
     // Crear course
     let course_data = CourseBuilder::new(&teacher_id).build();
@@ -221,10 +207,8 @@ async fn create_practice_with_invalid_description_should_fail() {
 async fn create_practice_with_invalid_location_should_fail() {
     let app = init_test_app().await;
 
-    let student_id =
-        create_student(&app, Some("location_student@example.com".to_string())).await;
-    let teacher_id =
-        create_teacher(&app, Some("location_teacher@example.com".to_string())).await;
+    let student_id = create_student(&app, Some("location_student@example.com".to_string())).await;
+    let teacher_id = create_teacher(&app, Some("location_teacher@example.com".to_string())).await;
 
     // Crear course
     let course_data = CourseBuilder::new(&teacher_id).build();
@@ -269,16 +253,10 @@ async fn create_practice_with_invalid_location_should_fail() {
 async fn create_practice_with_invalid_supervisor_name_should_fail() {
     let app = init_test_app().await;
 
-    let student_id = create_student(
-        &app,
-        Some("supervisor_name_student@example.com".to_string()),
-    )
-    .await;
-    let teacher_id = create_teacher(
-        &app,
-        Some("supervisor_name_teacher@example.com".to_string()),
-    )
-    .await;
+    let student_id =
+        create_student(&app, Some("supervisor_name_student@example.com".to_string())).await;
+    let teacher_id =
+        create_teacher(&app, Some("supervisor_name_teacher@example.com".to_string())).await;
 
     // Crear course
     let course_data = CourseBuilder::new(&teacher_id).build();
@@ -323,16 +301,10 @@ async fn create_practice_with_invalid_supervisor_name_should_fail() {
 async fn create_practice_with_invalid_supervisor_email_should_fail() {
     let app = init_test_app().await;
 
-    let student_id = create_student(
-        &app,
-        Some("supervisor_email_student@example.com".to_string()),
-    )
-    .await;
-    let teacher_id = create_teacher(
-        &app,
-        Some("supervisor_email_teacher@example.com".to_string()),
-    )
-    .await;
+    let student_id =
+        create_student(&app, Some("supervisor_email_student@example.com".to_string())).await;
+    let teacher_id =
+        create_teacher(&app, Some("supervisor_email_teacher@example.com".to_string())).await;
 
     // Crear course
     let course_data = CourseBuilder::new(&teacher_id).build();
@@ -377,12 +349,8 @@ async fn create_practice_with_invalid_supervisor_email_should_fail() {
 async fn create_practice_with_invalid_start_date_should_fail() {
     let app = init_test_app().await;
 
-    let student_id =
-        create_student(&app, Some("start_date_student@example.com".to_string()))
-            .await;
-    let teacher_id =
-        create_teacher(&app, Some("start_date_teacher@example.com".to_string()))
-            .await;
+    let student_id = create_student(&app, Some("start_date_student@example.com".to_string())).await;
+    let teacher_id = create_teacher(&app, Some("start_date_teacher@example.com".to_string())).await;
 
     // Crear course
     let course_data = CourseBuilder::new(&teacher_id).build();
@@ -428,10 +396,8 @@ async fn create_practice_with_invalid_start_date_should_fail() {
 async fn create_practice_with_invalid_end_date_should_fail() {
     let app = init_test_app().await;
 
-    let student_id =
-        create_student(&app, Some("end_date_student@example.com".to_string())).await;
-    let teacher_id =
-        create_teacher(&app, Some("end_date_teacher@example.com".to_string())).await;
+    let student_id = create_student(&app, Some("end_date_student@example.com".to_string())).await;
+    let teacher_id = create_teacher(&app, Some("end_date_teacher@example.com".to_string())).await;
 
     // Crear course
     let course_data = CourseBuilder::new(&teacher_id).build();
@@ -478,16 +444,10 @@ async fn create_practice_with_invalid_end_date_should_fail() {
 async fn create_practice_with_invalid_start_date_delete_should_fail() {
     let app = init_test_app().await;
 
-    let student_id = create_student(
-        &app,
-        Some("start_date_delete_student@example.com".to_string()),
-    )
-    .await;
-    let teacher_id = create_teacher(
-        &app,
-        Some("start_date_delete_teacher@example.com".to_string()),
-    )
-    .await;
+    let student_id =
+        create_student(&app, Some("start_date_delete_student@example.com".to_string())).await;
+    let teacher_id =
+        create_teacher(&app, Some("start_date_delete_teacher@example.com".to_string())).await;
 
     // Crear course
     let course_data = CourseBuilder::new(&teacher_id).build();
@@ -532,16 +492,10 @@ async fn create_practice_with_invalid_start_date_delete_should_fail() {
 async fn create_practice_with_invalid_end_date_delete_should_fail() {
     let app = init_test_app().await;
 
-    let student_id = create_student(
-        &app,
-        Some("end_date_delete_student@example.com".to_string()),
-    )
-    .await;
-    let teacher_id = create_teacher(
-        &app,
-        Some("end_date_delete_teacher@example.com".to_string()),
-    )
-    .await;
+    let student_id =
+        create_student(&app, Some("end_date_delete_student@example.com".to_string())).await;
+    let teacher_id =
+        create_teacher(&app, Some("end_date_delete_teacher@example.com".to_string())).await;
 
     // Crear course
     let course_data = CourseBuilder::new(&teacher_id).build();

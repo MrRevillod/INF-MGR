@@ -8,9 +8,7 @@ use sqlx::{query_as_with as sqlx_query, Postgres};
 use uuid::Uuid;
 
 use crate::{
-    practices::entity::{
-        Practice, Practices, PRACTICE_INSERT_COLUMNS, PRACTICE_UPDATE_COLUMNS,
-    },
+    practices::entity::{Practice, Practices, PRACTICE_INSERT_COLUMNS, PRACTICE_UPDATE_COLUMNS},
     shared::{database::DatabaseConnection, errors::AppError},
 };
 
@@ -28,10 +26,7 @@ pub struct PracticeFilter {
 
 #[async_trait]
 pub trait PracticeRepository: Interface {
-    async fn find_many(
-        &self,
-        filter: PracticeFilter,
-    ) -> Result<Vec<Practice>, AppError>;
+    async fn find_many(&self, filter: PracticeFilter) -> Result<Vec<Practice>, AppError>;
 
     async fn find_by_id(&self, id: &Uuid) -> Result<Option<Practice>, AppError>;
     async fn save(&self, practice: Practice) -> Result<Practice, AppError>;
@@ -40,14 +35,8 @@ pub trait PracticeRepository: Interface {
 
 #[async_trait]
 impl PracticeRepository for PostgresPracticeRepository {
-    async fn find_many(
-        &self,
-        filter: PracticeFilter,
-    ) -> Result<Vec<Practice>, AppError> {
-        let mut query = Query::select()
-            .expr(Expr::cust("*"))
-            .from(Practices::Table)
-            .to_owned();
+    async fn find_many(&self, filter: PracticeFilter) -> Result<Vec<Practice>, AppError> {
+        let mut query = Query::select().expr(Expr::cust("*")).from(Practices::Table).to_owned();
 
         if let Some(ids) = &filter.ids {
             query.and_where(Expr::col(Practices::Id).is_in(ids.clone()));

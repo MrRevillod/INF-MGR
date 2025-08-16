@@ -8,9 +8,7 @@ use uuid::Uuid;
 use crate::{
     courses::CourseService,
     enrollments::{EnrollmentService, UpdateEnrollmentDto},
-    practices::{
-        CreatePracticeDto, Practice, PracticeRepository, UpdatePracticeDto,
-    },
+    practices::{CreatePracticeDto, Practice, PracticeRepository, UpdatePracticeDto},
     shared::{errors::AppError, AppResult},
 };
 
@@ -34,11 +32,7 @@ pub struct PracticeServiceImpl {
 pub trait PracticeService: Interface {
     async fn get_by_id(&self, id: &Uuid) -> Result<Option<Practice>, AppError>;
 
-    async fn update(
-        &self,
-        id: &Uuid,
-        input: UpdatePracticeDto,
-    ) -> Result<Practice, AppError>;
+    async fn update(&self, id: &Uuid, input: UpdatePracticeDto) -> Result<Practice, AppError>;
 
     async fn create(
         &self,
@@ -48,11 +42,7 @@ pub trait PracticeService: Interface {
 
     async fn remove(&self, id: &Uuid) -> Result<(), AppError>;
 
-    async fn approve(
-        &self,
-        enrollment_id: &Uuid,
-        practice_id: &Uuid,
-    ) -> AppResult<Practice>;
+    async fn approve(&self, enrollment_id: &Uuid, practice_id: &Uuid) -> AppResult<Practice>;
 }
 
 #[async_trait]
@@ -68,8 +58,7 @@ impl PracticeService for PracticeServiceImpl {
     ) -> Result<Practice, AppError> {
         let practice = Practice::from(input);
 
-        let (enrollment, student, _) =
-            self.enrollments.get_by_id(enrollment_id).await?;
+        let (enrollment, student, _) = self.enrollments.get_by_id(enrollment_id).await?;
 
         let (course, _) = self.courses.get_by_id(&enrollment.course_id).await?;
 
@@ -86,51 +75,33 @@ impl PracticeService for PracticeServiceImpl {
 
         let event_data = (student, practice.clone(), course, enrollment);
 
-        self.event_queue
-            .publish(Event::PracticeCreated(event_data))
-            .await;
+        self.event_queue.publish(Event::PracticeCreated(event_data)).await;
 
         Ok(practice)
     }
 
-    async fn approve(
-        &self,
-        enrollment_id: &Uuid,
-        practice_id: &Uuid,
-    ) -> AppResult<Practice> {
-        let (enrollment, student, practice) =
-            self.enrollments.get_by_id(enrollment_id).await?;
+    async fn approve(&self, enrollment_id: &Uuid, practice_id: &Uuid) -> AppResult<Practice> {
+        let (enrollment, student, practice) = self.enrollments.get_by_id(enrollment_id).await?;
 
-        let mut practice =
-            practice.ok_or(AppError::ResourceNotFound(*practice_id))?;
+        let mut practice = practice.ok_or(AppError::ResourceNotFound(*practice_id))?;
 
         if practice.id != *practice_id {
             return Err(AppError::ResourceNotFound(*practice_id));
         }
 
-        let (course, teacher) =
-            self.courses.get_by_id(&enrollment.course_id).await?;
+        let (course, teacher) = self.courses.get_by_id(&enrollment.course_id).await?;
 
         let event_data = (student, practice.clone(), course, teacher);
 
-        self.event_queue
-            .publish(Event::PracticeApproved(event_data))
-            .await;
+        self.event_queue.publish(Event::PracticeApproved(event_data)).await;
 
         practice.is_approved = true;
         self.practices.save(practice).await
     }
 
-    async fn update(
-        &self,
-        id: &Uuid,
-        input: UpdatePracticeDto,
-    ) -> Result<Practice, AppError> {
-        let mut practice = self
-            .practices
-            .find_by_id(id)
-            .await?
-            .ok_or(AppError::ResourceNotFound(*id))?;
+    async fn update(&self, id: &Uuid, input: UpdatePracticeDto) -> Result<Practice, AppError> {
+        let mut practice =
+            self.practices.find_by_id(id).await?.ok_or(AppError::ResourceNotFound(*id))?;
 
         if let Some(enterprise_name) = input.enterprise_name {
             practice.enterprise_name = enterprise_name;
@@ -164,11 +135,8 @@ impl PracticeService for PracticeServiceImpl {
     }
 
     async fn remove(&self, id: &Uuid) -> Result<(), AppError> {
-        let practice = self
-            .practices
-            .find_by_id(id)
-            .await?
-            .ok_or(AppError::ResourceNotFound(*id))?;
+        let practice =
+            self.practices.find_by_id(id).await?.ok_or(AppError::ResourceNotFound(*id))?;
 
         self.practices.delete(&practice.id).await
     }

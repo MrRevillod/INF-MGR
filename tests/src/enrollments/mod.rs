@@ -6,9 +6,7 @@ use crate::{
     courses::utils::{CourseBuilder, create_course, delete_course},
     enrollments::utils::{EnrollmentBuilder, create_enrollment, delete_enrollment},
     extract_resource_id, init_test_app,
-    users::utils::{
-        create_student, create_teacher, delete_user, generate_unique_email,
-    },
+    users::utils::{create_student, create_teacher, delete_user, generate_unique_email},
 };
 
 pub mod utils;
@@ -61,9 +59,7 @@ pub async fn create_enrollment_and_practice() {
 
     //approve practice
     let approve_practice_res = app
-        .post(&format!(
-            "/enrollments/{enrollment_id}/practice/{practice_id}/approve",
-        ))
+        .post(&format!("/enrollments/{enrollment_id}/practice/{practice_id}/approve",))
         .await;
 
     approve_practice_res.assert_status(StatusCode::OK);

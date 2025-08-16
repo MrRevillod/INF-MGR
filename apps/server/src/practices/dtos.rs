@@ -40,9 +40,7 @@ pub struct CreatePracticeDto {
     ))]
     pub supervisor_name: String,
 
-    #[validate(email(
-        message = "El correo electrónico del supervisor debe ser válido."
-    ))]
+    #[validate(email(message = "El correo electrónico del supervisor debe ser válido."))]
     pub supervisor_email: String,
 
     #[validate(regex(
@@ -104,9 +102,7 @@ pub struct UpdatePracticeDto {
     ))]
     pub supervisor_name: Option<String>,
 
-    #[validate(email(
-        message = "El correo electrónico del supervisor debe ser válido."
-    ))]
+    #[validate(email(message = "El correo electrónico del supervisor debe ser válido."))]
     pub supervisor_email: Option<String>,
 
     pub start_date: Option<DateTime<Utc>>,
@@ -116,15 +112,11 @@ pub struct UpdatePracticeDto {
 static PHONE_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^(?:\+56)?\s?(?:9\d{8}|\d{1}\d{8})$").unwrap());
 
-fn validate_create_practice_dates(
-    schema: &CreatePracticeDto,
-) -> Result<(), ValidationError> {
+fn validate_create_practice_dates(schema: &CreatePracticeDto) -> Result<(), ValidationError> {
     validate_dates(Some(schema.start_date), Some(schema.end_date))
 }
 
-fn validate_update_practice_dates(
-    schema: &UpdatePracticeDto,
-) -> Result<(), ValidationError> {
+fn validate_update_practice_dates(schema: &UpdatePracticeDto) -> Result<(), ValidationError> {
     validate_dates(schema.start_date, schema.end_date)
 }
 

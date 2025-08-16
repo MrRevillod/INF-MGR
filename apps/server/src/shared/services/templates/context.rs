@@ -25,10 +25,7 @@ pub struct TemplateContext {
 }
 
 impl TemplateContext {
-    pub fn new(
-        templates: Templates,
-        config: TemplateConfig,
-    ) -> Result<Self, ServiceError> {
+    pub fn new(templates: Templates, config: TemplateConfig) -> Result<Self, ServiceError> {
         let mut tera_handler = Tera::default();
 
         for (name, content) in templates {
@@ -50,11 +47,7 @@ impl TemplateContext {
         context
     }
 
-    pub fn render(
-        &self,
-        template: &str,
-        ctx: RawContext,
-    ) -> Result<String, ServiceError> {
+    pub fn render(&self, template: &str, ctx: RawContext) -> Result<String, ServiceError> {
         let mut context = self.create_context_with_config();
 
         for (key, value) in ctx {

@@ -26,30 +26,18 @@ pub struct EnrollmentFilter {
 
 #[async_trait]
 pub trait EnrollmentRepository: Interface {
-    async fn find_many(
-        &self,
-        filter: EnrollmentFilter,
-    ) -> Result<Vec<Enrollment>, AppError>;
+    async fn find_many(&self, filter: EnrollmentFilter) -> Result<Vec<Enrollment>, AppError>;
 
     async fn find_by_id(&self, id: &Uuid) -> Result<Option<Enrollment>, AppError>;
     async fn save(&self, enrollment: Enrollment) -> Result<Enrollment, AppError>;
-    async fn create_many(
-        &self,
-        enrollments: Vec<Enrollment>,
-    ) -> Result<Vec<Enrollment>, AppError>;
+    async fn create_many(&self, enrollments: Vec<Enrollment>) -> Result<Vec<Enrollment>, AppError>;
     async fn delete(&self, id: &Uuid) -> Result<(), AppError>;
 }
 
 #[async_trait]
 impl EnrollmentRepository for PostgresEnrollmentRepository {
-    async fn find_many(
-        &self,
-        filter: EnrollmentFilter,
-    ) -> Result<Vec<Enrollment>, AppError> {
-        let mut query = Query::select()
-            .expr(Expr::cust("*"))
-            .from(Enrollments::Table)
-            .to_owned();
+    async fn find_many(&self, filter: EnrollmentFilter) -> Result<Vec<Enrollment>, AppError> {
+        let mut query = Query::select().expr(Expr::cust("*")).from(Enrollments::Table).to_owned();
 
         if let Some(user_id) = filter.student_id {
             query.and_where(Expr::col(Enrollments::StudentId).eq(user_id));
@@ -104,10 +92,7 @@ impl EnrollmentRepository for PostgresEnrollmentRepository {
         Ok(result)
     }
 
-    async fn create_many(
-        &self,
-        enrollments: Vec<Enrollment>,
-    ) -> Result<Vec<Enrollment>, AppError> {
+    async fn create_many(&self, enrollments: Vec<Enrollment>) -> Result<Vec<Enrollment>, AppError> {
         if enrollments.is_empty() {
             return Ok(vec![]);
         }
@@ -117,22 +102,22 @@ impl EnrollmentRepository for PostgresEnrollmentRepository {
 
         for _enrollment in &enrollments {
             query_values.push(format!(
-                "({}, {}, {}, {}, {})",
-                format!("${}", arg_index),     // id
-                format!("${}", arg_index + 1), // student_id
-                format!("${}", arg_index + 2), // course_id
-                format!("${}", arg_index + 3), // practice_id
-                format!("${}", arg_index + 4)  // student_scores
+                "(${}, ${}, ${}, ${}, ${})",
+                arg_index,     // id
+                arg_index + 1, // student_id
+                arg_index + 2, // course_id
+                arg_index + 3, // practice_id
+                arg_index + 4, // student_scores
             ));
             arg_index += 5;
         }
 
         let query = format!(
             r#"
-            INSERT INTO enrollments (id, student_id, course_id, practice_id, student_scores)
-            VALUES {}
-            ON CONFLICT (id) DO NOTHING
-            RETURNING *
+                INSERT INTO enrollments (id, student_id, course_id, practice_id, student_scores)
+                VALUES {}
+                ON CONFLICT (id) DO NOTHING
+                RETURNING *
             "#,
             query_values.join(", ")
         );
@@ -142,10 +127,10 @@ impl EnrollmentRepository for PostgresEnrollmentRepository {
         // Bind all parameters for all enrollments
         for enrollment in &enrollments {
             sqlx_query = sqlx_query
-                .bind(&enrollment.id)
-                .bind(&enrollment.student_id)
-                .bind(&enrollment.course_id)
-                .bind(&enrollment.practice_id)
+                .bind(enrollment.id)
+                .bind(enrollment.student_id)
+                .bind(enrollment.course_id)
+                .bind(enrollment.practice_id)
                 .bind(&enrollment.student_scores);
         }
 
@@ -160,9 +145,7 @@ impl EnrollmentRepository for PostgresEnrollmentRepository {
             .and_where(Expr::col(Enrollments::Id).eq(*id))
             .build_sqlx(PostgresQueryBuilder);
 
-        sqlx::query_with(&sql, values)
-            .execute(self.db_connection.get_pool())
-            .await?;
+        sqlx::query_with(&sql, values).execute(self.db_connection.get_pool()).await?;
 
         Ok(())
     }

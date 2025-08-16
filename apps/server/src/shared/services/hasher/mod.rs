@@ -8,12 +8,9 @@ const DEFAULT_PASSWORD_LEN: usize = 12;
 pub trait PasswordHasher: Interface {
     fn hash(&self, password: &str) -> Result<String, ServiceError>;
     fn verify(&self, password: &str, hash: &str) -> Result<bool, ServiceError>;
-    fn random_password(&self) -> Result<[String; 2], ServiceError>;
+    fn random_password(&self) -> Result<(String, String), ServiceError>;
     fn generate_password(&self, len: usize) -> Result<String, ServiceError>;
-    fn generate_and_hash(
-        &self,
-        len: usize,
-    ) -> Result<(String, String), ServiceError>;
+    fn generate_and_hash(&self, len: usize) -> Result<(String, String), ServiceError>;
 }
 
 #[derive(Component)]
@@ -29,10 +26,10 @@ impl PasswordHasher for BcryptPasswordHasher {
         Ok(bcrypt::verify(password, hash).map_err(HasherError::verify)?)
     }
 
-    fn random_password(&self) -> Result<[String; 2], ServiceError> {
+    fn random_password(&self) -> Result<(String, String), ServiceError> {
         let plain = self.generate_password(DEFAULT_PASSWORD_LEN)?;
         let hashed = self.hash(&plain)?;
-        Ok([plain, hashed])
+        Ok((plain, hashed))
     }
 
     fn generate_password(&self, len: usize) -> Result<String, ServiceError> {
@@ -49,18 +46,13 @@ impl PasswordHasher for BcryptPasswordHasher {
         };
 
         let pwd = pg.generate_one().map_err(|e| {
-            HasherError::password_generation(format!(
-                "password generation failed: {e}",
-            ))
+            HasherError::password_generation(format!("password generation failed: {e}",))
         })?;
 
         Ok(pwd)
     }
 
-    fn generate_and_hash(
-        &self,
-        len: usize,
-    ) -> Result<(String, String), ServiceError> {
+    fn generate_and_hash(&self, len: usize) -> Result<(String, String), ServiceError> {
         let plain = self.generate_password(len)?;
         let hashed = self.hash(&plain)?;
         Ok((plain, hashed))

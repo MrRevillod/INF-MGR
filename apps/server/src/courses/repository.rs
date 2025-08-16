@@ -28,8 +28,7 @@ pub struct CourseFilter {
 
 #[async_trait]
 pub trait CourseRepository: Interface {
-    async fn find_many(&self, filter: CourseFilter)
-        -> Result<Vec<Course>, AppError>;
+    async fn find_many(&self, filter: CourseFilter) -> Result<Vec<Course>, AppError>;
     async fn find_by_id(&self, id: &Uuid) -> Result<Option<Course>, AppError>;
     async fn save(&self, course: Course) -> Result<Course, AppError>;
     async fn delete(&self, id: &Uuid) -> Result<(), AppError>;
@@ -37,14 +36,8 @@ pub trait CourseRepository: Interface {
 
 #[async_trait]
 impl CourseRepository for PostgresCourseRepository {
-    async fn find_many(
-        &self,
-        filter: CourseFilter,
-    ) -> Result<Vec<Course>, AppError> {
-        let mut query = Query::select()
-            .expr(Expr::cust("*"))
-            .from(Courses::Table)
-            .to_owned();
+    async fn find_many(&self, filter: CourseFilter) -> Result<Vec<Course>, AppError> {
+        let mut query = Query::select().expr(Expr::cust("*")).from(Courses::Table).to_owned();
 
         if let Some(code) = filter.code {
             query.and_where(Expr::col(Courses::Code).eq(code));
@@ -114,9 +107,7 @@ impl CourseRepository for PostgresCourseRepository {
             .and_where(Expr::col(Courses::Id).eq(*id))
             .build_sqlx(PostgresQueryBuilder);
 
-        sqlx::query_with(&sql, values)
-            .execute(self.db_connection.get_pool())
-            .await?;
+        sqlx::query_with(&sql, values).execute(self.db_connection.get_pool()).await?;
 
         Ok(())
     }

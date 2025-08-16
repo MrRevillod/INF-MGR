@@ -37,15 +37,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .await
             .expect("Failed to create database connection");
 
-        db.migrate()
-            .await
-            .expect("Failed to create database connection");
+        db.migrate().await.expect("Failed to create database connection");
 
-        let mailer = Mailer::new(&mailer_config, &template_config)
-            .expect("Failed to create mailer");
+        let mailer =
+            Mailer::new(&mailer_config, &template_config).expect("Failed to create mailer");
 
-        let printer =
-            Printer::new(&template_config).expect("Failed to create printer");
+        let printer = Printer::new(&template_config).expect("Failed to create printer");
 
         (db, mailer, printer)
     };

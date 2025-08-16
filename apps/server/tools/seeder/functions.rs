@@ -43,11 +43,7 @@ pub async fn create_course(pool: &Pool<Postgres>, course: Course) {
         .unwrap();
 }
 
-pub async fn create_enrollments(
-    pool: &Pool<Postgres>,
-    students: Vec<User>,
-    course: Course,
-) {
+pub async fn create_enrollments(pool: &Pool<Postgres>, students: Vec<User>, course: Course) {
     let query = r#"
         INSERT INTO enrollments (id, student_id, course_id, practice_id, student_scores)
         VALUES ($1, $2, $3, NULL, ARRAY[]::student_score[])

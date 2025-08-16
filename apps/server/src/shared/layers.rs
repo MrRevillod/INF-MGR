@@ -5,9 +5,7 @@ use std::time::Duration;
 use axum::http;
 use tower_http::classify::{ServerErrorsAsFailures, SharedClassifier};
 use tower_http::cors::CorsLayer;
-use tower_http::trace::{
-    MakeSpan, OnRequest, OnResponse, TraceLayer as TowerTraceLayer,
-};
+use tower_http::trace::{MakeSpan, OnRequest, OnResponse, TraceLayer as TowerTraceLayer};
 
 use tracing::Span;
 
@@ -27,10 +25,7 @@ pub struct HttpLogger {
 
 impl HttpLogger {
     pub fn new() -> Self {
-        tracing_subscriber::fmt()
-            .with_target(false)
-            .compact()
-            .init();
+        tracing_subscriber::fmt().with_target(false).compact().init();
 
         HttpLogger {
             layer: TowerTraceLayer::new_for_http()
@@ -55,11 +50,7 @@ pub struct TraceOnRequest;
 
 impl<B> OnRequest<B> for TraceOnRequest {
     fn on_request(&mut self, request: &http::Request<B>, _: &Span) {
-        tracing::info!(
-            "HTTP - METHOD: [{}] - PATH: [{}]",
-            request.method(),
-            request.uri().path()
-        );
+        tracing::info!("HTTP - METHOD: [{}] - PATH: [{}]", request.method(), request.uri().path());
     }
 }
 
@@ -88,8 +79,8 @@ pub fn setup_cors(config: &CorsConfig) -> CorsLayer {
     let mut headers = HashSet::new();
 
     for method in config.allowed_http_methods.iter() {
-        let http_method = axum::http::Method::from_str(method)
-            .expect("Invalid HTTP Method found in config");
+        let http_method =
+            axum::http::Method::from_str(method).expect("Invalid HTTP Method found in config");
 
         methods.insert(http_method);
     }

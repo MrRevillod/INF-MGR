@@ -78,10 +78,8 @@ impl EventSubscriber {
                 let mut email_context = enterprise_auth_pdf_ctx.clone();
 
                 email_context.push(("practice_authorization_doc_url", pdf_url));
-                email_context.push((
-                    "supervisor_evaluation_url",
-                    supervisor_evaluation_url.clone(),
-                ));
+                email_context
+                    .push(("supervisor_evaluation_url", supervisor_evaluation_url.clone()));
 
                 tokio::try_join!(
                     mailer.send(MailTo {
@@ -165,6 +163,42 @@ impl EventSubscriber {
                     subject: "Bienvenido (a) a la plataforma",
                     email,
                     template: "system:welcome",
+                    context,
+                };
+
+                mailer.send(mail_opts).await?;
+            }
+
+            Event::ManyUsersCreated(data) => {
+                for (name, email, password) in data {
+                    let context: RawContext = vec![
+                        ("name", name),
+                        ("email", email.clone()),
+                        ("password", password),
+                    ];
+
+                    let mail_opts = MailTo {
+                        subject: "Bienvenido (a) a la plataforma",
+                        email,
+                        template: "system:welcome",
+                        context,
+                    };
+
+                    mailer.send(mail_opts).await?;
+                }
+            }
+
+            Event::CourseCreated((course, teacher)) => {
+                let context: RawContext = vec![
+                    ("course_name", course.name),
+                    ("course_code", course.code),
+                    ("teacher_name", teacher.name.clone()),
+                ];
+
+                let mail_opts = MailTo {
+                    subject: "Asignación de Curso",
+                    email: teacher.email.clone(),
+                    template: "course:creation:teacher",
                     context,
                 };
 

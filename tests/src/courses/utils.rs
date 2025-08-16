@@ -24,16 +24,12 @@ impl CourseBuilder {
             name: generate_unique_course_name(),
             evaluations: vec![
                 EvaluationBuilder {
-                    name: "Bitácoras Semanales".to_string(),
-                    weight: 30,
-                },
-                EvaluationBuilder {
                     name: "Informe Final".to_string(),
-                    weight: 40,
+                    weight: 60,
                 },
                 EvaluationBuilder {
                     name: "Evaluación Empresa".to_string(),
-                    weight: 30,
+                    weight: 40,
                 },
             ],
             teacher_id: teacher_id.to_string(),
@@ -99,12 +95,8 @@ impl CourseBuilder {
 pub fn generate_unique_code() -> String {
     let uuid = Uuid::new_v4();
     let uuid_bytes = uuid.as_bytes();
-    let numeric_value = u32::from_be_bytes([
-        uuid_bytes[0],
-        uuid_bytes[1],
-        uuid_bytes[2],
-        uuid_bytes[3],
-    ]);
+    let numeric_value =
+        u32::from_be_bytes([uuid_bytes[0], uuid_bytes[1], uuid_bytes[2], uuid_bytes[3]]);
 
     let four_digits = (numeric_value % 9000) + 1000;
 
@@ -112,10 +104,7 @@ pub fn generate_unique_code() -> String {
 }
 
 pub fn generate_unique_course_name() -> String {
-    format!(
-        "Test Course {}",
-        Uuid::new_v4().to_string()[0..16].to_uppercase()
-    )
+    format!("Test Course {}", Uuid::new_v4().to_string()[0..4].to_uppercase())
 }
 
 pub async fn create_course(server: &TestServer, course: &Value) -> Value {
@@ -132,15 +121,8 @@ pub async fn create_course(server: &TestServer, course: &Value) -> Value {
     body.data
 }
 
-pub async fn update_course(
-    server: &TestServer,
-    course_id: &str,
-    update_data: &Value,
-) -> Value {
-    let response = server
-        .patch(&format!("/courses/{}", course_id))
-        .json(update_data)
-        .await;
+pub async fn update_course(server: &TestServer, course_id: &str, update_data: &Value) -> Value {
+    let response = server.patch(&format!("/courses/{}", course_id)).json(update_data).await;
 
     let body = response.json::<ResponseBody>();
 
