@@ -42,6 +42,11 @@ impl EnrollmentsController {
         Ok(HttpResponse::Ok())
     }
 
+    #[post("/{id}/practice/{practice_id}/authorize")]
+    async fn authorize_practice(_: Context) -> HttpResult<HttpResponse> {
+        Ok(HttpResponse::Ok())
+    }
+
     #[post("/{id}/reject")]
     async fn reject_practice(_: Context) -> HttpResult<HttpResponse> {
         Ok(HttpResponse::Ok())
