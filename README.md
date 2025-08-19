@@ -17,7 +17,7 @@ Este repositorio contiene el código fuente de un sistema de gestión de prácti
 
 ## Instalación y ejecución
 
-Para instalar y ejecutar el sistema, sigue estos pasos:
+Para instalar y ejecutar el sistema, sigue estos pasos de ahora:
 
 1. Clona el repositorio:
    ```bash
