@@ -3,7 +3,7 @@ use uuid::Uuid;
 
 use crate::{
     container::AppModule,
-    practices::{CreatePracticeDto, PracticeService, UpdatePracticeDto},
+    practices::{CreatePracticeDto, PracticeService, PracticeStatus, UpdatePracticeDto},
 };
 
 #[controller("/enrollments")]
@@ -33,22 +33,41 @@ impl EnrollmentsController {
             return Err(HttpResponse::NotFound());
         };
 
-        if practice.is_approved {
+        if practice.practice_status != PracticeStatus::Pending {
             return Err(HttpResponse::BadRequest());
         }
 
-        service.approve(&enrollment_id, &practice_id).await?;
+        service
+            .update_status(&enrollment_id, &practice_id, PracticeStatus::Approved)
+            .await?;
+
+        Ok(HttpResponse::Ok())
+    }
+
+    #[post("/{id}/practice/{practice_id}/decline")]
+    async fn decline_practice(ctx: Context) -> HttpResult<HttpResponse> {
+        let enrollment_id = ctx.param::<Uuid>("id")?;
+        let practice_id = ctx.param::<Uuid>("practice_id")?;
+
+        let service = ctx.get_dependency::<AppModule, dyn PracticeService>()?;
+
+        let Some(practice) = service.get_by_id(&practice_id).await? else {
+            return Err(HttpResponse::NotFound());
+        };
+
+        if practice.practice_status != PracticeStatus::Pending {
+            return Err(HttpResponse::BadRequest());
+        }
+
+        service
+            .update_status(&enrollment_id, &practice_id, PracticeStatus::Declined)
+            .await?;
 
         Ok(HttpResponse::Ok())
     }
 
     #[post("/{id}/practice/{practice_id}/authorize")]
     async fn authorize_practice(_: Context) -> HttpResult<HttpResponse> {
-        Ok(HttpResponse::Ok())
-    }
-
-    #[post("/{id}/reject")]
-    async fn reject_practice(_: Context) -> HttpResult<HttpResponse> {
         Ok(HttpResponse::Ok())
     }
 

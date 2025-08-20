@@ -1,4 +1,7 @@
-use crate::shared::services::event_queue::{Event, EventQueue};
+use crate::{
+    practices::entity::PracticeStatus,
+    shared::services::event_queue::{Event, EventQueue},
+};
 use async_trait::async_trait;
 
 use shaku::{Component, Interface};
@@ -42,7 +45,12 @@ pub trait PracticeService: Interface {
 
     async fn remove(&self, id: &Uuid) -> Result<(), AppError>;
 
-    async fn approve(&self, enrollment_id: &Uuid, practice_id: &Uuid) -> AppResult<Practice>;
+    async fn update_status(
+        &self,
+        enrollment_id: &Uuid,
+        practice_id: &Uuid,
+        status: PracticeStatus,
+    ) -> AppResult<Practice>;
 }
 
 #[async_trait]
@@ -80,7 +88,12 @@ impl PracticeService for PracticeServiceImpl {
         Ok(practice)
     }
 
-    async fn approve(&self, enrollment_id: &Uuid, practice_id: &Uuid) -> AppResult<Practice> {
+    async fn update_status(
+        &self,
+        enrollment_id: &Uuid,
+        practice_id: &Uuid,
+        status: PracticeStatus,
+    ) -> AppResult<Practice> {
         let (enrollment, student, practice) = self.enrollments.get_by_id(enrollment_id).await?;
 
         let mut practice = practice.ok_or(AppError::ResourceNotFound(*practice_id))?;
@@ -92,10 +105,18 @@ impl PracticeService for PracticeServiceImpl {
         let (course, teacher) = self.courses.get_by_id(&enrollment.course_id).await?;
 
         let event_data = (student, practice.clone(), course, teacher);
+        match status {
+            PracticeStatus::Approved => {
+                practice.practice_status = PracticeStatus::Approved;
+                self.event_queue.publish(Event::PracticeApproved(event_data)).await;
+            }
+            PracticeStatus::Declined => {
+                practice.practice_status = PracticeStatus::Declined;
+                self.event_queue.publish(Event::PracticeDeclined(event_data)).await;
+            }
+            _ => unreachable!("Only Approved or Declined statuses are allowed in this method"),
+        }
 
-        self.event_queue.publish(Event::PracticeApproved(event_data)).await;
-
-        practice.is_approved = true;
         self.practices.save(practice).await
     }
 

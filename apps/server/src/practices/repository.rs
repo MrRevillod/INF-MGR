@@ -1,14 +1,14 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use sea_query::{Expr, ExprTrait, OnConflict, PostgresQueryBuilder, Query};
+use sea_query::{Expr, ExprTrait, PostgresQueryBuilder, Query};
 use sea_query_sqlx::SqlxBinder;
 use shaku::{Component, Interface};
 use sqlx::{query_as_with as sqlx_query, Postgres};
 use uuid::Uuid;
 
 use crate::{
-    practices::entity::{Practice, Practices, PRACTICE_INSERT_COLUMNS, PRACTICE_UPDATE_COLUMNS},
+    practices::entity::{Practice, Practices},
     shared::{database::DatabaseConnection, errors::AppError},
 };
 
@@ -66,36 +66,36 @@ impl PracticeRepository for PostgresPracticeRepository {
     }
 
     async fn save(&self, practice: Practice) -> Result<Practice, AppError> {
-        let (sql, values) = Query::insert()
-            .into_table(Practices::Table)
-            .columns(PRACTICE_INSERT_COLUMNS)
-            // SAFETY: values_panic is safe here because we control the input data
-            // and ensure proper types. Consider refactoring to use values() with proper error handling
-            .values_panic(vec![
-                practice.id.into(),
-                practice.enterprise_name.into(),
-                practice.location.into(),
-                practice.description.into(),
-                practice.supervisor_name.into(),
-                practice.supervisor_email.into(),
-                practice.supervisor_phone.into(),
-                practice.start_date.into(),
-                practice.end_date.into(),
-                practice.is_approved.into(),
-            ])
-            .on_conflict(
-                OnConflict::columns([Practices::Id])
-                    .update_columns(PRACTICE_UPDATE_COLUMNS)
-                    .to_owned(),
-            )
-            .returning_all()
-            .build_sqlx(PostgresQueryBuilder);
+        let query = r#"
+            INSERT INTO practices (id, enterprise_name,location, description, supervisor_name, supervisor_email, supervisor_phone, start_date, end_date, practice_status)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            ON CONFLICT (id) DO UPDATE SET 
+                enterprise_name = EXCLUDED.enterprise_name,
+                location = EXCLUDED.location,
+                description = EXCLUDED.description,
+                supervisor_name = EXCLUDED.supervisor_name,
+                supervisor_email = EXCLUDED.supervisor_email,
+                supervisor_phone = EXCLUDED.supervisor_phone,
+                start_date = EXCLUDED.start_date,
+                end_date = EXCLUDED.end_date,
+                practice_status = EXCLUDED.practice_status
+            RETURNING *
+        "#;
 
-        let saved_practice = sqlx_query::<Postgres, Practice, _>(&sql, values)
+        let result = sqlx::query_as::<_, Practice>(query)
+            .bind(practice.id)
+            .bind(practice.enterprise_name)
+            .bind(practice.location)
+            .bind(practice.description)
+            .bind(practice.supervisor_name)
+            .bind(practice.supervisor_email)
+            .bind(practice.supervisor_phone)
+            .bind(practice.start_date)
+            .bind(practice.end_date)
+            .bind(practice.practice_status)
             .fetch_one(self.db_connection.get_pool())
             .await?;
-
-        Ok(saved_practice)
+        Ok(result)
     }
 
     async fn delete(&self, id: &Uuid) -> Result<(), AppError> {

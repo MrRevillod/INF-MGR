@@ -103,6 +103,42 @@ impl EventSubscriber {
                 )?;
             }
 
+            Event::PracticeDeclined((student, practice, course, teacher)) => {
+                let email_context: RawContext = vec![
+                    ("student_name", student.name),
+                    ("course_name", course.name),
+                    ("course_code", course.code),
+                    ("enterprise_name", practice.enterprise_name),
+                    ("location", practice.location),
+                    ("start_date", format_date(practice.start_date.to_string())),
+                    ("end_date", format_date(practice.end_date.to_string())),
+                    ("supervisor_name", practice.supervisor_name),
+                    ("supervisor_email", practice.supervisor_email.clone()),
+                    ("teacher_name", teacher.name.clone()),
+                ];
+
+                tokio::try_join!(
+                    mailer.send(MailTo {
+                        subject: "Inscripción a Práctica Rechazada",
+                        template: "practice:decline:supervisor",
+                        email: practice.supervisor_email.clone(),
+                        context: email_context.clone(),
+                    }),
+                    mailer.send(MailTo {
+                        subject: "Inscripción a Práctica Rechazada",
+                        template: "practice:decline:student",
+                        email: student.email,
+                        context: email_context.clone(),
+                    }),
+                    mailer.send(MailTo {
+                        subject: "Inscripción a Práctica Rechazada",
+                        template: "practice:decline:teacher",
+                        email: teacher.email,
+                        context: email_context,
+                    }),
+                )?;
+            }
+
             Event::PracticeCreated((student, practice, course, enrollment)) => {
                 let start_date = format_date(practice.start_date.to_string());
                 let end_date = format_date(practice.end_date.to_string());

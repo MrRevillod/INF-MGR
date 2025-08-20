@@ -3,7 +3,7 @@ use sea_query::Iden;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use sqlx::FromRow;
+use sqlx::{FromRow, Type};
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 #[serde(rename_all = "camelCase")]
@@ -20,7 +20,16 @@ pub struct Practice {
     pub start_date: DateTime<Utc>,
     pub end_date: DateTime<Utc>,
 
-    pub is_approved: bool,
+    pub practice_status: PracticeStatus,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Type, PartialEq)]
+#[sqlx(type_name = "practice_status", rename_all = "lowercase")]
+#[serde(rename_all = "lowercase")]
+pub enum PracticeStatus {
+    Pending,
+    Approved,
+    Declined,
 }
 
 pub enum Practices {
@@ -34,7 +43,7 @@ pub enum Practices {
     SupervisorPhone,
     StartDate,
     EndDate,
-    IsApproved,
+    PracticeStatus,
 }
 
 impl Iden for Practices {
@@ -50,32 +59,7 @@ impl Iden for Practices {
             Practices::SupervisorPhone => "supervisor_phone",
             Practices::StartDate => "start_date",
             Practices::EndDate => "end_date",
-            Practices::IsApproved => "is_approved",
+            Practices::PracticeStatus => "practice_status",
         }
     }
 }
-
-pub const PRACTICE_INSERT_COLUMNS: [Practices; 10] = [
-    Practices::Id,
-    Practices::EnterpriseName,
-    Practices::Location,
-    Practices::Description,
-    Practices::SupervisorName,
-    Practices::SupervisorEmail,
-    Practices::SupervisorPhone,
-    Practices::StartDate,
-    Practices::EndDate,
-    Practices::IsApproved,
-];
-
-pub const PRACTICE_UPDATE_COLUMNS: [Practices; 9] = [
-    Practices::EnterpriseName,
-    Practices::Location,
-    Practices::Description,
-    Practices::SupervisorName,
-    Practices::SupervisorEmail,
-    Practices::SupervisorPhone,
-    Practices::StartDate,
-    Practices::EndDate,
-    Practices::IsApproved,
-];

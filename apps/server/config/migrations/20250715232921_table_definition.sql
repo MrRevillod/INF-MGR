@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS practices (
     start_date TIMESTAMP WITH TIME ZONE,
     end_date TIMESTAMP WITH TIME ZONE,
 
-    is_approved BOOLEAN NOT NULL DEFAULT FALSE
+    practice_status practice_status NOT NULL DEFAULT 'pending'
 );
 
 CREATE TABLE IF NOT EXISTS enrollments (
