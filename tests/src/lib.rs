@@ -4,7 +4,7 @@ use serde_json::Value;
 use server::{
     imports::ImportsController,
     shared::services::{
-        event_queue::{EventSubscriber, SubscriberServices, TokioEventSender},
+        event_queue::{EventSubscriber, SubscriberOptions, TokioEventSender},
         mailer::{Mailer, MailerConfig},
         printer::Printer,
         templates::TemplateConfig,
@@ -61,13 +61,13 @@ pub async fn init_test_app() -> TestServer {
     let publisher = TokioEventSender::new(tx);
     let dependency_container = DependencyContainer::new(db, publisher);
 
-    let sub_queue = EventSubscriber::new(rx, SubscriberServices { mailer, printer });
-
-    tokio::spawn(async move {
-        if let Err(e) = sub_queue.subscribe().await {
-            eprintln!("Error in event subscriber: {e}");
-        }
-    });
+    EventSubscriber::new(SubscriberOptions {
+        rx,
+        mailer,
+        printer,
+    })
+    .run_parallel()
+    .await;
 
     app = app
         .di_module(dependency_container.module)

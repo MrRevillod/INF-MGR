@@ -6,7 +6,7 @@ FROM rust:1.88-bullseye AS builder
 
 WORKDIR /app
 
-# Instalar Typst v0.13.1 en el builder stage
+# Instalar Typst (template engine para generar PDFs)
 RUN wget https://github.com/typst/typst/releases/download/v0.13.1/typst-x86_64-unknown-linux-musl.tar.xz \
     && tar -xf typst-x86_64-unknown-linux-musl.tar.xz \
     && mv typst-x86_64-unknown-linux-musl/typst /usr/local/bin/ \
@@ -34,7 +34,7 @@ RUN cd apps/server && cargo build --release
 
 FROM rust:1.88-bullseye AS dev
 
-# Instalar Typst v0.13.1 para desarrollo
+# Instalar Typst (template engine para generar PDFs)
 RUN wget https://github.com/typst/typst/releases/download/v0.13.1/typst-x86_64-unknown-linux-musl.tar.xz \
     && tar -xf typst-x86_64-unknown-linux-musl.tar.xz \
     && mv typst-x86_64-unknown-linux-musl/typst /usr/local/bin/ \

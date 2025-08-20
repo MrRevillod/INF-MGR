@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INF-MGR API Documentation</title>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.10.5/swagger-ui.css" />
+    <link rel="stylesheet" type="text/css" href="index.css">
+</head>
+
+<body>
+    <div class="version-info">
+        <strong>Versión:</strong> 1.0.0 |
+        <strong>Última actualización:</strong> <span id="last-updated"></span> |
+    </div>
+
+    <div id="swagger-ui"></div>
+
+    <script src="https://unpkg.com/swagger-ui-dist@5.10.5/swagger-ui-bundle.js"></script>
+    <script src="https://unpkg.com/swagger-ui-dist@5.10.5/swagger-ui-standalone-preset.js"></script>
+    <script>
+        window.onload = function () {
+            document.getElementById('last-updated').textContent = new Date().toLocaleDateString('es-ES');
+
+            const ui = SwaggerUIBundle({
+                url: './openapi.yaml',
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                plugins: [
+                    SwaggerUIBundle.plugins.DownloadUrl
+                ],
+                layout: "StandaloneLayout",
+                validatorUrl: null,
+                docExpansion: "list",
+                defaultModelsExpandDepth: 2,
+                defaultModelExpandDepth: 2,
+                displayOperationId: false,
+                displayRequestDuration: true,
+                tryItOutEnabled: true,
+                filter: true,
+                showCommonExtensions: true,
+                showExtensions: true,
+                operationsSorter: "alpha",
+                tagsSorter: "alpha",
+                onComplete: function () {
+                    customizeSwaggerUI();
+                }
+            });
+
+            document.getElementById('server-select').addEventListener('change', function (e) {
+                const newServer = e.target.value;
+
+                fetch('./openapi.yaml')
+                    .then(response => response.text())
+                    .then(yamlText => {
+                        const updatedYaml = yamlText.replace(
+                            /url: http:\/\/localhost:8000/g,
+                            `url: ${newServer}`
+                        );
+
+                        const blob = new Blob([updatedYaml], { type: 'text/yaml' });
+                        const url = URL.createObjectURL(blob);
+
+                        SwaggerUIBundle({
+                            url: url,
+                            dom_id: '#swagger-ui',
+                            deepLinking: true,
+                            presets: [
+                                SwaggerUIBundle.presets.apis,
+                                SwaggerUIStandalonePreset
+                            ],
+                            plugins: [
+                                SwaggerUIBundle.plugins.DownloadUrl
+                            ],
+                            layout: "StandaloneLayout",
+                            validatorUrl: null,
+                            docExpansion: "list",
+                            defaultModelsExpandDepth: 2,
+                            defaultModelExpandDepth: 2,
+                            displayOperationId: false,
+                            displayRequestDuration: true,
+                            tryItOutEnabled: true,
+                            filter: true,
+                            showCommonExtensions: true,
+                            showExtensions: true,
+                            operationsSorter: "alpha",
+                            tagsSorter: "alpha"
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error updating server:', error);
+                    });
+            });
+
+            window.ui = ui;
+        }
+
+        function customizeSwaggerUI() {
+            const logo = document.querySelector('.topbar-wrapper .link');
+            if (logo) {
+                logo.style.display = 'none';
+            }
+        }
+
+        function exportDocumentation() {
+            window.open('./openapi.yaml', '_blank');
+        }
+    </script>
+</body>
+
+</html>

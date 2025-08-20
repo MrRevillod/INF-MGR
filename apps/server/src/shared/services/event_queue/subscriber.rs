@@ -9,7 +9,8 @@ use crate::shared::services::{
     templates::RawContext,
 };
 
-pub struct SubscriberServices {
+pub struct SubscriberOptions {
+    pub rx: Receiver<Event>,
     pub mailer: Mailer,
     pub printer: Printer,
 }
@@ -21,12 +22,20 @@ pub struct EventSubscriber {
 }
 
 impl EventSubscriber {
-    pub fn new(rcv: Receiver<Event>, services: SubscriberServices) -> Self {
+    pub fn new(options: SubscriberOptions) -> Self {
         Self {
-            receiver: Arc::new(Mutex::new(rcv)),
-            mailer: Arc::new(services.mailer),
-            printer: Arc::new(services.printer),
+            receiver: Arc::new(Mutex::new(options.rx)),
+            mailer: Arc::new(options.mailer),
+            printer: Arc::new(options.printer),
         }
+    }
+
+    pub async fn run_parallel(self) {
+        tokio::spawn(async move {
+            if let Err(e) = self.subscribe().await {
+                eprintln!("Error in event subscriber: {e}");
+            }
+        });
     }
 
     pub async fn subscribe(&self) -> Result<(), Box<dyn std::error::Error>> {
