@@ -203,7 +203,7 @@ use validator::ValidationError;
 static ASIGNATURE_CODE_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^INFO\d{4}$").unwrap());
 
-fn validate_weights(weights: &Vec<i32>) -> Result<(), ValidationError> {
+fn validate_weights(weights: &[i32]) -> Result<(), ValidationError> {
     let total: i32 = weights.iter().sum();
 
     if total != 100 {
@@ -213,18 +213,17 @@ fn validate_weights(weights: &Vec<i32>) -> Result<(), ValidationError> {
     Ok(())
 }
 
-fn validate_evaluation_weights(
-    evaluations: &Vec<CourseEvaluationDto>,
-) -> Result<(), ValidationError> {
-    validate_weights(&evaluations.iter().map(|e| e.weight).collect())?;
-    Ok(())
+fn validate_evaluation_weights(evaluations: &[CourseEvaluationDto]) -> Result<(), ValidationError> {
+    let weights: Vec<i32> = evaluations.iter().map(|e| e.weight).collect();
+    validate_weights(&weights)
 }
 
 fn validate_update_evaluation_weights(
-    evaluations: &Vec<UpdateEvaluationDto>,
+    evaluations: &[UpdateEvaluationDto],
 ) -> Result<(), ValidationError> {
-    validate_weights(&evaluations.iter().map(|e| e.weight).collect())?;
-    Ok(())
+    let weights: Vec<i32> = evaluations.iter().map(|e| e.weight).collect();
+
+    validate_weights(&weights)
 }
 
 fn validate_course_status(status: &String) -> Result<(), ValidationError> {

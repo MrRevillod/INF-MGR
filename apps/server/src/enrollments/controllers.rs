@@ -65,7 +65,7 @@ impl EnrollmentsController {
         service
             .update_status(&enrollment_id, &practice_id, PracticeStatus::Declined)
             .await?;
-        
+
         Ok(HttpResponse::Ok())
     }
 

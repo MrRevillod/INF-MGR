@@ -127,7 +127,7 @@ impl EventSubscriber {
                 );
             }
 
-            Event::PracticeDeclined((student, practice, course, teacher)) => {
+            Event::PracticeDeclined((student, _enrollment, practice, course, teacher)) => {
                 let email_context: RawContext = vec![
                     ("student_name", student.name),
                     ("course_name", course.name),

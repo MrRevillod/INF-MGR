@@ -1,5 +1,4 @@
 use axum::http::StatusCode;
-use serde_json::json;
 use sword::web::ResponseBody;
 use uuid::Uuid;
 
@@ -113,8 +112,8 @@ pub async fn practice_approve_and_update_auth_doc() {
 pub async fn create_enrollment_and_decline_practice() {
     let app = init_test_app().await;
 
-    let student_id = create_student(&app, Some(generate_unique_email())).await;
-    let teacher_id = create_teacher(&app, Some(generate_unique_email())).await;
+    let student_id = create_student(&app).await;
+    let teacher_id = create_teacher(&app).await;
 
     let course_data = CourseBuilder::new(&teacher_id).build();
 
@@ -135,16 +134,15 @@ pub async fn create_enrollment_and_decline_practice() {
         "Course ID does not match"
     );
 
-    let practice_data = json!({
-        "enterpriseName": "Test Enterprise Decline",
-        "description": "Test Description Decline",
-        "location": "Test Location Decline",
-        "supervisorName": "Test Supervisor Decline",
-        "supervisorEmail": generate_unique_email(),
-        "supervisorPhone": "+56912345678",
-        "startDate": "2024-09-01T00:00:00Z",
-        "endDate": "2024-12-15T00:00:00Z",
-    });
+    let practice_data = TestPractice::builder()
+        .with_enterprise_name("Test Enterprise Decline")
+        .with_description("Test Description Decline")
+        .with_location("Test Location Decline")
+        .with_supervisor_name("Test Supervisor Decline")
+        .with_supervisor_phone("+56912345678")
+        .with_start_date("2024-09-01T00:00:00Z")
+        .with_end_date("2024-12-15T00:00:00Z")
+        .build();
 
     let create_practice_res = app
         .post(&format!("/enrollments/{enrollment_id}/practice"))
@@ -173,8 +171,8 @@ pub async fn create_enrollment_and_decline_practice() {
 pub async fn decline_nonexistent_practice_should_fail() {
     let app = init_test_app().await;
 
-    let student_id = create_student(&app, Some(generate_unique_email())).await;
-    let teacher_id = create_teacher(&app, Some(generate_unique_email())).await;
+    let student_id = create_student(&app).await;
+    let teacher_id = create_teacher(&app).await;
 
     let course_data = CourseBuilder::new(&teacher_id).build();
 
@@ -208,8 +206,8 @@ pub async fn decline_nonexistent_practice_should_fail() {
 pub async fn decline_already_approved_practice_should_fail() {
     let app = init_test_app().await;
 
-    let student_id = create_student(&app, Some(generate_unique_email())).await;
-    let teacher_id = create_teacher(&app, Some(generate_unique_email())).await;
+    let student_id = create_student(&app).await;
+    let teacher_id = create_teacher(&app).await;
 
     let course_data = CourseBuilder::new(&teacher_id).build();
 
@@ -224,16 +222,15 @@ pub async fn decline_already_approved_practice_should_fail() {
     let enrollment = create_enrollment(&app, &enrollment_data).await;
     let enrollment_id = extract_resource_id(&enrollment);
 
-    let practice_data = json!({
-        "enterpriseName": "Test Enterprise Already Approved",
-        "description": "Test Description Already Approved",
-        "location": "Test Location Already Approved",
-        "supervisorName": "Test Supervisor Already Approved",
-        "supervisorEmail": generate_unique_email(),
-        "supervisorPhone": "+56912345678",
-        "startDate": "2024-09-01T00:00:00Z",
-        "endDate": "2024-12-15T00:00:00Z",
-    });
+    let practice_data = TestPractice::builder()
+        .with_enterprise_name("Test Enterprise Already Approved")
+        .with_description("Test Description Already Approved")
+        .with_location("Test Location Already Approved")
+        .with_supervisor_name("Test Supervisor Already Approved")
+        .with_supervisor_phone("+56912345678")
+        .with_start_date("2024-09-01T00:00:00Z")
+        .with_end_date("2024-12-15T00:00:00Z")
+        .build();
 
     let create_practice_res = app
         .post(&format!("/enrollments/{enrollment_id}/practice"))

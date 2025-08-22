@@ -759,7 +759,7 @@ async fn test_create_course_valid_evaluation_but_repeated_names() {
 #[tokio::test]
 async fn test_update_course_evaluations_success() {
     let app = init_test_app().await;
-    let teacher_id = create_teacher(&app, None).await;
+    let teacher_id = create_teacher(&app).await;
 
     // Crear curso con evaluaciones iniciales
     let new_course = CourseBuilder::new(&teacher_id)
@@ -810,7 +810,7 @@ async fn test_update_course_evaluations_success() {
 #[tokio::test]
 async fn test_update_course_evaluations_weights_not_sum_100() {
     let app = init_test_app().await;
-    let teacher_id = create_teacher(&app, None).await;
+    let teacher_id = create_teacher(&app).await;
 
     // Crear curso con evaluaciones iniciales
     let new_course = CourseBuilder::new(&teacher_id)
@@ -860,7 +860,7 @@ async fn test_update_course_evaluations_weights_not_sum_100() {
 #[tokio::test]
 async fn test_update_course_evaluations_invalid_weight_values() {
     let app = init_test_app().await;
-    let teacher_id = create_teacher(&app, None).await;
+    let teacher_id = create_teacher(&app).await;
 
     // Crear curso con evaluaciones iniciales
     let new_course = CourseBuilder::new(&teacher_id)

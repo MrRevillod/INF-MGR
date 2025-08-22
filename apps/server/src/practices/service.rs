@@ -52,7 +52,7 @@ pub trait PracticeService: Interface {
         practice_id: &Uuid,
         status: PracticeStatus,
     ) -> AppResult<Practice>;
-  
+
     async fn remove(&self, id: &Uuid) -> Result<(), AppError>;
 }
 
@@ -108,7 +108,7 @@ impl PracticeService for PracticeServiceImpl {
         let (course, teacher) = self.courses.get_by_id(&enrollment.course_id).await?;
 
         let event_data = (student, enrollment, practice.clone(), course, teacher);
-      
+
         match status {
             PracticeStatus::Approved => {
                 practice.practice_status = PracticeStatus::Approved;
