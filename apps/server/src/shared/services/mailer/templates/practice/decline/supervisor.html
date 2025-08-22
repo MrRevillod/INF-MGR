@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{{ course_code }} - Confirmación de Denegación de Solicitud de Práctica</title>
+</head>
+
+<body>
+    <h1>Estimado(a) {{ supervisor_name }}</h1>
+
+    <p>
+        Junto con saludar, le confirmamos que la solicitud de práctica del estudiante 
+        <strong>{{ student_name }}</strong> de la carrera de Ingeniería Civil en Informática 
+        ha sido denegada exitosamente.
+    </p>
+
+    <h2>Detalles de la Solicitud Denegada:</h2>
+    <ul>
+        <li><strong>Estudiante:</strong> {{ student_name }}</li>
+        <li><strong>Curso:</strong> {{ course_name }} ({{ course_code }})</li>
+        <li><strong>Empresa:</strong> {{ enterprise_name }}</li>
+        <li><strong>Ubicación:</strong> {{ location }}</li>
+        <li><strong>Período:</strong> {{ start_date }} - {{ end_date }}</li>
+        <li><strong>Profesor responsable:</strong> {{ teacher_name }}</li>
+    </ul>
+
+    <p>
+        El estudiante y profesor responsable han sido notificados de esta decisión.
+    </p>
+
+    <p>
+        Si tiene consultas adicionales, puede contactar directamente al profesor 
+        responsable o a la coordinación de prácticas de la carrera.
+    </p>
+
+    <p>
+        Agradecemos su tiempo y consideración en la evaluación de esta solicitud.
+    </p>
+
+    <p>
+        Se despide cordialmente,<br>
+        Equipo de Prácticas y Tesis de la carrera de Ingeniería Civil en Informática
+    </p>
+</body>
+
+</html>

@@ -73,7 +73,7 @@ pub mod practices {
     mod service;
 
     pub use dtos::{CreatePracticeDto, UpdatePracticeDto};
-    pub use entity::Practice;
+    pub use entity::{Practice, PracticeStatus, Practices};
     pub use repository::{PostgresPracticeRepository, PracticeFilter, PracticeRepository};
     pub use service::{PracticeService, PracticeServiceImpl};
 }

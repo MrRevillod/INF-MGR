@@ -6,7 +6,7 @@ use validator::{Validate, ValidationError};
 use regex::Regex;
 use std::sync::LazyLock;
 
-use crate::practices::Practice;
+use crate::practices::{entity::PracticeStatus, Practice};
 
 #[derive(Serialize, Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
@@ -65,7 +65,7 @@ impl From<CreatePracticeDto> for Practice {
             supervisor_phone: dto.supervisor_phone,
             start_date: dto.start_date,
             end_date: dto.end_date,
-            is_approved: false,
+            practice_status: PracticeStatus::Pending,
         }
     }
 }
