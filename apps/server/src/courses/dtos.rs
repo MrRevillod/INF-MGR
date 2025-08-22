@@ -121,8 +121,43 @@ pub struct UpdateCourseDto {
         custom(function = validate_course_status)
     )]
     pub status: Option<String>,
+
+    #[validate(
+        nested,
+        custom(function = validate_update_evaluation_weights)
+    )]
+    pub evaluations: Option<Vec<UpdateEvaluationDto>>,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, Validate)]
+pub struct UpdateEvaluationDto {
+    #[validate(custom(function = validate_uuid))]
+    pub id: Option<String>,
+
+    #[validate(length(
+        min = 1,
+        max = 100,
+        message = "El nombre de la evaluación debe tener entre 1 y 100 caracteres."
+    ))]
+    pub name: String,
+
+    #[validate(range(
+        min = 1,
+        max = 100,
+        message = "El porcentaje de la evaluación debe estar entre 1 y 100%."
+    ))]
+    pub weight: i32,
+}
+
+impl From<UpdateEvaluationDto> for CourseEvaluation {
+    fn from(dto: UpdateEvaluationDto) -> Self {
+        CourseEvaluation {
+            id: Uuid::new_v4(),
+            name: dto.name,
+            weight: dto.weight,
+        }
+    }
+}
 // ============================================================================
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>> COURSE RESPONSE DTO <<<<<<<<<<<<<<<<<<<<<<<<<<<
 // ============================================================================
@@ -168,19 +203,27 @@ use validator::ValidationError;
 static ASIGNATURE_CODE_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^INFO\d{4}$").unwrap());
 
-fn validate_evaluation_weights(
-    evaluations: &Vec<CourseEvaluationDto>,
-) -> Result<(), ValidationError> {
-    let mut total_weight = 0;
+fn validate_weights(weights: &Vec<i32>) -> Result<(), ValidationError> {
+    let total: i32 = weights.iter().sum();
 
-    for evaluation in evaluations {
-        total_weight += evaluation.weight;
-    }
-
-    if total_weight != 100 {
+    if total != 100 {
         return Err(ValidationError::new("Las evaluaciones deben sumar 100%."));
     }
 
+    Ok(())
+}
+
+fn validate_evaluation_weights(
+    evaluations: &Vec<CourseEvaluationDto>,
+) -> Result<(), ValidationError> {
+    validate_weights(&evaluations.iter().map(|e| e.weight).collect())?;
+    Ok(())
+}
+
+fn validate_update_evaluation_weights(
+    evaluations: &Vec<UpdateEvaluationDto>,
+) -> Result<(), ValidationError> {
+    validate_weights(&evaluations.iter().map(|e| e.weight).collect())?;
     Ok(())
 }
 
