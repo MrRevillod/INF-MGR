@@ -1,10 +1,9 @@
-use std::env::var;
-
 use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::{
+    TEST_EMAILS,
     courses::utils::{CourseBuilder, create_course},
     extract_resource_id, init_test_app,
     users::utils::{create_teacher, generate_unique_email, generate_unique_rut},
@@ -69,10 +68,6 @@ async fn cleanup_import_test_data(course_id: &str, teacher_id: &str) {
 #[tokio::test]
 async fn test_import_users() {
     let app = init_test_app().await;
-
-    let student_email = var("STUDENT_EMAIL").expect("STUDENT_EMAIL not set");
-    let teacher_email = var("TEACHER_EMAIL").expect("TEACHER_EMAIL not set");
-
     let mut students = Vec::new();
 
     for i in 0..10 {
@@ -86,10 +81,10 @@ async fn test_import_users() {
     students.push(json!({
         "rut": generate_unique_rut(),
         "name": "Luciano Revillod",
-        "email": student_email,
+        "email": TEST_EMAILS.get("student").unwrap_or(&generate_unique_email())
     }));
 
-    let teacher_id = create_teacher(&app, Some(teacher_email)).await;
+    let teacher_id = create_teacher(&app).await;
 
     let course_data = CourseBuilder::new(&teacher_id).build();
     let course = create_course(&app, &course_data).await;

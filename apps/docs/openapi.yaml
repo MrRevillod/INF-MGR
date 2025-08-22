@@ -806,7 +806,7 @@ paths:
       tags:
         - Courses
       summary: Obtener estudiantes de un curso
-      description: Retorna todas las matrículas de un curso con información de estudiantes
+      description: Retorna todos los estudiantes inscritos en un curso
       parameters:
         - in: path
           name: id
@@ -817,7 +817,7 @@ paths:
           description: ID del curso
       responses:
         '200':
-          description: Lista de matrículas obtenida exitosamente
+          description: Lista de estudiantes obtenida exitosamente
           content:
             application/json:
               schema:
@@ -841,7 +841,7 @@ paths:
     post:
       tags:
         - Courses
-      summary: Matricular estudiante
+      summary: Registrar estudiante en curso
       description: Registra un estudiante en un curso
       requestBody:
         required: true
@@ -851,13 +851,13 @@ paths:
               $ref: '#/components/schemas/CreateEnrollmentDto'
       responses:
         '201':
-          description: Matrícula creada exitosamente
+          description: Estudiante inscrito exitosamente
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/EnrollmentResponse'
         '400':
-          description: Datos de entrada inválidos o estudiante ya matriculado
+          description: Datos de entrada inválidos o estudiante ya inscrito
           content:
             application/json:
               schema:
@@ -879,8 +879,8 @@ paths:
     patch:
       tags:
         - Courses
-      summary: Actualizar matrícula
-      description: Actualiza información de una matrícula (notas, práctica)
+      summary: Actualizar inscripción de estudiante
+      description: Actualiza información una inscripción de estudiante en un curso
       parameters:
         - in: path
           name: enrollment_id
@@ -888,7 +888,7 @@ paths:
           schema:
             type: string
             format: uuid
-          description: ID de la matrícula
+          description: ID de la inscripción
       requestBody:
         required: true
         content:
@@ -897,7 +897,7 @@ paths:
               $ref: '#/components/schemas/UpdateEnrollmentDto'
       responses:
         '200':
-          description: Matrícula actualizada exitosamente
+          description: Inscripción actualizada exitosamente
           content:
             application/json:
               schema:
@@ -909,7 +909,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ValidationError'
         '404':
-          description: Matrícula no encontrada
+          description: Inscripción no encontrada
           content:
             application/json:
               schema:
@@ -924,8 +924,8 @@ paths:
     delete:
       tags:
         - Courses
-      summary: Eliminar matrícula
-      description: Elimina la matrícula de un estudiante en un curso
+      summary: Eliminar inscripción de estudiante
+      description: Elimina la inscripción de un estudiante en un curso
       parameters:
         - in: path
           name: enrollment_id
@@ -933,12 +933,12 @@ paths:
           schema:
             type: string
             format: uuid
-          description: ID de la matrícula
+          description: ID de la inscripción
       responses:
         '200':
-          description: Matrícula eliminada exitosamente
+          description: Inscripción eliminada exitosamente
         '404':
-          description: Matrícula no encontrada
+          description: Inscripción no encontrada
           content:
             application/json:
               schema:
@@ -955,8 +955,8 @@ paths:
     post:
       tags:
         - Practices
-      summary: Crear práctica para matrícula
-      description: Crea una nueva práctica profesional para un estudiante matriculado
+      summary: Crear práctica para una inscripción
+      description: Crea una nueva práctica profesional para un estudiante inscrito en un curso
       parameters:
         - in: path
           name: id
@@ -964,7 +964,7 @@ paths:
           schema:
             type: string
             format: uuid
-          description: ID de la matrícula
+          description: ID de la inscripción
       requestBody:
         required: true
         content:
@@ -985,7 +985,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ValidationError'
         '404':
-          description: Matrícula no encontrada
+          description: Inscripción no encontrada
           content:
             application/json:
               schema:
@@ -1009,7 +1009,7 @@ paths:
           schema:
             type: string
             format: uuid
-          description: ID de la matrícula
+          description: ID de la inscripción
       requestBody:
         required: true
         content:
@@ -1110,7 +1110,7 @@ paths:
         '200':
           description: Operación exitosa (pendiente implementación)
 
-  /enrollments/{id}/reject:
+  /enrollments/{id}/practice/{practice_id}/reject:
     post:
       tags:
         - Practices
@@ -1123,12 +1123,19 @@ paths:
           schema:
             type: string
             format: uuid
-          description: ID de la matrícula
+          description: ID de la inscripción
+        - in: path
+          name: practice_id
+          required: true
+          schema: 
+            type: string
+            format: uuid
+          description: ID de la práctica
       responses:
         '200':
           description: Operación exitosa (pendiente implementación)
 
-  /enrollments/{id}/evaluate/{token}:
+  /enrollments/{id}/practice/{practice_id}/evaluate:
     post:
       tags:
         - Practices
@@ -1141,13 +1148,15 @@ paths:
           schema:
             type: string
             format: uuid
-          description: ID de la matrícula
+          description: ID de la inscripción
         - in: path
-          name: token
+          name: practice_id
           required: true
           schema:
             type: string
-          description: Token de evaluación
+            format: uuid
+          description: ID de la práctica
+        
       responses:
         '200':
           description: Operación exitosa (pendiente implementación)
@@ -1188,7 +1197,7 @@ paths:
       tags:
         - Imports
       summary: Importar estudiantes a curso
-      description: Importa una lista de estudiantes y los matricula en un curso
+      description: Importa una lista de estudiantes y los registra en un curso existente
       requestBody:
         required: true
         content:
@@ -1221,7 +1230,7 @@ tags:
   - name: Users
     description: Gestión de usuarios del sistema
   - name: Courses
-    description: Gestión de cursos y matrículas
+    description: Gestión de cursos e inscripciones
   - name: Practices
     description: Gestión de prácticas profesionales
   - name: Imports

@@ -25,10 +25,31 @@ pub mod users;
 #[cfg(test)]
 pub mod imports;
 
+#[cfg(test)]
+pub static TEST_EMAILS: std::sync::LazyLock<std::collections::HashMap<String, String>> =
+    std::sync::LazyLock::new(|| {
+        let mut m = std::collections::HashMap::new();
+
+        if let Ok(student_email) = std::env::var("TEST_STUDENT_EMAIL") {
+            m.insert("student".to_string(), student_email);
+        }
+
+        if let Ok(teacher_email) = std::env::var("TEST_TEACHER_EMAIL") {
+            m.insert("teacher".to_string(), teacher_email);
+        }
+
+        if let Ok(supervisor_email) = std::env::var("TEST_SUPERVISOR_EMAIL") {
+            m.insert("supervisor".to_string(), supervisor_email);
+        }
+
+        m
+    });
+
 use server::{
     config::PostgresDbConfig, container::DependencyContainer, courses::CoursesController,
     enrollments::EnrollmentsController, shared::database::PostgresDatabase, users::UsersController,
 };
+
 use tokio::sync::mpsc;
 
 pub async fn init_test_app() -> TestServer {
@@ -47,6 +68,11 @@ pub async fn init_test_app() -> TestServer {
             .expect("Failed to create database connection");
 
         db.migrate().await.expect("Failed to create database connection");
+
+        sqlx::query("TRUNCATE TABLE practices, enrollments, courses, users CASCADE")
+            .execute(&db.pool)
+            .await
+            .expect("Failed to truncate tables");
 
         let mailer =
             Mailer::new(&mailer_config, &tamplate_config).expect("Failed to create mailer");

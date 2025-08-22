@@ -11,7 +11,7 @@ services:
     depends_on:
       - postgres_dev
     volumes:
-      - documents_volume:/app/documents
+      - ./documents:/app/documents
     environment:
       - DOCUMENTS_DIR=/app/documents
 
@@ -71,5 +71,3 @@ volumes:
   server_target:
   cargo_cache:
   client_node_modules:
-  documents_volume:
-    driver: local

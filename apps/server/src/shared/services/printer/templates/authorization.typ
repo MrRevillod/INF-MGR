@@ -1,3 +1,5 @@
+#import "@preview/elsearticle:1.0.0": *
+
 #set par(justify: true)
 #set text(
   font: "Libertinus Serif",
@@ -25,10 +27,10 @@
       columns: (1fr, auto),
       align: (left + horizon, right + horizon),
       [*Escuela de Ingeniería en Informática*],
-      image("logo.png", scaling: "smooth", width: 18em)
+      image("./logo.png", scaling: "smooth", width: 18em)
     )
     #hr
-    #v(-5em)
+    #v(-4em)
   ],
   footer: [
     #v(-1em)
@@ -40,7 +42,7 @@
   ]
 )
 
-#v(6em)
+#v(5em)
 
 #align(center)[
   *AUTORIZACIÓN DE PRÁCTICA DE LA EMPRESA*
@@ -60,17 +62,19 @@ Autorizamos a: {{ student_name }}, alumno(a) regular de la carrera {{ career_nam
 #let tab1 = {
   table(
     columns: (1fr, 1fr),
-    rows: (2em, 2em, 2em, 2em, 2em, 2em, 4em, 4em),
+    rows: (2em, 2em, 2em, 2em, 2em, 2em, 4em, 4em, 2em),
     align: start,
 
     [Empresa / Institución], [ {{ enterprise_name }} ],
     [Dirección donde se realizará], [ {{ location }} ],
     [Departamento / Unidad ], [  ],
     [Fono/Anexo ], [ ],
-    [Fecha de inicio (Tentativa)], [{{ start_date }}],
-    [Fecha de termino (Tentativa)], [{{ end_date }}],
+    [Fecha de inicio], [ ],
+    [Fecha de termino], [ ],
     [Actividades a realizar], [],
     [Beneficios acordados], []
+,
+    [Modalidad], [#h(0.2cm) ☐ Presencial #h(0.8cm) ☐ En linea #h(0.8cm) ☐ Mixta]
   )
 }
 
@@ -81,21 +85,21 @@ Autorizamos a: {{ student_name }}, alumno(a) regular de la carrera {{ career_nam
 ) <tab:tab1>
 La coordinación de esta Práctica en la empresa/institución estará bajo la supervisión:
 
-#let tab2 = {
+ #let tab2 = {
   table(
     columns: (1fr, 1fr),
     rows: (2em, 2em, 2em, 2em),
     align: start,
     [Nombre del funcionario], [ {{ supervisor_name }} ],
     [Cargo], [  ],
-    [Correo electrónico], [ #raw("{{ supervisor_email }}") ],
-    [Teléfono de contacto], [ ],
+    [Correo electrónico], [ {{ supervisor_email }} ],
+    [Teléfono de contacto], [ {{ supervisor_phone }}],
   )
 }
 #figure(
     tab2,
     kind: table,
-) <tab:tab2>
+) <tab:tab1>
 
 #v(5em)
 
