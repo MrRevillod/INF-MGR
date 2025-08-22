@@ -7,7 +7,8 @@ use crate::{
     courses::utils::{CourseBuilder, create_course, delete_course},
     enrollments::utils::{EnrollmentBuilder, create_enrollment, delete_enrollment},
     extract_resource_id, init_test_app,
-    users::utils::{create_student, create_teacher, delete_user, generate_unique_email},
+    practices::utils::TestPractice,
+    users::utils::{create_student, create_teacher, delete_user},
 };
 
 pub mod utils;
@@ -16,8 +17,8 @@ pub mod utils;
 pub async fn create_enrollment_and_practice() {
     let app = init_test_app().await;
 
-    let student_id = create_student(&app, Some(generate_unique_email())).await; // alu
-    let teacher_id = create_teacher(&app, Some(generate_unique_email())).await;
+    let student_id = create_student(&app).await;
+    let teacher_id = create_teacher(&app).await;
 
     let course_data = CourseBuilder::new(&teacher_id).build();
 
@@ -38,34 +39,70 @@ pub async fn create_enrollment_and_practice() {
         "Course ID does not match"
     );
 
-    let practice_data = json!({
-        "enterpriseName": "Test Enterprise 6AM",
-        "description": "Test Description 6AM",
-        "location": "Test Location 6AM",
-        "supervisorName": "Test Supervisor 6AM",
-        "supervisorEmail": generate_unique_email(),
-        "supervisorPhone": "+56912345678",
-        "startDate": "2024-09-01T00:00:00Z",
-        "endDate": "2024-12-15T00:00:00Z",
-    });
+    let practice_data = TestPractice::builder()
+        .with_enterprise_name("Test Enterprise 6AM")
+        .with_description("Test Description 6AM")
+        .with_location("Test Location 6AM")
+        .with_supervisor_name("Test Supervisor 6AM")
+        .with_supervisor_phone("+56912345678")
+        .with_start_date("2024-09-01T00:00:00Z")
+        .with_end_date("2024-12-15T00:00:00Z")
+        .build();
 
-    let create_practice_res = app
-        .post(&format!("/enrollments/{enrollment_id}/practice"))
-        .json(&practice_data)
-        .await;
+    let practice_id = TestPractice::create(&app, &enrollment_id, practice_data).await;
 
-    let json = create_practice_res.json::<ResponseBody>().data;
+    TestPractice::approve(&app, &enrollment_id, &practice_id).await;
+    TestPractice::delete(&app, &practice_id).await;
 
-    let practice_id = extract_resource_id(&json);
+    delete_enrollment(&app, &enrollment_id).await;
+    delete_course(&app, &course_id).await;
+    delete_user(&app, &student_id).await;
+    delete_user(&app, &teacher_id).await;
+}
 
-    //approve practice
-    let approve_practice_res = app
-        .post(&format!("/enrollments/{enrollment_id}/practice/{practice_id}/approve",))
-        .await;
+#[tokio::test]
+pub async fn practice_approve_and_update_auth_doc() {
+    let app = init_test_app().await;
 
-    approve_practice_res.assert_status(StatusCode::OK);
+    let student_id = create_student(&app).await;
+    let teacher_id = create_teacher(&app).await;
 
-    // Clean up
+    let course_data = CourseBuilder::new(&teacher_id).build();
+
+    let course = create_course(&app, &course_data).await;
+    let course_id = extract_resource_id(&course);
+
+    let enrollment_data = EnrollmentBuilder::new()
+        .with_student_id(&student_id)
+        .with_course_id(&course_id)
+        .build();
+
+    let enrollment = create_enrollment(&app, &enrollment_data).await;
+    let enrollment_id = extract_resource_id(&enrollment);
+
+    assert_eq!(
+        enrollment["courseId"].as_str().unwrap(),
+        course_id.as_str(),
+        "Course ID does not match"
+    );
+
+    let practice = TestPractice::builder()
+        .with_enterprise_name("Test Enterprise 6AM")
+        .with_description("Test Description 6AM")
+        .with_location("Test Location 6AM")
+        .with_supervisor_name("Test Supervisor 6AM")
+        .with_supervisor_phone("+56912345678")
+        .with_start_date("2024-09-01T00:00:00Z")
+        .with_end_date("2024-12-15T00:00:00Z")
+        .build();
+
+    let practice_id = TestPractice::create(&app, &enrollment_id, practice).await;
+
+    TestPractice::approve(&app, &enrollment_id, &practice_id).await;
+    TestPractice::authorize(&app, &enrollment_id, &practice_id).await;
+
+    TestPractice::delete(&app, &practice_id).await;
+
     delete_enrollment(&app, &enrollment_id).await;
     delete_course(&app, &course_id).await;
     delete_user(&app, &student_id).await;

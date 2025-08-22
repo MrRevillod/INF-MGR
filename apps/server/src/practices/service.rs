@@ -2,10 +2,11 @@ use crate::{
     practices::entity::PracticeStatus,
     shared::services::event_queue::{Event, EventQueue},
 };
+
 use async_trait::async_trait;
 
 use shaku::{Component, Interface};
-use std::sync::Arc;
+use std::{io::Bytes, sync::Arc};
 use uuid::Uuid;
 
 use crate::{
@@ -43,7 +44,7 @@ pub trait PracticeService: Interface {
         input: CreatePracticeDto,
     ) -> Result<Practice, AppError>;
 
-    async fn remove(&self, id: &Uuid) -> Result<(), AppError>;
+    async fn authorize(&self, practice_id: &Uuid, document: Bytes<&[u8]>) -> Result<(), AppError>;
 
     async fn update_status(
         &self,
@@ -51,6 +52,8 @@ pub trait PracticeService: Interface {
         practice_id: &Uuid,
         status: PracticeStatus,
     ) -> AppResult<Practice>;
+  
+    async fn remove(&self, id: &Uuid) -> Result<(), AppError>;
 }
 
 #[async_trait]
@@ -104,7 +107,8 @@ impl PracticeService for PracticeServiceImpl {
 
         let (course, teacher) = self.courses.get_by_id(&enrollment.course_id).await?;
 
-        let event_data = (student, practice.clone(), course, teacher);
+        let event_data = (student, enrollment, practice.clone(), course, teacher);
+      
         match status {
             PracticeStatus::Approved => {
                 practice.practice_status = PracticeStatus::Approved;
@@ -118,6 +122,25 @@ impl PracticeService for PracticeServiceImpl {
         }
 
         self.practices.save(practice).await
+    }
+
+    async fn authorize(&self, practice_id: &Uuid, doc: Bytes<&[u8]>) -> Result<(), AppError> {
+        let practice = self
+            .practices
+            .find_by_id(practice_id)
+            .await?
+            .ok_or(AppError::ResourceNotFound(*practice_id))?;
+
+        let bytes: Vec<u8> = doc
+            .into_iter()
+            .collect::<Result<Vec<u8>, std::io::Error>>()
+            .map_err(|e| AppError::InternalServerError(e.into()))?;
+
+        let event_data = (practice, bytes);
+
+        self.event_queue.publish(Event::PracticeAuthorized(event_data)).await;
+
+        Ok(())
     }
 
     async fn update(&self, id: &Uuid, input: UpdatePracticeDto) -> Result<Practice, AppError> {

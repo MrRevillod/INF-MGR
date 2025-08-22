@@ -1,15 +1,19 @@
-use std::sync::Arc;
+use std::{env, path::Path, sync::Arc};
 use tokio::sync::{mpsc::Receiver, Mutex};
 use uuid::Uuid;
 
-use crate::shared::services::{
-    event_queue::{format_date, Event},
-    mailer::{MailTo, Mailer},
-    printer::{PrintOptions, Printer},
-    templates::RawContext,
+use crate::{
+    shared::services::{
+        event_queue::{format_date, Event},
+        mailer::{MailTo, Mailer},
+        printer::{PrintOptions, Printer},
+        templates::RawContext,
+    },
+    template_ctx,
 };
 
-pub struct SubscriberServices {
+pub struct SubscriberOptions {
+    pub rx: Receiver<Event>,
     pub mailer: Mailer,
     pub printer: Printer,
 }
@@ -21,12 +25,20 @@ pub struct EventSubscriber {
 }
 
 impl EventSubscriber {
-    pub fn new(rcv: Receiver<Event>, services: SubscriberServices) -> Self {
+    pub fn new(options: SubscriberOptions) -> Self {
         Self {
-            receiver: Arc::new(Mutex::new(rcv)),
-            mailer: Arc::new(services.mailer),
-            printer: Arc::new(services.printer),
+            receiver: Arc::new(Mutex::new(options.rx)),
+            mailer: Arc::new(options.mailer),
+            printer: Arc::new(options.printer),
         }
+    }
+
+    pub async fn run_parallel(self) {
+        tokio::spawn(async move {
+            if let Err(e) = self.subscribe().await {
+                tracing::error!("Error in event subscriber: {e}");
+            }
+        });
     }
 
     pub async fn subscribe(&self) -> Result<(), Box<dyn std::error::Error>> {
@@ -36,7 +48,7 @@ impl EventSubscriber {
 
             tokio::spawn(async move {
                 if let Err(e) = Self::handle(event, mailer, printer).await {
-                    eprintln!("Error processing event: {e}");
+                    tracing::error!("Error processing event: {e}");
                 }
             });
         }
@@ -50,57 +62,69 @@ impl EventSubscriber {
         printer: Arc<Printer>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         match event {
-            Event::PracticeApproved((student, practice, course, teacher)) => {
-                let enterprise_auth_pdf_ctx: RawContext = vec![
-                    ("student_name", student.name),
-                    ("course_name", course.name),
-                    ("course_code", course.code),
-                    ("enterprise_name", practice.enterprise_name),
-                    ("location", practice.location),
-                    ("start_date", format_date(practice.start_date.to_string())),
-                    ("end_date", format_date(practice.end_date.to_string())),
-                    ("supervisor_name", practice.supervisor_name),
-                    ("supervisor_email", practice.supervisor_email.clone()),
-                    ("teacher_name", teacher.name.clone()),
-                ];
+            Event::PracticeApproved((student, enrollment, practice, course, teacher)) => {
+                let mut template_ctx = template_ctx! {
+                    "student_rut" => student.rut,
+                    "student_name" => student.name,
+                    "course_name" => course.name,
+                    "course_code" => course.code,
+                    "enterprise_name" => practice.enterprise_name,
+                    "location" => practice.location,
+                    "start_date" => format_date(practice.start_date.to_string()),
+                    "end_date" => format_date(practice.end_date.to_string()),
+                    "supervisor_name" => practice.supervisor_name,
+                    "supervisor_email" => practice.supervisor_email.clone(),
+                    "teacher_name" => teacher.name.clone(),
+                };
 
-                let pdf_url = printer
-                    .print(PrintOptions {
-                        doc_id: practice.id.to_string(),
-                        template: "document:practice:authorization",
-                        context: enterprise_auth_pdf_ctx.clone(),
-                    })
-                    .await?;
+                let practice_static_dir = format!("practices/{}", practice.id);
+                let practice_auth_doc = format!("/static/{practice_static_dir}/authorization.pdf");
 
-                let supervisor_evaluation_url =
-                    format!("/practices/{}/evaluation/supervisor", practice.id);
+                let print_opts = PrintOptions {
+                    static_path: format!("{practice_static_dir}/authorization.pdf"),
+                    template: "document:practice:authorization",
+                    context: template_ctx.clone(),
+                };
 
-                let mut email_context = enterprise_auth_pdf_ctx.clone();
+                printer.print(print_opts).await?;
 
-                email_context.push(("practice_authorization_doc_url", pdf_url));
-                email_context
-                    .push(("supervisor_evaluation_url", supervisor_evaluation_url.clone()));
+                template_ctx.push(("practice_auth_doc_url", practice_auth_doc));
+                template_ctx.push((
+                    "practice_auth_form_url",
+                    format!("/enrollments/{}/practice/{}/authorize", enrollment.id, practice.id),
+                ));
 
-                tokio::try_join!(
+                template_ctx.push((
+                    "practice_evaluation_form_url",
+                    format!("/enrollments/{}/practice/{}/evaluate", enrollment.id, practice.id),
+                ));
+
+                let (_, _, _, _) = tokio::join!(
                     mailer.send(MailTo {
                         subject: "Información de Práctica Aprobada",
                         template: "practice:approval:supervisor",
                         email: practice.supervisor_email.clone(),
-                        context: email_context.clone(),
+                        context: template_ctx.clone(),
                     }),
                     mailer.send(MailTo {
                         subject: "Práctica Aprobada",
                         template: "practice:approval:student",
                         email: student.email,
-                        context: email_context.clone(),
+                        context: template_ctx.clone(),
                     }),
                     mailer.send(MailTo {
                         subject: "Práctica Aprobada",
                         template: "practice:approval:teacher",
                         email: teacher.email,
-                        context: email_context.clone(),
+                        context: template_ctx.clone()
                     }),
-                )?;
+                    mailer.send(MailTo {
+                        subject: "Práctica Aprobada",
+                        template: "practice:approval:secretary",
+                        context: template_ctx,
+                        email: mailer.context().config().secretary_email.clone(),
+                    })
+                );
             }
 
             Event::PracticeDeclined((student, practice, course, teacher)) => {
@@ -239,6 +263,21 @@ impl EventSubscriber {
                 };
 
                 mailer.send(mail_opts).await?;
+            }
+
+            Event::PracticeAuthorized((practice, pdf)) => {
+                let practice_static_dir = format!("practices/{}/authorization.pdf", practice.id);
+                let documents_dir = env::var("DOCUMENTS_DIR").unwrap_or(".".to_string());
+                let out_path_str = format!("{}/{}", documents_dir, practice_static_dir);
+                let out_path = Path::new(&out_path_str);
+
+                if let Some(parent) = out_path.parent() {
+                    if !parent.exists() {
+                        std::fs::create_dir_all(parent)?;
+                    }
+                }
+
+                tokio::fs::write(out_path, pdf).await?;
             }
         }
 

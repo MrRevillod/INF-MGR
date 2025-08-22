@@ -5,7 +5,6 @@ services:
       dockerfile: ./apps/server/Dockerfile
     volumes:
       - ./apps/server:/app/apps/server
-      - ./lib/services:/app/lib/services
       - ./Cargo.toml:/app/Cargo.toml
       - ./Cargo.lock:/app/Cargo.lock
       - cargo_cache:/usr/local/cargo/registry

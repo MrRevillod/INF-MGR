@@ -20,7 +20,7 @@ pub trait EventQueue: Interface {
 impl EventQueue for TokioEventQueue {
     async fn publish(&self, event: Event) {
         if let Err(e) = self.sender.send(event).await {
-            eprintln!("Error publishing event: {e}");
+            tracing::error!("Error publishing event: {e}");
         }
     }
 }
