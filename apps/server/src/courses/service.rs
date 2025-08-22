@@ -6,7 +6,8 @@ use uuid::Uuid;
 use crate::{
     course_filter,
     courses::{
-        Course, CourseFilter, CourseRepository, CourseWithStaff, CreateCourseDto, UpdateCourseDto,
+        Course, CourseEvaluation, CourseFilter, CourseRepository, CourseWithStaff, CreateCourseDto,
+        UpdateCourseDto,
     },
     enrollment_filter,
     enrollments::{EnrollmentFilter, EnrollmentRepository},
@@ -124,6 +125,9 @@ impl CourseService for CourseServiceImpl {
             course.teacher_id = Uuid::parse_str(&teacher_id).unwrap();
         }
 
+        if let Some(evaluation) = input.evaluations {
+            course.evaluations = evaluation.into_iter().map(CourseEvaluation::from).collect();
+        }
         Ok(self.courses.save(course).await?)
     }
 

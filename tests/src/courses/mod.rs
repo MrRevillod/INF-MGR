@@ -753,3 +753,142 @@ async fn test_create_course_valid_evaluation_but_repeated_names() {
 
     delete_user(&app, &teacher_id).await;
 }
+
+// ==================== UPDATE COURSE EVALUATIONS TESTS ====================
+
+#[tokio::test]
+async fn test_update_course_evaluations_success() {
+    let app = init_test_app().await;
+    let teacher_id = create_teacher(&app, None).await;
+
+    // Crear curso con evaluaciones iniciales
+    let new_course = CourseBuilder::new(&teacher_id)
+        .with_evaluations(vec![("Bitácoras Semanales", 60), ("Informe Final", 40)])
+        .build();
+
+    let created_course = create_course(&app, &new_course).await;
+    let created_course_id = extract_resource_id(&created_course);
+
+    // Actualizar las evaluaciones
+    let update_data = json!({
+        "evaluations": [
+            {
+                "name": "Test Evaluation 1",
+                "weight": 30
+            },
+            {
+                "name": "Test Evaluation 2",
+                "weight": 50
+            },
+            {
+                "name": "Test Evaluation 3",
+                "weight": 20
+            }
+        ]
+    });
+
+    let updated_course = update_course(&app, &created_course_id, &update_data).await;
+
+    // Verificar que las evaluaciones fueron actualizadas correctamente
+    let evaluations = updated_course["evaluations"].as_array().unwrap();
+    assert_eq!(evaluations.len(), 3);
+
+    let eval_names: Vec<&str> = evaluations.iter().map(|e| e["name"].as_str().unwrap()).collect();
+    assert!(eval_names.contains(&"Test Evaluation 1"));
+    assert!(eval_names.contains(&"Test Evaluation 2"));
+    assert!(eval_names.contains(&"Test Evaluation 3"));
+
+    // Verificar que los pesos suman 100
+    let total_weight: i64 = evaluations.iter().map(|e| e["weight"].as_i64().unwrap()).sum();
+    assert_eq!(total_weight, 100);
+
+    // Cleanup
+    delete_course(&app, &created_course_id).await;
+    delete_user(&app, &teacher_id).await;
+}
+
+#[tokio::test]
+async fn test_update_course_evaluations_weights_not_sum_100() {
+    let app = init_test_app().await;
+    let teacher_id = create_teacher(&app, None).await;
+
+    // Crear curso con evaluaciones iniciales
+    let new_course = CourseBuilder::new(&teacher_id)
+        .with_evaluations(vec![("Bitácoras Semanales", 60), ("Informe Final", 40)])
+        .build();
+
+    let created_course = create_course(&app, &new_course).await;
+    let created_course_id = extract_resource_id(&created_course);
+
+    // Intentar actualizar con evaluaciones que no suman 100%
+    let update_data = json!({
+        "evaluations": [
+            {
+                "name": "Test Evaluation 1",
+                "weight": 30
+            },
+            {
+                "name": "Test Evaluation 2",
+                "weight": 50
+            }
+            // Total: 80% (no suma 100%)
+        ]
+    });
+
+    let response = app.patch(&format!("/courses/{}", created_course_id)).json(&update_data).await;
+
+    assert_eq!(response.status_code(), 400);
+
+    let body = response.json::<ResponseBody>();
+
+    let error_message = body
+        .data
+        .get("errors")
+        .and_then(|errors| errors.as_array())
+        .and_then(|arr| arr.first())
+        .and_then(|err| err.get("message"))
+        .and_then(|m| m.as_str())
+        .expect("Should have an error message");
+
+    assert!(error_message.contains("100%"));
+
+    // Cleanup
+    delete_course(&app, &created_course_id).await;
+    delete_user(&app, &teacher_id).await;
+}
+
+#[tokio::test]
+async fn test_update_course_evaluations_invalid_weight_values() {
+    let app = init_test_app().await;
+    let teacher_id = create_teacher(&app, None).await;
+
+    // Crear curso con evaluaciones iniciales
+    let new_course = CourseBuilder::new(&teacher_id)
+        .with_evaluations(vec![("Bitácoras Semanales", 60), ("Informe Final", 40)])
+        .build();
+
+    let created_course = create_course(&app, &new_course).await;
+    let created_course_id = extract_resource_id(&created_course);
+
+    // Intentar actualizar con peso inválido (fuera del rango 1-100)
+    let update_data = json!({
+        "evaluations": [
+            {
+                "name": "Test Evaluation 1",
+                "weight": 0 // Peso inválido
+            },
+            {
+                "name": "Test Evaluation 2",
+                "weight": 100
+            }
+        ]
+    });
+
+    let response = app.patch(&format!("/courses/{}", created_course_id)).json(&update_data).await;
+
+    assert_eq!(response.status_code(), 400);
+
+    // Cleanup
+    delete_course(&app, &created_course_id).await;
+    delete_user(&app, &teacher_id).await;
+}
