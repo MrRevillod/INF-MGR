@@ -10,7 +10,7 @@ pub struct Printer {
 }
 
 pub struct PrintOptions {
-    pub doc_id: String,
+    pub static_path: String,
     pub template: &'static str,
     pub context: RawContext,
 }
@@ -28,17 +28,27 @@ impl Printer {
         let template_dir =
             Path::new(env!("CARGO_MANIFEST_DIR")).join("src/shared/services/printer/templates");
 
-        let temp_file = template_dir.join(format!("{}.typ", opts.doc_id));
-
-        let out_file = format!(
-            "{}/{}.pdf",
-            var("DOCUMENTS_DIR").unwrap_or_else(|_| ".".to_string()),
-            opts.doc_id
-        );
+        let temp_file = template_dir.join(format!("{}.typ", opts.template));
 
         fs::write(&temp_file, template).map_err(|source| ServiceError::Printer {
             source: source.into(),
         })?;
+
+        let out_file = format!(
+            "{}/{}",
+            var("DOCUMENTS_DIR").unwrap_or_else(|_| ".".to_string()),
+            opts.static_path
+        );
+
+        let out_path = Path::new(&out_file);
+
+        if let Some(parent) = out_path.parent() {
+            if !parent.exists() {
+                fs::create_dir_all(parent).map_err(|source| ServiceError::Printer {
+                    source: source.into(),
+                })?;
+            }
+        }
 
         let output = Command::new("typst")
             .args(["compile", temp_file.to_str().unwrap(), &out_file])

@@ -58,4 +58,8 @@ impl TemplateContext {
             .render(template, &context)
             .map_err(|source| ServiceError::TemplateHandler { source })
     }
+
+    pub fn config(&self) -> &TemplateConfig {
+        &self.config
+    }
 }

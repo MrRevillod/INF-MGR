@@ -6,8 +6,9 @@ use crate::{courses::Course, enrollments::Enrollment, practices::Practice, users
 #[derive(Debug, Clone)]
 pub enum Event {
     PracticeCreated((User, Practice, Course, Enrollment)),
-    PracticeApproved((User, Practice, Course, User)),
     PracticeDeclined((User, Practice, Course, User)),
+    PracticeApproved((User, Enrollment, Practice, Course, User)),
+    PracticeAuthorized((Practice, Vec<u8>)),
     UserCreated((String, String, String)),
     ManyUsersCreated(Vec<(String, String, String)>),
     CourseCreated((Course, User)),

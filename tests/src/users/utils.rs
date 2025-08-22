@@ -3,7 +3,7 @@ use serde_json::{Value, json};
 use sword::web::ResponseBody;
 use uuid::Uuid;
 
-use crate::extract_resource_id;
+use crate::{TEST_EMAILS, extract_resource_id};
 
 pub struct UserBuilder {
     rut: String,
@@ -78,12 +78,12 @@ pub async fn create_user(server: &TestServer, user: Value) -> Value {
     body.data
 }
 
-pub async fn create_teacher(server: &TestServer, email: Option<String>) -> String {
-    let mut user = UserBuilder::new().with_roles(vec!["teacher"]);
+pub async fn create_teacher(server: &TestServer) -> String {
+    let email = TEST_EMAILS.get("teacher").cloned();
 
-    if let Some(email) = email {
-        user = user.with_email(&email);
-    }
+    let user = UserBuilder::new()
+        .with_roles(vec!["teacher"])
+        .with_email(&email.clone().unwrap_or(generate_unique_email()));
 
     let data = create_user(server, user.build()).await;
 
@@ -97,14 +97,15 @@ pub async fn create_administrator(server: &TestServer) -> String {
     extract_resource_id(&data)
 }
 
-pub async fn create_student(server: &TestServer, email: Option<String>) -> String {
-    let mut user = UserBuilder::new()
-        .with_roles(vec!["student"])
-        .with_email(&generate_unique_email());
+pub async fn create_student(server: &TestServer) -> String {
+    let email = TEST_EMAILS.get("student").cloned();
 
-    if let Some(email) = email {
-        user = user.with_email(&email);
-    }
+    println!("Using student email: {:?}", email);
+
+    let user = UserBuilder::new()
+        .with_roles(vec!["student"])
+        .with_email(&email.clone().unwrap_or(generate_unique_email()));
+
     let data = create_user(server, user.build()).await;
 
     extract_resource_id(&data)
@@ -120,7 +121,12 @@ pub async fn delete_user(server: &TestServer, user_id: &str) {
 }
 
 pub fn generate_unique_email() -> String {
-    format!("{}@example.com", Uuid::new_v4())
+    let uuid = Uuid::new_v4();
+    let uuid_bytes = uuid.as_bytes();
+    let numeric_value =
+        u32::from_be_bytes([uuid_bytes[0], uuid_bytes[1], uuid_bytes[2], uuid_bytes[3]]);
+
+    format!("{}@example.com", numeric_value)
 }
 
 pub fn generate_unique_rut() -> String {

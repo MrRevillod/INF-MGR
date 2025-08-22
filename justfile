@@ -36,11 +36,11 @@ _ensure-test-service:
 
 test entity="":
     just _ensure-test-service
-    docker compose -f {{COMPOSE_TEST_FILE}} exec backend_test sh -c "cd tests && cargo test {{entity}} {{TEST_ARGS}}"
+    docker compose -f {{COMPOSE_TEST_FILE}} exec backend_test sh -c "cd tests && cargo test {{entity}} -- {{TEST_ARGS}} --test-threads=1 --nocapture"
 
 test-watch entity="":
 	just _ensure-test-service
-	docker compose -f {{COMPOSE_TEST_FILE}} exec backend_test sh -c "cd tests && cargo watch -x test {{entity}} {{TEST_ARGS}} -w src"
+	docker compose -f {{COMPOSE_TEST_FILE}} exec backend_test sh -c "cd tests && cargo-watch -x 'test {{entity}} -- {{TEST_ARGS}} --test-threads=1 --nocapture'"
 
 test-clean:
 	docker compose -f {{COMPOSE_TEST_FILE}} down -v

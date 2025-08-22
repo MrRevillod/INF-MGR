@@ -1,0 +1,1237 @@
+openapi: 3.0.3
+info:
+  title: INF-MGR API
+  description: API para gestión de prácticas iniciales y profesionales
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000
+    description: Servidor de desarrollo local
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Mensaje de error
+        details:
+          type: object
+          description: Detalles adicionales del error
+
+    ValidationError:
+      type: object
+      properties:
+        field:
+          type: string
+          description: Campo que causó el error
+        message:
+          type: string
+          description: Mensaje de validación
+        value:
+          type: string
+          description: Valor que causó el error
+
+    # ====================== USER SCHEMAS ======================
+    Role:
+      type: string
+      enum: [administrator, teacher, student, secretary]
+      description: Roles disponibles en el sistema
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID único del usuario
+        rut:
+          type: string
+          description: RUT chileno del usuario
+          example: "12345678-5"
+        name:
+          type: string
+          description: Nombre completo del usuario
+        email:
+          type: string
+          format: email
+          description: Email del usuario
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+          description: Roles asignados al usuario
+        created_at:
+          type: string
+          format: date-time
+          description: Fecha de creación del usuario
+
+    CreateUserDto:
+      type: object
+      required: [rut, name, email, password, confirmPassword, roles]
+      properties:
+        rut:
+          type: string
+          pattern: '^\d{7,8}-[0-9kK]$'
+          description: RUT chileno válido
+          example: "12345678-5"
+        name:
+          type: string
+          minLength: 5
+          maxLength: 100
+          description: Nombre completo del usuario
+        email:
+          type: string
+          format: email
+          description: Email válido del usuario
+        password:
+          type: string
+          minLength: 8
+          maxLength: 100
+          description: Contraseña (mín 8 caracteres, debe incluir mayúscula, minúscula, número y carácter especial)
+        confirmPassword:
+          type: string
+          description: Confirmación de la contraseña
+        roles:
+          type: array
+          items:
+            type: string
+            enum: [administrator, teacher, student, secretary]
+          minItems: 1
+          description: Lista de roles para el usuario
+
+    UpdateUserDto:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          description: Nuevo email del usuario
+        password:
+          type: string
+          minLength: 8
+          maxLength: 100
+          description: Nueva contraseña
+        confirmPassword:
+          type: string
+          description: Confirmación de la nueva contraseña
+        roles:
+          type: array
+          items:
+            type: string
+            enum: [administrator, teacher, student, secretary]
+          description: Nuevos roles para el usuario
+
+    GetUsersQueryDto:
+      type: object
+      properties:
+        search:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Término de búsqueda para filtrar usuarios
+        page:
+          type: integer
+          minimum: 1
+          description: Número de página para paginación
+
+    UsersListResponse:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserResponse'
+        currentPage:
+          type: integer
+          description: Página actual
+        totalPages:
+          type: integer
+          description: Total de páginas
+        hasNext:
+          type: boolean
+          description: Indica si hay página siguiente
+        hasPrevious:
+          type: boolean
+          description: Indica si hay página anterior
+
+    # ====================== COURSE SCHEMAS ======================
+    CourseStatus:
+      type: string
+      enum: [active, completed]
+      description: Estado del curso
+
+    CourseEvaluation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID de la evaluación
+        name:
+          type: string
+          description: Nombre de la evaluación
+        weight:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Peso de la evaluación en porcentaje
+
+    CourseEvaluationDto:
+      type: object
+      required: [name, weight]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Nombre de la evaluación
+        weight:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Peso de la evaluación en porcentaje (debe sumar 100% entre todas)
+
+    CreateCourseDto:
+      type: object
+      required: [year, code, name, evaluations, teacherId]
+      properties:
+        year:
+          type: integer
+          minimum: 2000
+          maximum: 2100
+          description: Año del curso
+        code:
+          type: string
+          pattern: '^INFO\d{4}$'
+          description: Código del curso (formato INFO####)
+          example: "INFO1001"
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Nombre del curso
+        evaluations:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourseEvaluationDto'
+          minItems: 1
+          description: Lista de evaluaciones (deben sumar 100%)
+        teacherId:
+          type: string
+          format: uuid
+          description: ID del profesor a cargo
+
+    UpdateCourseDto:
+      type: object
+      properties:
+        teacherId:
+          type: string
+          format: uuid
+          description: Nuevo ID del profesor
+        status:
+          type: string
+          enum: [active, completed]
+          description: Nuevo estado del curso
+
+    CourseResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID del curso
+        year:
+          type: integer
+          description: Año del curso
+        code:
+          type: string
+          description: Código del curso
+        name:
+          type: string
+          description: Nombre del curso
+        courseStatus:
+          $ref: '#/components/schemas/CourseStatus'
+        evaluations:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourseEvaluation'
+        teacherId:
+          type: string
+          format: uuid
+          description: ID del profesor
+        teacher:
+          $ref: '#/components/schemas/UserResponse'
+
+    # ====================== ENROLLMENT SCHEMAS ======================
+    StudentScore:
+      type: object
+      properties:
+        evaluationId:
+          type: string
+          format: uuid
+          description: ID de la evaluación
+        score:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 7.0
+          description: Nota del estudiante (escala 1.0 - 7.0)
+
+    StudentScoreDto:
+      type: object
+      required: [evaluationId, score]
+      properties:
+        evaluationId:
+          type: string
+          format: uuid
+          description: ID de la evaluación
+        score:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 7.0
+          description: Nota del estudiante
+
+    CreateEnrollmentDto:
+      type: object
+      required: [studentId, courseId]
+      properties:
+        studentId:
+          type: string
+          format: uuid
+          description: ID del estudiante
+        courseId:
+          type: string
+          format: uuid
+          description: ID del curso
+
+    UpdateEnrollmentDto:
+      type: object
+      properties:
+        studentScores:
+          type: array
+          items:
+            $ref: '#/components/schemas/StudentScoreDto'
+          description: Notas del estudiante
+        practiceId:
+          type: string
+          format: uuid
+          description: ID de la práctica asignada
+
+    EnrollmentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID de la matrícula
+        studentId:
+          type: string
+          format: uuid
+          description: ID del estudiante
+        courseId:
+          type: string
+          format: uuid
+          description: ID del curso
+        studentScores:
+          type: array
+          items:
+            $ref: '#/components/schemas/StudentScore'
+          description: Notas del estudiante
+        practiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID de la práctica (si existe)
+        student:
+          $ref: '#/components/schemas/UserResponse'
+        practice:
+          $ref: '#/components/schemas/Practice'
+          nullable: true
+
+    # ====================== PRACTICE SCHEMAS ======================
+    Practice:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID de la práctica
+        enterpriseName:
+          type: string
+          description: Nombre de la empresa
+        description:
+          type: string
+          description: Descripción de la práctica
+        location:
+          type: string
+          description: Ubicación de la práctica
+        supervisorName:
+          type: string
+          description: Nombre del supervisor
+        supervisorEmail:
+          type: string
+          format: email
+          description: Email del supervisor
+        supervisorPhone:
+          type: string
+          description: Teléfono del supervisor
+        startDate:
+          type: string
+          format: date-time
+          description: Fecha de inicio
+        endDate:
+          type: string
+          format: date-time
+          description: Fecha de finalización
+        isApproved:
+          type: boolean
+          description: Estado de aprobación
+
+    CreatePracticeDto:
+      type: object
+      required: [enterpriseName, description, location, supervisorName, supervisorEmail, supervisorPhone, startDate, endDate]
+      properties:
+        enterpriseName:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Nombre de la empresa
+        description:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Descripción de la práctica
+        location:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Ubicación de la práctica
+        supervisorName:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Nombre del supervisor
+        supervisorEmail:
+          type: string
+          format: email
+          description: Email del supervisor
+        supervisorPhone:
+          type: string
+          pattern: '^(?:\+56)?\s?(?:9\d{8}|\d{1}\d{8})$'
+          description: Teléfono chileno válido
+        startDate:
+          type: string
+          format: date-time
+          description: Fecha de inicio
+        endDate:
+          type: string
+          format: date-time
+          description: Fecha de finalización
+
+    UpdatePracticeDto:
+      type: object
+      properties:
+        enterpriseName:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Nombre de la empresa
+        description:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Descripción de la práctica
+        location:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Ubicación de la práctica
+        supervisorName:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Nombre del supervisor
+        supervisorEmail:
+          type: string
+          format: email
+          description: Email del supervisor
+        startDate:
+          type: string
+          format: date-time
+          description: Fecha de inicio
+        endDate:
+          type: string
+          format: date-time
+          description: Fecha de finalización
+
+    # ====================== IMPORT SCHEMAS ======================
+    ImportUserDto:
+      type: object
+      required: [rut, name, email]
+      properties:
+        rut:
+          type: string
+          pattern: '^\d{7,8}-[0-9kK]$'
+          description: RUT chileno válido
+        name:
+          type: string
+          minLength: 5
+          maxLength: 100
+          description: Nombre completo
+        email:
+          type: string
+          format: email
+          description: Email válido
+
+    ImportCourseDto:
+      type: object
+      required: [students, id]
+      properties:
+        students:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImportUserDto'
+          description: Lista de estudiantes a importar
+        id:
+          type: string
+          format: uuid
+          description: ID del curso
+
+paths:
+  # ====================== USER ENDPOINTS ======================
+  /users:
+    get:
+      tags:
+        - Users
+      summary: Obtener lista de usuarios
+      description: Retorna una lista paginada de usuarios con filtros opcionales
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+          description: Término de búsqueda para filtrar usuarios
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+          description: Número de página (por defecto 1)
+      responses:
+        '200':
+          description: Lista de usuarios obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsersListResponse'
+        '400':
+          description: Parámetros de consulta inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Users
+      summary: Crear nuevo usuario
+      description: Crea un nuevo usuario en el sistema
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserDto'
+      responses:
+        '201':
+          description: Usuario creado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Datos de entrada inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '409':
+          description: El usuario ya existe (RUT o email duplicado)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/{id}:
+    put:
+      tags:
+        - Users
+      summary: Actualizar usuario
+      description: Actualiza los datos de un usuario existente
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID del usuario a actualizar
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserDto'
+      responses:
+        '200':
+          description: Usuario actualizado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Datos de entrada inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '404':
+          description: Usuario no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Users
+      summary: Eliminar usuario
+      description: Elimina un usuario del sistema (soft delete)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID del usuario a eliminar
+      responses:
+        '200':
+          description: Usuario eliminado exitosamente
+        '404':
+          description: Usuario no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ====================== COURSE ENDPOINTS ======================
+  /courses:
+    get:
+      tags:
+        - Courses
+      summary: Obtener todos los cursos
+      description: Retorna una lista de todos los cursos con información del profesor
+      responses:
+        '200':
+          description: Lista de cursos obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CourseResponse'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Courses
+      summary: Crear nuevo curso
+      description: Crea un nuevo curso en el sistema
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCourseDto'
+      responses:
+        '201':
+          description: Curso creado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseResponse'
+        '400':
+          description: Datos de entrada inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '404':
+          description: Profesor no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /courses/{id}:
+    patch:
+      tags:
+        - Courses
+      summary: Actualizar curso
+      description: Actualiza la información de un curso (profesor o estado)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID del curso a actualizar
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCourseDto'
+      responses:
+        '200':
+          description: Curso actualizado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseResponse'
+        '400':
+          description: Datos de entrada inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '404':
+          description: Curso no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Courses
+      summary: Eliminar curso
+      description: Elimina un curso del sistema (solo si no tiene estudiantes inscritos)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID del curso a eliminar
+      responses:
+        '200':
+          description: Curso eliminado exitosamente
+        '400':
+          description: No se puede eliminar curso con estudiantes inscritos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Curso no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /courses/{id}/students:
+    get:
+      tags:
+        - Courses
+      summary: Obtener estudiantes de un curso
+      description: Retorna todos los estudiantes inscritos en un curso
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID del curso
+      responses:
+        '200':
+          description: Lista de estudiantes obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EnrollmentResponse'
+        '404':
+          description: Curso no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /courses/enroll:
+    post:
+      tags:
+        - Courses
+      summary: Registrar estudiante en curso
+      description: Registra un estudiante en un curso
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEnrollmentDto'
+      responses:
+        '201':
+          description: Estudiante inscrito exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrollmentResponse'
+        '400':
+          description: Datos de entrada inválidos o estudiante ya inscrito
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '404':
+          description: Estudiante o curso no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /courses/enrollments/{enrollment_id}:
+    patch:
+      tags:
+        - Courses
+      summary: Actualizar inscripción de estudiante
+      description: Actualiza información una inscripción de estudiante en un curso
+      parameters:
+        - in: path
+          name: enrollment_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID de la inscripción
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEnrollmentDto'
+      responses:
+        '200':
+          description: Inscripción actualizada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrollmentResponse'
+        '400':
+          description: Datos de entrada inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '404':
+          description: Inscripción no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Courses
+      summary: Eliminar inscripción de estudiante
+      description: Elimina la inscripción de un estudiante en un curso
+      parameters:
+        - in: path
+          name: enrollment_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID de la inscripción
+      responses:
+        '200':
+          description: Inscripción eliminada exitosamente
+        '404':
+          description: Inscripción no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ====================== ENROLLMENT ENDPOINTS ======================
+  /enrollments/{id}/practice:
+    post:
+      tags:
+        - Practices
+      summary: Crear práctica para una inscripción
+      description: Crea una nueva práctica profesional para un estudiante inscrito en un curso
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID de la inscripción
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePracticeDto'
+      responses:
+        '201':
+          description: Práctica creada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Practice'
+        '400':
+          description: Datos de entrada inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '404':
+          description: Inscripción no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    patch:
+      tags:
+        - Practices
+      summary: Actualizar práctica
+      description: Actualiza los datos de una práctica existente
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID de la inscripción
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePracticeDto'
+      responses:
+        '200':
+          description: Práctica actualizada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Practice'
+        '400':
+          description: Datos de entrada inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '404':
+          description: Práctica no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /enrollments/{id}/practice/{practice_id}/approve:
+    post:
+      tags:
+        - Practices
+      summary: Aprobar práctica
+      description: Aprueba una práctica profesional
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID de la matrícula
+        - in: path
+          name: practice_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID de la práctica
+      responses:
+        '200':
+          description: Práctica aprobada exitosamente
+        '400':
+          description: La práctica ya está aprobada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Práctica no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /enrollments/{id}/practice/{practice_id}/authorize:
+    post:
+      tags:
+        - Practices
+      summary: Autorizar práctica
+      description: Autoriza una práctica profesional (funcionalidad pendiente)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID de la matrícula
+        - in: path
+          name: practice_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID de la práctica
+      responses:
+        '200':
+          description: Operación exitosa (pendiente implementación)
+
+  /enrollments/{id}/practice/{practice_id}/reject:
+    post:
+      tags:
+        - Practices
+      summary: Rechazar práctica
+      description: Rechaza una práctica profesional (funcionalidad pendiente)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID de la inscripción
+        - in: path
+          name: practice_id
+          required: true
+          schema: 
+            type: string
+            format: uuid
+          description: ID de la práctica
+      responses:
+        '200':
+          description: Operación exitosa (pendiente implementación)
+
+  /enrollments/{id}/practice/{practice_id}/evaluate:
+    post:
+      tags:
+        - Practices
+      summary: Evaluar práctica
+      description: Evalúa una práctica profesional (funcionalidad pendiente)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID de la inscripción
+        - in: path
+          name: practice_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID de la práctica
+        
+      responses:
+        '200':
+          description: Operación exitosa (pendiente implementación)
+
+  /enrollments/practice/{practice_id}:
+    delete:
+      tags:
+        - Practices
+      summary: Eliminar práctica
+      description: Elimina una práctica profesional
+      parameters:
+        - in: path
+          name: practice_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID de la práctica
+      responses:
+        '204':
+          description: Práctica eliminada exitosamente
+        '404':
+          description: Práctica no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ====================== IMPORT ENDPOINTS ======================
+  /imports/course:
+    post:
+      tags:
+        - Imports
+      summary: Importar estudiantes a curso
+      description: Importa una lista de estudiantes y los registra en un curso existente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportCourseDto'
+      responses:
+        '201':
+          description: Estudiantes importados exitosamente
+        '400':
+          description: Datos de entrada inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '404':
+          description: Curso no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+tags:
+  - name: Users
+    description: Gestión de usuarios del sistema
+  - name: Courses
+    description: Gestión de cursos e inscripciones
+  - name: Practices
+    description: Gestión de prácticas profesionales
+  - name: Imports
+    description: Importación masiva de datos
