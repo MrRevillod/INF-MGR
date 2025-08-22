@@ -6,7 +6,69 @@ use axum_test::{
 use serde_json::{Value, json};
 use sword::web::ResponseBody;
 
-use crate::{TEST_EMAILS, extract_resource_id, users::utils::generate_unique_email};
+use crate::{TEST_EMAILS, extract_resource_id, users::utils::TestUser};
+
+pub struct TestPractice {}
+
+impl TestPractice {
+    pub fn builder() -> PracticeBuilder {
+        PracticeBuilder::new()
+    }
+
+    pub async fn extract_id(practice: &Value) -> String {
+        extract_resource_id(practice)
+    }
+
+    pub async fn create_without_extract(
+        app: &TestServer,
+        enrollment_id: &String,
+        data: Value,
+    ) -> Value {
+        let route = format!("/enrollments/{}/practice", enrollment_id);
+        let response = app.post(&route).json(&data).await;
+        let body = response.json::<ResponseBody>();
+
+        assert_eq!(response.status_code(), 201, "Failed to create practice: {}", body.data);
+
+        body.data
+    }
+
+    pub async fn create(app: &TestServer, enrollment_id: &String, data: Value) -> String {
+        let route = format!("/enrollments/{}/practice", enrollment_id);
+        let response = app.post(&route).json(&data).await;
+        let body = response.json::<ResponseBody>();
+
+        assert_eq!(response.status_code(), 201, "Failed to create practice: {}", body.data);
+
+        extract_resource_id(&body.data)
+    }
+
+    pub async fn approve(app: &TestServer, enrollment_id: &String, practice_id: &String) {
+        let route = format!("/enrollments/{}/practice/{}/approve", enrollment_id, practice_id);
+        let response = app.post(&route).await;
+
+        assert_eq!(response.status_code(), 200, "Failed to approve practice");
+    }
+
+    pub async fn authorize(app: &TestServer, enrollment_id: &String, practice_id: &String) {
+        let route = format!("/enrollments/{}/practice/{}/authorize", enrollment_id, practice_id);
+        let pdf_part =
+            Part::bytes(include_bytes!("../../files/Autorización de práctica.pdf").as_slice())
+                .file_name(&"auth_doc.pdf")
+                .mime_type(&"text/pdf");
+
+        let form = MultipartForm::new().add_part("auth_doc", pdf_part);
+        let response = app.post(&route).multipart(form).await;
+
+        assert_eq!(response.status_code(), 200, "Failed to authorize practice");
+    }
+
+    pub async fn delete(app: &TestServer, practice_id: &str) {
+        app.delete(&format!("/enrollments/practice/{}", practice_id))
+            .await
+            .assert_status(StatusCode::NO_CONTENT);
+    }
+}
 
 pub struct PracticeBuilder {
     pub enterprise_name: Option<String>,
@@ -79,54 +141,10 @@ impl PracticeBuilder {
             "description": self.description,
             "location": self.location,
             "supervisorName": self.supervisor_name,
-            "supervisorEmail": self.supervisor_email.unwrap_or(generate_unique_email()),
+            "supervisorEmail": self.supervisor_email.unwrap_or(TestUser::generate_unique_email()),
             "supervisorPhone": self.supervisor_phone,
             "startDate": self.start_date,
             "endDate": self.end_date
         })
-    }
-}
-
-pub enum TestPractice {}
-
-impl TestPractice {
-    pub fn builder() -> PracticeBuilder {
-        PracticeBuilder::new()
-    }
-
-    pub async fn create(app: &TestServer, enrollment_id: &String, data: Value) -> String {
-        let route = format!("/enrollments/{}/practice", enrollment_id);
-        let response = app.post(&route).json(&data).await;
-        let body = response.json::<ResponseBody>();
-
-        assert_eq!(response.status_code(), 201, "Failed to create practice: {}", body.data);
-
-        extract_resource_id(&body.data)
-    }
-
-    pub async fn approve(app: &TestServer, enrollment_id: &String, practice_id: &String) {
-        let route = format!("/enrollments/{}/practice/{}/approve", enrollment_id, practice_id);
-        let response = app.post(&route).await;
-
-        assert_eq!(response.status_code(), 200, "Failed to approve practice");
-    }
-
-    pub async fn authorize(app: &TestServer, enrollment_id: &String, practice_id: &String) {
-        let route = format!("/enrollments/{}/practice/{}/authorize", enrollment_id, practice_id);
-        let pdf_part =
-            Part::bytes(include_bytes!("../../files/Autorización de práctica.pdf").as_slice())
-                .file_name(&"auth_doc.pdf")
-                .mime_type(&"text/pdf");
-
-        let form = MultipartForm::new().add_part("auth_doc", pdf_part);
-        let response = app.post(&route).multipart(form).await;
-
-        assert_eq!(response.status_code(), 200, "Failed to authorize practice");
-    }
-
-    pub async fn delete(app: &TestServer, practice_id: &str) {
-        app.delete(&format!("/enrollments/practice/{}", practice_id))
-            .await
-            .assert_status(StatusCode::NO_CONTENT);
     }
 }

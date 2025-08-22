@@ -3,7 +3,126 @@ use serde_json::{Value, json};
 use sword::web::ResponseBody;
 use uuid::Uuid;
 
-use crate::{TEST_EMAILS, extract_resource_id};
+use crate::extract_resource_id;
+
+pub struct TestUser {}
+
+impl TestUser {
+    pub fn builder() -> UserBuilder {
+        UserBuilder::new()
+    }
+
+    pub async fn create_user_no_extract(server: &TestServer, user: Value) -> ResponseBody {
+        let response = server.post("/users").json(&user).await;
+        let body = response.json::<ResponseBody>();
+
+        return body;
+    }
+
+    pub async fn update_no_extract(server: &TestServer, id: &str, data: Value) -> ResponseBody {
+        let response = server.patch(&format!("/users/{}", id)).json(&data).await;
+        let body = response.json::<ResponseBody>();
+
+        return body;
+    }
+
+    pub async fn create_user(server: &TestServer, user: Value) -> Value {
+        let response = server.post("/users").json(&user).await;
+        let body = response.json::<ResponseBody>();
+
+        assert_eq!(
+            response.status_code(),
+            201,
+            "{}",
+            format!("Failed to create user - response: {}", body.data)
+        );
+
+        body.data
+    }
+
+    pub async fn create_teacher(server: &TestServer) -> String {
+        let user = UserBuilder::new()
+            .with_roles(vec!["teacher"])
+            .with_email(&Self::generate_unique_email());
+
+        let data = Self::create_user(server, user.build()).await;
+
+        extract_resource_id(&data)
+    }
+
+    pub async fn create_student(server: &TestServer) -> String {
+        let user = UserBuilder::new()
+            .with_roles(vec!["student"])
+            .with_email(&Self::generate_unique_email());
+
+        let data = Self::create_user(server, user.build()).await;
+
+        extract_resource_id(&data)
+    }
+
+    pub async fn create_administrator(server: &TestServer) -> String {
+        let user = UserBuilder::new().with_roles(vec!["administrator"]).build();
+        let data = Self::create_user(server, user).await;
+
+        extract_resource_id(&data)
+    }
+
+    pub async fn update(server: &TestServer, user_id: &str, update_data: Value) -> Value {
+        let response = server.patch(&format!("/users/{}", user_id)).json(&update_data).await;
+        let body = response.json::<ResponseBody>();
+
+        assert_eq!(
+            response.status_code(),
+            200,
+            "{}",
+            format!("Failed to update user - response: {}", body.data)
+        );
+
+        body.data
+    }
+
+    pub async fn delete(server: &TestServer, user_id: &str) {
+        let response = server.delete(&format!("/users/{}", user_id)).await;
+        assert!(
+            response.status_code() == 200 || response.status_code() == 404,
+            "Failed to delete user: expected 200 or 404, got {}",
+            response.status_code()
+        );
+    }
+
+    pub fn generate_unique_email() -> String {
+        let uuid = Uuid::new_v4();
+        let uuid_bytes = uuid.as_bytes();
+        let numeric_value =
+            u32::from_be_bytes([uuid_bytes[0], uuid_bytes[1], uuid_bytes[2], uuid_bytes[3]]);
+
+        format!("{}@example.com", numeric_value)
+    }
+
+    pub fn generate_unique_rut() -> String {
+        let random_number = (Uuid::new_v4().as_u128() % 90000000) + 10000000;
+
+        let sequence = [2, 3, 4, 5, 6, 7];
+        let mut sum = 0;
+        let mut rut_copy = random_number;
+        let mut i = 0;
+
+        while rut_copy > 0 {
+            sum += (rut_copy % 10) * sequence[i % 6];
+            rut_copy /= 10;
+            i += 1;
+        }
+
+        let remainder = sum % 11;
+        let verification_digit = match 11 - remainder {
+            10 => 'K',
+            11 => '0',
+            n => char::from_digit(n as u32, 10).unwrap(),
+        };
+
+        format!("{}-{}", random_number, verification_digit)
+    }
+}
 
 pub struct UserBuilder {
     rut: String,
@@ -17,9 +136,9 @@ pub struct UserBuilder {
 impl UserBuilder {
     pub fn new() -> Self {
         Self {
-            rut: generate_unique_rut(),
+            rut: TestUser::generate_unique_rut(),
             name: "Test User".to_string(),
-            email: generate_unique_email(),
+            email: TestUser::generate_unique_email(),
             roles: vec!["administrator".to_string()],
             password: "TestPassword123!".to_string(),
             confirm_password: "TestPassword123!".to_string(),
@@ -61,96 +180,5 @@ impl UserBuilder {
             "password": self.password,
             "confirmPassword": self.confirm_password,
         })
-    }
-}
-
-pub async fn create_user(server: &TestServer, user: Value) -> Value {
-    let response = server.post("/users").json(&user).await;
-    let body = response.json::<ResponseBody>();
-
-    assert_eq!(
-        response.status_code(),
-        201,
-        "{}",
-        format!("Failed to create user - response: {}", body.data)
-    );
-
-    body.data
-}
-
-pub async fn create_teacher(server: &TestServer) -> String {
-    let email = TEST_EMAILS.get("teacher").cloned();
-
-    let user = UserBuilder::new()
-        .with_roles(vec!["teacher"])
-        .with_email(&email.clone().unwrap_or(generate_unique_email()));
-
-    let data = create_user(server, user.build()).await;
-
-    extract_resource_id(&data)
-}
-
-pub async fn create_administrator(server: &TestServer) -> String {
-    let user = UserBuilder::new().with_roles(vec!["administrator"]).build();
-    let data = create_user(server, user).await;
-
-    extract_resource_id(&data)
-}
-
-pub async fn create_student(server: &TestServer) -> String {
-    let email = TEST_EMAILS.get("student").cloned();
-
-    println!("Using student email: {:?}", email);
-
-    let user = UserBuilder::new()
-        .with_roles(vec!["student"])
-        .with_email(&email.clone().unwrap_or(generate_unique_email()));
-
-    let data = create_user(server, user.build()).await;
-
-    extract_resource_id(&data)
-}
-
-pub async fn delete_user(server: &TestServer, user_id: &str) {
-    let response = server.delete(&format!("/users/{}", user_id)).await;
-    assert!(
-        response.status_code() == 200 || response.status_code() == 404,
-        "Failed to delete user: expected 200 or 404, got {}",
-        response.status_code()
-    );
-}
-
-pub fn generate_unique_email() -> String {
-    let uuid = Uuid::new_v4();
-    let uuid_bytes = uuid.as_bytes();
-    let numeric_value =
-        u32::from_be_bytes([uuid_bytes[0], uuid_bytes[1], uuid_bytes[2], uuid_bytes[3]]);
-
-    format!("{}@example.com", numeric_value)
-}
-
-pub fn generate_unique_rut() -> String {
-    let random_number = (Uuid::new_v4().as_u128() % 90000000) + 10000000;
-    let verification_digit = calculate_rut_verification_digit(random_number as u32);
-    format!("{}-{}", random_number, verification_digit)
-}
-
-fn calculate_rut_verification_digit(rut: u32) -> char {
-    let sequence = [2, 3, 4, 5, 6, 7];
-    let mut sum = 0;
-    let mut rut_copy = rut;
-    let mut i = 0;
-
-    while rut_copy > 0 {
-        sum += (rut_copy % 10) * sequence[i % 6];
-        rut_copy /= 10;
-        i += 1;
-    }
-
-    let remainder = sum % 11;
-    match 11 - remainder {
-        10 => 'K',
-        11 => '0',
-        n => char::from_digit(n as u32, 10).unwrap(),
     }
 }

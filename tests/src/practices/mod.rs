@@ -1,11 +1,8 @@
 pub mod utils;
 
 use crate::{
-    courses::utils::{CourseBuilder, create_course, delete_course},
-    enrollments::utils::{EnrollmentBuilder, create_enrollment, delete_enrollment},
-    extract_resource_id, init_test_app,
-    practices::utils::TestPractice,
-    users::utils::{create_student, create_teacher, delete_user},
+    courses::utils::TestCourse, enrollments::utils::TestEnrollment, extract_resource_id,
+    init_test_app, practices::utils::TestPractice, users::utils::TestUser,
 };
 use axum::http::StatusCode;
 use chrono::{Duration, Utc};
@@ -14,22 +11,21 @@ use chrono::{Duration, Utc};
 async fn create_practice_with_valid_phone_should_work() {
     let app = init_test_app().await;
 
-    // Crear student y teacher
-    let student_id = create_student(&app).await;
-    let teacher_id = create_teacher(&app).await;
+    let student_id = TestUser::create_student(&app).await;
+    let teacher_id = TestUser::create_teacher(&app).await;
 
-    // Crear course
-    let course_data = CourseBuilder::new(&teacher_id).build();
-    let course = create_course(&app, &course_data).await;
-    let course_id = extract_resource_id(&course);
+    let course_data = TestCourse::builder(&teacher_id).build();
+    let course = TestCourse::create(&app, &course_data).await;
+    let course_id = TestCourse::extract_id(&course);
 
-    // Crear enrollment
-    let enrollment_data = EnrollmentBuilder::new()
+    let enrollment_data = TestEnrollment::builder()
         .with_student_id(&student_id)
         .with_course_id(&course_id)
         .build();
-    let enrollment = create_enrollment(&app, &enrollment_data).await;
+
+    let enrollment = TestEnrollment::create(&app, &enrollment_data).await;
     let enrollment_id = extract_resource_id(&enrollment);
+
     let start_date = Utc::now();
     let end_date = start_date + Duration::days(90);
 
@@ -40,47 +36,41 @@ async fn create_practice_with_valid_phone_should_work() {
         .with_location("Ubicación de prueba")
         .with_supervisor_name("Supervisor Test")
         .with_supervisor_email("supervisor@example.com")
-        .with_supervisor_phone("+56912345678") // válido
+        .with_supervisor_phone("+56912345678")
         .with_start_date(&start_date.to_rfc3339())
         .with_end_date(&end_date.to_rfc3339())
         .build();
 
-    let response = app
-        .post(&format!("/enrollments/{enrollment_id}/practice"))
-        .json(&practice_data)
-        .await;
+    TestPractice::create(&app, &enrollment_id, practice_data).await;
 
-    response.assert_status(StatusCode::CREATED);
-
-    // Limpieza
-    delete_enrollment(&app, &enrollment_id).await;
-    delete_course(&app, &course_id).await;
-    delete_user(&app, &student_id).await;
-    delete_user(&app, &teacher_id).await;
+    TestEnrollment::delete(&app, &enrollment_id).await;
+    TestCourse::delete(&app, &course_id).await;
+    TestUser::delete(&app, &student_id).await;
+    TestUser::delete(&app, &teacher_id).await;
 }
 
 #[tokio::test]
 async fn create_practice_with_invalid_phone_should_fail() {
     let app = init_test_app().await;
 
-    let student_id = create_student(&app).await;
-    let teacher_id = create_teacher(&app).await;
+    let student_id = TestUser::create_student(&app).await;
+    let teacher_id = TestUser::create_teacher(&app).await;
 
-    // Crear course
-    let course_data = CourseBuilder::new(&teacher_id).build();
-    let course = create_course(&app, &course_data).await;
-    let course_id = extract_resource_id(&course);
+    let course_data = TestCourse::builder(&teacher_id).build();
+    let course = TestCourse::create(&app, &course_data).await;
+    let course_id = TestCourse::extract_id(&course);
 
-    // Crear enrollment
-    let enrollment_data = EnrollmentBuilder::new()
+    let enrollment_data = TestEnrollment::builder()
         .with_student_id(&student_id)
         .with_course_id(&course_id)
         .build();
-    let enrollment = create_enrollment(&app, &enrollment_data).await;
-    let enrollment_id = extract_resource_id(&enrollment);
+
+    let enrollment = TestEnrollment::create(&app, &enrollment_data).await;
+    let enrollment_id = TestEnrollment::extract_id(&enrollment);
+
     let start_date = Utc::now();
     let end_date = start_date + Duration::days(90);
-    // Construimos la práctica con número inválido
+
     let practice_data = TestPractice::builder()
         .with_enterprise_name("Empresa Test")
         .with_description("Descripción de prueba")
@@ -99,30 +89,30 @@ async fn create_practice_with_invalid_phone_should_fail() {
 
     response.assert_status(StatusCode::BAD_REQUEST);
 
-    delete_enrollment(&app, &enrollment_id).await;
-    delete_course(&app, &course_id).await;
-    delete_user(&app, &student_id).await;
-    delete_user(&app, &teacher_id).await;
+    TestEnrollment::delete(&app, &enrollment_id).await;
+    TestCourse::delete(&app, &course_id).await;
+    TestUser::delete(&app, &student_id).await;
+    TestUser::delete(&app, &teacher_id).await;
 }
 
 #[tokio::test]
 async fn create_practice_with_invalid_enterprise_name_should_fail() {
     let app = init_test_app().await;
 
-    let student_id = create_student(&app).await;
-    let teacher_id = create_teacher(&app).await;
+    let student_id = TestUser::create_student(&app).await;
+    let teacher_id = TestUser::create_teacher(&app).await;
 
     // Crear course
-    let course_data = CourseBuilder::new(&teacher_id).build();
-    let course = create_course(&app, &course_data).await;
-    let course_id = extract_resource_id(&course);
+    let course_data = TestCourse::builder(&teacher_id).build();
+    let course = TestCourse::create(&app, &course_data).await;
+    let course_id = TestCourse::extract_id(&course);
 
     // Crear enrollment
-    let enrollment_data = EnrollmentBuilder::new()
+    let enrollment_data = TestEnrollment::builder()
         .with_student_id(&student_id)
         .with_course_id(&course_id)
         .build();
-    let enrollment = create_enrollment(&app, &enrollment_data).await;
+    let enrollment = TestEnrollment::create(&app, &enrollment_data).await;
     let enrollment_id = extract_resource_id(&enrollment);
     let start_date = Utc::now();
     let end_date = start_date + Duration::days(90);
@@ -145,30 +135,30 @@ async fn create_practice_with_invalid_enterprise_name_should_fail() {
 
     response.assert_status(StatusCode::BAD_REQUEST);
 
-    delete_enrollment(&app, &enrollment_id).await;
-    delete_course(&app, &course_id).await;
-    delete_user(&app, &student_id).await;
-    delete_user(&app, &teacher_id).await;
+    TestEnrollment::delete(&app, &enrollment_id).await;
+    TestCourse::delete(&app, &course_id).await;
+    TestUser::delete(&app, &student_id).await;
+    TestUser::delete(&app, &teacher_id).await;
 }
 
 #[tokio::test]
 async fn create_practice_with_invalid_description_should_fail() {
     let app = init_test_app().await;
 
-    let student_id = create_student(&app).await;
-    let teacher_id = create_teacher(&app).await;
+    let student_id = TestUser::create_student(&app).await;
+    let teacher_id = TestUser::create_teacher(&app).await;
 
     // Crear course
-    let course_data = CourseBuilder::new(&teacher_id).build();
-    let course = create_course(&app, &course_data).await;
-    let course_id = extract_resource_id(&course);
+    let course_data = TestCourse::builder(&teacher_id).build();
+    let course = TestCourse::create(&app, &course_data).await;
+    let course_id = TestCourse::extract_id(&course);
 
     // Crear enrollment
-    let enrollment_data = EnrollmentBuilder::new()
+    let enrollment_data = TestEnrollment::builder()
         .with_student_id(&student_id)
         .with_course_id(&course_id)
         .build();
-    let enrollment = create_enrollment(&app, &enrollment_data).await;
+    let enrollment = TestEnrollment::create(&app, &enrollment_data).await;
     let enrollment_id = extract_resource_id(&enrollment);
     let start_date = Utc::now();
     let end_date = start_date + Duration::days(90);
@@ -191,30 +181,30 @@ async fn create_practice_with_invalid_description_should_fail() {
 
     response.assert_status(StatusCode::BAD_REQUEST);
 
-    delete_enrollment(&app, &enrollment_id).await;
-    delete_course(&app, &course_id).await;
-    delete_user(&app, &student_id).await;
-    delete_user(&app, &teacher_id).await;
+    TestEnrollment::delete(&app, &enrollment_id).await;
+    TestCourse::delete(&app, &course_id).await;
+    TestUser::delete(&app, &student_id).await;
+    TestUser::delete(&app, &teacher_id).await;
 }
 
 #[tokio::test]
 async fn create_practice_with_invalid_location_should_fail() {
     let app = init_test_app().await;
 
-    let student_id = create_student(&app).await;
-    let teacher_id = create_teacher(&app).await;
+    let student_id = TestUser::create_student(&app).await;
+    let teacher_id = TestUser::create_teacher(&app).await;
 
     // Crear course
-    let course_data = CourseBuilder::new(&teacher_id).build();
-    let course = create_course(&app, &course_data).await;
-    let course_id = extract_resource_id(&course);
+    let course_data = TestCourse::builder(&teacher_id).build();
+    let course = TestCourse::create(&app, &course_data).await;
+    let course_id = TestCourse::extract_id(&course);
 
     // Crear enrollment
-    let enrollment_data = EnrollmentBuilder::new()
+    let enrollment_data = TestEnrollment::builder()
         .with_student_id(&student_id)
         .with_course_id(&course_id)
         .build();
-    let enrollment = create_enrollment(&app, &enrollment_data).await;
+    let enrollment = TestEnrollment::create(&app, &enrollment_data).await;
     let enrollment_id = extract_resource_id(&enrollment);
     let start_date = Utc::now();
     let end_date = start_date + Duration::days(90);
@@ -237,30 +227,30 @@ async fn create_practice_with_invalid_location_should_fail() {
 
     response.assert_status(StatusCode::BAD_REQUEST);
 
-    delete_enrollment(&app, &enrollment_id).await;
-    delete_course(&app, &course_id).await;
-    delete_user(&app, &student_id).await;
-    delete_user(&app, &teacher_id).await;
+    TestEnrollment::delete(&app, &enrollment_id).await;
+    TestCourse::delete(&app, &course_id).await;
+    TestUser::delete(&app, &student_id).await;
+    TestUser::delete(&app, &teacher_id).await;
 }
 
 #[tokio::test]
 async fn create_practice_with_invalid_supervisor_name_should_fail() {
     let app = init_test_app().await;
 
-    let student_id = create_student(&app).await;
-    let teacher_id = create_teacher(&app).await;
+    let student_id = TestUser::create_student(&app).await;
+    let teacher_id = TestUser::create_teacher(&app).await;
 
     // Crear course
-    let course_data = CourseBuilder::new(&teacher_id).build();
-    let course = create_course(&app, &course_data).await;
-    let course_id = extract_resource_id(&course);
+    let course_data = TestCourse::builder(&teacher_id).build();
+    let course = TestCourse::create(&app, &course_data).await;
+    let course_id = TestCourse::extract_id(&course);
 
     // Crear enrollment
-    let enrollment_data = EnrollmentBuilder::new()
+    let enrollment_data = TestEnrollment::builder()
         .with_student_id(&student_id)
         .with_course_id(&course_id)
         .build();
-    let enrollment = create_enrollment(&app, &enrollment_data).await;
+    let enrollment = TestEnrollment::create(&app, &enrollment_data).await;
     let enrollment_id = extract_resource_id(&enrollment);
     let start_date = Utc::now();
     let end_date = start_date + Duration::days(90);
@@ -283,30 +273,30 @@ async fn create_practice_with_invalid_supervisor_name_should_fail() {
 
     response.assert_status(StatusCode::BAD_REQUEST);
 
-    delete_enrollment(&app, &enrollment_id).await;
-    delete_course(&app, &course_id).await;
-    delete_user(&app, &student_id).await;
-    delete_user(&app, &teacher_id).await;
+    TestEnrollment::delete(&app, &enrollment_id).await;
+    TestCourse::delete(&app, &course_id).await;
+    TestUser::delete(&app, &student_id).await;
+    TestUser::delete(&app, &teacher_id).await;
 }
 
 #[tokio::test]
 async fn create_practice_with_invalid_supervisor_email_should_fail() {
     let app = init_test_app().await;
 
-    let student_id = create_student(&app).await;
-    let teacher_id = create_teacher(&app).await;
+    let student_id = TestUser::create_student(&app).await;
+    let teacher_id = TestUser::create_teacher(&app).await;
 
     // Crear course
-    let course_data = CourseBuilder::new(&teacher_id).build();
-    let course = create_course(&app, &course_data).await;
-    let course_id = extract_resource_id(&course);
+    let course_data = TestCourse::builder(&teacher_id).build();
+    let course = TestCourse::create(&app, &course_data).await;
+    let course_id = TestCourse::extract_id(&course);
 
     // Crear enrollment
-    let enrollment_data = EnrollmentBuilder::new()
+    let enrollment_data = TestEnrollment::builder()
         .with_student_id(&student_id)
         .with_course_id(&course_id)
         .build();
-    let enrollment = create_enrollment(&app, &enrollment_data).await;
+    let enrollment = TestEnrollment::create(&app, &enrollment_data).await;
     let enrollment_id = extract_resource_id(&enrollment);
     let start_date = Utc::now();
     let end_date = start_date + Duration::days(90);
@@ -329,30 +319,30 @@ async fn create_practice_with_invalid_supervisor_email_should_fail() {
 
     response.assert_status(StatusCode::BAD_REQUEST);
 
-    delete_enrollment(&app, &enrollment_id).await;
-    delete_course(&app, &course_id).await;
-    delete_user(&app, &student_id).await;
-    delete_user(&app, &teacher_id).await;
+    TestEnrollment::delete(&app, &enrollment_id).await;
+    TestCourse::delete(&app, &course_id).await;
+    TestUser::delete(&app, &student_id).await;
+    TestUser::delete(&app, &teacher_id).await;
 }
 ////////////////////////////////////////////////////////
 #[tokio::test]
 async fn create_practice_with_invalid_start_date_should_fail() {
     let app = init_test_app().await;
 
-    let student_id = create_student(&app).await;
-    let teacher_id = create_teacher(&app).await;
+    let student_id = TestUser::create_student(&app).await;
+    let teacher_id = TestUser::create_teacher(&app).await;
 
     // Crear course
-    let course_data = CourseBuilder::new(&teacher_id).build();
-    let course = create_course(&app, &course_data).await;
-    let course_id = extract_resource_id(&course);
+    let course_data = TestCourse::builder(&teacher_id).build();
+    let course = TestCourse::create(&app, &course_data).await;
+    let course_id = TestCourse::extract_id(&course);
 
     // Crear enrollment
-    let enrollment_data = EnrollmentBuilder::new()
+    let enrollment_data = TestEnrollment::builder()
         .with_student_id(&student_id)
         .with_course_id(&course_id)
         .build();
-    let enrollment = create_enrollment(&app, &enrollment_data).await;
+    let enrollment = TestEnrollment::create(&app, &enrollment_data).await;
     let enrollment_id = extract_resource_id(&enrollment);
     let start_date = Utc::now();
     // Construimos la práctica con número inválido
@@ -374,10 +364,10 @@ async fn create_practice_with_invalid_start_date_should_fail() {
 
     response.assert_status(StatusCode::BAD_REQUEST);
 
-    delete_enrollment(&app, &enrollment_id).await;
-    delete_course(&app, &course_id).await;
-    delete_user(&app, &student_id).await;
-    delete_user(&app, &teacher_id).await;
+    TestEnrollment::delete(&app, &enrollment_id).await;
+    TestCourse::delete(&app, &course_id).await;
+    TestUser::delete(&app, &student_id).await;
+    TestUser::delete(&app, &teacher_id).await;
 }
 
 ///malo
@@ -386,20 +376,20 @@ async fn create_practice_with_invalid_start_date_should_fail() {
 async fn create_practice_with_invalid_end_date_should_fail() {
     let app = init_test_app().await;
 
-    let student_id = create_student(&app).await;
-    let teacher_id = create_teacher(&app).await;
+    let student_id = TestUser::create_student(&app).await;
+    let teacher_id = TestUser::create_teacher(&app).await;
 
     // Crear course
-    let course_data = CourseBuilder::new(&teacher_id).build();
-    let course = create_course(&app, &course_data).await;
-    let course_id = extract_resource_id(&course);
+    let course_data = TestCourse::builder(&teacher_id).build();
+    let course = TestCourse::create(&app, &course_data).await;
+    let course_id = TestCourse::extract_id(&course);
 
     // Crear enrollment
-    let enrollment_data = EnrollmentBuilder::new()
+    let enrollment_data = TestEnrollment::builder()
         .with_student_id(&student_id)
         .with_course_id(&course_id)
         .build();
-    let enrollment = create_enrollment(&app, &enrollment_data).await;
+    let enrollment = TestEnrollment::create(&app, &enrollment_data).await;
     let enrollment_id = extract_resource_id(&enrollment);
     let start_date = Utc::now();
     let end_date = start_date + Duration::days(90);
@@ -422,10 +412,10 @@ async fn create_practice_with_invalid_end_date_should_fail() {
 
     response.assert_status(StatusCode::BAD_REQUEST);
 
-    delete_enrollment(&app, &enrollment_id).await;
-    delete_course(&app, &course_id).await;
-    delete_user(&app, &student_id).await;
-    delete_user(&app, &teacher_id).await;
+    TestEnrollment::delete(&app, &enrollment_id).await;
+    TestCourse::delete(&app, &course_id).await;
+    TestUser::delete(&app, &student_id).await;
+    TestUser::delete(&app, &teacher_id).await;
 }
 
 //malo
@@ -434,20 +424,20 @@ async fn create_practice_with_invalid_end_date_should_fail() {
 async fn create_practice_with_invalid_start_date_delete_should_fail() {
     let app = init_test_app().await;
 
-    let student_id = create_student(&app).await;
-    let teacher_id = create_teacher(&app).await;
+    let student_id = TestUser::create_student(&app).await;
+    let teacher_id = TestUser::create_teacher(&app).await;
 
     // Crear course
-    let course_data = CourseBuilder::new(&teacher_id).build();
-    let course = create_course(&app, &course_data).await;
-    let course_id = extract_resource_id(&course);
+    let course_data = TestCourse::builder(&teacher_id).build();
+    let course = TestCourse::create(&app, &course_data).await;
+    let course_id = TestCourse::extract_id(&course);
 
     // Crear enrollment
-    let enrollment_data = EnrollmentBuilder::new()
+    let enrollment_data = TestEnrollment::builder()
         .with_student_id(&student_id)
         .with_course_id(&course_id)
         .build();
-    let enrollment = create_enrollment(&app, &enrollment_data).await;
+    let enrollment = TestEnrollment::create(&app, &enrollment_data).await;
     let enrollment_id = extract_resource_id(&enrollment);
     let start_date = Utc::now();
     let end_date = start_date + Duration::days(90);
@@ -470,30 +460,30 @@ async fn create_practice_with_invalid_start_date_delete_should_fail() {
 
     response.assert_status(StatusCode::BAD_REQUEST);
 
-    delete_enrollment(&app, &enrollment_id).await;
-    delete_course(&app, &course_id).await;
-    delete_user(&app, &student_id).await;
-    delete_user(&app, &teacher_id).await;
+    TestEnrollment::delete(&app, &enrollment_id).await;
+    TestCourse::delete(&app, &course_id).await;
+    TestUser::delete(&app, &student_id).await;
+    TestUser::delete(&app, &teacher_id).await;
 }
 
 #[tokio::test]
 async fn create_practice_with_invalid_end_date_delete_should_fail() {
     let app = init_test_app().await;
 
-    let student_id = create_student(&app).await;
-    let teacher_id = create_teacher(&app).await;
+    let student_id = TestUser::create_student(&app).await;
+    let teacher_id = TestUser::create_teacher(&app).await;
 
     // Crear course
-    let course_data = CourseBuilder::new(&teacher_id).build();
-    let course = create_course(&app, &course_data).await;
-    let course_id = extract_resource_id(&course);
+    let course_data = TestCourse::builder(&teacher_id).build();
+    let course = TestCourse::create(&app, &course_data).await;
+    let course_id = TestCourse::extract_id(&course);
 
     // Crear enrollment
-    let enrollment_data = EnrollmentBuilder::new()
+    let enrollment_data = TestEnrollment::builder()
         .with_student_id(&student_id)
         .with_course_id(&course_id)
         .build();
-    let enrollment = create_enrollment(&app, &enrollment_data).await;
+    let enrollment = TestEnrollment::create(&app, &enrollment_data).await;
     let enrollment_id = extract_resource_id(&enrollment);
     let start_date = Utc::now();
     // Construimos la práctica con número inválido
@@ -515,8 +505,8 @@ async fn create_practice_with_invalid_end_date_delete_should_fail() {
 
     response.assert_status(StatusCode::BAD_REQUEST);
 
-    delete_enrollment(&app, &enrollment_id).await;
-    delete_course(&app, &course_id).await;
-    delete_user(&app, &student_id).await;
-    delete_user(&app, &teacher_id).await;
+    TestEnrollment::delete(&app, &enrollment_id).await;
+    TestCourse::delete(&app, &course_id).await;
+    TestUser::delete(&app, &student_id).await;
+    TestUser::delete(&app, &teacher_id).await;
 }

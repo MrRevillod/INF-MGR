@@ -2,12 +2,7 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::{
-    TEST_EMAILS,
-    courses::utils::{CourseBuilder, create_course},
-    extract_resource_id, init_test_app,
-    users::utils::{create_teacher, generate_unique_email, generate_unique_rut},
-};
+use crate::{TEST_EMAILS, courses::utils::TestCourse, init_test_app, users::utils::TestUser};
 
 async fn get_db_pool() -> PgPool {
     use server::{config::PostgresDbConfig, shared::database::PostgresDatabase};
@@ -72,24 +67,23 @@ async fn test_import_users() {
 
     for i in 0..10 {
         students.push(json!({
-            "rut": generate_unique_rut(),
+            "rut": TestUser::generate_unique_rut(),
             "name": format!("Student {}", i),
-            "email": generate_unique_email(),
+            "email": TestUser::generate_unique_email(),
         }));
     }
 
     students.push(json!({
-        "rut": generate_unique_rut(),
+        "rut": TestUser::generate_unique_rut(),
         "name": "Luciano Revillod",
-        "email": TEST_EMAILS.get("student").unwrap_or(&generate_unique_email())
+        "email": TEST_EMAILS.get("student").unwrap_or(&TestUser::generate_unique_email())
     }));
 
-    let teacher_id = create_teacher(&app).await;
+    let teacher_id = TestUser::create_teacher(&app).await;
 
-    let course_data = CourseBuilder::new(&teacher_id).build();
-    let course = create_course(&app, &course_data).await;
-
-    let course_id = extract_resource_id(&course);
+    let course_data = TestCourse::builder(&teacher_id).build();
+    let course = TestCourse::create(&app, &course_data).await;
+    let course_id = TestCourse::extract_id(&course);
 
     let course_import_data = json!({
         "id": course_id,
