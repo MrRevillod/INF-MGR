@@ -3,7 +3,7 @@ use serde_json::{Value, json};
 use sword::web::ResponseBody;
 use uuid::Uuid;
 
-use crate::extract_resource_id;
+use crate::{TEST_EMAILS, extract_resource_id};
 
 pub struct TestUser {}
 
@@ -41,19 +41,24 @@ impl TestUser {
     }
 
     pub async fn create_teacher(server: &TestServer) -> String {
-        let user = UserBuilder::new()
-            .with_roles(vec!["teacher"])
-            .with_email(&Self::generate_unique_email());
+        let email = TEST_EMAILS.get("teacher").cloned().unwrap_or(Self::generate_unique_email());
+        let user = UserBuilder::new().with_roles(vec!["teacher"]).with_email(&email);
 
         let data = Self::create_user(server, user.build()).await;
 
         extract_resource_id(&data)
     }
 
+    pub async fn create_teacher_random_email(server: &TestServer) -> String {
+        let user = UserBuilder::new().with_roles(vec!["teacher"]);
+        let data = Self::create_user(server, user.build()).await;
+
+        extract_resource_id(&data)
+    }
+
     pub async fn create_student(server: &TestServer) -> String {
-        let user = UserBuilder::new()
-            .with_roles(vec!["student"])
-            .with_email(&Self::generate_unique_email());
+        let email = TEST_EMAILS.get("student").cloned().unwrap_or(Self::generate_unique_email());
+        let user = UserBuilder::new().with_roles(vec!["student"]).with_email(&email);
 
         let data = Self::create_user(server, user.build()).await;
 

@@ -22,8 +22,8 @@ pub mod practices;
 #[cfg(test)]
 pub mod users;
 
-// #[cfg(test)]
-// pub mod imports;
+#[cfg(test)]
+pub mod imports;
 
 #[cfg(test)]
 pub static TEST_EMAILS: std::sync::LazyLock<std::collections::HashMap<String, String>> =

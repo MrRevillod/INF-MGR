@@ -57,7 +57,7 @@ async fn test_update_course() {
     let created_course = TestCourse::create(&app, &new_course).await;
     let created_course_id = TestCourse::extract_id(&created_course);
 
-    let new_teacher_id = TestUser::create_teacher(&app).await;
+    let new_teacher_id = TestUser::create_teacher_random_email(&app).await;
 
     let update_course_data = json!({
         "teacherId": new_teacher_id.to_string(),
