@@ -59,10 +59,10 @@ macro_rules! course_filter {
 macro_rules! template_ctx {
     ($($key:expr => $value:expr),* $(,)?) => {
         {
-            let mut context: RawContext = Vec::new();
-            $(
-                context.push(($key, $value));
-            )*
+            let context: RawContext = vec![
+                $(($key, $value)),*
+            ];
+
             context
         }
     };

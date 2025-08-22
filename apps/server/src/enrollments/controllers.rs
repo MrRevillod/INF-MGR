@@ -74,7 +74,7 @@ impl EnrollmentsController {
         let practice_id = ctx.param::<Uuid>("practice_id")?;
         let form_data = ctx.multipart().await?;
 
-        let Some(field) = form_data.get(0) else {
+        let Some(field) = form_data.first() else {
             return Err(HttpResponse::BadRequest());
         };
 

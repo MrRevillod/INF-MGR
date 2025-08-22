@@ -268,7 +268,7 @@ impl EventSubscriber {
             Event::PracticeAuthorized((practice, pdf)) => {
                 let practice_static_dir = format!("practices/{}/authorization.pdf", practice.id);
                 let documents_dir = env::var("DOCUMENTS_DIR").unwrap_or(".".to_string());
-                let out_path_str = format!("{}/{}", documents_dir, practice_static_dir);
+                let out_path_str = format!("{documents_dir}/{practice_static_dir}");
                 let out_path = Path::new(&out_path_str);
 
                 if let Some(parent) = out_path.parent() {
