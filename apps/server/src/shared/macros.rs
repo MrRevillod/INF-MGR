@@ -54,3 +54,16 @@ macro_rules! course_filter {
         $crate::filter!(CourseFilter, { $($field $(: $value)?),* })
     };
 }
+
+#[macro_export]
+macro_rules! template_ctx {
+    ($($key:expr => $value:expr),* $(,)?) => {
+        {
+            let mut context: RawContext = Vec::new();
+            $(
+                context.push(($key, $value));
+            )*
+            context
+        }
+    };
+}

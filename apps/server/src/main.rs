@@ -1,3 +1,4 @@
+use axum_helmet::{Helmet, HelmetLayer};
 use sword::prelude::Application;
 use tokio::sync::mpsc;
 
@@ -8,12 +9,13 @@ use server::{
     shared::{
         database::PostgresDatabase,
         layers::{setup_cors, HttpLogger},
+        services::event_queue::SubscriberOptions,
     },
     users::UsersController,
 };
 
 use server::shared::services::{
-    event_queue::{EventSubscriber, SubscriberServices, TokioEventSender},
+    event_queue::{EventSubscriber, TokioEventSender},
     mailer::{Mailer, MailerConfig},
     printer::Printer,
     templates::TemplateConfig,
@@ -52,16 +54,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let publisher = TokioEventSender::new(tx);
     let dependency_container = DependencyContainer::new(db, publisher);
 
-    let sub_queue = EventSubscriber::new(rx, SubscriberServices { mailer, printer });
-
-    tokio::spawn(async move {
-        if let Err(e) = sub_queue.subscribe().await {
-            tracing::error!("Error in event subscriber: {e}");
-        }
-    });
+    EventSubscriber::new(SubscriberOptions {
+        rx,
+        mailer,
+        printer,
+    })
+    .run_parallel()
+    .await;
 
     let http_logger = HttpLogger::new();
     let cors_layer = setup_cors(&cors_config);
+
+    let helmet_layer = HelmetLayer::new(
+        Helmet::new()
+            .add(axum_helmet::XContentTypeOptions::nosniff())
+            .add(axum_helmet::XFrameOptions::same_origin())
+            .add(axum_helmet::StrictTransportSecurity::new().max_age(31536000))
+            .add(axum_helmet::CrossOriginResourcePolicy::same_origin())
+            .add(axum_helmet::ReferrerPolicy::strict_origin_when_cross_origin()),
+    );
 
     app.di_module(dependency_container.module)?
         .controller::<UsersController>()
@@ -69,6 +80,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .controller::<EnrollmentsController>()
         .layer(http_logger.layer)
         .layer(cors_layer)
+        .layer(helmet_layer)
         .run()
         .await?;
 

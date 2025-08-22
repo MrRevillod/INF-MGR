@@ -26,5 +26,6 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
 documents/*
+tests/files/*
 
 tests/config

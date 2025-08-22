@@ -69,4 +69,8 @@ impl Mailer {
 
         Ok(())
     }
+
+    pub fn context(&self) -> &TemplateContext {
+        &self.template_ctx
+    }
 }

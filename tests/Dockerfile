@@ -20,4 +20,4 @@ ENV CARGO_TARGET_DIR /app/target
 
 EXPOSE 8000
 
-CMD sh -c "cd tests/ && cargo watch -x 'test -- --nocapture --test-threads=1' -w src -w /../apps/server/src"
+CMD sh -c "cd tests/ && cargo-watch -x 'test' -w src"

@@ -89,7 +89,7 @@ async fn main() -> Result<(), sqlx::Error> {
     create_users(&pool, students2.clone()).await;
     create_enrollments(&pool, students2, info_1198_course).await;
 
-    println!("Database seeded successfully!");
+    tracing::info!("Database seeded successfully!");
 
     Ok(())
 }

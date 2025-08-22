@@ -1,3 +1,6 @@
+use std::io::Read;
+
+use axum::{http::StatusCode, response::IntoResponse};
 use sword::prelude::*;
 use uuid::Uuid;
 
@@ -42,17 +45,50 @@ impl EnrollmentsController {
         Ok(HttpResponse::Ok())
     }
 
-    #[post("/{id}/practice/{practice_id}/authorize")]
-    async fn authorize_practice(_: Context) -> HttpResult<HttpResponse> {
-        Ok(HttpResponse::Ok())
-    }
-
-    #[post("/{id}/reject")]
+    #[post("/{id}/practice/{practice_id}/reject")]
     async fn reject_practice(_: Context) -> HttpResult<HttpResponse> {
         Ok(HttpResponse::Ok())
     }
 
-    #[post("/{id}/evaluate/{token}")]
+    #[post("/{id}/practice/{practice_id}/authorize")]
+    async fn authorize_practice(ctx: Context) -> HttpResult<HttpResponse> {
+        let practice_id = ctx.param::<Uuid>("practice_id")?;
+        let form_data = ctx.multipart().await?;
+
+        let Some(field) = form_data.get(0) else {
+            return Err(HttpResponse::BadRequest());
+        };
+
+        if field.name != Some("auth_doc".into()) {
+            return Err(HttpResponse::BadRequest());
+        }
+
+        let service = ctx.get_dependency::<AppModule, dyn PracticeService>()?;
+
+        service.authorize(&practice_id, field.data.bytes()).await?;
+
+        Ok(HttpResponse::Ok())
+    }
+
+    #[get("/practice/{practice_id}/docs")]
+    async fn get_practice_docs(ctx: Context) -> Result<impl IntoResponse, HttpResponse> {
+        let practice_id = ctx.param::<Uuid>("practice_id")?;
+
+        let file_path = format!(
+            "{}/practices/{}/authorization.pdf",
+            std::env::var("DOCUMENTS_DIR").unwrap_or(".".to_string()),
+            practice_id
+        );
+
+        let buff = tokio::fs::read(&file_path).await.map_err(|e| {
+            tracing::error!("Failed to open/read file {}: {e}", file_path);
+            HttpResponse::NotFound()
+        })?;
+
+        Ok((StatusCode::OK, [("Content-Type", "application/pdf")], buff))
+    }
+
+    #[post("/{id}/practice/{practice_id}/evaluate")]
     async fn evaluate_practice(_: Context) -> HttpResult<HttpResponse> {
         Ok(HttpResponse::Ok())
     }
