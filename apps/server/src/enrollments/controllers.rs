@@ -6,7 +6,9 @@ use uuid::Uuid;
 
 use crate::{
     container::AppModule,
-    practices::{CreatePracticeDto, PracticeService, PracticeStatus, UpdatePracticeDto},
+    practices::{
+        CreatePracticeDto, EvaluatePracticeDto, PracticeService, PracticeStatus, UpdatePracticeDto,
+    },
 };
 
 #[controller("/enrollments")]
@@ -108,7 +110,21 @@ impl EnrollmentsController {
     }
 
     #[post("/{id}/practice/{practice_id}/evaluate")]
-    async fn evaluate_practice(_: Context) -> HttpResult<HttpResponse> {
+    async fn evaluate_practice(ctx: Context) -> HttpResult<HttpResponse> {
+        let enrollment_id = ctx.param::<Uuid>("id")?;
+        let practice_id = ctx.param::<Uuid>("practice_id")?;
+        let dto = ctx.validated_body::<EvaluatePracticeDto>()?;
+
+        let service = ctx.get_dependency::<AppModule, dyn PracticeService>()?;
+        let Some(practice) = service.get_by_id(&practice_id).await? else {
+            return Err(HttpResponse::NotFound());
+        };
+        if practice.practice_status != PracticeStatus::Approved {
+            return Err(HttpResponse::BadRequest());
+        }
+
+        service.evaluate(&enrollment_id, &practice_id, dto).await?;
+
         Ok(HttpResponse::Ok())
     }
 

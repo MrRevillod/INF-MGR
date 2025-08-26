@@ -9,6 +9,7 @@ pub enum Event {
     PracticeDeclined((User, Enrollment, Practice, Course, User)),
     PracticeApproved((User, Enrollment, Practice, Course, User)),
     PracticeAuthorized((Practice, Vec<u8>)),
+    PracticeEvaluated((User, Enrollment, Practice, Course, User)),
     UserCreated((String, String, String)),
     ManyUsersCreated(Vec<(String, String, String)>),
     CourseCreated((Course, User)),

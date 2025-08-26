@@ -1,5 +1,5 @@
 use crate::{
-    practices::entity::PracticeStatus,
+    practices::{entity::PracticeStatus, EvaluatePracticeDto},
     shared::services::event_queue::{Event, EventQueue},
 };
 
@@ -51,6 +51,13 @@ pub trait PracticeService: Interface {
         enrollment_id: &Uuid,
         practice_id: &Uuid,
         status: PracticeStatus,
+    ) -> AppResult<Practice>;
+
+    async fn evaluate(
+        &self,
+        enrollment_id: &Uuid,
+        practice_id: &Uuid,
+        input: EvaluatePracticeDto,
     ) -> AppResult<Practice>;
 
     async fn remove(&self, id: &Uuid) -> Result<(), AppError>;
@@ -176,6 +183,31 @@ impl PracticeService for PracticeServiceImpl {
         }
 
         self.practices.save(practice).await
+    }
+
+    async fn evaluate(
+        &self,
+        enrollment_id: &Uuid,
+        practice_id: &Uuid,
+        input: EvaluatePracticeDto,
+    ) -> AppResult<Practice> {
+        let (enrollment, student, practice) = self.enrollments.get_by_id(enrollment_id).await?;
+
+        let mut practice = practice.ok_or(AppError::ResourceNotFound(*practice_id))?;
+
+        if practice.id != *practice_id {
+            return Err(AppError::ResourceNotFound(*practice_id));
+        }
+
+        let practice = self.practices.save(practice).await?;
+
+        let (course, teacher) = self.courses.get_by_id(&enrollment.course_id).await?;
+
+        let event_data = (student, enrollment, practice.clone(), course, teacher);
+
+        self.event_queue.publish(Event::PracticeEvaluated(event_data)).await;
+
+        Ok(practice)
     }
 
     async fn remove(&self, id: &Uuid) -> Result<(), AppError> {

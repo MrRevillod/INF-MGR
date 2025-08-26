@@ -109,6 +109,18 @@ pub struct UpdatePracticeDto {
     pub end_date: Option<DateTime<Utc>>,
 }
 
+#[derive(Serialize, Deserialize, Validate)]
+#[serde(rename_all = "camelCase")]
+pub struct EvaluatePracticeDto {
+    #[validate(range(min = 1.0, max = 7.0, message = "La puntuación debe estar entre 1 y 7"))]
+    pub score: f32,
+    #[validate(length(
+        max = 1000,
+        message = "Los comentarios deben contener entre 1 y 1000 caracteres."
+    ))]
+    pub comments: Option<String>,
+}
+
 static PHONE_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^(?:\+56)?\s?(?:9\d{8}|\d{1}\d{8})$").unwrap());
 

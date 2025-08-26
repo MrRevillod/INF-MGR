@@ -279,6 +279,36 @@ impl EventSubscriber {
 
                 tokio::fs::write(out_path, pdf).await?;
             }
+            Event::PracticeEvaluated((student, _enrollment, practice, course, teacher)) => {
+                let email_context: RawContext = vec![
+                    ("student_name", student.name.clone()),
+                    ("student_email", student.email.clone()),
+                    ("enterprise_name", practice.enterprise_name.clone()),
+                    ("supervisor_name", practice.supervisor_name.clone()),
+                    ("supervisor_email", practice.supervisor_email.clone()),
+                    ("course_name", course.name.clone()),
+                    ("course_code", course.code.clone()),
+                    ("location", practice.location.clone()),
+                    ("start_date", format_date(practice.start_date.to_string())),
+                    ("end_date", format_date(practice.end_date.to_string())),
+                    ("teacher_name", teacher.name.clone()),
+                ];
+
+                tokio::try_join!(
+                    mailer.send(MailTo {
+                        subject: "Práctica Evaluada",
+                        template: "practice:evaluation:teacher",
+                        email: teacher.email.clone(),
+                        context: email_context.clone(),
+                    }),
+                    mailer.send(MailTo {
+                        subject: "Evaluación de Práctica Completada",
+                        template: "practice:evaluation:supervisor",
+                        email: practice.supervisor_email.clone(),
+                        context: email_context,
+                    }),
+                )?;
+            }
         }
 
         Ok(())
