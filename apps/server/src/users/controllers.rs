@@ -39,7 +39,7 @@ impl UsersController {
         Ok(HttpResponse::Created().data(UserResponse::from(user)))
     }
 
-    #[put("/{id}")]
+    #[patch("/{id}")]
     pub async fn update(ctx: Context) -> HttpResult<HttpResponse> {
         let id = ctx.param::<Uuid>("id")?;
         let user_data = ctx.validated_body::<UpdateUserDto>()?;

@@ -29,3 +29,4 @@ documents/*
 tests/files/*
 
 tests/config
+apps/server/config
