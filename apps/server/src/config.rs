@@ -19,14 +19,18 @@ pub struct PostgresDbConfig {
     pub acquire_timeout_ms: u64,
 }
 
-// #[derive(Debug, Deserialize)]
-// #[config(key = "auth")]
-// pub struct AuthConfig {
-//     pub session_jwt_secret: String,
-//     pub session_jwt_exp_ms: u32,
-//     pub refresh_jwt_secret: String,
-//     pub refresh_jwt_exp_ms: u32,
-// }
+#[derive(Debug, Deserialize)]
+#[config(key = "auth")]
+pub struct AuthConfig {
+    pub session_jwt_secret: String,
+    pub session_jwt_exp_ms: u32,
+    pub refresh_jwt_secret: String,
+    pub refresh_jwt_exp_ms: u32,
+
+    pub google_client_id: String,
+    pub google_client_secret: String,
+    pub google_redirect_url: String,
+}
 
 #[derive(Debug, Deserialize)]
 #[config(key = "cors")]

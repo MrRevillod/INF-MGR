@@ -96,14 +96,14 @@ pub async fn init_test_app() -> TestServer {
     .await;
 
     app = app
-        .di_module(dependency_container.module)
+        .with_shaku_di_module(dependency_container.module)
         .expect("Failed to load dependency module")
-        .controller::<UsersController>()
-        .controller::<CoursesController>()
-        .controller::<EnrollmentsController>()
-        .controller::<ImportsController>();
+        .with_controller::<UsersController>()
+        .with_controller::<CoursesController>()
+        .with_controller::<EnrollmentsController>()
+        .with_controller::<ImportsController>();
 
-    TestServer::new(app.router()).expect("Failed to start test server")
+    TestServer::new(app.build().router()).expect("Failed to start test server")
 }
 
 pub fn extract_resource_id(data: &Value) -> String {

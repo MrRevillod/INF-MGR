@@ -16,7 +16,11 @@ required-features = ["seeder"]
 tokio = { version = "1.46.1", features = ["full"] }
 
 axum = "0.8.4"
-sword = { git = "https://github.com/MrRevillod/sword", branch = "dev" }
+oauth2 = "5.0.0"
+sword = { git = "https://github.com/sword-framework/sword", branch = "dev", features = [
+    "multipart",
+    "shaku-di",
+] }
 
 chrono = { version = "0.4.41", features = ["serde"] }
 chrono-tz = "0.10.4"
@@ -37,6 +41,7 @@ sqlx = { version = "0.8.5", features = [
     "derive",
     "migrate",
 ] }
+
 sea-query-sqlx = { version = "0.8.0-rc.8", features = [
     "sqlx-postgres",
     "with-chrono",

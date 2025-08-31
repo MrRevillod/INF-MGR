@@ -2,10 +2,8 @@
 port = 8000
 host = "0.0.0.0"
 event_queue_buffer_size = 100
-
-[career]
-career_name = "${CAREER_NAME:Ingeniería en Informática}"
-career_manager = "${CAREER_MANAGER:Director de Carrera}"
+body_limit = "5MB"
+allowed_mime_types = ["application/pdf"]
 
 [postgres-db]
 url = "${POSTGRES_DATABASE_URL:postgres://localhost:5432/inf_mgr}"
@@ -20,6 +18,11 @@ session_jwt_exp_ms = 900000                  # 15 minutes
 
 refresh_jwt_secret = "${REFRESH_JWT_SECRET}"
 refresh_jwt_exp_ms = 604800000               # 7 days
+
+google_client_id = "${GOOGLE_CLIENT_ID}"
+google_client_secret = "${GOOGLE_CLIENT_SECRET}"
+
+google_redirect_url = "${GOOGLE_REDIRECT_URL}"
 
 [cors]
 allow_credentials = false

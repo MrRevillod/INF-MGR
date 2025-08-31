@@ -24,9 +24,9 @@ use server::shared::services::{
 use server::config::{CorsConfig, PostgresDbConfig};
 use server::container::DependencyContainer;
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let app = Application::builder()?;
+#[sword::main]
+async fn main() {
+    let mut app = Application::builder()?;
 
     let app_config = app.config.get::<ApplicationConfig>()?;
     let cors_config = app.config.get::<CorsConfig>()?;
@@ -74,15 +74,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .add(axum_helmet::ReferrerPolicy::strict_origin_when_cross_origin()),
     );
 
-    app.di_module(dependency_container.module)?
-        .controller::<UsersController>()
-        .controller::<CoursesController>()
-        .controller::<EnrollmentsController>()
-        .layer(http_logger.layer)
-        .layer(cors_layer)
-        .layer(helmet_layer)
-        .run()
-        .await?;
+    app = app
+        .with_shaku_di_module(dependency_container.module)?
+        .with_controller::<UsersController>()
+        .with_controller::<CoursesController>()
+        .with_controller::<EnrollmentsController>()
+        .with_layer(http_logger.layer)
+        .with_layer(cors_layer)
+        .with_layer(helmet_layer);
 
-    Ok(())
+    app.build().run().await?;
 }

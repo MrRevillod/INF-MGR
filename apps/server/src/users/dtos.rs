@@ -110,7 +110,7 @@ pub struct UpdateUserDto {
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> GET USERS QUERY <<<<<<<<<<<<<<<<<<<<<<<<<<<
 // ============================================================================
 
-#[derive(Serialize, Deserialize, Validate)]
+#[derive(Serialize, Deserialize, Validate, Default)]
 pub struct GetUsersQueryDto {
     #[validate(length(
         min = 1,

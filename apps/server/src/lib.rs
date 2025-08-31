@@ -1,5 +1,11 @@
 pub mod config;
 
+pub mod auth {
+    mod controllers;
+    mod dtos;
+    mod service;
+}
+
 pub mod users {
     mod controllers;
     mod dtos;
@@ -88,6 +94,8 @@ pub mod shared {
 
     pub mod database;
     pub mod layers;
+    pub mod oauth;
+
     pub mod validators {
         use validator::ValidationError;
 

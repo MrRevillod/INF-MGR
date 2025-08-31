@@ -8,7 +8,7 @@ async fn get_db_pool() -> PgPool {
     use server::{config::PostgresDbConfig, shared::database::PostgresDatabase};
     use sword::prelude::Application;
 
-    let app = Application::builder().expect("Failed to create application builder");
+    let app = Application::builder().expect("Failed to create application builder").build();
     let pg_db_config =
         app.config.get::<PostgresDbConfig>().expect("Failed to get PostgresDbConfig");
 

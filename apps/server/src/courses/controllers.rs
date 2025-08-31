@@ -20,7 +20,7 @@ impl CoursesController {
 
     #[get("/")]
     async fn get_courses(ctx: Context) -> HttpResult<HttpResponse> {
-        let service = ctx.get_dependency::<AppModule, dyn CourseService>()?;
+        let service = ctx.di::<AppModule, dyn CourseService>()?;
         let asignatures = service
             .get_all()
             .await?
@@ -37,7 +37,7 @@ impl CoursesController {
     #[get("/{id}/students")]
     async fn get_course_enrollments(ctx: Context) -> HttpResult<HttpResponse> {
         let course_id = ctx.param::<Uuid>("id")?;
-        let service = ctx.get_dependency::<AppModule, dyn EnrollmentService>()?;
+        let service = ctx.di::<AppModule, dyn EnrollmentService>()?;
 
         let filter = EnrollmentFilter {
             course_id: Some(course_id),
@@ -59,7 +59,7 @@ impl CoursesController {
     #[post("/")]
     async fn create_course(ctx: Context) -> HttpResult<HttpResponse> {
         let input = ctx.validated_body::<CreateCourseDto>()?;
-        let service = ctx.get_dependency::<AppModule, dyn CourseService>()?;
+        let service = ctx.di::<AppModule, dyn CourseService>()?;
 
         let asignature = service.create(input).await?;
 
@@ -71,7 +71,7 @@ impl CoursesController {
     #[post("/enroll")]
     async fn create_enrollment(ctx: Context) -> HttpResult<HttpResponse> {
         let input = ctx.validated_body::<CreateEnrollmentDto>()?;
-        let service = ctx.get_dependency::<AppModule, dyn EnrollmentService>()?;
+        let service = ctx.di::<AppModule, dyn EnrollmentService>()?;
 
         let enrollment = service.create(input).await?;
 
@@ -86,7 +86,7 @@ impl CoursesController {
         let asignature_id = ctx.param::<Uuid>("id")?;
         let input = ctx.validated_body::<UpdateCourseDto>()?;
 
-        let service = ctx.get_dependency::<AppModule, dyn CourseService>()?;
+        let service = ctx.di::<AppModule, dyn CourseService>()?;
         let updated_asignature = service.update(&asignature_id, input).await?;
 
         Ok(HttpResponse::Ok().data(updated_asignature))
@@ -100,7 +100,7 @@ impl CoursesController {
         let enrollment_id = ctx.param::<Uuid>("enrollment_id")?;
         let input = ctx.validated_body::<UpdateEnrollmentDto>()?;
 
-        let service = ctx.get_dependency::<AppModule, dyn EnrollmentService>()?;
+        let service = ctx.di::<AppModule, dyn EnrollmentService>()?;
         let updated_enrollment = service.update(&enrollment_id, input).await?;
 
         Ok(HttpResponse::Ok().data(updated_enrollment))
@@ -112,7 +112,7 @@ impl CoursesController {
     #[delete("/{id}")]
     async fn remove(ctx: Context) -> HttpResult<HttpResponse> {
         let course_id = ctx.param::<Uuid>("id")?;
-        let service = ctx.get_dependency::<AppModule, dyn CourseService>()?;
+        let service = ctx.di::<AppModule, dyn CourseService>()?;
 
         service.remove(&course_id).await?;
 
@@ -124,7 +124,7 @@ impl CoursesController {
     #[delete("/enrollments/{enrollment_id}")]
     async fn remove_enrollment(ctx: Context) -> HttpResult<HttpResponse> {
         let enrollment_id = ctx.param::<Uuid>("enrollment_id")?;
-        let service = ctx.get_dependency::<AppModule, dyn EnrollmentService>()?;
+        let service = ctx.di::<AppModule, dyn EnrollmentService>()?;
 
         service.remove(&enrollment_id).await?;
 
