@@ -109,21 +109,17 @@ impl EnrollmentsController {
         Ok((StatusCode::OK, [("Content-Type", "application/pdf")], buff))
     }
 
-    #[post("/{id}/practice/{practice_id}/evaluate")]
+    #[post("/{id}/practice/{practice_id}/evaluate/{evaluation_id}")]
     async fn evaluate_practice(ctx: Context) -> HttpResult<HttpResponse> {
         let enrollment_id = ctx.param::<Uuid>("id")?;
         let practice_id = ctx.param::<Uuid>("practice_id")?;
+        let evaluation_id = ctx.param::<Uuid>("evaluation_id")?;
         let dto = ctx.validated_body::<EvaluatePracticeDto>()?;
+        let practice_service = ctx.get_dependency::<AppModule, dyn PracticeService>()?;
 
-        let service = ctx.get_dependency::<AppModule, dyn PracticeService>()?;
-        let Some(practice) = service.get_by_id(&practice_id).await? else {
-            return Err(HttpResponse::NotFound());
-        };
-        if practice.practice_status != PracticeStatus::Approved {
-            return Err(HttpResponse::BadRequest());
-        }
-
-        service.evaluate(&enrollment_id, &practice_id, dto).await?;
+        practice_service
+            .evaluate(&enrollment_id, &practice_id, &evaluation_id, dto)
+            .await?;
 
         Ok(HttpResponse::Ok())
     }

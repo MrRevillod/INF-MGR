@@ -6,7 +6,10 @@ use validator::{Validate, ValidationError};
 use regex::Regex;
 use std::sync::LazyLock;
 
-use crate::practices::{entity::PracticeStatus, Practice};
+use crate::{
+    enrollments::{StudentScore, StudentScoreDto},
+    practices::{entity::PracticeStatus, Practice},
+};
 
 #[derive(Serialize, Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
@@ -112,13 +115,20 @@ pub struct UpdatePracticeDto {
 #[derive(Serialize, Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
 pub struct EvaluatePracticeDto {
-    #[validate(range(min = 1.0, max = 7.0, message = "La puntuación debe estar entre 1 y 7"))]
-    pub score: f32,
-    #[validate(length(
-        max = 1000,
-        message = "Los comentarios deben contener entre 1 y 1000 caracteres."
+    #[validate(custom(
+        function = "validate_score",
+        message = "La puntuación debe estar entre 1.0 y 7.0, no ser negativa y tener máximo 1 decimal"
     ))]
-    pub comments: Option<String>,
+    pub score: f64,
+}
+
+impl From<StudentScore> for StudentScoreDto {
+    fn from(dto: StudentScore) -> Self {
+        StudentScoreDto {
+            evaluation_id: dto.evaluation_id.to_string(),
+            score: dto.score,
+        }
+    }
 }
 
 static PHONE_REGEX: LazyLock<Regex> =
@@ -158,6 +168,28 @@ fn validate_dates(
             return Err(ValidationError::new(
                 "La fecha de inicio no puede ser igual a la fecha de finalización.",
             ));
+        }
+    }
+
+    Ok(())
+}
+
+fn validate_score(score: f64) -> Result<(), ValidationError> {
+    // Verificar que no sea negativo
+    if score < 0.0 {
+        return Err(ValidationError::new("La puntuación no puede ser negativa"));
+    }
+
+    // Verificar que esté en el rango válido
+    if score < 1.0 || score > 7.0 {
+        return Err(ValidationError::new("La puntuación debe estar entre 1.0 y 7.0"));
+    }
+
+    // Verificar que tenga máximo 1 decimal
+    let score_str = score.to_string();
+    if let Some(decimal_part) = score_str.split('.').nth(1) {
+        if decimal_part.len() > 1 {
+            return Err(ValidationError::new("La puntuación debe tener máximo 1 decimal"));
         }
     }
 
