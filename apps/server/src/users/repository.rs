@@ -9,7 +9,10 @@ use uuid::Uuid;
 use sea_query::{extension::postgres::PgExpr, Expr, ExprTrait, Order, PostgresQueryBuilder, Query};
 
 use crate::{
-    shared::{database::DatabaseConnection, entities::DEFAULT_PAGE_SIZE, errors::AppError},
+    shared::{
+        database::{DatabaseConnection, DEFAULT_PAGE_SIZE},
+        errors::AppError,
+    },
     users::entity::{User, Users},
 };
 
@@ -119,14 +122,14 @@ impl UserRepository for PostgresUserRepository {
 
     async fn save(&self, user: User) -> Result<User, AppError> {
         let upsert_query = r#"
-            INSERT INTO users (id, rut, name, email, password, roles, created_at, deleted_at)
+            INSERT INTO users (id, rut, name, email, google_id, roles, created_at, deleted_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             ON CONFLICT (id) 
             DO UPDATE SET 
                 rut = EXCLUDED.rut,
                 name = EXCLUDED.name,
                 email = EXCLUDED.email,
-                password = EXCLUDED.password,
+                google_id = EXCLUDED.google_id,
                 roles = EXCLUDED.roles
             WHERE users.deleted_at IS NULL
             RETURNING *
@@ -137,7 +140,7 @@ impl UserRepository for PostgresUserRepository {
             .bind(user.rut)
             .bind(user.name)
             .bind(user.email)
-            .bind(user.password)
+            .bind(user.google_id)
             .bind(user.roles)
             .bind(user.created_at)
             .bind(user.deleted_at)
@@ -162,7 +165,7 @@ impl UserRepository for PostgresUserRepository {
                 arg_index + 1, // rut
                 arg_index + 2, // name
                 arg_index + 3, // email
-                arg_index + 4, // password
+                arg_index + 4, // google_id
                 arg_index + 5, // roles
                 arg_index + 6, // created_at
                 arg_index + 7, // deleted_at
@@ -173,7 +176,7 @@ impl UserRepository for PostgresUserRepository {
 
         let query = format!(
             r#" 
-                INSERT INTO users (id, rut, name, email, password, roles, created_at, deleted_at)
+                INSERT INTO users (id, rut, name, email, google_id, roles, created_at, deleted_at)
                 VALUES {}
                 ON CONFLICT (id) DO NOTHING
                 RETURNING *
@@ -189,7 +192,7 @@ impl UserRepository for PostgresUserRepository {
                 .bind(&user.rut)
                 .bind(&user.name)
                 .bind(&user.email)
-                .bind(&user.password)
+                .bind(&user.google_id)
                 .bind(&user.roles)
                 .bind(user.created_at)
                 .bind(user.deleted_at);

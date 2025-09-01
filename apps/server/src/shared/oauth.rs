@@ -43,6 +43,14 @@ impl OAuthClient for GoogleOAuthClient {
     }
 }
 
+impl From<GoogleOAuthClient> for GoogleOAuthClientParameters {
+    fn from(client: GoogleOAuthClient) -> Self {
+        GoogleOAuthClientParameters {
+            client: client.get_client().clone(),
+        }
+    }
+}
+
 mod client {
 
     use oauth2::{

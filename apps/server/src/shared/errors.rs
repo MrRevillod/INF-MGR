@@ -15,9 +15,15 @@ pub enum AppError {
     },
 
     #[error("Database error: {source}")]
-    Database {
+    PostgresDatabase {
         #[from]
         source: sqlx::Error,
+    },
+
+    #[error("Redis error: {source}")]
+    RedisDatabase {
+        #[from]
+        source: redis::RedisError,
     },
 
     #[error("Not found: {0}")]

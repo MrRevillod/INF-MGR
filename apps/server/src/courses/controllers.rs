@@ -2,12 +2,12 @@ use sword::prelude::*;
 use uuid::Uuid;
 
 use crate::{
-    container::AppModule,
     courses::{CourseResponse, CourseService, CreateCourseDto, UpdateCourseDto},
     enrollments::{
-        CreateEnrollmentDto, EnrollmentFilter, EnrollmentResponse, EnrollmentService,
-        UpdateEnrollmentDto,
+        CreateEnrollmentDto, EnrollmentFilter, EnrollmentResponse,
+        EnrollmentService, UpdateEnrollmentDto,
     },
+    shared::di::AppModule,
 };
 
 #[controller("/courses")]

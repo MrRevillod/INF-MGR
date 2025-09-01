@@ -34,5 +34,4 @@ pub struct ImportCourseDto {
 /// and preserve plain password to use in related Events
 pub struct ImportedUser {
     pub entity: User,
-    pub plain_password: String,
 }

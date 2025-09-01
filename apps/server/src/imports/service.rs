@@ -7,10 +7,7 @@ use crate::{
     enrollments::EnrollmentService,
     imports::{ImportCourseDto, ImportUserDto, ImportedUser},
     shared::{
-        services::{
-            event_queue::{Event, EventQueue},
-            hasher::PasswordHasher,
-        },
+        services::event_queue::{Event, EventQueue},
         AppError,
     },
     user_filter,
@@ -25,9 +22,6 @@ pub struct ImportServiceImpl {
 
     #[shaku(inject)]
     enrollments: Arc<dyn EnrollmentService>,
-
-    #[shaku(inject)]
-    hasher: Arc<dyn PasswordHasher>,
 
     #[shaku(inject)]
     event_queue: Arc<dyn EventQueue>,
@@ -58,21 +52,15 @@ impl ImportService for ImportServiceImpl {
             .iter()
             .filter(|s| !existing_students.iter().any(|existing| existing.rut == s.rut))
             .map(|data| -> Result<ImportedUser, AppError> {
-                let (plain, hash) = self.hasher.random_password()?;
-
                 let entity = User {
                     rut: data.rut.clone(),
                     email: data.email.clone(),
                     name: data.name.clone(),
-                    password: hash,
                     roles: vec![Role::Student],
                     ..Default::default()
                 };
 
-                Ok(ImportedUser {
-                    entity,
-                    plain_password: plain,
-                })
+                Ok(ImportedUser { entity })
             })
             .collect::<Result<Vec<ImportedUser>, AppError>>()?;
 
@@ -85,7 +73,7 @@ impl ImportService for ImportServiceImpl {
 
         let event_data = imported_students
             .iter()
-            .map(|s| (s.entity.name.clone(), s.entity.email.clone(), s.plain_password.clone()))
+            .map(|s| (s.entity.name.clone(), s.entity.email.clone()))
             .collect::<Vec<_>>();
 
         let new_students = imported_students.into_iter().map(|s| s.entity).collect::<Vec<User>>();

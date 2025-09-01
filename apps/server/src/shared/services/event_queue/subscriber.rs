@@ -212,12 +212,11 @@ impl EventSubscriber {
                 )?;
             }
 
-            Event::UserCreated((name, email, password)) => {
-                let context: RawContext = vec![
-                    ("name", name),
-                    ("email", email.clone()),
-                    ("password", password),
-                ];
+            Event::UserCreated((name, email)) => {
+                let context: RawContext = template_ctx! {
+                    "name" => name,
+                    "email" => email.clone(),
+                };
 
                 let mail_opts = MailTo {
                     subject: "Bienvenido (a) a la plataforma",
@@ -230,12 +229,11 @@ impl EventSubscriber {
             }
 
             Event::ManyUsersCreated(data) => {
-                for (name, email, password) in data {
-                    let context: RawContext = vec![
-                        ("name", name),
-                        ("email", email.clone()),
-                        ("password", password),
-                    ];
+                for (name, email) in data {
+                    let context = template_ctx! {
+                        "name" => name,
+                        "email" => email.clone(),
+                    };
 
                     let mail_opts = MailTo {
                         subject: "Bienvenido (a) a la plataforma",

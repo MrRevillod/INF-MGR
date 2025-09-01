@@ -3,13 +3,13 @@ use std::str::FromStr;
 use std::time::Duration;
 
 use axum::http;
+use axum_helmet::{Helmet, HelmetLayer};
 use tower_http::classify::{ServerErrorsAsFailures, SharedClassifier};
 use tower_http::cors::CorsLayer;
 use tower_http::trace::{MakeSpan, OnRequest, OnResponse, TraceLayer as TowerTraceLayer};
 
-use tracing::Span;
-
 use crate::config::CorsConfig;
+use tracing::Span;
 
 type TraceLayer = TowerTraceLayer<
     SharedClassifier<ServerErrorsAsFailures>,
@@ -18,22 +18,14 @@ type TraceLayer = TowerTraceLayer<
     TraceOnResponse,
 >;
 
-#[derive(Clone, Debug)]
-pub struct HttpLogger {
-    pub layer: TraceLayer,
-}
+#[allow(non_snake_case)]
+pub fn LoggerLayer() -> TraceLayer {
+    tracing_subscriber::fmt().with_target(false).compact().init();
 
-impl HttpLogger {
-    pub fn new() -> Self {
-        tracing_subscriber::fmt().with_target(false).compact().init();
-
-        HttpLogger {
-            layer: TowerTraceLayer::new_for_http()
-                .make_span_with(TraceMakeSpan)
-                .on_request(TraceOnRequest)
-                .on_response(TraceOnResponse),
-        }
-    }
+    TowerTraceLayer::new_for_http()
+        .make_span_with(TraceMakeSpan)
+        .on_request(TraceOnRequest)
+        .on_response(TraceOnResponse)
 }
 
 #[derive(Clone, Debug)]
@@ -68,13 +60,8 @@ impl<B> OnResponse<B> for TraceOnResponse {
     }
 }
 
-impl Default for HttpLogger {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-pub fn setup_cors(config: &CorsConfig) -> CorsLayer {
+#[allow(non_snake_case)]
+pub fn CorsLayer(config: &CorsConfig) -> CorsLayer {
     let mut methods = HashSet::new();
     let mut headers = HashSet::new();
 
@@ -99,4 +86,16 @@ pub fn setup_cors(config: &CorsConfig) -> CorsLayer {
         .allow_credentials(config.allow_credentials)
         .allow_methods(methods)
         .allow_headers(headers)
+}
+
+#[allow(non_snake_case)]
+pub fn HelmetLayer() -> HelmetLayer {
+    HelmetLayer::new(
+        Helmet::new()
+            .add(axum_helmet::XContentTypeOptions::nosniff())
+            .add(axum_helmet::XFrameOptions::same_origin())
+            .add(axum_helmet::StrictTransportSecurity::new().max_age(31536000))
+            .add(axum_helmet::CrossOriginResourcePolicy::same_origin())
+            .add(axum_helmet::ReferrerPolicy::strict_origin_when_cross_origin()),
+    )
 }

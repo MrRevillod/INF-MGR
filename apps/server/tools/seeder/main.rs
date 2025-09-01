@@ -6,7 +6,6 @@ mod functions;
 use data::*;
 use functions::*;
 
-use bcrypt::hash;
 use rand::Rng;
 
 use server::users::{Role, User};
@@ -57,7 +56,7 @@ async fn main() -> Result<(), sqlx::Error> {
             roles: vec![Role::Student],
             created_at: chrono::Utc::now(),
             deleted_at: None,
-            password: hash("!abc1234ABC.", 8).unwrap(),
+            google_id: None,
         };
 
         students.push(student);
@@ -80,7 +79,7 @@ async fn main() -> Result<(), sqlx::Error> {
             roles: vec![Role::Student],
             created_at: chrono::Utc::now(),
             deleted_at: None,
-            password: hash("!abc1234ABC.", 8).unwrap(),
+            google_id: None,
         };
 
         students2.push(student);

@@ -1,58 +1,66 @@
-use axum_helmet::{Helmet, HelmetLayer};
 use sword::prelude::Application;
 use tokio::sync::mpsc;
 
 use server::{
-    config::ApplicationConfig,
-    courses::CoursesController,
-    enrollments::EnrollmentsController,
-    shared::{
-        database::PostgresDatabase,
-        layers::{setup_cors, HttpLogger},
-        services::event_queue::SubscriberOptions,
-    },
-    users::UsersController,
+    config::*, courses::CoursesController, enrollments::EnrollmentsController,
+    shared::redis::RedisDatabase, users::UsersController,
+};
+
+use server::shared::{
+    database::PostgresDatabase,
+    di::DependencyContainer,
+    layers::{CorsLayer, HelmetLayer, LoggerLayer},
+    oauth::GoogleOAuthClient,
 };
 
 use server::shared::services::{
-    event_queue::{EventSubscriber, TokioEventSender},
+    event_queue::*,
     mailer::{Mailer, MailerConfig},
     printer::Printer,
     templates::TemplateConfig,
 };
 
-use server::config::{CorsConfig, PostgresDbConfig};
-use server::container::DependencyContainer;
-
 #[sword::main]
 async fn main() {
     let mut app = Application::builder()?;
+    let config = app.config.clone();
 
-    let app_config = app.config.get::<ApplicationConfig>()?;
-    let cors_config = app.config.get::<CorsConfig>()?;
-    let pg_db_config = app.config.get::<PostgresDbConfig>()?;
-    let mailer_config = app.config.get::<MailerConfig>()?;
-    let template_config = app.config.get::<TemplateConfig>()?;
-
-    let (db, mailer, printer) = {
-        let db = PostgresDatabase::new(&pg_db_config)
+    let (pg_db, mailer, printer, oauth_client, redis_db) = {
+        let pg_db = PostgresDatabase::new(&config.get::<PostgresDbConfig>()?)
             .await
             .expect("Failed to create database connection");
 
-        db.migrate().await.expect("Failed to create database connection");
+        pg_db.migrate().await.expect("Failed to create database connection");
 
-        let mailer =
-            Mailer::new(&mailer_config, &template_config).expect("Failed to create mailer");
+        let mailer_config = config.get::<MailerConfig>()?;
+        let template_config = config.get::<TemplateConfig>()?;
 
-        let printer = Printer::new(&template_config).expect("Failed to create printer");
+        let mailer = Mailer::new(&mailer_config, &template_config)
+            .expect("Failed to create mailer");
 
-        (db, mailer, printer)
+        let printer =
+            Printer::new(&template_config).expect("Failed to create printer");
+
+        let oauth_client = GoogleOAuthClient::new(&config.get::<AuthConfig>()?);
+
+        let redis_db = RedisDatabase::new(&config.get::<RedisConfig>()?)
+            .await
+            .expect("Failed to create Redis connection");
+
+        (pg_db, mailer, printer, oauth_client, redis_db)
     };
+
+    let app_config = config.get::<ApplicationConfig>()?;
 
     let (tx, rx) = mpsc::channel(app_config.event_queue_buffer_size);
 
     let publisher = TokioEventSender::new(tx);
-    let dependency_container = DependencyContainer::new(db, publisher);
+    let dependency_container = DependencyContainer::builder()
+        .with_postgres_db(pg_db)
+        .with_event_sender(publisher)
+        .with_oauth_client(oauth_client)
+        .with_redis_db(redis_db)
+        .build();
 
     EventSubscriber::new(SubscriberOptions {
         rx,
@@ -62,26 +70,14 @@ async fn main() {
     .run_parallel()
     .await;
 
-    let http_logger = HttpLogger::new();
-    let cors_layer = setup_cors(&cors_config);
-
-    let helmet_layer = HelmetLayer::new(
-        Helmet::new()
-            .add(axum_helmet::XContentTypeOptions::nosniff())
-            .add(axum_helmet::XFrameOptions::same_origin())
-            .add(axum_helmet::StrictTransportSecurity::new().max_age(31536000))
-            .add(axum_helmet::CrossOriginResourcePolicy::same_origin())
-            .add(axum_helmet::ReferrerPolicy::strict_origin_when_cross_origin()),
-    );
-
     app = app
         .with_shaku_di_module(dependency_container.module)?
         .with_controller::<UsersController>()
         .with_controller::<CoursesController>()
         .with_controller::<EnrollmentsController>()
-        .with_layer(http_logger.layer)
-        .with_layer(cors_layer)
-        .with_layer(helmet_layer);
+        .with_layer(LoggerLayer())
+        .with_layer(CorsLayer(&config.get::<CorsConfig>()?))
+        .with_layer(HelmetLayer());
 
     app.build().run().await?;
 }

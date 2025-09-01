@@ -2,15 +2,21 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::{TEST_EMAILS, courses::utils::TestCourse, init_test_app, users::utils::TestUser};
+use crate::{
+    TEST_EMAILS, courses::utils::TestCourse, init_test_app, users::utils::TestUser,
+};
 
 async fn get_db_pool() -> PgPool {
     use server::{config::PostgresDbConfig, shared::database::PostgresDatabase};
     use sword::prelude::Application;
 
-    let app = Application::builder().expect("Failed to create application builder").build();
-    let pg_db_config =
-        app.config.get::<PostgresDbConfig>().expect("Failed to get PostgresDbConfig");
+    let app = Application::builder()
+        .expect("Failed to create application builder")
+        .build();
+    let pg_db_config = app
+        .config
+        .get::<PostgresDbConfig>()
+        .expect("Failed to get PostgresDbConfig");
 
     let db = PostgresDatabase::new(&pg_db_config)
         .await
@@ -61,8 +67,8 @@ async fn cleanup_import_test_data(course_id: &str, teacher_id: &str) {
 }
 
 #[tokio::test]
-async fn test_import_users() {
-    let app = init_test_app().await;
+async fn test_import_users() -> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
     let mut students = Vec::new();
 
     for i in 0..10 {
@@ -95,4 +101,6 @@ async fn test_import_users() {
     assert_eq!(response.status_code(), 201);
 
     cleanup_import_test_data(&course_id, &teacher_id).await;
+
+    Ok(())
 }

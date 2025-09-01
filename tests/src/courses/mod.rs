@@ -1,7 +1,8 @@
 pub mod utils;
 
 use crate::{
-    enrollments::utils::TestEnrollment, extract_resource_id, init_test_app, users::utils::TestUser,
+    enrollments::utils::TestEnrollment, extract_resource_id, init_test_app,
+    users::utils::TestUser,
 };
 
 use serde_json::json;
@@ -12,8 +13,8 @@ use uuid::Uuid;
 // ==================== CRUD TESTS ====================
 
 #[tokio::test]
-async fn test_create_course_should_work() {
-    let app = init_test_app().await;
+async fn test_create_course_should_work() -> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
     let teacher_id = TestUser::create_teacher(&app).await;
     let new_course = TestCourse::builder(&teacher_id).build();
 
@@ -32,22 +33,26 @@ async fn test_create_course_should_work() {
 
     TestCourse::delete(&app, &created_course_id).await;
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_get_courses() {
-    let app = init_test_app().await;
+async fn test_get_courses() -> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
 
     let response = app.get("/courses").await;
     assert_eq!(response.status_code(), 200);
 
     let body = response.json::<ResponseBody>();
     assert!(body.data.is_array());
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_update_course() {
-    let app = init_test_app().await;
+async fn test_update_course() -> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
     let teacher_id = TestUser::create_teacher(&app).await;
 
     let new_course = TestCourse::builder(&teacher_id)
@@ -74,11 +79,13 @@ async fn test_update_course() {
     TestCourse::delete(&app, &created_course_id).await;
     TestUser::delete(&app, &teacher_id).await;
     TestUser::delete(&app, &new_teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_delete_course() {
-    let app = init_test_app().await;
+async fn test_delete_course() -> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
     let teacher_id = TestUser::create_teacher(&app).await;
 
     let new_course = TestCourse::builder(&teacher_id)
@@ -90,11 +97,14 @@ async fn test_delete_course() {
 
     TestCourse::delete(&app, &created_course_id).await;
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_delete_course_with_active_inscriptions_should_fail() {
-    let app = init_test_app().await;
+async fn test_delete_course_with_active_inscriptions_should_fail()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
     let teacher_id = TestUser::create_teacher(&app).await;
 
     let new_course = TestCourse::builder(&teacher_id)
@@ -121,13 +131,16 @@ async fn test_delete_course_with_active_inscriptions_should_fail() {
     TestCourse::delete(&app, &created_course_id).await;
     TestUser::delete(&app, &student_id).await;
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 // // ==================== CREATE ASIGNATURE VALIDATION TESTS ====================
 
 #[tokio::test]
-async fn test_create_course_invalid_year_too_low() {
-    let app = init_test_app().await;
+async fn test_create_course_invalid_year_too_low()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
     let teacher_id = TestUser::create_teacher(&app).await;
 
     let new_course = TestCourse::builder(&teacher_id).with_year(1999).build();
@@ -150,11 +163,14 @@ async fn test_create_course_invalid_year_too_low() {
     assert!(year_error.is_some(), "Expected a validation error for 'year'");
 
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_create_course_invalid_year_too_high() {
-    let app = init_test_app().await;
+async fn test_create_course_invalid_year_too_high()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
     let teacher_id = TestUser::create_teacher(&app).await;
 
     let new_course = json!({
@@ -175,11 +191,14 @@ async fn test_create_course_invalid_year_too_high() {
     assert_eq!(response.code, 400);
 
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_create_course_invalid_code_format() {
-    let app = init_test_app().await;
+async fn test_create_course_invalid_code_format()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
     let teacher_id = TestUser::create_teacher(&app).await;
 
     let new_course = json!({
@@ -209,11 +228,14 @@ async fn test_create_course_invalid_code_format() {
     assert_eq!(error_arr[0].get("field").and_then(|m| m.as_str()), Some("code"),);
 
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_create_course_invalid_code_length() {
-    let app = init_test_app().await;
+async fn test_create_course_invalid_code_length()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
     let teacher_id = TestUser::create_teacher(&app).await;
 
     let new_course = json!({
@@ -234,11 +256,14 @@ async fn test_create_course_invalid_code_length() {
     assert_eq!(response.code, 400);
 
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_create_course_name_too_short() {
-    let app = init_test_app().await;
+async fn test_create_course_name_too_short() -> Result<(), Box<dyn std::error::Error>>
+{
+    let app = init_test_app().await?;
     let teacher_id = TestUser::create_teacher(&app).await;
 
     let new_course = json!({
@@ -259,11 +284,14 @@ async fn test_create_course_name_too_short() {
     assert_eq!(response.code, 400);
 
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_create_course_name_too_long() {
-    let app = init_test_app().await;
+async fn test_create_course_name_too_long() -> Result<(), Box<dyn std::error::Error>>
+{
+    let app = init_test_app().await?;
     let teacher_id = TestUser::create_teacher(&app).await;
 
     let long_name = "a".repeat(101);
@@ -285,11 +313,14 @@ async fn test_create_course_name_too_long() {
     assert_eq!(response.code, 400);
 
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_create_course_no_evaluations() {
-    let app = init_test_app().await;
+async fn test_create_course_no_evaluations() -> Result<(), Box<dyn std::error::Error>>
+{
+    let app = init_test_app().await?;
     let teacher_id = TestUser::create_teacher(&app).await;
 
     let new_course = json!({
@@ -304,11 +335,14 @@ async fn test_create_course_no_evaluations() {
     assert_eq!(response.code, 400);
 
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_create_course_evaluation_weights_not_sum_to_one() {
-    let app = init_test_app().await;
+async fn test_create_course_evaluation_weights_not_sum_to_one()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
     let teacher_id = TestUser::create_teacher(&app).await;
 
     let new_course = json!({
@@ -332,11 +366,14 @@ async fn test_create_course_evaluation_weights_not_sum_to_one() {
     assert_eq!(response.code, 400);
 
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_create_course_evaluation_name_too_short() {
-    let app = init_test_app().await;
+async fn test_create_course_evaluation_name_too_short()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
     let teacher_id = TestUser::create_teacher(&app).await;
 
     let new_course = json!({
@@ -356,11 +393,14 @@ async fn test_create_course_evaluation_name_too_short() {
     assert_eq!(response.code, 400);
 
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_create_course_evaluation_name_too_long() {
-    let app = init_test_app().await;
+async fn test_create_course_evaluation_name_too_long()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
     let teacher_id = TestUser::create_teacher(&app).await;
 
     let long_evaluation_name = "a".repeat(101); // 101 characters, maximum is 100
@@ -382,11 +422,14 @@ async fn test_create_course_evaluation_name_too_long() {
     assert_eq!(response.code, 400);
 
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_create_course_evaluation_weight_too_low() {
-    let app = init_test_app().await;
+async fn test_create_course_evaluation_weight_too_low()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
     let teacher_id = TestUser::create_teacher(&app).await;
 
     let new_course = json!({
@@ -406,11 +449,14 @@ async fn test_create_course_evaluation_weight_too_low() {
     assert_eq!(response.code, 400);
 
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_create_course_evaluation_weight_too_high() {
-    let app = init_test_app().await;
+async fn test_create_course_evaluation_weight_too_high()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
     let teacher_id = TestUser::create_teacher(&app).await;
 
     let new_course = json!({
@@ -430,11 +476,14 @@ async fn test_create_course_evaluation_weight_too_high() {
     assert_eq!(response.code, 400);
 
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_create_course_invalid_teacher_id() {
-    let app = init_test_app().await;
+async fn test_create_course_invalid_teacher_id()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
 
     let new_course = json!({
         "year": 2024,
@@ -451,11 +500,13 @@ async fn test_create_course_invalid_teacher_id() {
 
     let response = TestCourse::create_without_extract(&app, &new_course).await;
     assert_eq!(response.code, 400);
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_create_course_duplicate() {
-    let app = init_test_app().await;
+async fn test_create_course_duplicate() -> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
     let teacher_id = TestUser::create_teacher(&app).await;
 
     let code = TestCourse::generate_unique_code();
@@ -489,13 +540,16 @@ async fn test_create_course_duplicate() {
     app.delete(&format!("/courses/{}", course_id)).await;
 
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 // // ==================== UPDATE ASIGNATURE VALIDATION TESTS ====================
 
 #[tokio::test]
-async fn test_update_course_invalid_teacher_id() {
-    let app = init_test_app().await;
+async fn test_update_course_invalid_teacher_id()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
     let teacher_id = TestUser::create_teacher(&app).await;
 
     // Create asignature
@@ -521,34 +575,42 @@ async fn test_update_course_invalid_teacher_id() {
         "teacherId": "invalid-uuid"
     });
 
-    let update_response = app.patch(&format!("/courses/{}", course_id)).json(&update_course).await;
+    let update_response =
+        app.patch(&format!("/courses/{}", course_id)).json(&update_course).await;
 
     assert_eq!(update_response.status_code(), 400);
 
     // Cleanup
     app.delete(&format!("/courses/{}", course_id)).await;
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_update_nonexistent_asignature() {
-    let app = init_test_app().await;
+async fn test_update_nonexistent_asignature()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
 
     let update_course = json!({
         "year": 2025
     });
 
     let fake_id = Uuid::new_v4();
-    let update_response = app.patch(&format!("/courses/{}", fake_id)).json(&update_course).await;
+    let update_response =
+        app.patch(&format!("/courses/{}", fake_id)).json(&update_course).await;
 
     assert_eq!(update_response.status_code(), 404);
+
+    Ok(())
 }
 
 // // ==================== BOUNDARY TESTS ====================
 
 #[tokio::test]
-async fn test_create_course_valid_year_boundaries() {
-    let app = init_test_app().await;
+async fn test_create_course_valid_year_boundaries()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
     let teacher_id = TestUser::create_teacher(&app).await;
 
     // Test minimum year (2000)
@@ -589,11 +651,14 @@ async fn test_create_course_valid_year_boundaries() {
 
     TestCourse::delete(&app, &max_course_id).await;
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_create_course_valid_name_boundaries() {
-    let app = init_test_app().await;
+async fn test_create_course_valid_name_boundaries()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
     let teacher_id = TestUser::create_teacher(&app).await;
 
     // Test minimum length (1 character)
@@ -610,7 +675,8 @@ async fn test_create_course_valid_name_boundaries() {
         "teacherId": teacher_id,
     });
 
-    let response = TestCourse::create_without_extract(&app, &min_name_asignature).await;
+    let response =
+        TestCourse::create_without_extract(&app, &min_name_asignature).await;
     assert_eq!(response.code, 201);
 
     let min_course_id = TestCourse::extract_id(&response.data);
@@ -636,19 +702,20 @@ async fn test_create_course_valid_name_boundaries() {
     let body2 = response2.json::<ResponseBody>();
     let max_course_id = body2.data.get("id").and_then(|id| id.as_str()).unwrap();
 
-    // Cleanup
     app.delete(&format!("/courses/{}", min_course_id)).await;
     app.delete(&format!("/courses/{}", max_course_id)).await;
 
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_create_course_valid_evaluation_weight_boundaries() {
-    let app = init_test_app().await;
+async fn test_create_course_valid_evaluation_weight_boundaries()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
     let teacher_id = TestUser::create_teacher(&app).await;
 
-    // Test minimum weight (1)
     let min_weight_asignature = json!({
         "year": 2024,
         "code": TestCourse::generate_unique_code(),
@@ -671,11 +738,14 @@ async fn test_create_course_valid_evaluation_weight_boundaries() {
 
     TestCourse::delete(&app, &response_id).await;
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_create_course_valid_evaluation_weight_boundaries_3_33() {
-    let app = init_test_app().await;
+async fn test_create_course_valid_evaluation_weight_boundaries_3_33()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
     let teacher_id = TestUser::create_teacher(&app).await;
 
     let min_weight_asignature = json!({
@@ -699,18 +769,21 @@ async fn test_create_course_valid_evaluation_weight_boundaries_3_33() {
         "teacherId": teacher_id,
     });
 
-    let response = TestCourse::create_without_extract(&app, &min_weight_asignature).await;
+    let response =
+        TestCourse::create_without_extract(&app, &min_weight_asignature).await;
     assert_eq!(response.code, 400);
 
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_create_course_valid_evaluation_but_repeated_names() {
-    let app = init_test_app().await;
+async fn test_create_course_valid_evaluation_but_repeated_names()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
     let teacher_id = TestUser::create_teacher(&app).await;
 
-    // Test repeated evaluation names
     let min_weight_asignature = json!({
         "year": 2024,
         "code": TestCourse::generate_unique_code(),
@@ -732,17 +805,21 @@ async fn test_create_course_valid_evaluation_but_repeated_names() {
         "teacherId": teacher_id,
     });
 
-    let response = TestCourse::create_without_extract(&app, &min_weight_asignature).await;
+    let response =
+        TestCourse::create_without_extract(&app, &min_weight_asignature).await;
     assert_eq!(response.code, 400);
 
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 // ==================== UPDATE COURSE EVALUATIONS TESTS ====================
 
 #[tokio::test]
-async fn test_update_course_evaluations_success() {
-    let app = init_test_app().await;
+async fn test_update_course_evaluations_success()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
     let teacher_id = TestUser::create_teacher(&app).await;
 
     let new_course = TestCourse::builder(&teacher_id)
@@ -769,28 +846,35 @@ async fn test_update_course_evaluations_success() {
         ]
     });
 
-    let updated_course = TestCourse::update(&app, &created_course_id, &update_data).await;
+    let updated_course =
+        TestCourse::update(&app, &created_course_id, &update_data).await;
 
-    // Verificar que las evaluaciones fueron actualizadas correctamente
     let evaluations = updated_course["evaluations"].as_array().unwrap();
     assert_eq!(evaluations.len(), 3);
 
-    let eval_names: Vec<&str> = evaluations.iter().map(|e| e["name"].as_str().unwrap()).collect();
+    let eval_names: Vec<&str> =
+        evaluations.iter().map(|e| e["name"].as_str().unwrap()).collect();
+
     assert!(eval_names.contains(&"Test Evaluation 1"));
     assert!(eval_names.contains(&"Test Evaluation 2"));
     assert!(eval_names.contains(&"Test Evaluation 3"));
 
     // Verificar que los pesos suman 100
-    let total_weight: i64 = evaluations.iter().map(|e| e["weight"].as_i64().unwrap()).sum();
+    let total_weight: i64 =
+        evaluations.iter().map(|e| e["weight"].as_i64().unwrap()).sum();
+
     assert_eq!(total_weight, 100);
 
     TestCourse::delete(&app, &created_course_id).await;
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_update_course_evaluations_weights_not_sum_100() {
-    let app = init_test_app().await;
+async fn test_update_course_evaluations_weights_not_sum_100()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
     let teacher_id = TestUser::create_teacher(&app).await;
 
     let new_course = TestCourse::builder(&teacher_id)
@@ -815,7 +899,8 @@ async fn test_update_course_evaluations_weights_not_sum_100() {
     });
 
     let update_response =
-        TestCourse::update_should_fail(&app, &created_course_id, &update_data, 400).await;
+        TestCourse::update_should_fail(&app, &created_course_id, &update_data, 400)
+            .await;
 
     let error_message = update_response
         .data
@@ -830,11 +915,14 @@ async fn test_update_course_evaluations_weights_not_sum_100() {
 
     TestCourse::delete(&app, &created_course_id).await;
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_update_course_evaluations_invalid_weight_values() {
-    let app = init_test_app().await;
+async fn test_update_course_evaluations_invalid_weight_values()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
     let teacher_id = TestUser::create_teacher(&app).await;
 
     let new_course = TestCourse::builder(&teacher_id)
@@ -858,8 +946,11 @@ async fn test_update_course_evaluations_invalid_weight_values() {
         ]
     });
 
-    TestCourse::update_should_fail(&app, &created_course_id, &update_data, 400).await;
+    TestCourse::update_should_fail(&app, &created_course_id, &update_data, 400)
+        .await;
 
     TestCourse::delete(&app, &created_course_id).await;
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }

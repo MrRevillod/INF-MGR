@@ -5,8 +5,10 @@ use sword::prelude::*;
 use uuid::Uuid;
 
 use crate::{
-    container::AppModule,
-    practices::{CreatePracticeDto, PracticeService, PracticeStatus, UpdatePracticeDto},
+    practices::{
+        CreatePracticeDto, PracticeService, PracticeStatus, UpdatePracticeDto,
+    },
+    shared::di::AppModule,
 };
 
 #[controller("/enrollments")]
@@ -90,7 +92,9 @@ impl EnrollmentsController {
     }
 
     #[get("/practice/{practice_id}/docs")]
-    async fn get_practice_docs(ctx: Context) -> Result<impl IntoResponse, HttpResponse> {
+    async fn get_practice_docs(
+        ctx: Context,
+    ) -> Result<impl IntoResponse, HttpResponse> {
         let practice_id = ctx.param::<Uuid>("practice_id")?;
 
         let file_path = format!(

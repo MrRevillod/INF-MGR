@@ -1,8 +1,8 @@
 use sword::prelude::*;
 
 use crate::{
-    container::AppModule,
     imports::{ImportCourseDto, ImportService},
+    shared::di::AppModule,
 };
 
 #[controller("/imports")]

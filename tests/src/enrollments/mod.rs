@@ -13,8 +13,9 @@ use crate::{
 pub mod utils;
 
 #[tokio::test]
-pub async fn create_enrollment_and_practice() {
-    let app = init_test_app().await;
+pub async fn create_enrollment_and_practice()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
 
     let student_id = TestUser::create_student(&app).await;
     let teacher_id = TestUser::create_teacher(&app).await;
@@ -48,7 +49,8 @@ pub async fn create_enrollment_and_practice() {
         .with_end_date("2024-12-15T00:00:00Z")
         .build();
 
-    let practice_id = TestPractice::create(&app, &enrollment_id, practice_data).await;
+    let practice_id =
+        TestPractice::create(&app, &enrollment_id, practice_data).await;
 
     TestPractice::approve(&app, &enrollment_id, &practice_id).await;
 
@@ -57,11 +59,14 @@ pub async fn create_enrollment_and_practice() {
     TestCourse::delete(&app, &course_id).await;
     TestUser::delete(&app, &student_id).await;
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-pub async fn practice_approve_and_update_auth_doc() {
-    let app = init_test_app().await;
+pub async fn practice_approve_and_update_auth_doc()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
 
     let student_id = TestUser::create_student(&app).await;
     let teacher_id = TestUser::create_teacher(&app).await;
@@ -107,11 +112,14 @@ pub async fn practice_approve_and_update_auth_doc() {
 
     TestUser::delete(&app, &student_id).await;
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-pub async fn create_enrollment_and_decline_practice() {
-    let app = init_test_app().await;
+pub async fn create_enrollment_and_decline_practice()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
 
     let student_id = TestUser::create_student(&app).await;
     let teacher_id = TestUser::create_teacher(&app).await;
@@ -155,7 +163,9 @@ pub async fn create_enrollment_and_decline_practice() {
     let practice_id = extract_resource_id(&json);
 
     let decline_practice_res = app
-        .post(&format!("/enrollments/{enrollment_id}/practice/{practice_id}/decline"))
+        .post(&format!(
+            "/enrollments/{enrollment_id}/practice/{practice_id}/decline"
+        ))
         .await;
 
     decline_practice_res.assert_status(StatusCode::OK);
@@ -164,11 +174,14 @@ pub async fn create_enrollment_and_decline_practice() {
     TestCourse::delete(&app, &course_id).await;
     TestUser::delete(&app, &student_id).await;
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-pub async fn decline_nonexistent_practice_should_fail() {
-    let app = init_test_app().await;
+pub async fn decline_nonexistent_practice_should_fail()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
 
     let student_id = TestUser::create_student(&app).await;
     let teacher_id = TestUser::create_teacher(&app).await;
@@ -188,7 +201,9 @@ pub async fn decline_nonexistent_practice_should_fail() {
 
     let fake_practice_id = Uuid::new_v4();
     let decline_practice_res = app
-        .post(&format!("/enrollments/{enrollment_id}/practice/{fake_practice_id}/decline"))
+        .post(&format!(
+            "/enrollments/{enrollment_id}/practice/{fake_practice_id}/decline"
+        ))
         .await;
 
     decline_practice_res.assert_status(StatusCode::NOT_FOUND);
@@ -197,11 +212,14 @@ pub async fn decline_nonexistent_practice_should_fail() {
     TestCourse::delete(&app, &course_id).await;
     TestUser::delete(&app, &student_id).await;
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-pub async fn decline_already_approved_practice_should_fail() {
-    let app = init_test_app().await;
+pub async fn decline_already_approved_practice_should_fail()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
 
     let student_id = TestUser::create_student(&app).await;
     let teacher_id = TestUser::create_teacher(&app).await;
@@ -239,13 +257,17 @@ pub async fn decline_already_approved_practice_should_fail() {
     let practice_id = extract_resource_id(&json);
 
     let approve_practice_res = app
-        .post(&format!("/enrollments/{enrollment_id}/practice/{practice_id}/approve"))
+        .post(&format!(
+            "/enrollments/{enrollment_id}/practice/{practice_id}/approve"
+        ))
         .await;
 
     approve_practice_res.assert_status(StatusCode::OK);
 
     let decline_practice_res = app
-        .post(&format!("/enrollments/{enrollment_id}/practice/{practice_id}/decline"))
+        .post(&format!(
+            "/enrollments/{enrollment_id}/practice/{practice_id}/decline"
+        ))
         .await;
 
     decline_practice_res.assert_status(StatusCode::BAD_REQUEST);
@@ -254,4 +276,6 @@ pub async fn decline_already_approved_practice_should_fail() {
     TestCourse::delete(&app, &course_id).await;
     TestUser::delete(&app, &student_id).await;
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }

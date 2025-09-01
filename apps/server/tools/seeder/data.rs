@@ -1,4 +1,3 @@
-use bcrypt::hash;
 use server::{
     courses::{Course, CourseEvaluation, CourseStatus},
     users::{Role, User},
@@ -15,7 +14,7 @@ pub fn teachers() -> Vec<User> {
         roles: vec![Role::Teacher],
         created_at: chrono::Utc::now(),
         deleted_at: None,
-        password: hash("!abc1234ABC.", 8).unwrap(),
+        google_id: None,
     }]
 }
 
@@ -28,7 +27,7 @@ pub fn administrators() -> Vec<User> {
         roles: vec![Role::Administrator],
         created_at: chrono::Utc::now(),
         deleted_at: None,
-        password: hash("!abc1234ABC.", 8).unwrap(),
+        google_id: None,
     }]
 }
 
@@ -41,7 +40,7 @@ pub fn secretaries() -> Vec<User> {
         roles: vec![Role::Secretary],
         created_at: chrono::Utc::now(),
         deleted_at: None,
-        password: hash("!abc1234ABC.", 8).unwrap(),
+        google_id: None,
     }]
 }
 

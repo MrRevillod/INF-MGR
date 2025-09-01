@@ -3,7 +3,12 @@ pub mod config;
 pub mod auth {
     mod controllers;
     mod dtos;
+    mod repository;
     mod service;
+
+    pub use controllers::AuthController;
+    pub use repository::{AuthRepository, AuthRepositoryImpl};
+    pub use service::{GoogleOAuthService, OAuthService};
 }
 
 pub mod users {
@@ -85,16 +90,23 @@ pub mod practices {
 }
 
 pub mod shared {
-    pub mod entities;
     pub mod errors;
-
     pub use errors::{AppError, AppResult};
+
+    pub mod di {
+        mod container;
+
+        pub use container::{AppModule, DependencyContainer};
+
+        mod builder;
+    }
 
     pub mod macros;
 
     pub mod database;
     pub mod layers;
     pub mod oauth;
+    pub mod redis;
 
     pub mod validators {
         use validator::ValidationError;
@@ -114,7 +126,6 @@ pub mod shared {
 
     pub mod services {
         pub mod errors;
-        pub mod hasher;
         pub mod mailer;
         pub mod printer;
         pub mod templates {
@@ -139,5 +150,3 @@ pub mod shared {
         }
     }
 }
-
-pub mod container;

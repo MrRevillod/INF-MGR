@@ -20,6 +20,12 @@ pub struct PostgresDbConfig {
 }
 
 #[derive(Debug, Deserialize)]
+#[config(key = "redis")]
+pub struct RedisConfig {
+    pub url: String,
+}
+
+#[derive(Debug, Deserialize)]
 #[config(key = "auth")]
 pub struct AuthConfig {
     pub session_jwt_secret: String,

@@ -1,15 +1,17 @@
 pub mod utils;
 
 use crate::{
-    courses::utils::TestCourse, enrollments::utils::TestEnrollment, extract_resource_id,
-    init_test_app, practices::utils::TestPractice, users::utils::TestUser,
+    courses::utils::TestCourse, enrollments::utils::TestEnrollment,
+    extract_resource_id, init_test_app, practices::utils::TestPractice,
+    users::utils::TestUser,
 };
 use axum::http::StatusCode;
 use chrono::{Duration, Utc};
 
 #[tokio::test]
-async fn create_practice_with_valid_phone_should_work() {
-    let app = init_test_app().await;
+async fn create_practice_with_valid_phone_should_work()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
 
     let student_id = TestUser::create_student(&app).await;
     let teacher_id = TestUser::create_teacher(&app).await;
@@ -47,11 +49,14 @@ async fn create_practice_with_valid_phone_should_work() {
     TestCourse::delete(&app, &course_id).await;
     TestUser::delete(&app, &student_id).await;
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn create_practice_with_invalid_phone_should_fail() {
-    let app = init_test_app().await;
+async fn create_practice_with_invalid_phone_should_fail()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
 
     let student_id = TestUser::create_student(&app).await;
     let teacher_id = TestUser::create_teacher(&app).await;
@@ -93,11 +98,14 @@ async fn create_practice_with_invalid_phone_should_fail() {
     TestCourse::delete(&app, &course_id).await;
     TestUser::delete(&app, &student_id).await;
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn create_practice_with_invalid_enterprise_name_should_fail() {
-    let app = init_test_app().await;
+async fn create_practice_with_invalid_enterprise_name_should_fail()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
 
     let student_id = TestUser::create_student(&app).await;
     let teacher_id = TestUser::create_teacher(&app).await;
@@ -139,11 +147,14 @@ async fn create_practice_with_invalid_enterprise_name_should_fail() {
     TestCourse::delete(&app, &course_id).await;
     TestUser::delete(&app, &student_id).await;
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn create_practice_with_invalid_description_should_fail() {
-    let app = init_test_app().await;
+async fn create_practice_with_invalid_description_should_fail()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
 
     let student_id = TestUser::create_student(&app).await;
     let teacher_id = TestUser::create_teacher(&app).await;
@@ -185,11 +196,14 @@ async fn create_practice_with_invalid_description_should_fail() {
     TestCourse::delete(&app, &course_id).await;
     TestUser::delete(&app, &student_id).await;
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn create_practice_with_invalid_location_should_fail() {
-    let app = init_test_app().await;
+async fn create_practice_with_invalid_location_should_fail()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
 
     let student_id = TestUser::create_student(&app).await;
     let teacher_id = TestUser::create_teacher(&app).await;
@@ -231,11 +245,14 @@ async fn create_practice_with_invalid_location_should_fail() {
     TestCourse::delete(&app, &course_id).await;
     TestUser::delete(&app, &student_id).await;
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn create_practice_with_invalid_supervisor_name_should_fail() {
-    let app = init_test_app().await;
+async fn create_practice_with_invalid_supervisor_name_should_fail()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
 
     let student_id = TestUser::create_student(&app).await;
     let teacher_id = TestUser::create_teacher(&app).await;
@@ -277,11 +294,14 @@ async fn create_practice_with_invalid_supervisor_name_should_fail() {
     TestCourse::delete(&app, &course_id).await;
     TestUser::delete(&app, &student_id).await;
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn create_practice_with_invalid_supervisor_email_should_fail() {
-    let app = init_test_app().await;
+async fn create_practice_with_invalid_supervisor_email_should_fail()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
 
     let student_id = TestUser::create_student(&app).await;
     let teacher_id = TestUser::create_teacher(&app).await;
@@ -323,11 +343,14 @@ async fn create_practice_with_invalid_supervisor_email_should_fail() {
     TestCourse::delete(&app, &course_id).await;
     TestUser::delete(&app, &student_id).await;
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
-////////////////////////////////////////////////////////
+
 #[tokio::test]
-async fn create_practice_with_invalid_start_date_should_fail() {
-    let app = init_test_app().await;
+async fn create_practice_with_invalid_start_date_should_fail()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
 
     let student_id = TestUser::create_student(&app).await;
     let teacher_id = TestUser::create_teacher(&app).await;
@@ -368,13 +391,14 @@ async fn create_practice_with_invalid_start_date_should_fail() {
     TestCourse::delete(&app, &course_id).await;
     TestUser::delete(&app, &student_id).await;
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
-///malo
-
 #[tokio::test]
-async fn create_practice_with_invalid_end_date_should_fail() {
-    let app = init_test_app().await;
+async fn create_practice_with_invalid_end_date_should_fail()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
 
     let student_id = TestUser::create_student(&app).await;
     let teacher_id = TestUser::create_teacher(&app).await;
@@ -416,13 +440,14 @@ async fn create_practice_with_invalid_end_date_should_fail() {
     TestCourse::delete(&app, &course_id).await;
     TestUser::delete(&app, &student_id).await;
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
-//malo
-
 #[tokio::test]
-async fn create_practice_with_invalid_start_date_delete_should_fail() {
-    let app = init_test_app().await;
+async fn create_practice_with_invalid_start_date_delete_should_fail()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
 
     let student_id = TestUser::create_student(&app).await;
     let teacher_id = TestUser::create_teacher(&app).await;
@@ -464,11 +489,14 @@ async fn create_practice_with_invalid_start_date_delete_should_fail() {
     TestCourse::delete(&app, &course_id).await;
     TestUser::delete(&app, &student_id).await;
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn create_practice_with_invalid_end_date_delete_should_fail() {
-    let app = init_test_app().await;
+async fn create_practice_with_invalid_end_date_delete_should_fail()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
 
     let student_id = TestUser::create_student(&app).await;
     let teacher_id = TestUser::create_teacher(&app).await;
@@ -509,4 +537,6 @@ async fn create_practice_with_invalid_end_date_delete_should_fail() {
     TestCourse::delete(&app, &course_id).await;
     TestUser::delete(&app, &student_id).await;
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }

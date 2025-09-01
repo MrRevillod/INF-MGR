@@ -1,9 +1,18 @@
-use std::time::Duration;
+use crate::config::PostgresDbConfig;
 
 use shaku::{Component, Interface};
 use sqlx::{postgres::PgPoolOptions, PgPool};
+use std::time::Duration;
 
-use crate::config::PostgresDbConfig;
+pub const DEFAULT_PAGE_SIZE: u64 = 10;
+
+pub struct Pagination<T> {
+    pub items: Vec<T>,
+    pub current_page: u64,
+    pub total_pages: u64,
+    pub has_next: bool,
+    pub has_previous: bool,
+}
 
 pub trait DatabaseConnection: Interface {
     fn get_pool(&self) -> &PgPool;
