@@ -181,7 +181,7 @@ fn validate_score(score: f64) -> Result<(), ValidationError> {
     }
 
     // Verificar que esté en el rango válido
-    if score < 1.0 || score > 7.0 {
+    if !(1.0..=7.0).contains(&score) {
         return Err(ValidationError::new("La puntuación debe estar entre 1.0 y 7.0"));
     }
 
