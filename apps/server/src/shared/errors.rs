@@ -35,11 +35,26 @@ pub enum AppError {
     #[error("Invalid input: {0:?}")]
     InvalidInput(Input),
 
-    #[error("Internal server error")]
+    #[error("Unauthorized: {source}")]
+    Unauthorized {
+        #[from]
+        source: AuthError,
+    },
+
+    #[error("Internal server error: {0}")]
     InternalServerError(Box<dyn std::error::Error + Send + Sync>),
 
     #[error("Invalid operation: {0}")]
     InvalidOperation(String),
+}
+
+#[derive(Debug, Error)]
+pub enum AuthError {
+    #[error("OAuthError: {0}")]
+    OAuthError(String),
+
+    #[error("The user: {0} isn't registered in the system")]
+    UserNotFound(String),
 }
 
 impl From<AppError> for HttpResponse {
@@ -55,13 +70,35 @@ impl From<AppError> for HttpResponse {
                 "message": input.message,
             })),
 
-            AppError::InvalidInput(input) => HttpResponse::BadRequest().data(json!({
-                "field": input.field,
-                "value": input.value,
-                "message": input.message,
-            })),
+            AppError::InvalidInput(input) => {
+                HttpResponse::BadRequest().data(json!({
+                    "field": input.field,
+                    "value": input.value,
+                    "message": input.message,
+                }))
+            }
 
-            AppError::InvalidOperation(message) => HttpResponse::BadRequest().message(message),
+            AppError::InvalidOperation(message) => {
+                HttpResponse::BadRequest().message(message)
+            }
+
+            AppError::Unauthorized { source } => {
+                tracing::warn!("Unauthorized access: {source}");
+
+                let error_data = match source {
+                    AuthError::OAuthError(_) => json!({
+                        "error": "oauth_error",
+                        "message": "Error en el proceso de autenticación con Google",
+                    }),
+                    AuthError::UserNotFound(email) => json!({
+                        "error": "user_not_found",
+                        "message": "Usuario no encontrado en el sistema",
+                        "details": format!("El usuario con email '{}' no está registrado.", email),
+                    }),
+                };
+
+                HttpResponse::Unauthorized().data(error_data)
+            }
 
             _ => {
                 tracing::error!("Internal AppError: {error:?}");

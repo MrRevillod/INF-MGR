@@ -39,6 +39,16 @@ services:
     networks:
       - my_networks
 
+  redis_test:
+    container_name: inf_mgr_redis_test
+    extends:
+      file: docker-compose.base.yml
+      service: redis_base
+    ports:
+      - "6379:6379"
+    networks:
+      - my_networks
+
 networks:
   my_networks:
     driver: bridge

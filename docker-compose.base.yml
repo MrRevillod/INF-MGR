@@ -42,6 +42,11 @@ services:
     networks:
       - my_networks
 
+  redis_base:
+    image: redis:8.0-alpine
+    networks:
+      - my_networks
+
 volumes:
   cargo_cache:
   server_target:

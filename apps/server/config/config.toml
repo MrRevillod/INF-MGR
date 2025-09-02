@@ -13,7 +13,7 @@ max_connections = 10
 acquire_timeout_ms = 5000
 
 [redis]
-url = "${REDIS_URL:redis://localhost/}"
+url = "${REDIS_DATABASE_URL}"
 
 [auth]
 session_jwt_secret = "${SESSION_JWT_SECRET}"

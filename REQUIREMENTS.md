@@ -26,7 +26,7 @@ Actualmente el proceso depende de **correo electrónico** y de un **coordinador 
 Se propone una **plataforma web con perfiles de acceso**: estudiante, profesor, secretaría y administración.
 
 ### Nuevo flujo
-1. **Creación de perfiles:** Secretaría carga CSV con inscritos; el sistema genera usuarios y credenciales.  
+1. **Creación de perfiles:** Secretaría carga CSV con usuarios inscritos; el sistema genera los usuarios.
 2. **Profesor integrado:** Acceso directo a informes y documentos.  
 3. **Bitácoras eliminadas por correo:** Solo se anexan al informe final.  
 4. **Registro de empresa automatizado:** Notificación y autorización online.  

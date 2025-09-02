@@ -1,3 +1,4 @@
+use server::auth::AuthController;
 use sword::prelude::Application;
 use tokio::sync::mpsc;
 
@@ -75,6 +76,7 @@ async fn main() {
         .with_controller::<UsersController>()
         .with_controller::<CoursesController>()
         .with_controller::<EnrollmentsController>()
+        .with_controller::<AuthController>()
         .with_layer(LoggerLayer())
         .with_layer(CorsLayer(&config.get::<CorsConfig>()?))
         .with_layer(HelmetLayer());
