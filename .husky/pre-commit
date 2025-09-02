@@ -6,7 +6,7 @@ echo "Running pre-commit hooks..."
 # just lint
 
 echo "Running code formatting"
-just format
+just fmt
 
 # echo "Running type checking"
 # just check
