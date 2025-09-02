@@ -1,11 +1,9 @@
 use crate::config::AuthConfig;
 use client::OAuthClientType;
 
-use oauth2::{
-    basic::BasicClient, AuthUrl, ClientId, ClientSecret, RedirectUrl, TokenUrl,
-};
+use oauth2::{AuthUrl, ClientId, ClientSecret, RedirectUrl, TokenUrl, basic::BasicClient};
 
-use reqwest::{redirect::Policy, Client as HttpClient, ClientBuilder};
+use reqwest::{Client as HttpClient, ClientBuilder, redirect::Policy};
 use shaku::{Component, Interface};
 
 #[derive(Component)]
@@ -24,16 +22,14 @@ impl GoogleOAuthClient {
     pub fn new(config: &AuthConfig) -> Self {
         let client_id = ClientId::new(config.google_client_id.clone());
         let client_secret = ClientSecret::new(config.google_client_secret.clone());
-        let auth_url =
-            AuthUrl::new("https://accounts.google.com/o/oauth2/v2/auth".to_string())
-                .expect("Invalid authorization endpoint URL");
+        let auth_url = AuthUrl::new("https://accounts.google.com/o/oauth2/v2/auth".to_string())
+            .expect("Invalid authorization endpoint URL");
 
-        let token_url =
-            TokenUrl::new("https://oauth2.googleapis.com/token".to_string())
-                .expect("Invalid token endpoint URL");
+        let token_url = TokenUrl::new("https://oauth2.googleapis.com/token".to_string())
+            .expect("Invalid token endpoint URL");
 
-        let redirect_url = RedirectUrl::new(config.google_redirect_url.clone())
-            .expect("Invalid redirect URL");
+        let redirect_url =
+            RedirectUrl::new(config.google_redirect_url.clone()).expect("Invalid redirect URL");
 
         let oauth_client = BasicClient::new(client_id)
             .set_client_secret(client_secret)
@@ -75,10 +71,10 @@ impl From<GoogleOAuthClient> for GoogleOAuthClientParameters {
 mod client {
 
     use oauth2::{
+        Client, EmptyExtraTokenFields, EndpointNotSet, EndpointSet, RevocationErrorResponseType,
+        StandardErrorResponse, StandardRevocableToken, StandardTokenIntrospectionResponse,
+        StandardTokenResponse,
         basic::{BasicErrorResponseType, BasicTokenType},
-        Client, EmptyExtraTokenFields, EndpointNotSet, EndpointSet,
-        RevocationErrorResponseType, StandardErrorResponse, StandardRevocableToken,
-        StandardTokenIntrospectionResponse, StandardTokenResponse,
     };
 
     pub type OAuthClientType = Client<

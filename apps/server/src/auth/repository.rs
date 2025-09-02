@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use redis::AsyncTypedCommands;
 use shaku::{Component, Interface};
 
-use crate::shared::{redis::CacheDbConnection, AppError};
+use crate::shared::{AppError, redis::CacheDbConnection};
 
 #[derive(Component)]
 #[shaku(interface = AuthRepository)]

@@ -4,8 +4,8 @@ use uuid::Uuid;
 use crate::{
     courses::{CourseResponse, CourseService, CreateCourseDto, UpdateCourseDto},
     enrollments::{
-        CreateEnrollmentDto, EnrollmentFilter, EnrollmentResponse,
-        EnrollmentService, UpdateEnrollmentDto,
+        CreateEnrollmentDto, EnrollmentFilter, EnrollmentResponse, EnrollmentService,
+        UpdateEnrollmentDto,
     },
     shared::di::AppModule,
 };

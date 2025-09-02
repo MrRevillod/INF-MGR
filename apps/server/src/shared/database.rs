@@ -1,7 +1,7 @@
 use crate::config::PostgresDbConfig;
 
 use shaku::{Component, Interface};
-use sqlx::{postgres::PgPoolOptions, PgPool};
+use sqlx::{PgPool, postgres::PgPoolOptions};
 use std::time::Duration;
 
 pub const DEFAULT_PAGE_SIZE: u64 = 10;

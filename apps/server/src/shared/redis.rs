@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use redis::{aio::MultiplexedConnection, Client};
+use redis::{Client, aio::MultiplexedConnection};
 use shaku::{Component, Interface};
 
 use crate::config::RedisConfig;

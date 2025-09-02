@@ -1,16 +1,14 @@
 pub mod utils;
 
 use crate::{
-    courses::utils::TestCourse, enrollments::utils::TestEnrollment,
-    extract_resource_id, init_test_app, practices::utils::TestPractice,
-    users::utils::TestUser,
+    courses::utils::TestCourse, enrollments::utils::TestEnrollment, extract_resource_id,
+    init_test_app, practices::utils::TestPractice, users::utils::TestUser,
 };
 use axum::http::StatusCode;
 use chrono::{Duration, Utc};
 
 #[tokio::test]
-async fn create_practice_with_valid_phone_should_work()
--> Result<(), Box<dyn std::error::Error>> {
+async fn create_practice_with_valid_phone_should_work() -> Result<(), Box<dyn std::error::Error>> {
     let app = init_test_app().await?;
 
     let student_id = TestUser::create_student(&app).await;
@@ -54,8 +52,8 @@ async fn create_practice_with_valid_phone_should_work()
 }
 
 #[tokio::test]
-async fn create_practice_with_invalid_phone_should_fail()
--> Result<(), Box<dyn std::error::Error>> {
+async fn create_practice_with_invalid_phone_should_fail() -> Result<(), Box<dyn std::error::Error>>
+{
     let app = init_test_app().await?;
 
     let student_id = TestUser::create_student(&app).await;

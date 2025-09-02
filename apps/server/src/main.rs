@@ -36,11 +36,10 @@ async fn main() {
         let mailer_config = config.get::<MailerConfig>()?;
         let template_config = config.get::<TemplateConfig>()?;
 
-        let mailer = Mailer::new(&mailer_config, &template_config)
-            .expect("Failed to create mailer");
+        let mailer =
+            Mailer::new(&mailer_config, &template_config).expect("Failed to create mailer");
 
-        let printer =
-            Printer::new(&template_config).expect("Failed to create printer");
+        let printer = Printer::new(&template_config).expect("Failed to create printer");
 
         let oauth_client = GoogleOAuthClient::new(&config.get::<AuthConfig>()?);
 

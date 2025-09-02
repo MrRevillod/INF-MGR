@@ -2,15 +2,15 @@ use async_trait::async_trait;
 use chrono::Utc;
 use sea_query_sqlx::SqlxBinder;
 use shaku::{Component, Interface};
-use sqlx::{query_as_with as sqlx_query, Postgres};
+use sqlx::{Postgres, query_as_with as sqlx_query};
 use std::sync::Arc;
 use uuid::Uuid;
 
-use sea_query::{extension::postgres::PgExpr, Expr, ExprTrait, Order, PostgresQueryBuilder, Query};
+use sea_query::{Expr, ExprTrait, Order, PostgresQueryBuilder, Query, extension::postgres::PgExpr};
 
 use crate::{
     shared::{
-        database::{DatabaseConnection, DEFAULT_PAGE_SIZE},
+        database::{DEFAULT_PAGE_SIZE, DatabaseConnection},
         errors::AppError,
     },
     users::entity::{User, Users},

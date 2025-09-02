@@ -7,12 +7,12 @@ use uuid::Uuid;
 
 use crate::{
     shared::{
-        database::{Pagination, DEFAULT_PAGE_SIZE},
+        database::{DEFAULT_PAGE_SIZE, Pagination},
         errors::{AppError, Input},
     },
     user_filter,
     users::{
-        dtos::from_string_vec_roles, CreateUserDto, UpdateUserDto, User, UserFilter, UserRepository,
+        CreateUserDto, UpdateUserDto, User, UserFilter, UserRepository, dtos::from_string_vec_roles,
     },
 };
 

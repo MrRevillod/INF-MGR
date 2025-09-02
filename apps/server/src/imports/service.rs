@@ -7,8 +7,8 @@ use crate::{
     enrollments::EnrollmentService,
     imports::{ImportCourseDto, ImportUserDto, ImportedUser},
     shared::{
-        services::event_queue::{Event, EventQueue},
         AppError,
+        services::event_queue::{Event, EventQueue},
     },
     user_filter,
     users::{Role, User, UserFilter, UserRepository},

@@ -14,8 +14,8 @@ use sqlx::postgres::PgPoolOptions;
 use std::time::Duration;
 use uuid::Uuid;
 
-use fake::faker::{internet::en::FreeEmail, name::en::Name};
 use fake::Fake;
+use fake::faker::{internet::en::FreeEmail, name::en::Name};
 
 #[tokio::main]
 async fn main() -> Result<(), sqlx::Error> {

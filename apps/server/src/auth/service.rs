@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use oauth2::{
-    reqwest::{self, redirect::Policy},
     AuthorizationCode, CsrfToken, Scope, TokenResponse,
+    reqwest::{self, redirect::Policy},
 };
 
 use shaku::{Component, Interface};
@@ -12,7 +12,7 @@ use crate::{
         dtos::{AuthSuccessParams, CallBackParams, GoogleUserInfo, LoginData},
         repository::AuthRepository,
     },
-    shared::{errors::AuthError, oauth::OAuthClient, AppError, AppResult},
+    shared::{AppError, AppResult, errors::AuthError, oauth::OAuthClient},
     user_filter,
     users::{User, UserFilter, UserRepository},
 };
@@ -49,10 +49,6 @@ impl OAuthService for GoogleOAuthService {
             .add_scope(Scope::new("profile".into()))
             .url();
 
-        // Debug log para verificar la URL generada
-        println!("🔍 DEBUG - Generated auth URL: {}", auth_url);
-        println!("🔍 DEBUG - Redirect URI in client: {:?}", client.redirect_uri());
-
         self.auth_repository.save_csrf_token(csrf_token.secret()).await?;
 
         Ok(LoginData {
@@ -71,15 +67,11 @@ impl OAuthService for GoogleOAuthService {
             .map_err(|e| AppError::InternalServerError(e.into()))?;
 
         if !response.status().is_success() {
-            return Err(AppError::InternalServerError(
-                "Failed to fetch user info".into(),
-            ));
+            return Err(AppError::InternalServerError("Failed to fetch user info".into()));
         }
 
-        let user_info: GoogleUserInfo = response
-            .json()
-            .await
-            .map_err(|e| AppError::InternalServerError(e.into()))?;
+        let user_info: GoogleUserInfo =
+            response.json().await.map_err(|e| AppError::InternalServerError(e.into()))?;
 
         Ok(user_info)
     }

@@ -32,30 +32,28 @@ pub mod users;
 pub mod imports;
 
 #[cfg(test)]
-pub static TEST_EMAILS: std::sync::LazyLock<
-    std::collections::HashMap<String, String>,
-> = std::sync::LazyLock::new(|| {
-    let mut m = std::collections::HashMap::new();
+pub static TEST_EMAILS: std::sync::LazyLock<std::collections::HashMap<String, String>> =
+    std::sync::LazyLock::new(|| {
+        let mut m = std::collections::HashMap::new();
 
-    if let Ok(student_email) = std::env::var("TEST_STUDENT_EMAIL") {
-        m.insert("student".to_string(), student_email);
-    }
+        if let Ok(student_email) = std::env::var("TEST_STUDENT_EMAIL") {
+            m.insert("student".to_string(), student_email);
+        }
 
-    if let Ok(teacher_email) = std::env::var("TEST_TEACHER_EMAIL") {
-        m.insert("teacher".to_string(), teacher_email);
-    }
+        if let Ok(teacher_email) = std::env::var("TEST_TEACHER_EMAIL") {
+            m.insert("teacher".to_string(), teacher_email);
+        }
 
-    if let Ok(supervisor_email) = std::env::var("TEST_SUPERVISOR_EMAIL") {
-        m.insert("supervisor".to_string(), supervisor_email);
-    }
+        if let Ok(supervisor_email) = std::env::var("TEST_SUPERVISOR_EMAIL") {
+            m.insert("supervisor".to_string(), supervisor_email);
+        }
 
-    m
-});
+        m
+    });
 
 use server::{
-    config::PostgresDbConfig, courses::CoursesController,
-    enrollments::EnrollmentsController, shared::database::PostgresDatabase,
-    shared::di::DependencyContainer, users::UsersController,
+    config::PostgresDbConfig, courses::CoursesController, enrollments::EnrollmentsController,
+    shared::database::PostgresDatabase, shared::di::DependencyContainer, users::UsersController,
 };
 
 use tokio::sync::mpsc;
@@ -74,11 +72,10 @@ pub async fn init_test_app() -> Result<TestServer, Box<dyn std::error::Error>> {
         let mailer_config = config.get::<MailerConfig>()?;
         let template_config = config.get::<TemplateConfig>()?;
 
-        let mailer = Mailer::new(&mailer_config, &template_config)
-            .expect("Failed to create mailer");
+        let mailer =
+            Mailer::new(&mailer_config, &template_config).expect("Failed to create mailer");
 
-        let printer =
-            Printer::new(&template_config).expect("Failed to create printer");
+        let printer = Printer::new(&template_config).expect("Failed to create printer");
 
         let oauth_client = GoogleOAuthClient::new(&config.get::<AuthConfig>()?);
 

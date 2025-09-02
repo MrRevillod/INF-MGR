@@ -1,10 +1,10 @@
 use std::{env, path::Path, sync::Arc};
-use tokio::sync::{mpsc::Receiver, Mutex};
+use tokio::sync::{Mutex, mpsc::Receiver};
 use uuid::Uuid;
 
 use crate::{
     shared::services::{
-        event_queue::{format_date, Event},
+        event_queue::{Event, format_date},
         mailer::{MailTo, Mailer},
         printer::{PrintOptions, Printer},
         templates::RawContext,

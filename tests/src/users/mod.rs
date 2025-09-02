@@ -54,8 +54,7 @@ async fn just_test_update_user() -> Result<(), Box<dyn std::error::Error>> {
 // ==================== CREATE USER VALIDATION TESTS ====================
 
 #[tokio::test]
-async fn test_create_user_invalid_rut_format()
--> Result<(), Box<dyn std::error::Error>> {
+async fn test_create_user_invalid_rut_format() -> Result<(), Box<dyn std::error::Error>> {
     let app = init_test_app().await?;
 
     let new_user = TestUser::builder().with_rut("34108499").build();
@@ -67,8 +66,8 @@ async fn test_create_user_invalid_rut_format()
 }
 
 #[tokio::test]
-async fn test_create_user_invalid_rut_verification_digit()
--> Result<(), Box<dyn std::error::Error>> {
+async fn test_create_user_invalid_rut_verification_digit() -> Result<(), Box<dyn std::error::Error>>
+{
     let app = init_test_app().await?;
     let new_user = TestUser::builder().with_rut("34108499-9").build();
     let response = TestUser::create_user_no_extract(&app, new_user).await;
@@ -79,8 +78,7 @@ async fn test_create_user_invalid_rut_verification_digit()
 }
 
 #[tokio::test]
-async fn test_create_user_name_too_short() -> Result<(), Box<dyn std::error::Error>>
-{
+async fn test_create_user_name_too_short() -> Result<(), Box<dyn std::error::Error>> {
     let app = init_test_app().await?;
 
     let new_user = TestUser::builder().with_name("Test").build();
@@ -117,8 +115,7 @@ async fn test_create_user_invalid_email() -> Result<(), Box<dyn std::error::Erro
 }
 
 #[tokio::test]
-async fn test_create_user_password_too_short()
--> Result<(), Box<dyn std::error::Error>> {
+async fn test_create_user_password_too_short() -> Result<(), Box<dyn std::error::Error>> {
     let app = init_test_app().await?;
     let new_user = TestUser::builder().with_password("Test1!", "Test1!").build();
     let response = TestUser::create_user_no_extract(&app, new_user).await;
@@ -129,8 +126,7 @@ async fn test_create_user_password_too_short()
 }
 
 #[tokio::test]
-async fn test_create_user_password_missing_uppercase()
--> Result<(), Box<dyn std::error::Error>> {
+async fn test_create_user_password_missing_uppercase() -> Result<(), Box<dyn std::error::Error>> {
     let app = init_test_app().await?;
     let new_user = TestUser::builder()
         .with_password("testpassword123!", "testpassword123!")
@@ -144,8 +140,7 @@ async fn test_create_user_password_missing_uppercase()
 }
 
 #[tokio::test]
-async fn test_create_user_password_missing_lowercase()
--> Result<(), Box<dyn std::error::Error>> {
+async fn test_create_user_password_missing_lowercase() -> Result<(), Box<dyn std::error::Error>> {
     let app = init_test_app().await?;
     let new_user = TestUser::builder()
         .with_password("TESTPASSWORD123!", "TESTPASSWORD123!")
@@ -159,11 +154,9 @@ async fn test_create_user_password_missing_lowercase()
 }
 
 #[tokio::test]
-async fn test_create_user_password_missing_digit()
--> Result<(), Box<dyn std::error::Error>> {
+async fn test_create_user_password_missing_digit() -> Result<(), Box<dyn std::error::Error>> {
     let app = init_test_app().await?;
-    let new_user =
-        TestUser::builder().with_password("TestPassword!", "TestPassword!").build();
+    let new_user = TestUser::builder().with_password("TestPassword!", "TestPassword!").build();
 
     let response = TestUser::create_user_no_extract(&app, new_user).await;
 
@@ -173,12 +166,10 @@ async fn test_create_user_password_missing_digit()
 }
 
 #[tokio::test]
-async fn test_create_user_password_missing_special_char()
--> Result<(), Box<dyn std::error::Error>> {
+async fn test_create_user_password_missing_special_char() -> Result<(), Box<dyn std::error::Error>>
+{
     let app = init_test_app().await?;
-    let new_user = TestUser::builder()
-        .with_password("TestPassword123", "TestPassword123")
-        .build();
+    let new_user = TestUser::builder().with_password("TestPassword123", "TestPassword123").build();
 
     let response = TestUser::create_user_no_extract(&app, new_user).await;
 
@@ -188,8 +179,7 @@ async fn test_create_user_password_missing_special_char()
 }
 
 #[tokio::test]
-async fn test_create_user_passwords_dont_match()
--> Result<(), Box<dyn std::error::Error>> {
+async fn test_create_user_passwords_dont_match() -> Result<(), Box<dyn std::error::Error>> {
     let app = init_test_app().await?;
     let new_user = TestUser::builder()
         .with_password("TestPassword123!", "DifferentPassword123!")
@@ -242,8 +232,7 @@ async fn test_update_user_invalid_email() -> Result<(), Box<dyn std::error::Erro
     let user_id = extract_resource_id(&body);
     let update_user = json!({ "email": "invalid-email-format" });
 
-    let updated_response =
-        TestUser::update_no_extract(&app, &user_id, update_user).await;
+    let updated_response = TestUser::update_no_extract(&app, &user_id, update_user).await;
 
     assert_eq!(updated_response.code, 400);
 
@@ -253,8 +242,7 @@ async fn test_update_user_invalid_email() -> Result<(), Box<dyn std::error::Erro
 }
 
 #[tokio::test]
-async fn test_update_user_password_only_one_field()
--> Result<(), Box<dyn std::error::Error>> {
+async fn test_update_user_password_only_one_field() -> Result<(), Box<dyn std::error::Error>> {
     let app = init_test_app().await?;
     let new_user = TestUser::builder().build();
 
@@ -262,8 +250,7 @@ async fn test_update_user_password_only_one_field()
     let user_id = extract_resource_id(&body);
     let update_user = json!({ "password": "NewPassword123!" });
 
-    let updated_response =
-        TestUser::update_no_extract(&app, &user_id, update_user).await;
+    let updated_response = TestUser::update_no_extract(&app, &user_id, update_user).await;
 
     assert_eq!(updated_response.code, 400);
 
@@ -273,17 +260,16 @@ async fn test_update_user_password_only_one_field()
 }
 
 #[tokio::test]
-async fn test_update_user_passwords_dont_match()
--> Result<(), Box<dyn std::error::Error>> {
+async fn test_update_user_passwords_dont_match() -> Result<(), Box<dyn std::error::Error>> {
     let app = init_test_app().await?;
     let new_user = TestUser::builder().build();
     let body = TestUser::create_user(&app, new_user).await;
 
     let user_id = body.get("id").and_then(|id| id.as_str()).unwrap();
-    let update_user = json!({ "password": "NewPassword123!", "confirmPassword": "DifferentPassword123!" });
+    let update_user =
+        json!({ "password": "NewPassword123!", "confirmPassword": "DifferentPassword123!" });
 
-    let updated_response =
-        TestUser::update_no_extract(&app, &user_id, update_user).await;
+    let updated_response = TestUser::update_no_extract(&app, &user_id, update_user).await;
 
     assert_eq!(updated_response.code, 400);
     TestUser::delete(&app, user_id).await;
@@ -292,8 +278,7 @@ async fn test_update_user_passwords_dont_match()
 }
 
 #[tokio::test]
-async fn test_update_user_invalid_password_format()
--> Result<(), Box<dyn std::error::Error>> {
+async fn test_update_user_invalid_password_format() -> Result<(), Box<dyn std::error::Error>> {
     let app = init_test_app().await?;
     let new_user = TestUser::builder().build();
 
@@ -301,8 +286,7 @@ async fn test_update_user_invalid_password_format()
     let user_id = body.get("id").and_then(|id| id.as_str()).unwrap();
 
     let update_user = json!({ "password": "Test1!", "confirmPassword": "Test1!" });
-    let updated_response =
-        TestUser::update_no_extract(&app, &user_id, update_user).await;
+    let updated_response = TestUser::update_no_extract(&app, &user_id, update_user).await;
 
     assert_eq!(updated_response.code, 400);
     TestUser::delete(&app, user_id).await;
@@ -319,8 +303,7 @@ async fn test_update_user_invalid_role() -> Result<(), Box<dyn std::error::Error
     let user_id = body.get("id").and_then(|id| id.as_str()).unwrap();
     let update_user = json!({ "roles": ["invalid_role"] });
 
-    let updated_response =
-        TestUser::update_no_extract(&app, &user_id, update_user).await;
+    let updated_response = TestUser::update_no_extract(&app, &user_id, update_user).await;
 
     assert_eq!(updated_response.code, 400);
     TestUser::delete(&app, user_id).await;
@@ -329,8 +312,7 @@ async fn test_update_user_invalid_role() -> Result<(), Box<dyn std::error::Error
 }
 
 #[tokio::test]
-async fn test_update_user_valid_password_change()
--> Result<(), Box<dyn std::error::Error>> {
+async fn test_update_user_valid_password_change() -> Result<(), Box<dyn std::error::Error>> {
     let app = init_test_app().await?;
     let new_user = TestUser::builder().build();
 
@@ -342,8 +324,7 @@ async fn test_update_user_valid_password_change()
         "confirmPassword": "NewValidPassword123!"
     });
 
-    let updated_response =
-        TestUser::update_no_extract(&app, &user_id, update_user).await;
+    let updated_response = TestUser::update_no_extract(&app, &user_id, update_user).await;
 
     assert_eq!(updated_response.code, 200);
 
@@ -353,8 +334,7 @@ async fn test_update_user_valid_password_change()
 }
 
 #[tokio::test]
-async fn test_update_user_valid_role_change()
--> Result<(), Box<dyn std::error::Error>> {
+async fn test_update_user_valid_role_change() -> Result<(), Box<dyn std::error::Error>> {
     let app = init_test_app().await?;
     let new_user = TestUser::builder().build();
     let body = TestUser::create_user(&app, new_user).await;
@@ -362,8 +342,7 @@ async fn test_update_user_valid_role_change()
     let user_id = extract_resource_id(&body);
     let update_user = json!({ "roles": ["teacher", "administrator"] });
 
-    let updated_response =
-        TestUser::update_no_extract(&app, &user_id, update_user).await;
+    let updated_response = TestUser::update_no_extract(&app, &user_id, update_user).await;
 
     assert_eq!(updated_response.code, 200);
 
@@ -388,8 +367,7 @@ async fn test_update_user_valid_role_change()
 // ==================== EDGE CASES AND BOUNDARY TESTS ====================
 
 #[tokio::test]
-async fn test_create_user_name_boundary_valid()
--> Result<(), Box<dyn std::error::Error>> {
+async fn test_create_user_name_boundary_valid() -> Result<(), Box<dyn std::error::Error>> {
     let app = init_test_app().await?;
     let new_user = TestUser::builder().with_name("Tests").build();
     let body = TestUser::create_user(&app, new_user).await;
@@ -402,8 +380,7 @@ async fn test_create_user_name_boundary_valid()
 }
 
 #[tokio::test]
-async fn test_create_user_name_boundary_maximum()
--> Result<(), Box<dyn std::error::Error>> {
+async fn test_create_user_name_boundary_maximum() -> Result<(), Box<dyn std::error::Error>> {
     let app = init_test_app().await?;
     let max_name = "a".repeat(100);
     let new_user = TestUser::builder().with_name(&max_name).build();
@@ -417,8 +394,7 @@ async fn test_create_user_name_boundary_maximum()
 }
 
 #[tokio::test]
-async fn test_create_user_password_boundary_minimum()
--> Result<(), Box<dyn std::error::Error>> {
+async fn test_create_user_password_boundary_minimum() -> Result<(), Box<dyn std::error::Error>> {
     let app = init_test_app().await?;
     let new_user = TestUser::builder().with_password("TestPa1!", "TestPa1!").build();
 
@@ -432,8 +408,7 @@ async fn test_create_user_password_boundary_minimum()
 }
 
 #[tokio::test]
-async fn test_create_user_password_boundary_maximum()
--> Result<(), Box<dyn std::error::Error>> {
+async fn test_create_user_password_boundary_maximum() -> Result<(), Box<dyn std::error::Error>> {
     let app = init_test_app().await?;
     let base_password = "A".repeat(96);
     let password = format!("{}a1!", base_password);
