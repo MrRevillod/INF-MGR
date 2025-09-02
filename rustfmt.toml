@@ -2,8 +2,6 @@ max_width = 100
 fn_call_width = 80
 chain_width = 80
 
-# Opciones estables
 reorder_imports = true
 use_field_init_shorthand = true
 array_width = 80
-newline_style = "Unix"

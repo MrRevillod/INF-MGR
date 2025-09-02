@@ -269,10 +269,10 @@ impl EventSubscriber {
                 let out_path_str = format!("{documents_dir}/{practice_static_dir}");
                 let out_path = Path::new(&out_path_str);
 
-                if let Some(parent) = out_path.parent() {
-                    if !parent.exists() {
-                        std::fs::create_dir_all(parent)?;
-                    }
+                if let Some(parent) = out_path.parent()
+                    && !parent.exists()
+                {
+                    std::fs::create_dir_all(parent)?;
                 }
 
                 tokio::fs::write(out_path, pdf).await?;
