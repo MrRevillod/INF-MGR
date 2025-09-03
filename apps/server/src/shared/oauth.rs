@@ -6,6 +6,8 @@ use oauth2::{AuthUrl, ClientId, ClientSecret, RedirectUrl, TokenUrl, basic::Basi
 use reqwest::{Client as HttpClient, ClientBuilder, redirect::Policy};
 use shaku::{Component, Interface};
 
+pub use client::OAuthTokenType;
+
 #[derive(Component)]
 #[shaku(interface = OAuthClient)]
 pub struct GoogleOAuthClient {
@@ -89,4 +91,6 @@ mod client {
         EndpointNotSet,
         EndpointSet,
     >;
+
+    pub type OAuthTokenType = StandardTokenResponse<EmptyExtraTokenFields, BasicTokenType>;
 }

@@ -45,7 +45,7 @@ services:
       file: docker-compose.base.yml
       service: redis_base
     ports:
-      - "6379:6379"
+      - "6380:6379"
     networks:
       - my_networks
 

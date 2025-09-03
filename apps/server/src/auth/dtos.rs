@@ -1,10 +1,4 @@
-use serde::{Deserialize, Serialize};
-
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct LoginData {
-    pub auth_url: String,
-}
+use serde::Deserialize;
 
 #[derive(Deserialize, Default)]
 pub struct CallBackParams {

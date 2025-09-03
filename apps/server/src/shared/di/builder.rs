@@ -1,6 +1,9 @@
-use crate::shared::{
-    database::PostgresDatabase, di::DependencyContainer, oauth::GoogleOAuthClient,
-    redis::RedisDatabase, services::event_queue::TokioEventSender,
+use crate::{
+    auth::JsonWebTokenService,
+    shared::{
+        database::PostgresDatabase, di::DependencyContainer, oauth::GoogleOAuthClient,
+        redis::RedisDatabase, services::event_queue::TokioEventSender,
+    },
 };
 
 #[derive(Default)]
@@ -9,6 +12,7 @@ pub struct DependencyContainerBuilder {
     sender: Option<TokioEventSender>,
     oauth_client: Option<GoogleOAuthClient>,
     redis_db: Option<RedisDatabase>,
+    jwt_service: Option<JsonWebTokenService>,
 }
 
 impl DependencyContainerBuilder {
@@ -38,12 +42,18 @@ impl DependencyContainerBuilder {
         self
     }
 
+    pub fn with_jwt_service(mut self, service: JsonWebTokenService) -> Self {
+        self.jwt_service = Some(service);
+        self
+    }
+
     pub fn build(self) -> DependencyContainer {
         DependencyContainer::new(
             self.postgres_db.expect("Postgres database is required"),
             self.sender.expect("Event sender is required"),
             self.oauth_client.expect("OAuth client is required"),
             self.redis_db.expect("Redis database is required"),
+            self.jwt_service.expect("JWT service is required"),
         )
     }
 }

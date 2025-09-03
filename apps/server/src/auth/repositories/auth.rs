@@ -1,14 +1,13 @@
-use std::sync::Arc;
-
 use async_trait::async_trait;
 use redis::AsyncTypedCommands;
 use shaku::{Component, Interface};
+use std::sync::Arc;
 
 use crate::shared::{AppError, redis::CacheDbConnection};
 
 #[derive(Component)]
 #[shaku(interface = AuthRepository)]
-pub struct AuthRepositoryImpl {
+pub struct OAuthRepository {
     #[shaku(inject)]
     redis_db: Arc<dyn CacheDbConnection>,
 }
@@ -20,7 +19,7 @@ pub trait AuthRepository: Interface {
 }
 
 #[async_trait]
-impl AuthRepository for AuthRepositoryImpl {
+impl AuthRepository for OAuthRepository {
     async fn save_csrf_token(&self, token: &str) -> Result<(), AppError> {
         self.redis_db
             .get_connection()

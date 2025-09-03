@@ -1,20 +1,17 @@
 use async_trait::async_trait;
-use oauth2::{
-    AuthorizationCode, CsrfToken, Scope, TokenResponse,
-    reqwest::{self, redirect::Policy},
-};
+use oauth2::{AuthorizationCode, CsrfToken, Scope, TokenResponse};
 
 use shaku::{Component, Interface};
 use std::sync::Arc;
 
 use crate::{
-    auth::{
-        dtos::{AuthSuccessParams, CallBackParams, GoogleUserInfo, LoginData},
-        repository::AuthRepository,
+    auth::{AuthRepository, AuthSuccessParams, CallBackParams, GoogleUserInfo},
+    shared::{
+        AppError, AppResult,
+        errors::AuthError,
+        oauth::{OAuthClient, OAuthTokenType},
     },
-    shared::{AppError, AppResult, errors::AuthError, oauth::OAuthClient},
-    user_filter,
-    users::{User, UserFilter, UserRepository},
+    users::{User, UserFilter, UserRepository, user_filter},
 };
 
 #[derive(Component)]
@@ -32,14 +29,14 @@ pub struct GoogleOAuthService {
 
 #[async_trait]
 pub trait OAuthService: Interface {
-    async fn oauth_login(&self) -> AppResult<LoginData>;
-    async fn validate_callback(&self, params: CallBackParams) -> AppResult<User>;
+    async fn oauth_login(&self) -> AppResult<String>;
+    async fn validate_callback(&self, params: CallBackParams) -> AppResult<(User, OAuthTokenType)>;
     async fn get_user_info(&self, access_token: &str) -> AppResult<GoogleUserInfo>;
 }
 
 #[async_trait]
 impl OAuthService for GoogleOAuthService {
-    async fn oauth_login(&self) -> AppResult<LoginData> {
+    async fn oauth_login(&self) -> AppResult<String> {
         let client = self.oauth_client.get_client();
 
         let (auth_url, csrf_token) = client
@@ -51,32 +48,32 @@ impl OAuthService for GoogleOAuthService {
 
         self.auth_repository.save_csrf_token(csrf_token.secret()).await?;
 
-        Ok(LoginData {
-            auth_url: auth_url.to_string(),
-        })
+        Ok(auth_url.to_string())
     }
 
     async fn get_user_info(&self, access_token: &str) -> AppResult<GoogleUserInfo> {
         let http_client = self.oauth_client.get_http_client();
 
-        let response = http_client
+        let user_info_response = http_client
             .get("https://www.googleapis.com/oauth2/v2/userinfo")
             .bearer_auth(access_token)
             .send()
             .await
             .map_err(|e| AppError::InternalServerError(e.into()))?;
 
-        if !response.status().is_success() {
+        if !user_info_response.status().is_success() {
             return Err(AppError::InternalServerError("Failed to fetch user info".into()));
         }
 
-        let user_info: GoogleUserInfo =
-            response.json().await.map_err(|e| AppError::InternalServerError(e.into()))?;
+        let user_info: GoogleUserInfo = user_info_response
+            .json()
+            .await
+            .map_err(|e| AppError::InternalServerError(e.into()))?;
 
         Ok(user_info)
     }
 
-    async fn validate_callback(&self, params: CallBackParams) -> AppResult<User> {
+    async fn validate_callback(&self, params: CallBackParams) -> AppResult<(User, OAuthTokenType)> {
         let CallBackParams { success, error } = params;
 
         if let Some(err) = error {
@@ -93,18 +90,13 @@ impl OAuthService for GoogleOAuthService {
             return Err(AuthError::OAuthError("Invalid CSRF token".into()))?;
         }
 
-        let http_client = reqwest::ClientBuilder::new()
-            .redirect(Policy::none())
-            .build()
-            .map_err(|e| AppError::InternalServerError(e.into()))?;
-
-        let token_result = client
+        let token_response = client
             .exchange_code(AuthorizationCode::new(code))
-            .request_async(&http_client)
+            .request_async(self.oauth_client.get_http_client())
             .await
             .map_err(|e| AppError::InternalServerError(e.into()))?;
 
-        let access_token = token_result.access_token().secret();
+        let access_token = token_response.access_token().secret();
         let google_user_info = self.get_user_info(access_token).await?;
 
         let system_user = self
@@ -121,6 +113,6 @@ impl OAuthService for GoogleOAuthService {
             self.user_repository.save(user.clone()).await?;
         }
 
-        Ok(user)
+        Ok((user, token_response))
     }
 }
