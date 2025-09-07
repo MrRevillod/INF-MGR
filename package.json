@@ -1,5 +1,6 @@
 {
 	"name": "inf-mgr",
+	"type": "module",
 	"version": "1.0.0",
 	"description": "Este repositorio contiene el código fuente de un sistema de gestión de prácticas y tesis universitarias. El sistema está diseñado para facilitar la administración de las prácticas y tesis de los estudiantes, permitiendo a los administradores gestionar las solicitudes, asignaciones y seguimientos de manera eficiente.",
 	"main": "index.js",

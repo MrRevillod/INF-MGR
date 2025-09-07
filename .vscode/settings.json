@@ -43,6 +43,7 @@
 		".markdown": false,
 		"target": true,
 		"**/.svelte-kit": true,
+		".husky": true,
 	},
 	"explorer.fileNesting.enabled": true,
 	"explorer.fileNesting.expand": false,
