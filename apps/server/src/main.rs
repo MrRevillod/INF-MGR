@@ -1,26 +1,27 @@
-use server::auth::{AuthController, JsonWebTokenService, TokenConfig};
-use server::shared::di::InitialComponents;
 use sword::core::Config;
 use sword::prelude::Application;
 use tokio::sync::mpsc;
 
 use server::{
-    config::*, courses::CoursesController, enrollments::EnrollmentsController,
-    shared::redis::RedisDatabase, users::UsersController,
+    auth::{AuthController, JsonWebTokenService, TokenConfig},
+    config::*,
+    courses::CoursesController,
+    enrollments::EnrollmentsController,
+    users::UsersController,
 };
 
 use server::shared::{
     database::PostgresDatabase,
-    di::DependencyContainer,
+    di::{DependencyContainer, InitialComponents},
     layers::{CorsLayer, HelmetLayer, LoggerLayer},
     oauth::GoogleOAuthClient,
-};
-
-use server::shared::services::{
-    event_queue::*,
-    mailer::{Mailer, MailerConfig},
-    printer::Printer,
-    templates::TemplateConfig,
+    redis::RedisDatabase,
+    services::{
+        event_queue::*,
+        mailer::{Mailer, MailerConfig},
+        printer::Printer,
+        templates::TemplateConfig,
+    },
 };
 
 #[sword::main]
@@ -37,10 +38,9 @@ async fn main() {
 
     let (tx, rx) = mpsc::channel(app_config.event_queue_buffer_size);
 
-    let publisher = TokioEventSender::new(tx);
     let dependency_container = DependencyContainer::builder()
         .with_postgres_db(pg_db)
-        .with_event_sender(publisher)
+        .with_event_queue(TokioEventQueue::new(tx))
         .with_oauth_client(oauth_client)
         .with_redis_db(redis_db)
         .with_jwt_service(jsonwebtoken_service)
@@ -55,7 +55,7 @@ async fn main() {
     .await;
 
     app = app
-        .with_shaku_di_module(dependency_container.module)?
+        .with_shaku_di_module(dependency_container)?
         .with_controller::<UsersController>()
         .with_controller::<CoursesController>()
         .with_controller::<EnrollmentsController>()
@@ -81,7 +81,6 @@ async fn build_initial_components(
     pg_db.migrate().await.expect("Failed to create database connection");
 
     let mailer = Mailer::new(&mailer_config, &template_config).expect("Failed to create mailer");
-
     let printer = Printer::new(&template_config).expect("Failed to create printer");
 
     let oauth_client = GoogleOAuthClient::new(&config.get::<AuthConfig>()?);
@@ -93,11 +92,11 @@ async fn build_initial_components(
     let jsonwebtoken_service = JsonWebTokenService::new(
         TokenConfig {
             secret: auth_config.access_jwt_secret,
-            expiration: auth_config.access_jwt_exp_ms,
+            expiration: auth_config.access_exp_ms,
         },
         TokenConfig {
             secret: auth_config.refresh_jwt_secret,
-            expiration: auth_config.refresh_jwt_exp_ms,
+            expiration: auth_config.refresh_exp_ms,
         },
     );
 

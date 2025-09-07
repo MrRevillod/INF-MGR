@@ -30,9 +30,12 @@ pub struct RedisConfig {
 #[config(key = "auth")]
 pub struct AuthConfig {
     pub access_jwt_secret: String,
-    pub access_jwt_exp_ms: usize,
     pub refresh_jwt_secret: String,
-    pub refresh_jwt_exp_ms: usize,
+
+    pub access_exp_ms: usize,
+    pub refresh_exp_ms: usize,
+
+    pub session_ttl_seconds: u64,
 
     pub google_client_id: String,
     pub google_client_secret: String,

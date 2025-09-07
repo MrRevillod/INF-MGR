@@ -1,13 +1,18 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Session {
+    pub id: Uuid,
     pub access_token: String,
     pub refresh_token: String,
-    pub expires_in: i64,
+
     pub user_id: String,
     pub google_access_token: String,
     pub google_refresh_token: String,
+
+    pub created_at: DateTime<Utc>,
 }
 
 impl Session {
@@ -18,9 +23,9 @@ impl Session {
 
 #[derive(Default)]
 pub struct SessionBuilder {
+    id: Option<Uuid>,
     access_token: Option<String>,
     refresh_token: Option<String>,
-    expires_in: Option<i64>,
     user_id: Option<String>,
     google_access_token: Option<String>,
     google_refresh_token: Option<String>,
@@ -29,13 +34,13 @@ pub struct SessionBuilder {
 impl SessionBuilder {
     pub fn new() -> Self {
         Self {
-            access_token: None,
-            refresh_token: None,
-            expires_in: None,
-            user_id: None,
-            google_access_token: None,
-            google_refresh_token: None,
+            ..Default::default()
         }
+    }
+
+    pub fn session_id(mut self, id: Uuid) -> Self {
+        self.id = Some(id);
+        self
     }
 
     pub fn access_token(mut self, token: String) -> Self {
@@ -45,11 +50,6 @@ impl SessionBuilder {
 
     pub fn refresh_token(mut self, token: String) -> Self {
         self.refresh_token = Some(token);
-        self
-    }
-
-    pub fn expires_in(mut self, expires_in: i64) -> Self {
-        self.expires_in = Some(expires_in);
         self
     }
 
@@ -70,12 +70,13 @@ impl SessionBuilder {
 
     pub fn build(self) -> Session {
         Session {
+            id: self.id.unwrap_or_else(Uuid::new_v4),
             access_token: self.access_token.unwrap_or_default(),
             refresh_token: self.refresh_token.unwrap_or_default(),
-            expires_in: self.expires_in.unwrap_or(0),
             user_id: self.user_id.unwrap_or_default(),
             google_access_token: self.google_access_token.unwrap_or_default(),
             google_refresh_token: self.google_refresh_token.unwrap_or_default(),
+            created_at: Utc::now(),
         }
     }
 }

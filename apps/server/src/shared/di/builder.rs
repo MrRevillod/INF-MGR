@@ -1,22 +1,22 @@
 use crate::{
     auth::JsonWebTokenService,
     shared::{
-        database::PostgresDatabase, di::DependencyContainer, oauth::GoogleOAuthClient,
-        redis::RedisDatabase, services::event_queue::TokioEventSender,
+        database::PostgresDatabase, di::AppModule, oauth::GoogleOAuthClient, redis::RedisDatabase,
+        services::event_queue::TokioEventQueue,
     },
 };
 
 #[derive(Default)]
-pub struct DependencyContainerBuilder {
+pub struct DependencyContainer {
     postgres_db: Option<PostgresDatabase>,
-    sender: Option<TokioEventSender>,
+    event_queue: Option<TokioEventQueue>,
     oauth_client: Option<GoogleOAuthClient>,
     redis_db: Option<RedisDatabase>,
     jwt_service: Option<JsonWebTokenService>,
 }
 
-impl DependencyContainerBuilder {
-    pub fn new() -> Self {
+impl DependencyContainer {
+    pub fn builder() -> Self {
         Self {
             ..Default::default()
         }
@@ -27,8 +27,8 @@ impl DependencyContainerBuilder {
         self
     }
 
-    pub fn with_event_sender(mut self, sender: TokioEventSender) -> Self {
-        self.sender = Some(sender);
+    pub fn with_event_queue(mut self, event_queue: TokioEventQueue) -> Self {
+        self.event_queue = Some(event_queue);
         self
     }
 
@@ -47,13 +47,20 @@ impl DependencyContainerBuilder {
         self
     }
 
-    pub fn build(self) -> DependencyContainer {
-        DependencyContainer::new(
-            self.postgres_db.expect("Postgres database is required"),
-            self.sender.expect("Event sender is required"),
-            self.oauth_client.expect("OAuth client is required"),
-            self.redis_db.expect("Redis database is required"),
-            self.jwt_service.expect("JWT service is required"),
-        )
+    pub fn build(self) -> AppModule {
+        let postgres_db = self.postgres_db.expect("PostgresDatabase is required");
+        let event_queue = self.event_queue.expect("TokioEventQueue is required");
+        let oauth_client = self.oauth_client.expect("GoogleOAuthClient is required");
+
+        let redis_db = self.redis_db.expect("RedisDatabase is required");
+        let jwt_service = self.jwt_service.expect("JsonWebTokenService is required");
+
+        AppModule::builder()
+            .with_component_parameters::<PostgresDatabase>(postgres_db.into())
+            .with_component_parameters::<TokioEventQueue>(event_queue.into())
+            .with_component_parameters::<GoogleOAuthClient>(oauth_client.into())
+            .with_component_parameters::<RedisDatabase>(redis_db.into())
+            .with_component_parameters::<JsonWebTokenService>(jwt_service.into())
+            .build()
     }
 }

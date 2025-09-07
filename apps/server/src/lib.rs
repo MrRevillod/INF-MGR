@@ -21,6 +21,10 @@ pub mod auth {
 
         mod jsonwebtoken;
         pub use jsonwebtoken::{Claims, JsonWebTokenService, TokenConfig, TokenKind, TokenService};
+
+        mod cookies;
+
+        pub use cookies::CookieBuilder;
     }
 
     pub use services::{Claims, TokenConfig, TokenKind, TokenService};
@@ -124,10 +128,11 @@ pub mod shared {
     pub use errors::{AppError, AppResult};
 
     pub mod di {
+        mod builder;
         mod container;
 
-        pub use container::{AppModule, DependencyContainer, InitialComponents};
-        mod builder;
+        pub use builder::DependencyContainer;
+        pub use container::{AppModule, InitialComponents};
     }
 
     pub mod macros;
@@ -167,14 +172,12 @@ pub mod shared {
 
         pub mod event_queue {
             mod publisher;
-            mod sender;
             mod subscriber;
 
             mod events;
 
             pub use events::*;
             pub use publisher::*;
-            pub use sender::*;
             pub use subscriber::*;
         }
     }

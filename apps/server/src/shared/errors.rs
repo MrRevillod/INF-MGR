@@ -55,6 +55,12 @@ pub enum AuthError {
 
     #[error("The user: {0} isn't registered in the system")]
     UserNotFound(String),
+
+    #[error("Jsonwebtoken error: {0}")]
+    JsonWebTokenError(#[from] jsonwebtoken::errors::Error),
+
+    #[error("Session expired")]
+    SessionExpired,
 }
 
 impl From<AppError> for HttpResponse {
@@ -88,8 +94,20 @@ impl From<AppError> for HttpResponse {
                     }),
                     AuthError::UserNotFound(email) => json!({
                         "error": "user_not_found",
-                        "message": "Usuario no encontrado en el sistema",
                         "details": format!("El usuario con email '{}' no está registrado.", email),
+                    }),
+
+                    AuthError::JsonWebTokenError(err) => {
+                        eprintln!("JWT error: {:?}", err);
+                        json!({
+                            "error": "authorization_token_error",
+                            "details": "No autorizado"
+                        })
+                    }
+
+                    AuthError::SessionExpired => json!({
+                        "error": "session_expired",
+                        "details": "La sesión ha expirado. Por favor, inicie sesión de nuevo."
                     }),
                 };
 

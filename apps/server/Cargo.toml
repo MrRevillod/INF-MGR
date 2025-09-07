@@ -70,9 +70,9 @@ rand = { version = "0.9.1", optional = true }
 
 thiserror = "2.0.14"
 
-passwords = "3.1.16"
 axum-helmet = "0.2.0"
 jsonwebtoken = "9.3.1"
+time = "0.3.43"
 
 [dev-dependencies]
 axum-test = "17.3.0"

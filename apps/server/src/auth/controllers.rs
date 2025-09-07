@@ -1,6 +1,9 @@
 use crate::{
-    auth::{CallBackParams, OAuthService, services::SessionService},
-    config::ApplicationConfig,
+    auth::{
+        CallBackParams, OAuthService,
+        services::{CookieBuilder, SessionService},
+    },
+    config::{ApplicationConfig, AuthConfig},
     shared::di::AppModule,
 };
 
@@ -25,30 +28,81 @@ impl AuthController {
             HttpResponse::BadRequest().message("Faltan parámetros de callback de Google OAuth")
         })?;
 
-        let oauth_service = ctx.di::<AppModule, dyn OAuthService>()?;
-        let (user, oauth_token) = oauth_service.validate_callback(callback_params).await?;
+        let (user, oauth_token) = ctx
+            .di::<AppModule, dyn OAuthService>()?
+            .validate_callback(callback_params)
+            .await?;
 
         let app_config = ctx.config::<ApplicationConfig>()?;
-        let redirect_url = format!("{}/dashboard", app_config.client_app_url);
+        let auth_config = ctx.config::<AuthConfig>()?;
 
-        let session_service = ctx.di::<AppModule, dyn SessionService>()?;
-        let session = session_service.create_session(&user, oauth_token).await?;
+        let session = ctx
+            .di::<AppModule, dyn SessionService>()?
+            .create_session(&user, oauth_token, auth_config.session_ttl_seconds)
+            .await?;
 
-        let access_token_cookie = Cookie::build(("access_token", session.access_token.clone()))
-            .path("/")
-            .http_only(true)
-            .same_site(SameSite::Lax)
+        let access_cookie = CookieBuilder::new(("access", session.access_token.clone()))
+            .max_age(auth_config.access_exp_ms)
             .build();
 
-        let refresh_token_cookie = Cookie::build(("refresh_token", session.refresh_token.clone()))
-            .path("/")
-            .http_only(true)
-            .same_site(SameSite::Lax)
+        let refresh_cookie = CookieBuilder::new(("refresh", session.refresh_token.clone()))
+            .max_age(auth_config.refresh_exp_ms)
             .build();
 
-        ctx.cookies_mut()?.add(access_token_cookie);
-        ctx.cookies_mut()?.add(refresh_token_cookie);
+        ctx.cookies_mut()?.add(access_cookie);
+        ctx.cookies_mut()?.add(refresh_cookie);
 
-        Ok(HttpResponse::TemporaryRedirect().add_header("Location", &redirect_url))
+        Ok(HttpResponse::TemporaryRedirect()
+            .add_header("Location", &format!("{}/dashboard", app_config.client_app_url)))
+    }
+
+    #[post("/refresh")]
+    async fn refresh_token(mut ctx: Context) -> HttpResult<HttpResponse> {
+        let cookies = ctx.cookies()?;
+        let auth_config = ctx.config::<AuthConfig>()?;
+
+        let refresh_token = cookies
+            .get("refresh")
+            .map(|c| c.value().to_string())
+            .ok_or(HttpResponse::Unauthorized())?;
+
+        let session = ctx
+            .di::<AppModule, dyn SessionService>()?
+            .refresh_session(refresh_token.to_string(), auth_config.session_ttl_seconds)
+            .await?;
+
+        let access_cookie = CookieBuilder::new(("access", session.access_token.clone()))
+            .max_age(auth_config.access_exp_ms)
+            .build();
+
+        let refresh_cookie = CookieBuilder::new(("refresh", session.refresh_token.clone()))
+            .max_age(auth_config.refresh_exp_ms)
+            .build();
+
+        ctx.cookies_mut()?.add(access_cookie);
+        ctx.cookies_mut()?.add(refresh_cookie);
+
+        Ok(HttpResponse::Ok())
+    }
+
+    #[post("/logout")]
+    async fn logout(mut ctx: Context) -> HttpResult<HttpResponse> {
+        let cookies = ctx.cookies()?;
+        let access_token = cookies.get("access").map(|c| c.value().to_string());
+
+        if let Some(token) = access_token {
+            ctx.di::<AppModule, dyn SessionService>()?.close_session(&token).await?;
+        }
+
+        let expired_access_cookie =
+            CookieBuilder::new(("access", String::default())).max_age(0).build();
+
+        let expired_refresh_cookie =
+            CookieBuilder::new(("refresh", String::default())).max_age(0).build();
+
+        ctx.cookies_mut()?.add(expired_access_cookie);
+        ctx.cookies_mut()?.add(expired_refresh_cookie);
+
+        Ok(HttpResponse::Ok())
     }
 }

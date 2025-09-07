@@ -20,7 +20,8 @@ type TraceLayer = TowerTraceLayer<
 
 #[allow(non_snake_case)]
 pub fn LoggerLayer() -> TraceLayer {
-    tracing_subscriber::fmt().with_target(false).compact().init();
+    // Use try_init to avoid panic if subscriber is already initialized
+    let _ = tracing_subscriber::fmt().with_target(false).compact().try_init();
 
     TowerTraceLayer::new_for_http()
         .make_span_with(TraceMakeSpan)
