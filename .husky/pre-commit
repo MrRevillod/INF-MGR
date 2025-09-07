@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+
+echo "Running pre-commit hooks..."
+
+echo "Running code linting"
+just lint
+
+echo "Running code formatting"
+just fmt
+
+echo "Running type checking"
+just check

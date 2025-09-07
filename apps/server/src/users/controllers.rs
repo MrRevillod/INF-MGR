@@ -1,4 +1,4 @@
-use crate::container::AppModule;
+use crate::shared::di::AppModule;
 use crate::users::{CreateUserDto, GetUsersQueryDto, UpdateUserDto, UserResponse, UserService};
 
 use serde_json::json;
@@ -12,8 +12,8 @@ pub struct UsersController;
 impl UsersController {
     #[get("/")]
     async fn find_all(ctx: Context) -> HttpResult<HttpResponse> {
-        let query = ctx.validated_query::<GetUsersQueryDto>()?;
-        let service = ctx.get_dependency::<AppModule, dyn UserService>()?;
+        let query = ctx.validated_query::<GetUsersQueryDto>()?.unwrap_or_default();
+        let service = ctx.di::<AppModule, dyn UserService>()?;
 
         let data = service.get_all(query.into()).await?;
         let users = data.items.into_iter().map(UserResponse::from).collect::<Vec<_>>();
@@ -32,7 +32,7 @@ impl UsersController {
     #[post("/")]
     async fn create(ctx: Context) -> HttpResult<HttpResponse> {
         let user_data = ctx.validated_body::<CreateUserDto>()?;
-        let service = ctx.get_dependency::<AppModule, dyn UserService>()?;
+        let service = ctx.di::<AppModule, dyn UserService>()?;
 
         let user = service.create(user_data).await?;
 
@@ -44,7 +44,7 @@ impl UsersController {
         let id = ctx.param::<Uuid>("id")?;
         let user_data = ctx.validated_body::<UpdateUserDto>()?;
 
-        let service = ctx.get_dependency::<AppModule, dyn UserService>()?;
+        let service = ctx.di::<AppModule, dyn UserService>()?;
         let user = service.update(id, user_data).await?;
 
         Ok(HttpResponse::Ok().data(UserResponse::from(user)))
@@ -53,7 +53,7 @@ impl UsersController {
     #[delete("/{id}")]
     async fn remove(ctx: Context) -> HttpResult<HttpResponse> {
         let id = ctx.param::<Uuid>("id")?;
-        let service = ctx.get_dependency::<AppModule, dyn UserService>()?;
+        let service = ctx.di::<AppModule, dyn UserService>()?;
 
         service.remove(id).await?;
 

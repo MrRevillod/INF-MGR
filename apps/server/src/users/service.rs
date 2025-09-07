@@ -1,7 +1,4 @@
-use crate::shared::services::{
-    event_queue::{Event, EventQueue},
-    hasher::PasswordHasher,
-};
+use crate::shared::services::event_queue::{Event, EventQueue};
 
 use async_trait::async_trait;
 use shaku::{Component, Interface};
@@ -10,12 +7,12 @@ use uuid::Uuid;
 
 use crate::{
     shared::{
-        entities::{Pagination, DEFAULT_PAGE_SIZE},
+        database::{DEFAULT_PAGE_SIZE, Pagination},
         errors::{AppError, Input},
     },
     user_filter,
     users::{
-        dtos::from_string_vec_roles, CreateUserDto, UpdateUserDto, User, UserFilter, UserRepository,
+        CreateUserDto, UpdateUserDto, User, UserFilter, UserRepository, dtos::from_string_vec_roles,
     },
 };
 
@@ -24,9 +21,6 @@ use crate::{
 pub struct UserServiceImpl {
     #[shaku(inject)]
     users: Arc<dyn UserRepository>,
-
-    #[shaku(inject)]
-    hasher: Arc<dyn PasswordHasher>,
 
     #[shaku(inject)]
     event_queue: Arc<dyn EventQueue>,
@@ -58,7 +52,7 @@ impl UserService for UserServiceImpl {
         })
     }
 
-    async fn create(&self, mut input: CreateUserDto) -> Result<User, AppError> {
+    async fn create(&self, input: CreateUserDto) -> Result<User, AppError> {
         let (user_by_rut, user_by_email) = tokio::try_join!(
             self.users.find_one(user_filter! {
                 rut: input.rut.clone(),
@@ -84,12 +78,8 @@ impl UserService for UserServiceImpl {
             }));
         }
 
-        let unhashed_password = input.password.clone();
-
-        input.password = self.hasher.hash(&input.password)?;
         let user = self.users.save(User::try_from(input.clone())?).await?;
-
-        let event_data = (user.name.clone(), user.email.clone(), unhashed_password.clone());
+        let event_data = (user.name.clone(), user.email.clone());
 
         self.event_queue.publish(Event::UserCreated(event_data)).await;
 
@@ -114,10 +104,6 @@ impl UserService for UserServiceImpl {
             }
 
             user.email = e
-        }
-
-        if let Some(p) = input.password {
-            user.password = self.hasher.hash(&p)?
         }
 
         if let Some(roles) = input.roles {

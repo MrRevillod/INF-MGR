@@ -15,9 +15,15 @@ pub enum AppError {
     },
 
     #[error("Database error: {source}")]
-    Database {
+    PostgresDatabase {
         #[from]
         source: sqlx::Error,
+    },
+
+    #[error("Redis error: {source}")]
+    RedisDatabase {
+        #[from]
+        source: redis::RedisError,
     },
 
     #[error("Not found: {0}")]
@@ -29,11 +35,32 @@ pub enum AppError {
     #[error("Invalid input: {0:?}")]
     InvalidInput(Input),
 
-    #[error("Internal server error")]
+    #[error("Unauthorized: {source}")]
+    Unauthorized {
+        #[from]
+        source: AuthError,
+    },
+
+    #[error("Internal server error: {0}")]
     InternalServerError(Box<dyn std::error::Error + Send + Sync>),
 
     #[error("Invalid operation: {0}")]
     InvalidOperation(String),
+}
+
+#[derive(Debug, Error)]
+pub enum AuthError {
+    #[error("OAuthError: {0}")]
+    OAuthError(String),
+
+    #[error("The user: {0} isn't registered in the system")]
+    UserNotFound(String),
+
+    #[error("Jsonwebtoken error: {0}")]
+    JsonWebTokenError(#[from] jsonwebtoken::errors::Error),
+
+    #[error("Session expired")]
+    SessionExpired,
 }
 
 impl From<AppError> for HttpResponse {
@@ -56,6 +83,36 @@ impl From<AppError> for HttpResponse {
             })),
 
             AppError::InvalidOperation(message) => HttpResponse::BadRequest().message(message),
+
+            AppError::Unauthorized { source } => {
+                tracing::warn!("Unauthorized access: {source}");
+
+                let error_data = match source {
+                    AuthError::OAuthError(_) => json!({
+                        "error": "oauth_error",
+                        "message": "Error en el proceso de autenticación con Google",
+                    }),
+                    AuthError::UserNotFound(email) => json!({
+                        "error": "user_not_found",
+                        "details": format!("El usuario con email '{}' no está registrado.", email),
+                    }),
+
+                    AuthError::JsonWebTokenError(err) => {
+                        eprintln!("JWT error: {:?}", err);
+                        json!({
+                            "error": "authorization_token_error",
+                            "details": "No autorizado"
+                        })
+                    }
+
+                    AuthError::SessionExpired => json!({
+                        "error": "session_expired",
+                        "details": "La sesión ha expirado. Por favor, inicie sesión de nuevo."
+                    }),
+                };
+
+                HttpResponse::Unauthorized().data(error_data)
+            }
 
             _ => {
                 tracing::error!("Internal AppError: {error:?}");

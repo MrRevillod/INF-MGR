@@ -1,10 +1,10 @@
 use std::{env, path::Path, sync::Arc};
-use tokio::sync::{mpsc::Receiver, Mutex};
+use tokio::sync::{Mutex, mpsc::Receiver};
 use uuid::Uuid;
 
 use crate::{
     shared::services::{
-        event_queue::{format_date, Event},
+        event_queue::{Event, format_date},
         mailer::{MailTo, Mailer},
         printer::{PrintOptions, Printer},
         templates::RawContext,
@@ -212,12 +212,11 @@ impl EventSubscriber {
                 )?;
             }
 
-            Event::UserCreated((name, email, password)) => {
-                let context: RawContext = vec![
-                    ("name", name),
-                    ("email", email.clone()),
-                    ("password", password),
-                ];
+            Event::UserCreated((name, email)) => {
+                let context: RawContext = template_ctx! {
+                    "name" => name,
+                    "email" => email.clone(),
+                };
 
                 let mail_opts = MailTo {
                     subject: "Bienvenido (a) a la plataforma",
@@ -230,12 +229,11 @@ impl EventSubscriber {
             }
 
             Event::ManyUsersCreated(data) => {
-                for (name, email, password) in data {
-                    let context: RawContext = vec![
-                        ("name", name),
-                        ("email", email.clone()),
-                        ("password", password),
-                    ];
+                for (name, email) in data {
+                    let context = template_ctx! {
+                        "name" => name,
+                        "email" => email.clone(),
+                    };
 
                     let mail_opts = MailTo {
                         subject: "Bienvenido (a) a la plataforma",
@@ -271,10 +269,10 @@ impl EventSubscriber {
                 let out_path_str = format!("{documents_dir}/{practice_static_dir}");
                 let out_path = Path::new(&out_path_str);
 
-                if let Some(parent) = out_path.parent() {
-                    if !parent.exists() {
-                        std::fs::create_dir_all(parent)?;
-                    }
+                if let Some(parent) = out_path.parent()
+                    && !parent.exists()
+                {
+                    std::fs::create_dir_all(parent)?;
                 }
 
                 tokio::fs::write(out_path, pdf).await?;

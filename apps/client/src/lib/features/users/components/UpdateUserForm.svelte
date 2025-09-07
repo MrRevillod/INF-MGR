@@ -49,4 +49,11 @@
 	<Field label="Roles" value={formatRoles(user?.roles ?? [])} />
 
 	<Field label="Contraseña" value="********" />
+
+	<button
+		class="bg-primary hover:bg-primary-dark rounded px-4 py-2 text-white"
+		onclick={() => onSubmit({})}
+	>
+		Actualizar Usuario
+	</button>
 </div>

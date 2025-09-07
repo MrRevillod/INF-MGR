@@ -1,8 +1,8 @@
 use sword::prelude::*;
 
 use crate::{
-    container::AppModule,
     imports::{ImportCourseDto, ImportService},
+    shared::di::AppModule,
 };
 
 #[controller("/imports")]
@@ -13,7 +13,7 @@ impl ImportsController {
     #[post("/course")]
     async fn import_couse(ctx: Context) -> HttpResult<HttpResponse> {
         let data = ctx.validated_body::<ImportCourseDto>()?;
-        let service = ctx.get_dependency::<AppModule, dyn ImportService>()?;
+        let service = ctx.di::<AppModule, dyn ImportService>()?;
 
         service.import_course_students(data).await?;
 

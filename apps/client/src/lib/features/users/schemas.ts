@@ -1,5 +1,4 @@
 import * as v from "valibot"
-import type { Course } from "../courses/schemas"
 
 export interface User {
 	id: string

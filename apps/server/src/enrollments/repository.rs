@@ -2,12 +2,12 @@ use async_trait::async_trait;
 use sea_query::{Expr, ExprTrait, PostgresQueryBuilder, Query};
 use sea_query_sqlx::SqlxBinder;
 use shaku::{Component, Interface};
-use sqlx::{query_as_with as sqlx_query, Postgres};
+use sqlx::{Postgres, query_as_with as sqlx_query};
 use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::{
-    enrollments::{entity::Enrollments, Enrollment},
+    enrollments::{Enrollment, entity::Enrollments},
     shared::{database::DatabaseConnection, errors::AppError},
 };
 

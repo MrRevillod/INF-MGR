@@ -18,6 +18,10 @@ fmt-check:
 	cargo fmt --check && \
 	cd apps/client && npm run format && cd ../..
 
+check:
+	cargo check --all-features
+	cd apps/client && npm run check && cd ../..
+
 db-seed:
 	docker exec inf_mgr_server_dev cargo run -p server --bin seeder --features seeder
 

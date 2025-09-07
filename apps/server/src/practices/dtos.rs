@@ -6,7 +6,7 @@ use validator::{Validate, ValidationError};
 use regex::Regex;
 use std::sync::LazyLock;
 
-use crate::practices::{entity::PracticeStatus, Practice};
+use crate::practices::{Practice, entity::PracticeStatus};
 
 #[derive(Serialize, Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]

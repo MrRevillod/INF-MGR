@@ -2,14 +2,14 @@ mod context;
 pub use context::{MailTo, MailerConfig};
 
 use lettre::{
-    message::{header::ContentType, Mailbox},
-    transport::smtp::authentication::Credentials,
     Message, SmtpTransport, Transport,
+    message::{Mailbox, header::ContentType},
+    transport::smtp::authentication::Credentials,
 };
 
 use crate::shared::services::{
     errors::{MailerError, ServiceError},
-    templates::{TemplateConfig, TemplateContext, MAILER_TEMPLATES},
+    templates::{MAILER_TEMPLATES, TemplateConfig, TemplateContext},
 };
 
 pub struct Mailer {

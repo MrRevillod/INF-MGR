@@ -13,7 +13,7 @@ use crate::{
     courses::CourseService,
     enrollments::{EnrollmentService, UpdateEnrollmentDto},
     practices::{CreatePracticeDto, Practice, PracticeRepository, UpdatePracticeDto},
-    shared::{errors::AppError, AppResult},
+    shared::{AppResult, errors::AppError},
 };
 
 #[derive(Component)]
