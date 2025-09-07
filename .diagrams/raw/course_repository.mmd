@@ -1,0 +1,54 @@
+classDiagram
+    direction LR
+    
+    class CourseStatus {
+        <<enumeration>>
+        Active
+        Completed
+    }
+    
+    class CourseEvaluation {
+        -Uuid id
+        -String name
+        -i32 weight
+    }
+    
+    class Course {
+        -Uuid id
+        -i32 year
+        -String code
+        -String name
+        -CourseStatus course_status
+        -Vec~CourseEvaluation~ evaluations
+        -Uuid teacher_id
+    }
+    
+    class CourseFilter {
+        -Option~String~ code
+        -Option~String~ name
+        -Option~Uuid~ teacher_id
+        -Option~i32~ year
+    }
+    
+    class CourseRepository {
+        <<interface>>
+        +find_many(filter CourseFilter) Vec~Course~
+        +find_by_id(id Uuid) Option~Course~
+        +save(course Course) Course
+        +delete(id Uuid) void
+    }
+    
+    class PostgresCourseRepository {
+        -Arc~DatabaseConnection~ db_connection
+        +find_many(filter CourseFilter) Vec~Course~
+        +find_by_id(id Uuid) Option~Course~
+        +save(course Course) Course
+        +delete(id Uuid) void
+    }
+    
+    CourseStatus --> Course : used by
+    CourseEvaluation --> Course : belongs to
+    Course --> CourseFilter : filtered by
+    CourseFilter --> CourseRepository : used by
+    CourseRepository --> PostgresCourseRepository : implemented by
+    CourseRepository --> Course : manages
