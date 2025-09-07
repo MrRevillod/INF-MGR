@@ -167,36 +167,34 @@ impl EventSubscriber {
                 let start_date = format_date(practice.start_date.to_string());
                 let end_date = format_date(practice.end_date.to_string());
 
-                let email_context: RawContext = vec![
-                    ("student_name", student.name),
-                    ("student_email", student.email),
-                    ("enterprise_name", practice.enterprise_name),
-                    ("supervisor_name", practice.supervisor_name),
-                    ("supervisor_email", practice.supervisor_email.clone()),
-                    ("course_name", course.name),
-                    ("course_code", course.code),
-                    ("location", practice.location),
-                    ("start_date", start_date.clone()),
-                    ("end_date", end_date.clone()),
-                    (
-                        "approval_link",
-                        format!(
-                            "/enrollments/{}/practice/{}/approve",
-                            enrollment.id,
-                            enrollment.practice_id.unwrap_or(Uuid::new_v4())
-                        ),
-                    ),
-                    (
-                        "rejection_link",
-                        format!(
-                            "/enrollments/{}/practice/{}/reject",
-                            enrollment.id,
-                            enrollment.practice_id.unwrap_or(Uuid::new_v4())
-                        ),
-                    ),
-                ];
+                let approval_link = format!(
+                    "/enrollments/{}/practice/{}/approve",
+                    enrollment.id,
+                    enrollment.practice_id.unwrap_or(Uuid::new_v4())
+                );
 
-                tokio::try_join!(
+                let rejection_link = format!(
+                    "/enrollments/{}/practice/{}/reject",
+                    enrollment.id,
+                    enrollment.practice_id.unwrap_or(Uuid::new_v4())
+                );
+
+                let email_context = template_ctx! {
+                    "student_name" => student.name,
+                    "student_email" => student.email,
+                    "enterprise_name" => practice.enterprise_name,
+                    "supervisor_name" => practice.supervisor_name,
+                    "supervisor_email" => practice.supervisor_email.clone(),
+                    "course_name" => course.name,
+                    "course_code" => course.code,
+                    "location" => practice.location,
+                    "start_date" => start_date.clone(),
+                    "end_date" => end_date.clone(),
+                    "approval_link" => approval_link,
+                    "rejection_link" => rejection_link
+                };
+
+                let (_, _) = tokio::join!(
                     mailer.send(MailTo {
                         email: practice.supervisor_email.clone(),
                         subject: "Solicitud de Inscripción de Práctica",
@@ -209,7 +207,7 @@ impl EventSubscriber {
                         template: "practice:creation:student",
                         context: email_context,
                     })
-                )?;
+                );
             }
 
             Event::UserCreated((name, email)) => {
@@ -247,11 +245,11 @@ impl EventSubscriber {
             }
 
             Event::CourseCreated((course, teacher)) => {
-                let context: RawContext = vec![
-                    ("course_name", course.name),
-                    ("course_code", course.code),
-                    ("teacher_name", teacher.name.clone()),
-                ];
+                let context = template_ctx! {
+                    "course_name" => course.name,
+                    "course_code" => course.code,
+                    "teacher_name" => teacher.name.clone(),
+                };
 
                 let mail_opts = MailTo {
                     subject: "Asignación de Curso",
