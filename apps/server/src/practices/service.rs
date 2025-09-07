@@ -1,5 +1,5 @@
 use crate::{
-    practices::{entity::PracticeStatus, EvaluatePracticeDto},
+    practices::{EvaluatePracticeDto, entity::PracticeStatus},
     shared::services::event_queue::{Event, EventQueue},
 };
 

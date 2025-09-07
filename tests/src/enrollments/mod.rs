@@ -268,8 +268,9 @@ pub async fn decline_already_approved_practice_should_fail()
 }
 
 #[tokio::test]
-pub async fn evaluate_practice_with_valid_grade_should_succeed() {
-    let app = init_test_app().await;
+pub async fn evaluate_practice_with_valid_grade_should_succeed()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
 
     let student_id = TestUser::create_student(&app).await;
     let teacher_id = TestUser::create_teacher(&app).await;
@@ -316,11 +317,14 @@ pub async fn evaluate_practice_with_valid_grade_should_succeed() {
     TestCourse::delete(&app, &course_id).await;
     TestUser::delete(&app, &student_id).await;
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-pub async fn evaluate_practice_with_invalid_grade_should_fail() {
-    let app = init_test_app().await;
+pub async fn evaluate_practice_with_invalid_grade_should_fail()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
 
     let student_id = TestUser::create_student(&app).await;
     let teacher_id = TestUser::create_teacher(&app).await;
@@ -385,11 +389,14 @@ pub async fn evaluate_practice_with_invalid_grade_should_fail() {
     TestCourse::delete(&app, &course_id).await;
     TestUser::delete(&app, &student_id).await;
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-pub async fn evaluate_practice_with_custom_validation_should_fail() {
-    let app = init_test_app().await;
+pub async fn evaluate_practice_with_custom_validation_should_fail()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
 
     let student_id = TestUser::create_student(&app).await;
     let teacher_id = TestUser::create_teacher(&app).await;
@@ -476,4 +483,6 @@ pub async fn evaluate_practice_with_custom_validation_should_fail() {
     TestCourse::delete(&app, &course_id).await;
     TestUser::delete(&app, &student_id).await;
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }

@@ -5,10 +5,10 @@ use sword::prelude::*;
 use uuid::Uuid;
 
 use crate::{
-    shared::di::AppModule,
     practices::{
         CreatePracticeDto, EvaluatePracticeDto, PracticeService, PracticeStatus, UpdatePracticeDto,
     },
+    shared::di::AppModule,
 };
 
 #[controller("/enrollments")]
@@ -111,11 +111,13 @@ impl EnrollmentsController {
 
     #[post("/{id}/practice/{practice_id}/evaluate/{evaluation_id}")]
     async fn evaluate_practice(ctx: Context) -> HttpResult<HttpResponse> {
-        let enrollment_id = ctx.param::<Uuid>("id")?;
         let practice_id = ctx.param::<Uuid>("practice_id")?;
+        let enrollment_id = ctx.param::<Uuid>("id")?;
         let evaluation_id = ctx.param::<Uuid>("evaluation_id")?;
+
         let dto = ctx.validated_body::<EvaluatePracticeDto>()?;
-        let practice_service = ctx.get_dependency::<AppModule, dyn PracticeService>()?;
+
+        let practice_service = ctx.di::<AppModule, dyn PracticeService>()?;
 
         practice_service
             .evaluate(&enrollment_id, &practice_id, &evaluation_id, dto)
