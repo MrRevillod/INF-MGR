@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Evaluación de Práctica Completada</title>
+</head>
+
+<body>
+    <h1>Estimado(a) {{ supervisor_name }}</h1>
+
+    <p>
+        Junto con saludar, le confirmamos que la evaluación de la práctica del estudiante 
+        <strong>{{ student_name }}</strong> en <strong>{{ enterprise_name }}</strong> 
+        ha sido registrada exitosamente en nuestro sistema.
+    </p>
+
+    <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #28a745; margin: 20px 0;">
+        <h3>Detalles de la Práctica Evaluada:</h3>
+        <ul>
+            <li><strong>Estudiante:</strong> {{ student_name }}</li>
+            <li><strong>Curso:</strong> {{ course_name }} ({{ course_code }})</li>
+            <li><strong>Empresa:</strong> {{ enterprise_name }}</li>
+            <li><strong>Ubicación:</strong> {{ location }}</li>
+            <li><strong>Período:</strong> {{ start_date }} - {{ end_date }}</li>
+            <li><strong>Profesor Guía:</strong> {{ teacher_name }}</li>
+        </ul>
+    </div>
+
+    <div style="background-color: #e8f5e8; padding: 15px; border-left: 4px solid #28a745; margin: 20px 0;">
+        <h3>📊 Resumen de su Evaluación:</h3>
+        <p><strong>Puntuación otorgada:</strong> {{ evaluation_score }} / 7.0</p>
+        <p><strong>Comentarios:</strong></p>
+        <p style="font-style: italic; margin-left: 15px; color: #555;">
+            "{{ evaluation_comments }}"
+        </p>
+    </div>
+
+    <p>
+        La evaluación ha sido procesada y se ha notificado al profesor guía correspondiente. 
+        Agradecemos su tiempo y dedicación en la supervisión y evaluación del estudiante.
+    </p>
+
+    <p>
+        Su colaboración es fundamental para el proceso formativo de nuestros estudiantes 
+        y contribuye significativamente a su desarrollo profesional.
+    </p>
+
+    <p>
+        Si tiene alguna consulta adicional o necesita realizar alguna modificación, 
+        por favor contáctese con nosotros respondiendo a este correo.
+    </p>
+
+    <p>
+        Agradecemos nuevamente su participación en el proceso de formación práctica 
+        de nuestros estudiantes.
+    </p>
+
+    <p>
+        Se despide cordialmente,<br>
+        Equipo de Prácticas y Tesis de la carrera de Ingeniería Civil en Informática
+    </p>
+</body>
+
+</html>

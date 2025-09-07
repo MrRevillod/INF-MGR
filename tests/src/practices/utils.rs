@@ -68,6 +68,42 @@ impl TestPractice {
             .await
             .assert_status(StatusCode::NO_CONTENT);
     }
+
+    pub async fn evaluate(
+        app: &TestServer,
+        enrollment_id: &String,
+        practice_id: &String,
+        evaluation_id: &String,
+        score: f64,
+    ) {
+        let route = format!(
+            "/enrollments/{}/practice/{}/evaluate/{}",
+            enrollment_id, practice_id, evaluation_id
+        );
+        let evaluate_data = json!({
+            "score": score
+        });
+        let response = app.post(&route).json(&evaluate_data).await;
+
+        assert_eq!(response.status_code(), 200, "Failed to evaluate practice");
+    }
+
+    pub async fn evaluate_without_assert(
+        app: &TestServer,
+        enrollment_id: &String,
+        practice_id: &String,
+        evaluation_id: &String,
+        score: f64,
+    ) -> axum_test::TestResponse {
+        let route = format!(
+            "/enrollments/{}/practice/{}/evaluate/{}",
+            enrollment_id, practice_id, evaluation_id
+        );
+        let evaluate_data = json!({
+            "score": score
+        });
+        app.post(&route).json(&evaluate_data).await
+    }
 }
 
 pub struct PracticeBuilder {

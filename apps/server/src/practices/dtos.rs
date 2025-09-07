@@ -6,7 +6,10 @@ use validator::{Validate, ValidationError};
 use regex::Regex;
 use std::sync::LazyLock;
 
-use crate::practices::{Practice, entity::PracticeStatus};
+use crate::{
+    enrollments::{StudentScore, StudentScoreDto},
+    practices::{entity::PracticeStatus, Practice},
+};
 
 #[derive(Serialize, Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
@@ -109,6 +112,25 @@ pub struct UpdatePracticeDto {
     pub end_date: Option<DateTime<Utc>>,
 }
 
+#[derive(Serialize, Deserialize, Validate)]
+#[serde(rename_all = "camelCase")]
+pub struct EvaluatePracticeDto {
+    #[validate(custom(
+        function = "validate_score",
+        message = "La puntuación debe estar entre 1.0 y 7.0, no ser negativa y tener máximo 1 decimal"
+    ))]
+    pub score: f64,
+}
+
+impl From<StudentScore> for StudentScoreDto {
+    fn from(dto: StudentScore) -> Self {
+        StudentScoreDto {
+            evaluation_id: dto.evaluation_id.to_string(),
+            score: dto.score,
+        }
+    }
+}
+
 static PHONE_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^(?:\+56)?\s?(?:9\d{8}|\d{1}\d{8})$").unwrap());
 
@@ -146,6 +168,28 @@ fn validate_dates(
             return Err(ValidationError::new(
                 "La fecha de inicio no puede ser igual a la fecha de finalización.",
             ));
+        }
+    }
+
+    Ok(())
+}
+
+fn validate_score(score: f64) -> Result<(), ValidationError> {
+    // Verificar que no sea negativo
+    if score < 0.0 {
+        return Err(ValidationError::new("La puntuación no puede ser negativa"));
+    }
+
+    // Verificar que esté en el rango válido
+    if !(1.0..=7.0).contains(&score) {
+        return Err(ValidationError::new("La puntuación debe estar entre 1.0 y 7.0"));
+    }
+
+    // Verificar que tenga máximo 1 decimal
+    let score_str = score.to_string();
+    if let Some(decimal_part) = score_str.split('.').nth(1) {
+        if decimal_part.len() > 1 {
+            return Err(ValidationError::new("La puntuación debe tener máximo 1 decimal"));
         }
     }
 

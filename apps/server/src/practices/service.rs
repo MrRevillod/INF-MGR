@@ -1,5 +1,5 @@
 use crate::{
-    practices::entity::PracticeStatus,
+    practices::{entity::PracticeStatus, EvaluatePracticeDto},
     shared::services::event_queue::{Event, EventQueue},
 };
 
@@ -11,7 +11,7 @@ use uuid::Uuid;
 
 use crate::{
     courses::CourseService,
-    enrollments::{EnrollmentService, UpdateEnrollmentDto},
+    enrollments::{EnrollmentService, StudentScoreDto, UpdateEnrollmentDto},
     practices::{CreatePracticeDto, Practice, PracticeRepository, UpdatePracticeDto},
     shared::{AppResult, errors::AppError},
 };
@@ -51,6 +51,14 @@ pub trait PracticeService: Interface {
         enrollment_id: &Uuid,
         practice_id: &Uuid,
         status: PracticeStatus,
+    ) -> AppResult<Practice>;
+
+    async fn evaluate(
+        &self,
+        enrollment_id: &Uuid,
+        practice_id: &Uuid,
+        evaluation_id: &Uuid,
+        input: EvaluatePracticeDto,
     ) -> AppResult<Practice>;
 
     async fn remove(&self, id: &Uuid) -> Result<(), AppError>;
@@ -176,6 +184,50 @@ impl PracticeService for PracticeServiceImpl {
         }
 
         self.practices.save(practice).await
+    }
+
+    async fn evaluate(
+        &self,
+        enrollment_id: &Uuid,
+        practice_id: &Uuid,
+        evaluation_id: &Uuid,
+        input: EvaluatePracticeDto,
+    ) -> AppResult<Practice> {
+        // Obtener enrollment, estudiante y práctica
+        let (mut enrollment, student, practice) = self.enrollments.get_by_id(enrollment_id).await?;
+
+        let (course, teacher) = self.courses.get_by_id(&enrollment.course_id).await?;
+
+        let updated_evaluation =
+            enrollment.student_scores.iter_mut().find(|s| s.evaluation_id == *evaluation_id);
+
+        let practice = practice.ok_or(AppError::ResourceNotFound(*practice_id))?;
+
+        if let Some(evaluation) = updated_evaluation {
+            evaluation.score = input.score;
+        }
+
+        // Convertir StudentScore a StudentScoreDto para la actualización
+        let student_scores_dto = enrollment
+            .student_scores
+            .iter()
+            .map(|score| StudentScoreDto::from(score.clone()))
+            .collect();
+
+        // Guardar el enrollment actualizado
+        let update_data = UpdateEnrollmentDto {
+            practice_id: None,
+            student_scores: Some(student_scores_dto),
+        };
+        let updated_enrollment = self.enrollments.update(enrollment_id, update_data).await?;
+
+        // Disparar evento con la nota
+        let event_data =
+            (student, updated_enrollment, practice.clone(), course, teacher, input.score);
+
+        self.event_queue.publish(Event::PracticeEvaluated(event_data)).await;
+
+        Ok(practice)
     }
 
     async fn remove(&self, id: &Uuid) -> Result<(), AppError> {

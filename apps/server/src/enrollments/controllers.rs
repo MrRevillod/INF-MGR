@@ -5,8 +5,10 @@ use sword::prelude::*;
 use uuid::Uuid;
 
 use crate::{
-    practices::{CreatePracticeDto, PracticeService, PracticeStatus, UpdatePracticeDto},
     shared::di::AppModule,
+    practices::{
+        CreatePracticeDto, EvaluatePracticeDto, PracticeService, PracticeStatus, UpdatePracticeDto,
+    },
 };
 
 #[controller("/enrollments")]
@@ -107,8 +109,18 @@ impl EnrollmentsController {
         Ok((StatusCode::OK, [("Content-Type", "application/pdf")], buff))
     }
 
-    #[post("/{id}/practice/{practice_id}/evaluate")]
-    async fn evaluate_practice(_: Context) -> HttpResult<HttpResponse> {
+    #[post("/{id}/practice/{practice_id}/evaluate/{evaluation_id}")]
+    async fn evaluate_practice(ctx: Context) -> HttpResult<HttpResponse> {
+        let enrollment_id = ctx.param::<Uuid>("id")?;
+        let practice_id = ctx.param::<Uuid>("practice_id")?;
+        let evaluation_id = ctx.param::<Uuid>("evaluation_id")?;
+        let dto = ctx.validated_body::<EvaluatePracticeDto>()?;
+        let practice_service = ctx.get_dependency::<AppModule, dyn PracticeService>()?;
+
+        practice_service
+            .evaluate(&enrollment_id, &practice_id, &evaluation_id, dto)
+            .await?;
+
         Ok(HttpResponse::Ok())
     }
 
