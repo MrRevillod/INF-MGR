@@ -12,6 +12,7 @@ services:
       - my_networks
     depends_on:
       - postgres_test
+      - redis_test
     volumes:
       - .:/app
       - cargo_cache:/usr/local/cargo/registry

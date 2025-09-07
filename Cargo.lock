@@ -1938,15 +1938,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "passwords"
-version = "3.1.16"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "11407193a7c2bd14ec6b0ec3394da6fdcf7a4d5dcbc8c3cc38dfb17802c8d59c"
-dependencies = [
- "random-pick",
-]
-
-[[package]]
 name = "pem"
 version = "3.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2209,12 +2200,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "proc-macro-hack"
-version = "0.5.20+deprecated"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc375e1527247fe1a97d8b7156678dfe7c1af2fc075c9a4db3690ecd2a148068"
-
-[[package]]
 name = "proc-macro2"
 version = "1.0.101"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2391,37 +2376,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "99d9a13982dcf210057a8a78572b2217b667c3beacbf3a0d8b454f6f82837d38"
 dependencies = [
  "getrandom 0.3.3",
-]
-
-[[package]]
-name = "random-number"
-version = "0.1.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7fc8cdd49be664772ffc3dbfa743bb8c34b78f9cc6a9f50e56ae878546796067"
-dependencies = [
- "proc-macro-hack",
- "rand 0.8.5",
- "random-number-macro-impl",
-]
-
-[[package]]
-name = "random-number-macro-impl"
-version = "0.1.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f5135143cb48d14289139e4615bffec0d59b4cbfd4ea2398a3770bd2abfc4aa2"
-dependencies = [
- "proc-macro-hack",
- "quote",
- "syn 2.0.106",
-]
-
-[[package]]
-name = "random-pick"
-version = "1.2.16"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c179499072da789afe44127d5f4aa6012de2c2f96ef759990196b37387a2a0f8"
-dependencies = [
- "random-number",
 ]
 
 [[package]]
@@ -2883,7 +2837,6 @@ dependencies = [
  "jsonwebtoken",
  "lettre",
  "oauth2",
- "passwords",
  "rand 0.9.2",
  "redis",
  "regex",
@@ -2897,6 +2850,7 @@ dependencies = [
  "sword",
  "tera",
  "thiserror 2.0.16",
+ "time",
  "tokio",
  "tower-http",
  "tracing",
