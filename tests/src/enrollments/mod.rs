@@ -13,8 +13,8 @@ use crate::{
 pub mod utils;
 
 #[tokio::test]
-pub async fn create_enrollment_and_practice() {
-    let app = init_test_app().await;
+pub async fn create_enrollment_and_practice() -> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
 
     let student_id = TestUser::create_student(&app).await;
     let teacher_id = TestUser::create_teacher(&app).await;
@@ -57,11 +57,13 @@ pub async fn create_enrollment_and_practice() {
     TestCourse::delete(&app, &course_id).await;
     TestUser::delete(&app, &student_id).await;
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-pub async fn practice_approve_and_update_auth_doc() {
-    let app = init_test_app().await;
+pub async fn practice_approve_and_update_auth_doc() -> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
 
     let student_id = TestUser::create_student(&app).await;
     let teacher_id = TestUser::create_teacher(&app).await;
@@ -107,11 +109,13 @@ pub async fn practice_approve_and_update_auth_doc() {
 
     TestUser::delete(&app, &student_id).await;
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-pub async fn create_enrollment_and_decline_practice() {
-    let app = init_test_app().await;
+pub async fn create_enrollment_and_decline_practice() -> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
 
     let student_id = TestUser::create_student(&app).await;
     let teacher_id = TestUser::create_teacher(&app).await;
@@ -164,11 +168,13 @@ pub async fn create_enrollment_and_decline_practice() {
     TestCourse::delete(&app, &course_id).await;
     TestUser::delete(&app, &student_id).await;
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-pub async fn decline_nonexistent_practice_should_fail() {
-    let app = init_test_app().await;
+pub async fn decline_nonexistent_practice_should_fail() -> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
 
     let student_id = TestUser::create_student(&app).await;
     let teacher_id = TestUser::create_teacher(&app).await;
@@ -197,11 +203,14 @@ pub async fn decline_nonexistent_practice_should_fail() {
     TestCourse::delete(&app, &course_id).await;
     TestUser::delete(&app, &student_id).await;
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]
-pub async fn decline_already_approved_practice_should_fail() {
-    let app = init_test_app().await;
+pub async fn decline_already_approved_practice_should_fail()
+-> Result<(), Box<dyn std::error::Error>> {
+    let app = init_test_app().await?;
 
     let student_id = TestUser::create_student(&app).await;
     let teacher_id = TestUser::create_teacher(&app).await;
@@ -254,6 +263,8 @@ pub async fn decline_already_approved_practice_should_fail() {
     TestCourse::delete(&app, &course_id).await;
     TestUser::delete(&app, &student_id).await;
     TestUser::delete(&app, &teacher_id).await;
+
+    Ok(())
 }
 
 #[tokio::test]

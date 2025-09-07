@@ -1,5 +1,48 @@
 pub mod config;
 
+pub mod auth {
+    mod controllers;
+    mod dtos;
+
+    mod repositories {
+        mod auth;
+        mod session;
+
+        pub use auth::{AuthRepository, OAuthRepository};
+        pub use session::{RedisSessionRepository, SessionRepository};
+    }
+
+    mod services {
+        mod oauth;
+        pub use oauth::{GoogleOAuthService, OAuthService};
+
+        mod session;
+        pub use session::{SessionService, SessionServiceImpl};
+
+        mod jsonwebtoken;
+        pub use jsonwebtoken::{Claims, JsonWebTokenService, TokenConfig, TokenKind, TokenService};
+
+        mod cookies;
+
+        pub use cookies::CookieBuilder;
+    }
+
+    pub use services::{Claims, TokenConfig, TokenKind, TokenService};
+
+    pub use controllers::AuthController;
+    pub use repositories::{
+        AuthRepository, OAuthRepository, RedisSessionRepository, SessionRepository,
+    };
+
+    pub use dtos::*;
+    pub use services::{
+        GoogleOAuthService, JsonWebTokenService, OAuthService, SessionService, SessionServiceImpl,
+    };
+
+    mod entity;
+    pub use entity::Session;
+}
+
 pub mod users {
     mod controllers;
     mod dtos;
@@ -9,13 +52,15 @@ pub mod users {
 
     pub use controllers::UsersController;
     pub use dtos::{
-        role_validator, validate_rut_id, CreateUserDto, GetUsersQueryDto, UpdateUserDto,
-        UserResponse,
+        CreateUserDto, GetUsersQueryDto, UpdateUserDto, UserResponse, role_validator,
+        validate_rut_id,
     };
+
     pub use entity::{Role, User};
     pub use repository::{PostgresUserRepository, UserFilter, UserRepository};
-
     pub use service::{UserService, UserServiceImpl};
+
+    pub use crate::user_filter;
 }
 
 pub mod courses {
@@ -79,15 +124,24 @@ pub mod practices {
 }
 
 pub mod shared {
-    pub mod entities;
     pub mod errors;
-
     pub use errors::{AppError, AppResult};
+
+    pub mod di {
+        mod builder;
+        mod container;
+
+        pub use builder::DependencyContainer;
+        pub use container::{AppModule, InitialComponents};
+    }
 
     pub mod macros;
 
     pub mod database;
     pub mod layers;
+    pub mod oauth;
+    pub mod redis;
+
     pub mod validators {
         use validator::ValidationError;
 
@@ -106,7 +160,6 @@ pub mod shared {
 
     pub mod services {
         pub mod errors;
-        pub mod hasher;
         pub mod mailer;
         pub mod printer;
         pub mod templates {
@@ -119,17 +172,13 @@ pub mod shared {
 
         pub mod event_queue {
             mod publisher;
-            mod sender;
             mod subscriber;
 
             mod events;
 
             pub use events::*;
             pub use publisher::*;
-            pub use sender::*;
             pub use subscriber::*;
         }
     }
 }
-
-pub mod container;

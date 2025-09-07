@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS users (
     rut TEXT NOT NULL,
     name TEXT NOT NULL,
     email TEXT NOT NULL UNIQUE,
-    password TEXT NOT NULL,
+    google_id TEXT UNIQUE,
     roles user_role[] NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     deleted_at TIMESTAMP WITH TIME ZONE NULL

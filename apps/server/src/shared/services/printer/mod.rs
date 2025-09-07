@@ -42,12 +42,12 @@ impl Printer {
 
         let out_path = Path::new(&out_file);
 
-        if let Some(parent) = out_path.parent() {
-            if !parent.exists() {
-                fs::create_dir_all(parent).map_err(|source| ServiceError::Printer {
-                    source: source.into(),
-                })?;
-            }
+        if let Some(parent) = out_path.parent()
+            && !parent.exists()
+        {
+            fs::create_dir_all(parent).map_err(|source| ServiceError::Printer {
+                source: source.into(),
+            })?;
         }
 
         let output = Command::new("typst")

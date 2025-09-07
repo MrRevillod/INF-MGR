@@ -1,7 +1,6 @@
 use chrono::Utc;
-use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::{str::FromStr, sync::OnceLock};
+use std::str::FromStr;
 use uuid::Uuid;
 use validator::{Validate, ValidationError};
 
@@ -15,7 +14,6 @@ use crate::{
 // ============================================================================
 
 #[derive(Serialize, Deserialize, Validate, Debug, Clone)]
-#[validate(schema(function = "validate_password_pairs"))]
 pub struct CreateUserDto {
     #[validate(custom(function = "validate_rut_id"))]
     pub rut: String,
@@ -29,13 +27,6 @@ pub struct CreateUserDto {
 
     #[validate(email(message = "El email debe ser válido."))]
     pub email: String,
-
-    #[validate(custom(function = "password_schema"))]
-    pub password: String,
-
-    #[validate(custom(function = "password_schema"))]
-    #[serde(rename = "confirmPassword")]
-    pub confirm_password: String,
 
     #[validate(custom(function = "role_validator"))]
     pub roles: Vec<String>,
@@ -52,7 +43,7 @@ impl TryFrom<CreateUserDto> for User {
             rut: dto.rut,
             name: dto.name,
             email: dto.email,
-            password: dto.password,
+            google_id: None,
             roles,
             deleted_at: None,
             created_at: Utc::now(),
@@ -90,17 +81,9 @@ pub fn from_string_vec_roles(roles: Vec<String>) -> Result<Vec<Role>, AppError> 
 // ============================================================================
 
 #[derive(Debug, Serialize, Deserialize, Validate)]
-#[validate(schema(function = "validate_optional_password_pairs"))]
 pub struct UpdateUserDto {
     #[validate(email)]
     pub email: Option<String>,
-
-    #[validate(custom(function = "password_schema"))]
-    pub password: Option<String>,
-
-    #[validate(custom(function = "password_schema"))]
-    #[serde(rename = "confirmPassword")]
-    pub confirm_password: Option<String>,
 
     #[validate(custom(function = "role_validator"))]
     pub roles: Option<Vec<String>>,
@@ -110,7 +93,7 @@ pub struct UpdateUserDto {
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> GET USERS QUERY <<<<<<<<<<<<<<<<<<<<<<<<<<<
 // ============================================================================
 
-#[derive(Serialize, Deserialize, Validate)]
+#[derive(Serialize, Deserialize, Validate, Default)]
 pub struct GetUsersQueryDto {
     #[validate(length(
         min = 1,
@@ -142,7 +125,6 @@ pub struct UserResponse {
     pub id: String,
     pub rut: String,
     pub name: String,
-    pub email: String,
     pub roles: Vec<Role>,
     pub created_at: String,
 }
@@ -153,7 +135,6 @@ impl From<User> for UserResponse {
             id: user_model.id.to_string(),
             rut: user_model.rut,
             name: user_model.name,
-            email: user_model.email,
             roles: user_model.roles.clone(),
             created_at: user_model.created_at.to_rfc3339(),
         }
@@ -163,61 +144,6 @@ impl From<User> for UserResponse {
 // ============================================================================
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> VALIDATORS <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 // ============================================================================
-
-static SPECIAL_CHAR_REGEX: OnceLock<Regex> = OnceLock::new();
-
-fn get_special_char_regex() -> &'static Regex {
-    SPECIAL_CHAR_REGEX
-        .get_or_init(|| Regex::new(r#"[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]"#).unwrap())
-}
-
-fn validate_password_pairs(dto: &CreateUserDto) -> Result<(), ValidationError> {
-    if dto.password != dto.confirm_password {
-        return Err(ValidationError::new("Passwords must match"));
-    }
-    Ok(())
-}
-
-fn validate_optional_password_pairs(dto: &UpdateUserDto) -> Result<(), ValidationError> {
-    match (&dto.password, &dto.confirm_password) {
-        (Some(pwd), Some(conf)) if pwd != conf => Err(ValidationError::new("Passwords must match")),
-        (Some(_), None) | (None, Some(_)) => {
-            Err(ValidationError::new("Either provide both password fields or neither"))
-        }
-        _ => Ok(()),
-    }
-}
-
-fn password_schema(password: &str) -> Result<(), ValidationError> {
-    if password.len() < 8 || password.len() > 100 {
-        return Err(ValidationError::new("Password must be 8-100 characters long"));
-    }
-
-    let has_uppercase = password.chars().any(|c| c.is_ascii_uppercase());
-    let has_lowercase = password.chars().any(|c| c.is_ascii_lowercase());
-    let has_digit = password.chars().any(|c| c.is_ascii_digit());
-    let has_special = get_special_char_regex().is_match(password);
-
-    if !has_uppercase {
-        return Err(ValidationError::new("Password must contain at least one uppercase letter"));
-    }
-
-    if !has_lowercase {
-        return Err(ValidationError::new("Password must contain at least one lowercase letter"));
-    }
-
-    if !has_digit {
-        return Err(ValidationError::new("Password must contain at least one digit"));
-    }
-
-    if !has_special {
-        return Err(ValidationError::new(
-            "Password must contain at least one special character (e.g., !@#$%^&*)",
-        ));
-    }
-
-    Ok(())
-}
 
 /// Valida si el RUT chileno es válido
 /// Formato esperado: "12345678-5" (con guion y dígito verificador)

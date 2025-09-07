@@ -12,6 +12,7 @@ services:
       - my_networks
     depends_on:
       - postgres_test
+      - redis_test
     volumes:
       - .:/app
       - cargo_cache:/usr/local/cargo/registry
@@ -36,6 +37,16 @@ services:
       - postgres_data_test:/var/lib/postgresql/data
     env_file:
       - .env.test
+    networks:
+      - my_networks
+
+  redis_test:
+    container_name: inf_mgr_redis_test
+    extends:
+      file: docker-compose.base.yml
+      service: redis_base
+    ports:
+      - "6380:6379"
     networks:
       - my_networks
 

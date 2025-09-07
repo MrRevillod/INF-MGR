@@ -134,8 +134,6 @@ pub struct UserBuilder {
     name: String,
     email: String,
     roles: Vec<String>,
-    password: String,
-    confirm_password: String,
 }
 
 impl UserBuilder {
@@ -145,8 +143,6 @@ impl UserBuilder {
             name: "Test User".to_string(),
             email: TestUser::generate_unique_email(),
             roles: vec!["administrator".to_string()],
-            password: "TestPassword123!".to_string(),
-            confirm_password: "TestPassword123!".to_string(),
         }
     }
 
@@ -170,20 +166,12 @@ impl UserBuilder {
         self
     }
 
-    pub fn with_password(mut self, password: &str, confirm_password: &str) -> Self {
-        self.password = password.to_string();
-        self.confirm_password = confirm_password.to_string();
-        self
-    }
-
     pub fn build(self) -> Value {
         json!({
             "rut": self.rut,
             "name": self.name,
             "email": self.email,
             "roles": self.roles,
-            "password": self.password,
-            "confirmPassword": self.confirm_password,
         })
     }
 }

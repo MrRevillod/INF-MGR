@@ -5,7 +5,7 @@ use sword::prelude::*;
 use uuid::Uuid;
 
 use crate::{
-    container::AppModule,
+    shared::di::AppModule,
     practices::{
         CreatePracticeDto, EvaluatePracticeDto, PracticeService, PracticeStatus, UpdatePracticeDto,
     },
@@ -21,7 +21,7 @@ impl EnrollmentsController {
         let enrollment_id = ctx.param::<Uuid>("id")?;
         let dto = ctx.validated_body::<CreatePracticeDto>()?;
 
-        let service = ctx.get_dependency::<AppModule, dyn PracticeService>()?;
+        let service = ctx.di::<AppModule, dyn PracticeService>()?;
 
         let practice = service.create(&enrollment_id, dto).await?;
         Ok(HttpResponse::Created().data(practice))
@@ -32,7 +32,7 @@ impl EnrollmentsController {
         let enrollment_id = ctx.param::<Uuid>("id")?;
         let practice_id = ctx.param::<Uuid>("practice_id")?;
 
-        let service = ctx.get_dependency::<AppModule, dyn PracticeService>()?;
+        let service = ctx.di::<AppModule, dyn PracticeService>()?;
 
         let Some(practice) = service.get_by_id(&practice_id).await? else {
             return Err(HttpResponse::NotFound());
@@ -54,7 +54,7 @@ impl EnrollmentsController {
         let enrollment_id = ctx.param::<Uuid>("id")?;
         let practice_id = ctx.param::<Uuid>("practice_id")?;
 
-        let service = ctx.get_dependency::<AppModule, dyn PracticeService>()?;
+        let service = ctx.di::<AppModule, dyn PracticeService>()?;
 
         let Some(practice) = service.get_by_id(&practice_id).await? else {
             return Err(HttpResponse::NotFound());
@@ -76,7 +76,7 @@ impl EnrollmentsController {
         let practice_id = ctx.param::<Uuid>("practice_id")?;
         let form_data = ctx.multipart().await?;
 
-        let Some(field) = form_data.first() else {
+        let Some(field) = form_data.fields().first() else {
             return Err(HttpResponse::BadRequest());
         };
 
@@ -84,7 +84,7 @@ impl EnrollmentsController {
             return Err(HttpResponse::BadRequest());
         }
 
-        let service = ctx.get_dependency::<AppModule, dyn PracticeService>()?;
+        let service = ctx.di::<AppModule, dyn PracticeService>()?;
 
         service.authorize(&practice_id, field.data.bytes()).await?;
 
@@ -129,7 +129,7 @@ impl EnrollmentsController {
         let enrollment_id = ctx.param::<Uuid>("id")?;
         let dto = ctx.validated_body::<UpdatePracticeDto>()?;
 
-        let service = ctx.get_dependency::<AppModule, dyn PracticeService>()?;
+        let service = ctx.di::<AppModule, dyn PracticeService>()?;
         let practice = service.update(&enrollment_id, dto).await?;
 
         Ok(HttpResponse::Ok().data(practice))
@@ -138,7 +138,7 @@ impl EnrollmentsController {
     #[delete("/practice/{practice_id}")]
     async fn delete_practice(ctx: Context) -> HttpResult<HttpResponse> {
         let practice_id = ctx.param::<Uuid>("practice_id")?;
-        let service = ctx.get_dependency::<AppModule, dyn PracticeService>()?;
+        let service = ctx.di::<AppModule, dyn PracticeService>()?;
 
         service.remove(&practice_id).await?;
         Ok(HttpResponse::NoContent())

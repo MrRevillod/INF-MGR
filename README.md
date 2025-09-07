@@ -7,13 +7,10 @@ Este repositorio contiene el código fuente de un sistema de gestión de prácti
 ## Diagramas del sistema
 
 ### Arquitectura del sistema
-![Diagrama ERD](.diagrams/sad.png)
+![Diagrama ERD](https://raw.githubusercontent.com/MrRevillod/INF-MGR/refs/heads/development/.diagrams/sad.png)
 
 ### Entidad relación (ERD)
 ![Diagrama ERD](https://raw.githubusercontent.com/MrRevillod/INF-MGR/refs/heads/development/.diagrams/erd.png)
-
-### Secuencia UML
-![Diagrama ERD](https://raw.githubusercontent.com/MrRevillod/INF-MGR/refs/heads/development/.diagrams/secuence_proposal.png)
 
 ## Instalación y ejecución
 

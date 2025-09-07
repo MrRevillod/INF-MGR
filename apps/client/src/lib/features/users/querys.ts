@@ -1,5 +1,5 @@
-import type { Asignature } from "$lib/features/courses/schemas"
-import type { User, Inscription } from "$users/schemas"
+import type { Course, Inscription } from "$lib/features/courses/schemas"
+import type { User } from "$users/schemas"
 
 import { api } from "$api/client"
 import { tryHttp } from "$api/utils"
@@ -40,7 +40,7 @@ export const getUsersQuery = (params: GetUsersParams) => {
 
 type StudentInscriptionsResponse = Array<
 	Inscription & {
-		asignature: Asignature
+		asignature: Course
 	}
 >
 

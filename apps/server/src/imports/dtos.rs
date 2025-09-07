@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use validator::Validate;
 
 use crate::shared::validators::validate_uuid;
-use crate::users::{validate_rut_id, User};
+use crate::users::{User, validate_rut_id};
 
 #[derive(Debug, Serialize, Deserialize, Validate, Clone)]
 pub struct ImportUserDto {
@@ -34,5 +34,4 @@ pub struct ImportCourseDto {
 /// and preserve plain password to use in related Events
 pub struct ImportedUser {
     pub entity: User,
-    pub plain_password: String,
 }

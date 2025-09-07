@@ -21,34 +21,34 @@ jobs:
           toolchain: stable
 
       # Frontend Node
-      #- name: Install Node.js
-      #  uses: actions/setup-node@v3
-      #  with:
-      #    node-version: 20
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
 
-      #- name: Install frontend dependencies
-      #  working-directory: ./apps/client
-      #  run: npm install
+      - name: Install frontend dependencies
+        working-directory: ./apps/client
+        run: npm install
 
       # Rust format check
       - name: Rust fmt check
         run: cargo fmt --check
 
-      # Frontend format check
-      #- name: Frontend format check
-      #  working-directory: ./apps/client
-      #  run: npm run format
+      #Frontend format check
+      - name: Frontend format check
+        working-directory: ./apps/client
+        run: npm run format
 
       # Rust linting
       - name: Rust clippy
         run: cargo clippy --all-features -- -D warnings
 
-      # Frontend linting
-      #- name: Frontend ESLint check
-      #  working-directory: ./apps/client
-      #  run: npm run lint
+      #Frontend linting
+      - name: Frontend ESLint check
+        working-directory: ./apps/client
+        run: npm run lint
 
-      # Svelte type check
-      #- name: Svelte type check
-      #  working-directory: ./apps/client
-      #  run: npm run check
+      #Svelte type check
+      - name: Svelte type check
+        working-directory: ./apps/client
+        run: npm run check
