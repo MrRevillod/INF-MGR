@@ -74,7 +74,7 @@ pub async fn init_test_app() -> Result<TestServer, Box<dyn std::error::Error>> {
         .execute(&pg_db.pool)
         .await?;
 
-    sqlx::migrate!("./config/migrations").run(&pg_db.pool).await?;
+    pg_db.migrate().await.expect("Failed to create database connection");
 
     let dependency_container = DependencyContainer::builder()
         .with_postgres_db(pg_db)
