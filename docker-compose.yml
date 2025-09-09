@@ -74,10 +74,13 @@ services:
 
   students_api_dev:
     container_name: inf_mgr_students_api_dev
+    extends:
+      file: docker-compose.base.yml
+      service: students_api_base
     build:
-      context: ./apps/students-api
-      dockerfile: Dockerfile
       target: dev
+    env_file:
+      - .env
     ports:
       - "7001:7000"
     networks:
@@ -92,3 +95,4 @@ volumes:
   server_target:
   cargo_cache:
   client_node_modules:
+  uv_cache:

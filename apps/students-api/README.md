@@ -56,7 +56,20 @@ docker compose up students_api_dev
 docker build -t api-prod --target prod ./apps/students-api
 docker run -p 7001:7000 api-prod
 ```
+# Ver logs en tiempo real
+docker-compose logs -f students_api_dev
+
+# Reiniciar el servicio
+docker-compose restart students_api_dev
+
+# Parar el servicio
+docker-compose stop students_api_dev
+
+# Ver estado de todos los servicios
+docker-compose ps
+
 
 ### Endpoints disponibles
 - `/` - Mensaje de bienvenida
 - `/health` - Estado de la API
+
