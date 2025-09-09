@@ -77,8 +77,9 @@ services:
     build:
       context: ./apps/students-api
       dockerfile: Dockerfile
+      target: dev
     ports:
-      - "8001:8000"
+      - "7001:7000"
     networks:
       - my_networks
 

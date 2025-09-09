@@ -28,7 +28,7 @@ uv run ruff format . # Formatear código
 ```bash
 just students-api-lint      # Verificar código
 just students-api-format    # Formatear código
-just students-api-run       # Ejecutar API local
+just students-api-run       # Ejecutar API 
 ```
 
 ### Docker
@@ -39,5 +39,24 @@ docker compose down         # Parar contenedor
 ```
 
 ### Acceso
-- **Local**: http://localhost:8000
-- **Docker**: http://localhost:8001
+- **Local**: http://localhost:7000
+- **Docker**: http://localhost:7001
+
+## API Base con FastAPI
+- **FastAPI** - API REST en puerto 7000
+- **Perfiles de ejecución** - Desarrollo (watch) y producción (workers)
+- **Docker targets** - `dev` y `prod`
+
+### Targets Docker
+```bash
+# Desarrollo (watch mode)
+docker compose up students_api_dev
+
+# Producción (4 workers)  
+docker build -t api-prod --target prod ./apps/students-api
+docker run -p 7001:7000 api-prod
+```
+
+### Endpoints disponibles
+- `/` - Mensaje de bienvenida
+- `/health` - Estado de la API
