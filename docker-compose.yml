@@ -72,6 +72,16 @@ services:
     networks:
       - my_networks
 
+  students_api_dev:
+    container_name: inf_mgr_students_api_dev
+    build:
+      context: ./apps/students-api
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8000"
+    networks:
+      - my_networks
+
 networks:
   my_networks:
     driver: bridge

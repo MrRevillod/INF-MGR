@@ -50,3 +50,17 @@ test-clean:
 	docker compose -f {{COMPOSE_TEST_FILE}} down -v
 	docker volume rm inf-mgr_rust_target_cache inf-mgr_cargo_cache 2>/dev/null || true
 	rm -f tests/config tests/tools apps/server/tools/tools apps/server/config/config
+
+# Students API Python commands
+
+students-api-lint:
+	cd apps/students-api && uv run ruff check .
+
+students-api-format:
+	cd apps/students-api && uv run ruff format .
+
+students-api-run:
+    docker compose up students_api_dev
+
+students-api-build:
+    docker compose build students_api_dev
