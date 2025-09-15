@@ -28,34 +28,63 @@ impl TestPractice {
         let response = app.post(&route).json(&data).await;
         let body = response.json::<ResponseBody>();
 
-        assert_eq!(response.status_code(), 201, "Failed to create practice: {}", body.data);
+        assert_eq!(
+            response.status_code(),
+            201,
+            "Failed to create practice: {}",
+            body.data
+        );
 
         body.data
     }
 
-    pub async fn create(app: &TestServer, enrollment_id: &String, data: Value) -> String {
+    pub async fn create(
+        app: &TestServer,
+        enrollment_id: &String,
+        data: Value,
+    ) -> String {
         let route = format!("/enrollments/{}/practice", enrollment_id);
         let response = app.post(&route).json(&data).await;
         let body = response.json::<ResponseBody>();
 
-        assert_eq!(response.status_code(), 201, "Failed to create practice: {}", body.data);
+        assert_eq!(
+            response.status_code(),
+            201,
+            "Failed to create practice: {}",
+            body.data
+        );
 
         extract_resource_id(&body.data)
     }
 
-    pub async fn approve(app: &TestServer, enrollment_id: &String, practice_id: &String) {
-        let route = format!("/enrollments/{}/practice/{}/approve", enrollment_id, practice_id);
+    pub async fn approve(
+        app: &TestServer,
+        enrollment_id: &String,
+        practice_id: &String,
+    ) {
+        let route = format!(
+            "/enrollments/{}/practice/{}/approve",
+            enrollment_id, practice_id
+        );
         let response = app.post(&route).await;
 
         assert_eq!(response.status_code(), 200, "Failed to approve practice");
     }
 
-    pub async fn authorize(app: &TestServer, enrollment_id: &String, practice_id: &String) {
-        let route = format!("/enrollments/{}/practice/{}/authorize", enrollment_id, practice_id);
-        let pdf_part =
-            Part::bytes(include_bytes!("../../files/Autorización de práctica.pdf").as_slice())
-                .file_name(&"auth_doc.pdf")
-                .mime_type(&"text/pdf");
+    pub async fn authorize(
+        app: &TestServer,
+        enrollment_id: &String,
+        practice_id: &String,
+    ) {
+        let route = format!(
+            "/enrollments/{}/practice/{}/authorize",
+            enrollment_id, practice_id
+        );
+        let pdf_part = Part::bytes(
+            include_bytes!("../../files/Autorización de práctica.pdf").as_slice(),
+        )
+        .file_name(&"auth_doc.pdf")
+        .mime_type(&"text/pdf");
 
         let form = MultipartForm::new().add_part("auth_doc", pdf_part);
         let response = app.post(&route).multipart(form).await;

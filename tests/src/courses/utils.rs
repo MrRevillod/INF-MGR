@@ -16,8 +16,12 @@ impl TestCourse {
     pub fn generate_unique_code() -> String {
         let uuid = Uuid::new_v4();
         let uuid_bytes = uuid.as_bytes();
-        let numeric_value =
-            u32::from_be_bytes([uuid_bytes[0], uuid_bytes[1], uuid_bytes[2], uuid_bytes[3]]);
+        let numeric_value = u32::from_be_bytes([
+            uuid_bytes[0],
+            uuid_bytes[1],
+            uuid_bytes[2],
+            uuid_bytes[3],
+        ]);
 
         let four_digits = (numeric_value % 9000) + 1000;
 
@@ -36,7 +40,10 @@ impl TestCourse {
         extract_resource_id(course)
     }
 
-    pub async fn create_without_extract(app: &TestServer, course: &Value) -> ResponseBody {
+    pub async fn create_without_extract(
+        app: &TestServer,
+        course: &Value,
+    ) -> ResponseBody {
         let response = app.post("/courses").json(&course).await;
         let body = response.json::<ResponseBody>();
 
@@ -72,7 +79,10 @@ impl TestCourse {
     }
 
     pub async fn update(app: &TestServer, course_id: &str, course: &Value) -> Value {
-        let response = app.patch(&format!("/courses/{}", course_id)).json(&course).await;
+        let response = app
+            .patch(&format!("/courses/{}", course_id))
+            .json(&course)
+            .await;
         let body = response.json::<ResponseBody>();
 
         assert_eq!(

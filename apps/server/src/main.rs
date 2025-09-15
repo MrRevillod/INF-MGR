@@ -1,5 +1,6 @@
+use helmet::*;
 use sword::core::Config;
-use sword::prelude::Application;
+use sword::prelude::*;
 use tokio::sync::mpsc;
 
 use server::{
@@ -13,7 +14,7 @@ use server::{
 use server::shared::{
     database::PostgresDatabase,
     di::{DependencyContainer, InitialComponents},
-    layers::{CorsLayer, HelmetLayer, LoggerLayer},
+    layers::{CorsLayer, LoggerLayer},
     oauth::GoogleOAuthClient,
     redis::RedisDatabase,
     services::{
@@ -29,7 +30,7 @@ async fn main() {
     let mut app = Application::builder()?;
 
     let config = app.config.clone();
-    let app_config = config.get::<ApplicationConfig>().expect("Invalid app config");
+    let app_config = config.get::<ServerConfig>().expect("Invalid app config");
 
     let (pg_db, mailer, printer, oauth_client, redis_db, jsonwebtoken_service) =
         build_initial_components(config.clone())
@@ -62,7 +63,15 @@ async fn main() {
         .with_controller::<AuthController>()
         .with_layer(LoggerLayer())
         .with_layer(CorsLayer(&config.get::<CorsConfig>()?))
-        .with_layer(HelmetLayer());
+        .with_layer(
+            Helmet::builder()
+                .with_header(XContentTypeOptions::nosniff())
+                .with_header(XFrameOptions::same_origin())
+                .with_header(StrictTransportSecurity::new().max_age(31536000))
+                .with_header(CrossOriginResourcePolicy::same_origin())
+                .with_header(ReferrerPolicy::strict_origin_when_cross_origin())
+                .build(),
+        );
 
     app.build().run().await?;
 }
@@ -78,9 +87,13 @@ async fn build_initial_components(
         .await
         .expect("Failed to create database connection");
 
-    pg_db.migrate().await.expect("Failed to create database connection");
+    pg_db
+        .migrate()
+        .await
+        .expect("Failed to create database connection");
 
-    let mailer = Mailer::new(&mailer_config, &template_config).expect("Failed to create mailer");
+    let mailer = Mailer::new(&mailer_config, &template_config)
+        .expect("Failed to create mailer");
     let printer = Printer::new(&template_config).expect("Failed to create printer");
 
     let oauth_client = GoogleOAuthClient::new(&config.get::<AuthConfig>()?);
@@ -100,5 +113,12 @@ async fn build_initial_components(
         },
     );
 
-    Ok((pg_db, mailer, printer, oauth_client, redis_db, jsonwebtoken_service))
+    Ok((
+        pg_db,
+        mailer,
+        printer,
+        oauth_client,
+        redis_db,
+        jsonwebtoken_service,
+    ))
 }

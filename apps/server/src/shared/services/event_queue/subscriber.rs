@@ -62,7 +62,13 @@ impl EventSubscriber {
         printer: Arc<Printer>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         match event {
-            Event::PracticeApproved((student, enrollment, practice, course, teacher)) => {
+            Event::PracticeApproved((
+                student,
+                enrollment,
+                practice,
+                course,
+                teacher,
+            )) => {
                 let mut template_ctx = template_ctx! {
                     "student_rut" => student.rut,
                     "student_name" => student.name,
@@ -78,7 +84,8 @@ impl EventSubscriber {
                 };
 
                 let practice_static_dir = format!("practices/{}", practice.id);
-                let practice_auth_doc = format!("/static/{practice_static_dir}/authorization.pdf");
+                let practice_auth_doc =
+                    format!("/static/{practice_static_dir}/authorization.pdf");
 
                 let print_opts = PrintOptions {
                     static_path: format!("{practice_static_dir}/authorization.pdf"),
@@ -91,12 +98,18 @@ impl EventSubscriber {
                 template_ctx.push(("practice_auth_doc_url", practice_auth_doc));
                 template_ctx.push((
                     "practice_auth_form_url",
-                    format!("/enrollments/{}/practice/{}/authorize", enrollment.id, practice.id),
+                    format!(
+                        "/enrollments/{}/practice/{}/authorize",
+                        enrollment.id, practice.id
+                    ),
                 ));
 
                 template_ctx.push((
                     "practice_evaluation_form_url",
-                    format!("/enrollments/{}/practice/{}/evaluate", enrollment.id, practice.id),
+                    format!(
+                        "/enrollments/{}/practice/{}/evaluate",
+                        enrollment.id, practice.id
+                    ),
                 ));
 
                 let (_, _, _, _) = tokio::join!(
@@ -127,7 +140,13 @@ impl EventSubscriber {
                 );
             }
 
-            Event::PracticeDeclined((student, _enrollment, practice, course, teacher)) => {
+            Event::PracticeDeclined((
+                student,
+                _enrollment,
+                practice,
+                course,
+                teacher,
+            )) => {
                 let email_context: RawContext = vec![
                     ("student_name", student.name),
                     ("course_name", course.name),
@@ -262,8 +281,10 @@ impl EventSubscriber {
             }
 
             Event::PracticeAuthorized((practice, pdf)) => {
-                let practice_static_dir = format!("practices/{}/authorization.pdf", practice.id);
-                let documents_dir = env::var("DOCUMENTS_DIR").unwrap_or(".".to_string());
+                let practice_static_dir =
+                    format!("practices/{}/authorization.pdf", practice.id);
+                let documents_dir =
+                    env::var("DOCUMENTS_DIR").unwrap_or(".".to_string());
                 let out_path_str = format!("{documents_dir}/{practice_static_dir}");
                 let out_path = Path::new(&out_path_str);
 
@@ -297,7 +318,10 @@ impl EventSubscriber {
                     ("end_date", format_date(practice.end_date.to_string())),
                     ("teacher_name", teacher.name),
                     ("evaluation_score", evaluation_score.to_string()),
-                    ("evaluation_comments", "Evaluación completada por el supervisor".to_string()),
+                    (
+                        "evaluation_comments",
+                        "Evaluación completada por el supervisor".to_string(),
+                    ),
                 ];
 
                 tokio::try_join!(

@@ -11,7 +11,10 @@ pub static PRINTER_TEMPLATES: LazyLock<Templates> = LazyLock::new(|| {
 
 pub static MAILER_TEMPLATES: LazyLock<Templates> = LazyLock::new(|| {
     vec![
-        ("system:welcome.html", include_str!("../mailer/templates/system/welcome.html")),
+        (
+            "system:welcome.html",
+            include_str!("../mailer/templates/system/welcome.html"),
+        ),
         (
             "practice:creation:supervisor.html",
             include_str!("../mailer/templates/practice/creation/supervisor.html"),

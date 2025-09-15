@@ -7,10 +7,7 @@ edition = "2024"
 
 server = { path = "../apps/server" }
 tokio = { version = "1.46.1", features = ["full"] }
-sword = { git = "https://github.com/sword-framework/sword", branch = "dev", features = [
-    "shaku-di",
-    "multipart",
-] }
+sword = { version = "0.1.8", features = ["shaku-di", "multipart"] }
 
 axum = "0.8.4"
 

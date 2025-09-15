@@ -3,11 +3,12 @@ use sword::prelude::config;
 
 #[derive(Debug, Deserialize)]
 #[config(key = "application")]
-pub struct ApplicationConfig {
+pub struct ServerConfig {
     pub port: u16,
     pub host: String,
     pub event_queue_buffer_size: usize,
     pub client_app_url: String,
+    pub documents_dir: String,
 }
 
 #[derive(Debug, Deserialize)]

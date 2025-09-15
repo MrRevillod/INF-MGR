@@ -12,14 +12,21 @@ impl TestUser {
         UserBuilder::new()
     }
 
-    pub async fn create_user_no_extract(server: &TestServer, user: Value) -> ResponseBody {
+    pub async fn create_user_no_extract(
+        server: &TestServer,
+        user: Value,
+    ) -> ResponseBody {
         let response = server.post("/users").json(&user).await;
         let body = response.json::<ResponseBody>();
 
         return body;
     }
 
-    pub async fn update_no_extract(server: &TestServer, id: &str, data: Value) -> ResponseBody {
+    pub async fn update_no_extract(
+        server: &TestServer,
+        id: &str,
+        data: Value,
+    ) -> ResponseBody {
         let response = server.patch(&format!("/users/{}", id)).json(&data).await;
         let body = response.json::<ResponseBody>();
 
@@ -41,8 +48,13 @@ impl TestUser {
     }
 
     pub async fn create_teacher(server: &TestServer) -> String {
-        let email = TEST_EMAILS.get("teacher").cloned().unwrap_or(Self::generate_unique_email());
-        let user = UserBuilder::new().with_roles(vec!["teacher"]).with_email(&email);
+        let email = TEST_EMAILS
+            .get("teacher")
+            .cloned()
+            .unwrap_or(Self::generate_unique_email());
+        let user = UserBuilder::new()
+            .with_roles(vec!["teacher"])
+            .with_email(&email);
 
         let data = Self::create_user(server, user.build()).await;
 
@@ -57,8 +69,13 @@ impl TestUser {
     }
 
     pub async fn create_student(server: &TestServer) -> String {
-        let email = TEST_EMAILS.get("student").cloned().unwrap_or(Self::generate_unique_email());
-        let user = UserBuilder::new().with_roles(vec!["student"]).with_email(&email);
+        let email = TEST_EMAILS
+            .get("student")
+            .cloned()
+            .unwrap_or(Self::generate_unique_email());
+        let user = UserBuilder::new()
+            .with_roles(vec!["student"])
+            .with_email(&email);
 
         let data = Self::create_user(server, user.build()).await;
 
@@ -72,8 +89,15 @@ impl TestUser {
         extract_resource_id(&data)
     }
 
-    pub async fn update(server: &TestServer, user_id: &str, update_data: Value) -> Value {
-        let response = server.patch(&format!("/users/{}", user_id)).json(&update_data).await;
+    pub async fn update(
+        server: &TestServer,
+        user_id: &str,
+        update_data: Value,
+    ) -> Value {
+        let response = server
+            .patch(&format!("/users/{}", user_id))
+            .json(&update_data)
+            .await;
         let body = response.json::<ResponseBody>();
 
         assert_eq!(
@@ -98,8 +122,12 @@ impl TestUser {
     pub fn generate_unique_email() -> String {
         let uuid = Uuid::new_v4();
         let uuid_bytes = uuid.as_bytes();
-        let numeric_value =
-            u32::from_be_bytes([uuid_bytes[0], uuid_bytes[1], uuid_bytes[2], uuid_bytes[3]]);
+        let numeric_value = u32::from_be_bytes([
+            uuid_bytes[0],
+            uuid_bytes[1],
+            uuid_bytes[2],
+            uuid_bytes[3],
+        ]);
 
         format!("{}@example.com", numeric_value)
     }

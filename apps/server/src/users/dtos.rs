@@ -125,6 +125,7 @@ pub struct UserResponse {
     pub id: String,
     pub rut: String,
     pub name: String,
+    pub email: String,
     pub roles: Vec<Role>,
     pub created_at: String,
 }
@@ -135,6 +136,7 @@ impl From<User> for UserResponse {
             id: user_model.id.to_string(),
             rut: user_model.rut,
             name: user_model.name,
+            email: user_model.email,
             roles: user_model.roles.clone(),
             created_at: user_model.created_at.to_rfc3339(),
         }
@@ -188,7 +190,9 @@ fn compute_rut_dv(mut rut: u32) -> String {
 /// Valida que la lista de roles sea válida
 pub fn role_validator(roles: &Vec<String>) -> Result<(), ValidationError> {
     if roles.is_empty() {
-        return Err(ValidationError::new("La lista de roles no pueden estar vacía"));
+        return Err(ValidationError::new(
+            "La lista de roles no pueden estar vacía",
+        ));
     }
 
     for role in roles {

@@ -4,15 +4,16 @@ use crate::{
 };
 
 use async_trait::async_trait;
-
 use shaku::{Component, Interface};
-use std::{io::Bytes, sync::Arc};
+use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::{
     courses::CourseService,
     enrollments::{EnrollmentService, StudentScoreDto, UpdateEnrollmentDto},
-    practices::{CreatePracticeDto, Practice, PracticeRepository, UpdatePracticeDto},
+    practices::{
+        CreatePracticeDto, Practice, PracticeRepository, UpdatePracticeDto,
+    },
     shared::{AppResult, errors::AppError},
 };
 
@@ -36,7 +37,11 @@ pub struct PracticeServiceImpl {
 pub trait PracticeService: Interface {
     async fn get_by_id(&self, id: &Uuid) -> Result<Option<Practice>, AppError>;
 
-    async fn update(&self, id: &Uuid, input: UpdatePracticeDto) -> Result<Practice, AppError>;
+    async fn update(
+        &self,
+        id: &Uuid,
+        input: UpdatePracticeDto,
+    ) -> Result<Practice, AppError>;
 
     async fn create(
         &self,
@@ -44,7 +49,11 @@ pub trait PracticeService: Interface {
         input: CreatePracticeDto,
     ) -> Result<Practice, AppError>;
 
-    async fn authorize(&self, practice_id: &Uuid, document: Bytes<&[u8]>) -> Result<(), AppError>;
+    async fn authorize(
+        &self,
+        practice_id: &Uuid,
+        document: Vec<u8>,
+    ) -> Result<(), AppError>;
 
     async fn update_status(
         &self,
@@ -77,7 +86,8 @@ impl PracticeService for PracticeServiceImpl {
     ) -> Result<Practice, AppError> {
         let practice = Practice::from(input);
 
-        let (enrollment, student, _) = self.enrollments.get_by_id(enrollment_id).await?;
+        let (enrollment, student, _) =
+            self.enrollments.get_by_id(enrollment_id).await?;
 
         let (course, _) = self.courses.get_by_id(&enrollment.course_id).await?;
 
@@ -94,7 +104,9 @@ impl PracticeService for PracticeServiceImpl {
 
         let event_data = (student, practice.clone(), course, enrollment);
 
-        self.event_queue.publish(Event::PracticeCreated(event_data)).await;
+        self.event_queue
+            .publish(Event::PracticeCreated(event_data))
+            .await;
 
         Ok(practice)
     }
@@ -105,55 +117,72 @@ impl PracticeService for PracticeServiceImpl {
         practice_id: &Uuid,
         status: PracticeStatus,
     ) -> AppResult<Practice> {
-        let (enrollment, student, practice) = self.enrollments.get_by_id(enrollment_id).await?;
+        let (enrollment, student, practice) =
+            self.enrollments.get_by_id(enrollment_id).await?;
 
-        let mut practice = practice.ok_or(AppError::ResourceNotFound(*practice_id))?;
+        let mut practice =
+            practice.ok_or(AppError::ResourceNotFound(*practice_id))?;
 
         if practice.id != *practice_id {
             return Err(AppError::ResourceNotFound(*practice_id));
         }
 
-        let (course, teacher) = self.courses.get_by_id(&enrollment.course_id).await?;
+        let (course, teacher) =
+            self.courses.get_by_id(&enrollment.course_id).await?;
 
         let event_data = (student, enrollment, practice.clone(), course, teacher);
 
         match status {
             PracticeStatus::Approved => {
                 practice.practice_status = PracticeStatus::Approved;
-                self.event_queue.publish(Event::PracticeApproved(event_data)).await;
+                self.event_queue
+                    .publish(Event::PracticeApproved(event_data))
+                    .await;
             }
             PracticeStatus::Declined => {
                 practice.practice_status = PracticeStatus::Declined;
-                self.event_queue.publish(Event::PracticeDeclined(event_data)).await;
+                self.event_queue
+                    .publish(Event::PracticeDeclined(event_data))
+                    .await;
             }
-            _ => unreachable!("Only Approved or Declined statuses are allowed in this method"),
+            _ => unreachable!(
+                "Only Approved or Declined statuses are allowed in this method"
+            ),
         }
 
         self.practices.save(practice).await
     }
 
-    async fn authorize(&self, practice_id: &Uuid, doc: Bytes<&[u8]>) -> Result<(), AppError> {
+    async fn authorize(
+        &self,
+        practice_id: &Uuid,
+        doc_bytes: Vec<u8>,
+    ) -> Result<(), AppError> {
         let practice = self
             .practices
             .find_by_id(practice_id)
             .await?
             .ok_or(AppError::ResourceNotFound(*practice_id))?;
 
-        let bytes: Vec<u8> = doc
-            .into_iter()
-            .collect::<Result<Vec<u8>, std::io::Error>>()
-            .map_err(|e| AppError::InternalServerError(e.into()))?;
+        let event_data = (practice, doc_bytes);
 
-        let event_data = (practice, bytes);
-
-        self.event_queue.publish(Event::PracticeAuthorized(event_data)).await;
+        self.event_queue
+            .publish(Event::PracticeAuthorized(event_data))
+            .await;
 
         Ok(())
     }
 
-    async fn update(&self, id: &Uuid, input: UpdatePracticeDto) -> Result<Practice, AppError> {
-        let mut practice =
-            self.practices.find_by_id(id).await?.ok_or(AppError::ResourceNotFound(*id))?;
+    async fn update(
+        &self,
+        id: &Uuid,
+        input: UpdatePracticeDto,
+    ) -> Result<Practice, AppError> {
+        let mut practice = self
+            .practices
+            .find_by_id(id)
+            .await?
+            .ok_or(AppError::ResourceNotFound(*id))?;
 
         if let Some(enterprise_name) = input.enterprise_name {
             practice.enterprise_name = enterprise_name;
@@ -194,12 +223,16 @@ impl PracticeService for PracticeServiceImpl {
         input: EvaluatePracticeDto,
     ) -> AppResult<Practice> {
         // Obtener enrollment, estudiante y práctica
-        let (mut enrollment, student, practice) = self.enrollments.get_by_id(enrollment_id).await?;
+        let (mut enrollment, student, practice) =
+            self.enrollments.get_by_id(enrollment_id).await?;
 
-        let (course, teacher) = self.courses.get_by_id(&enrollment.course_id).await?;
+        let (course, teacher) =
+            self.courses.get_by_id(&enrollment.course_id).await?;
 
-        let updated_evaluation =
-            enrollment.student_scores.iter_mut().find(|s| s.evaluation_id == *evaluation_id);
+        let updated_evaluation = enrollment
+            .student_scores
+            .iter_mut()
+            .find(|s| s.evaluation_id == *evaluation_id);
 
         let practice = practice.ok_or(AppError::ResourceNotFound(*practice_id))?;
 
@@ -219,20 +252,32 @@ impl PracticeService for PracticeServiceImpl {
             practice_id: None,
             student_scores: Some(student_scores_dto),
         };
-        let updated_enrollment = self.enrollments.update(enrollment_id, update_data).await?;
+        let updated_enrollment =
+            self.enrollments.update(enrollment_id, update_data).await?;
 
         // Disparar evento con la nota
-        let event_data =
-            (student, updated_enrollment, practice.clone(), course, teacher, input.score);
+        let event_data = (
+            student,
+            updated_enrollment,
+            practice.clone(),
+            course,
+            teacher,
+            input.score,
+        );
 
-        self.event_queue.publish(Event::PracticeEvaluated(event_data)).await;
+        self.event_queue
+            .publish(Event::PracticeEvaluated(event_data))
+            .await;
 
         Ok(practice)
     }
 
     async fn remove(&self, id: &Uuid) -> Result<(), AppError> {
-        let practice =
-            self.practices.find_by_id(id).await?.ok_or(AppError::ResourceNotFound(*id))?;
+        let practice = self
+            .practices
+            .find_by_id(id)
+            .await?
+            .ok_or(AppError::ResourceNotFound(*id))?;
 
         self.practices.delete(&practice.id).await
     }

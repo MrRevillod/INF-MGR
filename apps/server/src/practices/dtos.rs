@@ -43,7 +43,9 @@ pub struct CreatePracticeDto {
     ))]
     pub supervisor_name: String,
 
-    #[validate(email(message = "El correo electrónico del supervisor debe ser válido."))]
+    #[validate(email(
+        message = "El correo electrónico del supervisor debe ser válido."
+    ))]
     pub supervisor_email: String,
 
     #[validate(regex(
@@ -105,7 +107,9 @@ pub struct UpdatePracticeDto {
     ))]
     pub supervisor_name: Option<String>,
 
-    #[validate(email(message = "El correo electrónico del supervisor debe ser válido."))]
+    #[validate(email(
+        message = "El correo electrónico del supervisor debe ser válido."
+    ))]
     pub supervisor_email: Option<String>,
 
     pub start_date: Option<DateTime<Utc>>,
@@ -134,11 +138,15 @@ impl From<StudentScore> for StudentScoreDto {
 static PHONE_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^(?:\+56)?\s?(?:9\d{8}|\d{1}\d{8})$").unwrap());
 
-fn validate_create_practice_dates(schema: &CreatePracticeDto) -> Result<(), ValidationError> {
+fn validate_create_practice_dates(
+    schema: &CreatePracticeDto,
+) -> Result<(), ValidationError> {
     validate_dates(Some(schema.start_date), Some(schema.end_date))
 }
 
-fn validate_update_practice_dates(schema: &UpdatePracticeDto) -> Result<(), ValidationError> {
+fn validate_update_practice_dates(
+    schema: &UpdatePracticeDto,
+) -> Result<(), ValidationError> {
     validate_dates(schema.start_date, schema.end_date)
 }
 
@@ -181,7 +189,9 @@ fn validate_score(score: f64) -> Result<(), ValidationError> {
     }
 
     if !(1.0..=7.0).contains(&score) {
-        return Err(ValidationError::new("La puntuación debe estar entre 1.0 y 7.0"));
+        return Err(ValidationError::new(
+            "La puntuación debe estar entre 1.0 y 7.0",
+        ));
     }
 
     let score_str = score.to_string();
@@ -189,7 +199,9 @@ fn validate_score(score: f64) -> Result<(), ValidationError> {
     if let Some(decimal_part) = score_str.split('.').nth(1)
         && decimal_part.len() > 1
     {
-        return Err(ValidationError::new("La puntuación debe tener máximo 1 decimal"));
+        return Err(ValidationError::new(
+            "La puntuación debe tener máximo 1 decimal",
+        ));
     }
 
     Ok(())

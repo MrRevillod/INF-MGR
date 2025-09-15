@@ -30,7 +30,10 @@ pub struct GoogleOAuthService {
 #[async_trait]
 pub trait OAuthService: Interface {
     async fn oauth_login(&self) -> AppResult<String>;
-    async fn validate_callback(&self, params: CallBackParams) -> AppResult<(User, OAuthTokenType)>;
+    async fn validate_callback(
+        &self,
+        params: CallBackParams,
+    ) -> AppResult<(User, OAuthTokenType)>;
     async fn get_user_info(&self, access_token: &str) -> AppResult<GoogleUserInfo>;
 }
 
@@ -46,7 +49,9 @@ impl OAuthService for GoogleOAuthService {
             .add_scope(Scope::new("profile".into()))
             .url();
 
-        self.auth_repository.save_csrf_token(csrf_token.secret()).await?;
+        self.auth_repository
+            .save_csrf_token(csrf_token.secret())
+            .await?;
 
         Ok(auth_url.to_string())
     }
@@ -62,7 +67,9 @@ impl OAuthService for GoogleOAuthService {
             .map_err(|e| AppError::InternalServerError(e.into()))?;
 
         if !user_info_response.status().is_success() {
-            return Err(AppError::InternalServerError("Failed to fetch user info".into()));
+            return Err(AppError::InternalServerError(
+                "Failed to fetch user info".into(),
+            ));
         }
 
         let user_info: GoogleUserInfo = user_info_response
@@ -73,7 +80,10 @@ impl OAuthService for GoogleOAuthService {
         Ok(user_info)
     }
 
-    async fn validate_callback(&self, params: CallBackParams) -> AppResult<(User, OAuthTokenType)> {
+    async fn validate_callback(
+        &self,
+        params: CallBackParams,
+    ) -> AppResult<(User, OAuthTokenType)> {
         let CallBackParams { success, error } = params;
 
         if let Some(err) = error {
@@ -86,7 +96,12 @@ impl OAuthService for GoogleOAuthService {
 
         let client = self.oauth_client.get_client();
 
-        if self.auth_repository.get_csrf_token(state.as_str()).await?.is_none() {
+        if self
+            .auth_repository
+            .get_csrf_token(state.as_str())
+            .await?
+            .is_none()
+        {
             return Err(AuthError::OAuthError("Invalid CSRF token".into()))?;
         }
 

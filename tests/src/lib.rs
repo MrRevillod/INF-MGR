@@ -3,11 +3,11 @@ use serde_json::Value;
 
 use server::{
     auth::{JsonWebTokenService, TokenConfig},
-    config::{ApplicationConfig, AuthConfig, CorsConfig, RedisConfig},
+    config::{AuthConfig, CorsConfig, RedisConfig, ServerConfig},
     imports::ImportsController,
     shared::{
         di::InitialComponents,
-        layers::{CorsLayer, HelmetLayer},
+        layers::CorsLayer,
         oauth::GoogleOAuthClient,
         redis::RedisDatabase,
         services::{
@@ -31,28 +31,30 @@ pub mod practices;
 pub mod users;
 
 #[cfg(test)]
-pub static TEST_EMAILS: std::sync::LazyLock<std::collections::HashMap<String, String>> =
-    std::sync::LazyLock::new(|| {
-        let mut m = std::collections::HashMap::new();
+pub static TEST_EMAILS: std::sync::LazyLock<
+    std::collections::HashMap<String, String>,
+> = std::sync::LazyLock::new(|| {
+    let mut m = std::collections::HashMap::new();
 
-        if let Ok(student_email) = std::env::var("TEST_STUDENT_EMAIL") {
-            m.insert("student".to_string(), student_email);
-        }
+    if let Ok(student_email) = std::env::var("TEST_STUDENT_EMAIL") {
+        m.insert("student".to_string(), student_email);
+    }
 
-        if let Ok(teacher_email) = std::env::var("TEST_TEACHER_EMAIL") {
-            m.insert("teacher".to_string(), teacher_email);
-        }
+    if let Ok(teacher_email) = std::env::var("TEST_TEACHER_EMAIL") {
+        m.insert("teacher".to_string(), teacher_email);
+    }
 
-        if let Ok(supervisor_email) = std::env::var("TEST_SUPERVISOR_EMAIL") {
-            m.insert("supervisor".to_string(), supervisor_email);
-        }
+    if let Ok(supervisor_email) = std::env::var("TEST_SUPERVISOR_EMAIL") {
+        m.insert("supervisor".to_string(), supervisor_email);
+    }
 
-        m
-    });
+    m
+});
 
 use server::{
-    config::PostgresDbConfig, courses::CoursesController, enrollments::EnrollmentsController,
-    shared::database::PostgresDatabase, shared::di::DependencyContainer, users::UsersController,
+    config::PostgresDbConfig, courses::CoursesController,
+    enrollments::EnrollmentsController, shared::database::PostgresDatabase,
+    shared::di::DependencyContainer, users::UsersController,
 };
 
 use tokio::sync::mpsc;
@@ -66,15 +68,9 @@ pub async fn init_test_app() -> Result<TestServer, Box<dyn std::error::Error>> {
             .await
             .expect("Failed to build dependencies");
 
-    let app_config = config.get::<ApplicationConfig>()?;
+    let app_config = config.get::<ServerConfig>()?;
 
     let (tx, rx) = mpsc::channel(app_config.event_queue_buffer_size);
-
-    sqlx::query("TRUNCATE TABLE users, courses, enrollments, practices CASCADE")
-        .execute(&pg_db.pool)
-        .await?;
-
-    pg_db.migrate().await.expect("Failed to create database connection");
 
     let dependency_container = DependencyContainer::builder()
         .with_postgres_db(pg_db)
@@ -98,8 +94,7 @@ pub async fn init_test_app() -> Result<TestServer, Box<dyn std::error::Error>> {
         .with_controller::<CoursesController>()
         .with_controller::<EnrollmentsController>()
         .with_controller::<ImportsController>()
-        .with_layer(CorsLayer(&config.get::<CorsConfig>()?))
-        .with_layer(HelmetLayer());
+        .with_layer(CorsLayer(&config.get::<CorsConfig>()?));
 
     Ok(TestServer::new(app.build().router()).expect("Failed to start test server"))
 }
@@ -115,9 +110,14 @@ async fn build_initial_components(
         .await
         .expect("Failed to create database connection");
 
-    pg_db.migrate().await.expect("Failed to create database connection");
+    pg_db.migrate().await.expect("Failed to run migrations");
 
-    let mailer = Mailer::new(&mailer_config, &template_config).expect("Failed to create mailer");
+    sqlx::query("TRUNCATE TABLE users, courses, enrollments, practices CASCADE")
+        .execute(&pg_db.pool)
+        .await?;
+
+    let mailer = Mailer::new(&mailer_config, &template_config)
+        .expect("Failed to create mailer");
     let printer = Printer::new(&template_config).expect("Failed to create printer");
 
     let oauth_client = GoogleOAuthClient::new(&config.get::<AuthConfig>()?);
@@ -137,7 +137,14 @@ async fn build_initial_components(
         },
     );
 
-    Ok((pg_db, mailer, printer, oauth_client, redis_db, jsonwebtoken_service))
+    Ok((
+        pg_db,
+        mailer,
+        printer,
+        oauth_client,
+        redis_db,
+        jsonwebtoken_service,
+    ))
 }
 
 pub fn extract_resource_id(data: &Value) -> String {

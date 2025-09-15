@@ -30,7 +30,12 @@ pub struct JsonWebTokenService {
 }
 
 pub trait TokenService: Interface {
-    fn sign(&self, token_kind: TokenKind, session_id: &str, user_id: &str) -> AppResult<String>;
+    fn sign(
+        &self,
+        token_kind: TokenKind,
+        session_id: &str,
+        user_id: &str,
+    ) -> AppResult<String>;
     fn verify(&self, token_kind: TokenKind, token: &str) -> AppResult<Claims>;
     fn get_token_config(&self, token_kind: TokenKind) -> TokenConfig;
 }
@@ -45,7 +50,12 @@ impl JsonWebTokenService {
 }
 
 impl TokenService for JsonWebTokenService {
-    fn sign(&self, token_kind: TokenKind, session_id: &str, user_id: &str) -> AppResult<String> {
+    fn sign(
+        &self,
+        token_kind: TokenKind,
+        session_id: &str,
+        user_id: &str,
+    ) -> AppResult<String> {
         let TokenConfig { secret, expiration } = self.get_token_config(token_kind);
 
         // Convert milliseconds to proper Unix timestamp

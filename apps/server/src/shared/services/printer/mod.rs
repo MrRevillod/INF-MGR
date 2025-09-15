@@ -18,15 +18,18 @@ pub struct PrintOptions {
 impl Printer {
     pub fn new(template_config: &TemplateConfig) -> Result<Self, ServiceError> {
         Ok(Printer {
-            template_ctx: TemplateContext::new(PRINTER_TEMPLATES.clone(), template_config.clone())?,
+            template_ctx: TemplateContext::new(
+                PRINTER_TEMPLATES.clone(),
+                template_config.clone(),
+            )?,
         })
     }
 
     pub async fn print(&self, opts: PrintOptions) -> Result<String, ServiceError> {
         let template = self.template_ctx.render(opts.template, opts.context)?;
 
-        let template_dir =
-            Path::new(env!("CARGO_MANIFEST_DIR")).join("src/shared/services/printer/templates");
+        let template_dir = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("src/shared/services/printer/templates");
 
         let temp_file = template_dir.join(format!("{}.typ", opts.template));
 
@@ -58,9 +61,10 @@ impl Printer {
             })?;
 
         if !output.status.success() {
-            return Err(
-                PrinterError::PdfGenerationError("Failed to generate PDF".to_string()).into()
-            );
+            return Err(PrinterError::PdfGenerationError(
+                "Failed to generate PDF".to_string(),
+            )
+            .into());
         }
 
         let _ = std::fs::remove_file(&temp_file);

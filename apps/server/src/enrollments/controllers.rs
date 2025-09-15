@@ -1,12 +1,13 @@
-use std::io::Read;
-
-use axum::{http::StatusCode, response::IntoResponse};
+use sword::__internal::IntoResponse;
 use sword::prelude::*;
+use tokio::fs;
 use uuid::Uuid;
 
 use crate::{
+    config::ServerConfig,
     practices::{
-        CreatePracticeDto, EvaluatePracticeDto, PracticeService, PracticeStatus, UpdatePracticeDto,
+        CreatePracticeDto, EvaluatePracticeDto, PracticeService, PracticeStatus,
+        UpdatePracticeDto,
     },
     shared::di::AppModule,
 };
@@ -21,9 +22,11 @@ impl EnrollmentsController {
         let enrollment_id = ctx.param::<Uuid>("id")?;
         let dto = ctx.validated_body::<CreatePracticeDto>()?;
 
-        let service = ctx.di::<AppModule, dyn PracticeService>()?;
+        let practice = ctx
+            .di::<AppModule, dyn PracticeService>()?
+            .create(&enrollment_id, dto)
+            .await?;
 
-        let practice = service.create(&enrollment_id, dto).await?;
         Ok(HttpResponse::Created().data(practice))
     }
 
@@ -74,34 +77,40 @@ impl EnrollmentsController {
     #[post("/{id}/practice/{practice_id}/authorize")]
     async fn authorize_practice(ctx: Context) -> HttpResult<HttpResponse> {
         let practice_id = ctx.param::<Uuid>("practice_id")?;
-        let form_data = ctx.multipart().await?;
+        let mut form_data = ctx.multipart().await?;
 
-        let Some(field) = form_data.fields().first() else {
-            return Err(HttpResponse::BadRequest());
-        };
+        while let Some(field) = form_data.next_field().await.ok().flatten() {
+            if field.name() != Some("auth_doc".into()) {
+                return Err(HttpResponse::BadRequest());
+            }
 
-        if field.name != Some("auth_doc".into()) {
-            return Err(HttpResponse::BadRequest());
+            let service = ctx.di::<AppModule, dyn PracticeService>()?;
+            let field_bytes = field
+                .bytes()
+                .await
+                .map_err(|_| HttpResponse::BadRequest())?;
+
+            service
+                .authorize(&practice_id, field_bytes.to_vec())
+                .await?;
         }
-
-        let service = ctx.di::<AppModule, dyn PracticeService>()?;
-
-        service.authorize(&practice_id, field.data.bytes()).await?;
 
         Ok(HttpResponse::Ok())
     }
 
     #[get("/practice/{practice_id}/docs")]
-    async fn get_practice_docs(ctx: Context) -> Result<impl IntoResponse, HttpResponse> {
+    async fn get_practice_docs(
+        ctx: Context,
+    ) -> Result<impl IntoResponse, HttpResponse> {
         let practice_id = ctx.param::<Uuid>("practice_id")?;
+        let documents_dir = ctx.config::<ServerConfig>()?.documents_dir;
 
         let file_path = format!(
             "{}/practices/{}/authorization.pdf",
-            std::env::var("DOCUMENTS_DIR").unwrap_or(".".to_string()),
-            practice_id
+            documents_dir, practice_id
         );
 
-        let buff = tokio::fs::read(&file_path).await.map_err(|e| {
+        let buff = fs::read(&file_path).await.map_err(|e| {
             tracing::error!("Failed to open/read file {}: {e}", file_path);
             HttpResponse::NotFound()
         })?;

@@ -29,7 +29,10 @@ pub struct ImportServiceImpl {
 
 #[async_trait]
 pub trait ImportService: Interface {
-    async fn import_course_students(&self, data: ImportCourseDto) -> Result<(), AppError>;
+    async fn import_course_students(
+        &self,
+        data: ImportCourseDto,
+    ) -> Result<(), AppError>;
     async fn classify_imported_students(
         &self,
         students: Vec<ImportUserDto>,
@@ -50,7 +53,11 @@ impl ImportService for ImportServiceImpl {
 
         let imported_students = students
             .iter()
-            .filter(|s| !existing_students.iter().any(|existing| existing.rut == s.rut))
+            .filter(|s| {
+                !existing_students
+                    .iter()
+                    .any(|existing| existing.rut == s.rut)
+            })
             .map(|data| -> Result<ImportedUser, AppError> {
                 let entity = User {
                     rut: data.rut.clone(),
@@ -67,7 +74,10 @@ impl ImportService for ImportServiceImpl {
         Ok((imported_students, existing_students))
     }
 
-    async fn import_course_students(&self, course: ImportCourseDto) -> Result<(), AppError> {
+    async fn import_course_students(
+        &self,
+        course: ImportCourseDto,
+    ) -> Result<(), AppError> {
         let (imported_students, existing_students) =
             self.classify_imported_students(course.students).await?;
 
@@ -76,10 +86,15 @@ impl ImportService for ImportServiceImpl {
             .map(|s| (s.entity.name.clone(), s.entity.email.clone()))
             .collect::<Vec<_>>();
 
-        let new_students = imported_students.into_iter().map(|s| s.entity).collect::<Vec<User>>();
+        let new_students = imported_students
+            .into_iter()
+            .map(|s| s.entity)
+            .collect::<Vec<User>>();
 
         self.users.create_many(new_students.clone()).await?;
-        self.event_queue.publish(Event::ManyUsersCreated(event_data)).await;
+        self.event_queue
+            .publish(Event::ManyUsersCreated(event_data))
+            .await;
 
         let all_students = existing_students
             .into_iter()
@@ -89,7 +104,9 @@ impl ImportService for ImportServiceImpl {
 
         let course_id = Uuid::parse_str(&course.id).unwrap();
 
-        self.enrollments.create_many(&course_id, all_students).await?;
+        self.enrollments
+            .create_many(&course_id, all_students)
+            .await?;
 
         Ok(())
     }

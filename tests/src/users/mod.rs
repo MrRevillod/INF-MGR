@@ -30,8 +30,11 @@ async fn test_get_users() -> Result<(), Box<dyn std::error::Error>> {
 #[tokio::test]
 async fn just_test_update_user() -> Result<(), Box<dyn std::error::Error>> {
     let app = init_test_app().await?;
+
     let new_user = TestUser::builder().build();
     let body = TestUser::create_user(&app, new_user).await;
+
+    dbg!(&body);
 
     let user_id = extract_resource_id(&body);
     let new_email = TestUser::generate_unique_email();
@@ -39,10 +42,12 @@ async fn just_test_update_user() -> Result<(), Box<dyn std::error::Error>> {
 
     let updated_data = TestUser::update(&app, &user_id, update_user).await;
 
+    dbg!(&updated_data);
+
     let updated_user_email = updated_data
         .get("email")
-        .and_then(|name| name.as_str())
-        .expect("Updated user name should be present");
+        .and_then(|email| email.as_str())
+        .expect("Updated user email should be present");
 
     assert_eq!(updated_user_email, new_email);
 
@@ -54,7 +59,8 @@ async fn just_test_update_user() -> Result<(), Box<dyn std::error::Error>> {
 // ==================== CREATE USER VALIDATION TESTS ====================
 
 #[tokio::test]
-async fn test_create_user_invalid_rut_format() -> Result<(), Box<dyn std::error::Error>> {
+async fn test_create_user_invalid_rut_format()
+-> Result<(), Box<dyn std::error::Error>> {
     let app = init_test_app().await?;
 
     let new_user = TestUser::builder().with_rut("34108499").build();
@@ -66,8 +72,8 @@ async fn test_create_user_invalid_rut_format() -> Result<(), Box<dyn std::error:
 }
 
 #[tokio::test]
-async fn test_create_user_invalid_rut_verification_digit() -> Result<(), Box<dyn std::error::Error>>
-{
+async fn test_create_user_invalid_rut_verification_digit()
+-> Result<(), Box<dyn std::error::Error>> {
     let app = init_test_app().await?;
     let new_user = TestUser::builder().with_rut("34108499-9").build();
     let response = TestUser::create_user_no_extract(&app, new_user).await;
@@ -78,7 +84,8 @@ async fn test_create_user_invalid_rut_verification_digit() -> Result<(), Box<dyn
 }
 
 #[tokio::test]
-async fn test_create_user_name_too_short() -> Result<(), Box<dyn std::error::Error>> {
+async fn test_create_user_name_too_short() -> Result<(), Box<dyn std::error::Error>>
+{
     let app = init_test_app().await?;
 
     let new_user = TestUser::builder().with_name("Test").build();
@@ -154,7 +161,8 @@ async fn test_update_user_invalid_email() -> Result<(), Box<dyn std::error::Erro
     let user_id = extract_resource_id(&body);
     let update_user = json!({ "email": "invalid-email-format" });
 
-    let updated_response = TestUser::update_no_extract(&app, &user_id, update_user).await;
+    let updated_response =
+        TestUser::update_no_extract(&app, &user_id, update_user).await;
 
     assert_eq!(updated_response.code, 400);
 
@@ -172,7 +180,8 @@ async fn test_update_user_invalid_role() -> Result<(), Box<dyn std::error::Error
     let user_id = body.get("id").and_then(|id| id.as_str()).unwrap();
     let update_user = json!({ "roles": ["invalid_role"] });
 
-    let updated_response = TestUser::update_no_extract(&app, &user_id, update_user).await;
+    let updated_response =
+        TestUser::update_no_extract(&app, &user_id, update_user).await;
 
     assert_eq!(updated_response.code, 400);
     TestUser::delete(&app, user_id).await;
@@ -181,7 +190,8 @@ async fn test_update_user_invalid_role() -> Result<(), Box<dyn std::error::Error
 }
 
 #[tokio::test]
-async fn test_update_user_valid_role_change() -> Result<(), Box<dyn std::error::Error>> {
+async fn test_update_user_valid_role_change()
+-> Result<(), Box<dyn std::error::Error>> {
     let app = init_test_app().await?;
     let new_user = TestUser::builder().build();
     let body = TestUser::create_user(&app, new_user).await;
@@ -189,7 +199,8 @@ async fn test_update_user_valid_role_change() -> Result<(), Box<dyn std::error::
     let user_id = extract_resource_id(&body);
     let update_user = json!({ "roles": ["teacher", "administrator"] });
 
-    let updated_response = TestUser::update_no_extract(&app, &user_id, update_user).await;
+    let updated_response =
+        TestUser::update_no_extract(&app, &user_id, update_user).await;
 
     assert_eq!(updated_response.code, 200);
 
@@ -214,7 +225,8 @@ async fn test_update_user_valid_role_change() -> Result<(), Box<dyn std::error::
 // ==================== EDGE CASES AND BOUNDARY TESTS ====================
 
 #[tokio::test]
-async fn test_create_user_name_boundary_valid() -> Result<(), Box<dyn std::error::Error>> {
+async fn test_create_user_name_boundary_valid()
+-> Result<(), Box<dyn std::error::Error>> {
     let app = init_test_app().await?;
     let new_user = TestUser::builder().with_name("Tests").build();
     let body = TestUser::create_user(&app, new_user).await;
@@ -227,7 +239,8 @@ async fn test_create_user_name_boundary_valid() -> Result<(), Box<dyn std::error
 }
 
 #[tokio::test]
-async fn test_create_user_name_boundary_maximum() -> Result<(), Box<dyn std::error::Error>> {
+async fn test_create_user_name_boundary_maximum()
+-> Result<(), Box<dyn std::error::Error>> {
     let app = init_test_app().await?;
     let max_name = "a".repeat(100);
     let new_user = TestUser::builder().with_name(&max_name).build();

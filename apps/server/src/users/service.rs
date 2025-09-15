@@ -12,7 +12,8 @@ use crate::{
     },
     user_filter,
     users::{
-        CreateUserDto, UpdateUserDto, User, UserFilter, UserRepository, dtos::from_string_vec_roles,
+        CreateUserDto, UpdateUserDto, User, UserFilter, UserRepository,
+        dtos::from_string_vec_roles,
     },
 };
 
@@ -28,7 +29,10 @@ pub struct UserServiceImpl {
 
 #[async_trait]
 pub trait UserService: Interface {
-    async fn get_all(&self, filter: UserFilter) -> Result<Pagination<User>, AppError>;
+    async fn get_all(
+        &self,
+        filter: UserFilter,
+    ) -> Result<Pagination<User>, AppError>;
 
     async fn create(&self, user: CreateUserDto) -> Result<User, AppError>;
     async fn update(&self, id: Uuid, user: UpdateUserDto) -> Result<User, AppError>;
@@ -37,7 +41,10 @@ pub trait UserService: Interface {
 
 #[async_trait]
 impl UserService for UserServiceImpl {
-    async fn get_all(&self, filter: UserFilter) -> Result<Pagination<User>, AppError> {
+    async fn get_all(
+        &self,
+        filter: UserFilter,
+    ) -> Result<Pagination<User>, AppError> {
         let results = self.users.find_many(filter.clone()).await?;
         let total = self.users.count(filter.clone()).await?;
 
@@ -81,19 +88,28 @@ impl UserService for UserServiceImpl {
         let user = self.users.save(User::try_from(input.clone())?).await?;
         let event_data = (user.name.clone(), user.email.clone());
 
-        self.event_queue.publish(Event::UserCreated(event_data)).await;
+        self.event_queue
+            .publish(Event::UserCreated(event_data))
+            .await;
 
         Ok(user)
     }
 
-    async fn update(&self, id: Uuid, input: UpdateUserDto) -> Result<User, AppError> {
+    async fn update(
+        &self,
+        id: Uuid,
+        input: UpdateUserDto,
+    ) -> Result<User, AppError> {
         let Some(mut user) = self.users.find_by_id(&id).await? else {
             return Err(AppError::ResourceNotFound(id));
         };
 
         if let Some(e) = input.email {
-            let email_exists =
-                self.users.find_one(user_filter! { email: e.clone() }).await?.is_some();
+            let email_exists = self
+                .users
+                .find_one(user_filter! { email: e.clone() })
+                .await?
+                .is_some();
 
             if email_exists && user.email != e {
                 return Err(AppError::Conflict(Input {

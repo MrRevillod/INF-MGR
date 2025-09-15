@@ -76,13 +76,17 @@ impl From<AppError> for HttpResponse {
                 "message": input.message,
             })),
 
-            AppError::InvalidInput(input) => HttpResponse::BadRequest().data(json!({
-                "field": input.field,
-                "value": input.value,
-                "message": input.message,
-            })),
+            AppError::InvalidInput(input) => {
+                HttpResponse::BadRequest().data(json!({
+                    "field": input.field,
+                    "value": input.value,
+                    "message": input.message,
+                }))
+            }
 
-            AppError::InvalidOperation(message) => HttpResponse::BadRequest().message(message),
+            AppError::InvalidOperation(message) => {
+                HttpResponse::BadRequest().message(message)
+            }
 
             AppError::Unauthorized { source } => {
                 tracing::warn!("Unauthorized access: {source}");

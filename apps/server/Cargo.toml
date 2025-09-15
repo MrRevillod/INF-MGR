@@ -18,10 +18,11 @@ tokio = { version = "1.46.1", features = ["full"] }
 axum = "0.8.4"
 oauth2 = "5.0.0"
 reqwest = { version = "0.12", features = ["json"] }
-sword = { git = "https://github.com/sword-framework/sword", branch = "dev", features = [
+sword = { version = "0.1.8", features = [
     "multipart",
     "shaku-di",
     "cookies",
+    "helmet",
 ] }
 
 chrono = { version = "0.4.41", features = ["serde"] }
@@ -70,7 +71,6 @@ rand = { version = "0.9.1", optional = true }
 
 thiserror = "2.0.14"
 
-axum-helmet = "0.2.0"
 jsonwebtoken = "9.3.1"
 time = "0.3.43"
 

@@ -2,11 +2,15 @@ use std::collections::HashSet;
 use std::str::FromStr;
 use std::time::Duration;
 
+use sword::web::Method;
+use sword::web::header::HeaderName;
+
 use axum::http;
-use axum_helmet::{Helmet, HelmetLayer};
 use tower_http::classify::{ServerErrorsAsFailures, SharedClassifier};
 use tower_http::cors::CorsLayer;
-use tower_http::trace::{MakeSpan, OnRequest, OnResponse, TraceLayer as TowerTraceLayer};
+use tower_http::trace::{
+    MakeSpan, OnRequest, OnResponse, TraceLayer as TowerTraceLayer,
+};
 
 use crate::config::CorsConfig;
 use tracing::Span;
@@ -20,8 +24,10 @@ type TraceLayer = TowerTraceLayer<
 
 #[allow(non_snake_case)]
 pub fn LoggerLayer() -> TraceLayer {
-    // Use try_init to avoid panic if subscriber is already initialized
-    let _ = tracing_subscriber::fmt().with_target(false).compact().try_init();
+    let _ = tracing_subscriber::fmt()
+        .with_target(false)
+        .compact()
+        .try_init();
 
     TowerTraceLayer::new_for_http()
         .make_span_with(TraceMakeSpan)
@@ -43,7 +49,11 @@ pub struct TraceOnRequest;
 
 impl<B> OnRequest<B> for TraceOnRequest {
     fn on_request(&mut self, request: &http::Request<B>, _: &Span) {
-        tracing::info!("HTTP - METHOD: [{}] - PATH: [{}]", request.method(), request.uri().path());
+        tracing::info!(
+            "HTTP - METHOD: [{}] - PATH: [{}]",
+            request.method(),
+            request.uri().path()
+        );
     }
 }
 
@@ -68,13 +78,13 @@ pub fn CorsLayer(config: &CorsConfig) -> CorsLayer {
 
     for method in config.allowed_http_methods.iter() {
         let http_method =
-            axum::http::Method::from_str(method).expect("Invalid HTTP Method found in config");
+            Method::from_str(method).expect("Invalid HTTP Method found in config");
 
         methods.insert(http_method);
     }
 
     for header in config.allowed_http_headers.iter() {
-        let http_header = axum::http::header::HeaderName::from_str(header)
+        let http_header = HeaderName::from_str(header)
             .expect("Invalid HTTP Header found in config");
 
         headers.insert(http_header);
@@ -87,16 +97,4 @@ pub fn CorsLayer(config: &CorsConfig) -> CorsLayer {
         .allow_credentials(config.allow_credentials)
         .allow_methods(methods)
         .allow_headers(headers)
-}
-
-#[allow(non_snake_case)]
-pub fn HelmetLayer() -> HelmetLayer {
-    HelmetLayer::new(
-        Helmet::new()
-            .add(axum_helmet::XContentTypeOptions::nosniff())
-            .add(axum_helmet::XFrameOptions::same_origin())
-            .add(axum_helmet::StrictTransportSecurity::new().max_age(31536000))
-            .add(axum_helmet::CrossOriginResourcePolicy::same_origin())
-            .add(axum_helmet::ReferrerPolicy::strict_origin_when_cross_origin()),
-    )
 }

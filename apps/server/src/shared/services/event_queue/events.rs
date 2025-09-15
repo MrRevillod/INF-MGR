@@ -1,7 +1,9 @@
 use chrono::{DateTime, Utc};
 use chrono_tz::America::Santiago;
 
-use crate::{courses::Course, enrollments::Enrollment, practices::Practice, users::User};
+use crate::{
+    courses::Course, enrollments::Enrollment, practices::Practice, users::User,
+};
 
 #[derive(Debug, Clone)]
 pub enum Event {
@@ -16,7 +18,9 @@ pub enum Event {
 }
 
 pub fn format_date(date: String) -> String {
-    let date = DateTime::parse_from_rfc3339(&date).map(|dt| dt.with_timezone(&Utc)).ok();
+    let date = DateTime::parse_from_rfc3339(&date)
+        .map(|dt| dt.with_timezone(&Utc))
+        .ok();
 
     date.map(|date| date.with_timezone(&Santiago).format("%d/%m/%y").to_string())
         .unwrap_or_default()

@@ -26,18 +26,30 @@ pub struct EnrollmentFilter {
 
 #[async_trait]
 pub trait EnrollmentRepository: Interface {
-    async fn find_many(&self, filter: EnrollmentFilter) -> Result<Vec<Enrollment>, AppError>;
+    async fn find_many(
+        &self,
+        filter: EnrollmentFilter,
+    ) -> Result<Vec<Enrollment>, AppError>;
 
     async fn find_by_id(&self, id: &Uuid) -> Result<Option<Enrollment>, AppError>;
     async fn save(&self, enrollment: Enrollment) -> Result<Enrollment, AppError>;
-    async fn create_many(&self, enrollments: Vec<Enrollment>) -> Result<Vec<Enrollment>, AppError>;
+    async fn create_many(
+        &self,
+        enrollments: Vec<Enrollment>,
+    ) -> Result<Vec<Enrollment>, AppError>;
     async fn delete(&self, id: &Uuid) -> Result<(), AppError>;
 }
 
 #[async_trait]
 impl EnrollmentRepository for PostgresEnrollmentRepository {
-    async fn find_many(&self, filter: EnrollmentFilter) -> Result<Vec<Enrollment>, AppError> {
-        let mut query = Query::select().expr(Expr::cust("*")).from(Enrollments::Table).to_owned();
+    async fn find_many(
+        &self,
+        filter: EnrollmentFilter,
+    ) -> Result<Vec<Enrollment>, AppError> {
+        let mut query = Query::select()
+            .expr(Expr::cust("*"))
+            .from(Enrollments::Table)
+            .to_owned();
 
         if let Some(user_id) = filter.student_id {
             query.and_where(Expr::col(Enrollments::StudentId).eq(user_id));
@@ -92,7 +104,10 @@ impl EnrollmentRepository for PostgresEnrollmentRepository {
         Ok(result)
     }
 
-    async fn create_many(&self, enrollments: Vec<Enrollment>) -> Result<Vec<Enrollment>, AppError> {
+    async fn create_many(
+        &self,
+        enrollments: Vec<Enrollment>,
+    ) -> Result<Vec<Enrollment>, AppError> {
         if enrollments.is_empty() {
             return Ok(vec![]);
         }
@@ -145,7 +160,9 @@ impl EnrollmentRepository for PostgresEnrollmentRepository {
             .and_where(Expr::col(Enrollments::Id).eq(*id))
             .build_sqlx(PostgresQueryBuilder);
 
-        sqlx::query_with(&sql, values).execute(self.db_connection.get_pool()).await?;
+        sqlx::query_with(&sql, values)
+            .execute(self.db_connection.get_pool())
+            .await?;
 
         Ok(())
     }

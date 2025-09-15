@@ -30,8 +30,11 @@ impl AuthRepository for OAuthRepository {
     }
 
     async fn get_csrf_token(&self, token: &str) -> Result<Option<String>, AppError> {
-        let result: Option<String> =
-            self.redis_db.get_connection().get(format!("csrf:{token}")).await?;
+        let result: Option<String> = self
+            .redis_db
+            .get_connection()
+            .get(format!("csrf:{token}"))
+            .await?;
 
         Ok(result)
     }

@@ -19,7 +19,11 @@ use crate::{
 #[derive(Serialize, Deserialize, Debug, Clone, Validate)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateCourseDto {
-    #[validate(range(min = 2000, max = 2100, message = "El año debe tener 4 dígitos."))]
+    #[validate(range(
+        min = 2000,
+        max = 2100,
+        message = "El año debe tener 4 dígitos."
+    ))]
     pub year: i32,
 
     #[validate(
@@ -56,7 +60,11 @@ impl From<CreateCourseDto> for Course {
             year: dto.year,
             code: dto.code,
             name: dto.name,
-            evaluations: dto.evaluations.into_iter().map(CourseEvaluation::from).collect(),
+            evaluations: dto
+                .evaluations
+                .into_iter()
+                .map(CourseEvaluation::from)
+                .collect(),
 
             teacher_id: Uuid::parse_str(&dto.teacher_id).unwrap(),
             course_status: CourseStatus::Active,
@@ -213,7 +221,9 @@ fn validate_weights(weights: &[i32]) -> Result<(), ValidationError> {
     Ok(())
 }
 
-fn validate_evaluation_weights(evaluations: &[CourseEvaluationDto]) -> Result<(), ValidationError> {
+fn validate_evaluation_weights(
+    evaluations: &[CourseEvaluationDto],
+) -> Result<(), ValidationError> {
     let weights: Vec<i32> = evaluations.iter().map(|e| e.weight).collect();
     validate_weights(&weights)
 }

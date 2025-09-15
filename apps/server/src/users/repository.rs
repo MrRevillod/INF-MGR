@@ -6,7 +6,9 @@ use sqlx::{Postgres, query_as_with as sqlx_query};
 use std::sync::Arc;
 use uuid::Uuid;
 
-use sea_query::{Expr, ExprTrait, Order, PostgresQueryBuilder, Query, extension::postgres::PgExpr};
+use sea_query::{
+    Expr, ExprTrait, Order, PostgresQueryBuilder, Query, extension::postgres::PgExpr,
+};
 
 use crate::{
     shared::{
@@ -49,7 +51,10 @@ pub trait UserRepository: Interface {
 #[async_trait]
 impl UserRepository for PostgresUserRepository {
     async fn find_many(&self, filter: UserFilter) -> Result<Vec<User>, AppError> {
-        let mut query = Query::select().expr(Expr::cust("*")).from(Users::Table).to_owned();
+        let mut query = Query::select()
+            .expr(Expr::cust("*"))
+            .from(Users::Table)
+            .to_owned();
 
         if let Some(ids) = &filter.ids {
             query.and_where(Expr::col(Users::Id).is_in(ids.clone()));
@@ -198,7 +203,9 @@ impl UserRepository for PostgresUserRepository {
                 .bind(user.deleted_at);
         }
 
-        let results = sqlx_query.fetch_all(self.database_connection.get_pool()).await?;
+        let results = sqlx_query
+            .fetch_all(self.database_connection.get_pool())
+            .await?;
 
         Ok(results)
     }

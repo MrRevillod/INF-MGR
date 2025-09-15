@@ -1,5 +1,7 @@
 use crate::shared::di::AppModule;
-use crate::users::{CreateUserDto, GetUsersQueryDto, UpdateUserDto, UserResponse, UserService};
+use crate::users::{
+    CreateUserDto, GetUsersQueryDto, UpdateUserDto, UserResponse, UserService,
+};
 
 use serde_json::json;
 use sword::{prelude::*, web::HttpResult};
@@ -12,11 +14,17 @@ pub struct UsersController;
 impl UsersController {
     #[get("/")]
     async fn find_all(ctx: Context) -> HttpResult<HttpResponse> {
-        let query = ctx.validated_query::<GetUsersQueryDto>()?.unwrap_or_default();
+        let query = ctx
+            .validated_query::<GetUsersQueryDto>()?
+            .unwrap_or_default();
         let service = ctx.di::<AppModule, dyn UserService>()?;
 
         let data = service.get_all(query.into()).await?;
-        let users = data.items.into_iter().map(UserResponse::from).collect::<Vec<_>>();
+        let users = data
+            .items
+            .into_iter()
+            .map(UserResponse::from)
+            .collect::<Vec<_>>();
 
         let json = json!({
             "users": users,
