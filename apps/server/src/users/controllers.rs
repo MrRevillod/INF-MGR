@@ -10,12 +10,12 @@ use sword::prelude::*;
 use uuid::Uuid;
 
 #[controller("/users")]
+#[middleware(Authentication)]
 pub struct UsersController;
 
 #[routes]
 impl UsersController {
     #[get("/")]
-    #[middleware(Authentication)]
     #[middleware(RequirePermission, config = "users:read")]
     async fn find_all(ctx: Context) -> HttpResult<HttpResponse> {
         let query = ctx
@@ -43,7 +43,6 @@ impl UsersController {
     }
 
     #[post("/")]
-    #[middleware(Authentication)]
     #[middleware(RequirePermission, config = "users:create")]
     async fn create(ctx: Context) -> HttpResult<HttpResponse> {
         let user_data = ctx.validated_body::<CreateUserDto>()?;
@@ -55,7 +54,6 @@ impl UsersController {
     }
 
     #[patch("/{id}")]
-    #[middleware(Authentication)]
     #[middleware(RequirePermission, config = "users:update")]
     pub async fn update(ctx: Context) -> HttpResult<HttpResponse> {
         let id = ctx.param::<Uuid>("id")?;
@@ -68,7 +66,6 @@ impl UsersController {
     }
 
     #[delete("/{id}")]
-    #[middleware(Authentication)]
     #[middleware(RequirePermission, config = "users:delete")]
     async fn remove(ctx: Context) -> HttpResult<HttpResponse> {
         let id = ctx.param::<Uuid>("id")?;

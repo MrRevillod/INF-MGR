@@ -18,17 +18,9 @@ impl MiddlewareWithConfig<&str> for RequirePermission {
             )),
         )?;
 
-        if !user_permissions.contains(&required_permission.to_string()) {
-            tracing::warn!(
-                "Permission denied. Required: {}, User permissions: {:?}",
-                required_permission,
-                user_permissions
-            );
-
-            return Err(
-                HttpResponse::Forbidden().message("Missing required permission")
-            );
-        }
+        todo!(
+            "check just first 2 levels of permission hierarchy and save permissions as enums on the request extensions"
+        );
 
         next!(req, next)
     }
