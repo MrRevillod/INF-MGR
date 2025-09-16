@@ -4,6 +4,7 @@ use tokio::fs;
 use uuid::Uuid;
 
 use crate::{
+    auth::{Authentication, permissions::RequirePermission},
     config::ServerConfig,
     practices::{
         CreatePracticeDto, EvaluatePracticeDto, PracticeService, PracticeStatus,
@@ -18,6 +19,7 @@ pub struct EnrollmentsController {}
 #[routes]
 impl EnrollmentsController {
     #[post("/{id}/practice")]
+    #[middleware(RequirePermission, config = "practices:create")]
     async fn create_practice(ctx: Context) -> HttpResult<HttpResponse> {
         let enrollment_id = ctx.param::<Uuid>("id")?;
         let dto = ctx.validated_body::<CreatePracticeDto>()?;
@@ -80,7 +82,7 @@ impl EnrollmentsController {
         let mut form_data = ctx.multipart().await?;
 
         while let Some(field) = form_data.next_field().await.ok().flatten() {
-            if field.name() != Some("auth_doc".into()) {
+            if field.name() != Some("auth_doc") {
                 return Err(HttpResponse::BadRequest());
             }
 
@@ -136,6 +138,7 @@ impl EnrollmentsController {
     }
 
     #[patch("/{id}/practice")]
+    #[middleware(Authentication)]
     async fn update_practice(ctx: Context) -> HttpResult<HttpResponse> {
         let enrollment_id = ctx.param::<Uuid>("id")?;
         let dto = ctx.validated_body::<UpdatePracticeDto>()?;
@@ -147,6 +150,7 @@ impl EnrollmentsController {
     }
 
     #[delete("/practice/{practice_id}")]
+    #[middleware(Authentication)]
     async fn delete_practice(ctx: Context) -> HttpResult<HttpResponse> {
         let practice_id = ctx.param::<Uuid>("practice_id")?;
         let service = ctx.di::<AppModule, dyn PracticeService>()?;

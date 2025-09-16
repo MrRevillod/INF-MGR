@@ -35,7 +35,7 @@ pub trait TokenService: Interface {
         &self,
         token_kind: TokenKind,
         session_id: &str,
-        permissions: &Vec<String>,
+        permissions: &[String],
         user_id: &str,
     ) -> AppResult<String>;
 
@@ -57,7 +57,7 @@ impl TokenService for JsonWebTokenService {
         &self,
         token_kind: TokenKind,
         session_id: &str,
-        permissions: &Vec<String>,
+        permissions: &[String],
         user_id: &str,
     ) -> AppResult<String> {
         let TokenConfig { secret, expiration } = self.get_token_config(token_kind);
@@ -69,7 +69,7 @@ impl TokenService for JsonWebTokenService {
 
         let claims = Claims {
             user_id: user_id.to_string(),
-            permissions: permissions.clone(),
+            permissions: permissions.to_vec(),
             session_id: session_id.to_string(),
             exp: exp_timestamp,
         };

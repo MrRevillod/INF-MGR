@@ -4,7 +4,7 @@ use std::collections::HashSet;
 pub struct Permissions;
 
 impl Permissions {
-    pub fn build(roles: &Vec<Role>) -> Vec<String> {
+    pub fn build(roles: &[Role]) -> Vec<String> {
         let mut permissions = HashSet::new();
 
         let permissions_for_role = |role: &Role| -> Vec<String> {
@@ -60,6 +60,7 @@ impl Permissions {
             // Related enrollments (students in their courses)
             "enrollments:read:related".to_string(),
             "enrollments:update:related".to_string(),
+            "practices:create".to_string(),
         ]
     }
 

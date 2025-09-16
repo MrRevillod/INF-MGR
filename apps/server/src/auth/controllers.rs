@@ -1,6 +1,6 @@
 use crate::{
     auth::{
-        CallBackParams, OAuthService,
+        Authentication, CallBackParams, OAuthService,
         services::{CookieBuilder, SessionService},
     },
     config::{AuthConfig, ServerConfig},
@@ -96,6 +96,7 @@ impl AuthController {
     }
 
     #[post("/logout")]
+    #[middleware(Authentication)]
     async fn logout(mut ctx: Context) -> HttpResult<HttpResponse> {
         let cookies = ctx.cookies()?;
         let access_token = cookies.get("access").map(|c| c.value().to_string());

@@ -2,6 +2,9 @@ use std::fmt::Display;
 
 use crate::shared::errors::AuthError;
 
+mod middleware;
+pub use middleware::RequirePermission;
+
 mod service;
 pub use service::Permissions;
 

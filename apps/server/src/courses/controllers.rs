@@ -2,7 +2,7 @@ use sword::prelude::*;
 use uuid::Uuid;
 
 use crate::{
-    auth::middleware::Authentication,
+    auth::{Authentication, permissions::RequirePermission},
     courses::{CourseResponse, CourseService, CreateCourseDto, UpdateCourseDto},
     enrollments::{
         CreateEnrollmentDto, EnrollmentFilter, EnrollmentResponse,
@@ -18,9 +18,9 @@ pub struct CoursesController {}
 impl CoursesController {
     /// Obtener todos los cursos registrados en el sistema
     /// Se transforma el output sumando los miembros del staff a cada curso (teacher + coord)
-
     #[get("/")]
     #[middleware(Authentication)]
+    #[middleware(RequirePermission, config = "courses:read")]
     async fn get_courses(ctx: Context) -> HttpResult<HttpResponse> {
         let service = ctx.di::<AppModule, dyn CourseService>()?;
         let asignatures = service
@@ -37,6 +37,8 @@ impl CoursesController {
     /// de cada estudiante, sus notas y demás.
 
     #[get("/{id}/students")]
+    #[middleware(Authentication)]
+    #[middleware(RequirePermission, config = "enrollments:read")]
     async fn get_course_enrollments(ctx: Context) -> HttpResult<HttpResponse> {
         let course_id = ctx.param::<Uuid>("id")?;
         let service = ctx.di::<AppModule, dyn EnrollmentService>()?;
@@ -59,6 +61,8 @@ impl CoursesController {
     /// Crear y registrar un nuevo curso en el sistema
 
     #[post("/")]
+    #[middleware(Authentication)]
+    #[middleware(RequirePermission, config = "courses:create")]
     async fn create_course(ctx: Context) -> HttpResult<HttpResponse> {
         let input = ctx.validated_body::<CreateCourseDto>()?;
         let service = ctx.di::<AppModule, dyn CourseService>()?;
@@ -71,6 +75,8 @@ impl CoursesController {
     /// Registrar un estudiante en un curso (enrollment)
 
     #[post("/enroll")]
+    #[middleware(Authentication)]
+    #[middleware(RequirePermission, config = "enrollments:create")]
     async fn create_enrollment(ctx: Context) -> HttpResult<HttpResponse> {
         let input = ctx.validated_body::<CreateEnrollmentDto>()?;
         let service = ctx.di::<AppModule, dyn EnrollmentService>()?;
@@ -84,6 +90,8 @@ impl CoursesController {
     /// Profesor, cordinador a cargo y/o estado del curso
 
     #[patch("/{id}")]
+    #[middleware(Authentication)]
+    #[middleware(RequirePermission, config = "courses:update")]
     async fn update_course(ctx: Context) -> HttpResult<HttpResponse> {
         let asignature_id = ctx.param::<Uuid>("id")?;
         let input = ctx.validated_body::<UpdateCourseDto>()?;
@@ -98,6 +106,8 @@ impl CoursesController {
     /// Notas, práctica, etc.
 
     #[patch("/enrollments/{enrollment_id}")]
+    #[middleware(Authentication)]
+    #[middleware(RequirePermission, config = "enrollments:update")]
     async fn update_enrollment(ctx: Context) -> HttpResult<HttpResponse> {
         let enrollment_id = ctx.param::<Uuid>("enrollment_id")?;
         let input = ctx.validated_body::<UpdateEnrollmentDto>()?;
@@ -112,6 +122,8 @@ impl CoursesController {
     /// estudiantes inscritos en el.
 
     #[delete("/{id}")]
+    #[middleware(Authentication)]
+    #[middleware(RequirePermission, config = "courses:delete")]
     async fn remove(ctx: Context) -> HttpResult<HttpResponse> {
         let course_id = ctx.param::<Uuid>("id")?;
         let service = ctx.di::<AppModule, dyn CourseService>()?;
@@ -124,6 +136,8 @@ impl CoursesController {
     /// Eliminar inscripción de un estudiante en un curso.
 
     #[delete("/enrollments/{enrollment_id}")]
+    #[middleware(Authentication)]
+    #[middleware(RequirePermission, config = "enrollments:delete")]
     async fn remove_enrollment(ctx: Context) -> HttpResult<HttpResponse> {
         let enrollment_id = ctx.param::<Uuid>("enrollment_id")?;
         let service = ctx.di::<AppModule, dyn EnrollmentService>()?;

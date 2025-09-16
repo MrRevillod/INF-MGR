@@ -108,7 +108,7 @@ impl SessionService for SessionServiceImpl {
             .await?
             .ok_or_else(|| AuthError::UserNotFound(claims.user_id.clone()))?;
 
-        let permissions = Permissions::build(&&user.roles);
+        let permissions = Permissions::build(&user.roles);
 
         let new_access_token = self.jwt.sign(
             TokenKind::Access,
