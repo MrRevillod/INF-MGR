@@ -3,6 +3,12 @@ pub mod config;
 pub mod auth {
     mod controllers;
     mod dtos;
+    pub mod middleware {
+        mod auth;
+        pub use auth::Authentication;
+    }
+
+    pub mod permissions;
 
     mod repositories {
         mod auth;

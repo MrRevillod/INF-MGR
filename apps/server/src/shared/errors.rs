@@ -61,6 +61,9 @@ pub enum AuthError {
 
     #[error("Session expired")]
     SessionExpired,
+
+    #[error("Other auth error: {0}")]
+    Other(String),
 }
 
 impl From<AppError> for HttpResponse {
@@ -112,6 +115,11 @@ impl From<AppError> for HttpResponse {
                     AuthError::SessionExpired => json!({
                         "error": "session_expired",
                         "details": "La sesión ha expirado. Por favor, inicie sesión de nuevo."
+                    }),
+
+                    AuthError::Other(msg) => json!({
+                        "error": "unauthorized",
+                        "details": msg
                     }),
                 };
 

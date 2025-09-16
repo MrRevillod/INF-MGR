@@ -2,6 +2,7 @@ use sword::prelude::*;
 use uuid::Uuid;
 
 use crate::{
+    auth::middleware::Authentication,
     courses::{CourseResponse, CourseService, CreateCourseDto, UpdateCourseDto},
     enrollments::{
         CreateEnrollmentDto, EnrollmentFilter, EnrollmentResponse,
@@ -19,6 +20,7 @@ impl CoursesController {
     /// Se transforma el output sumando los miembros del staff a cada curso (teacher + coord)
 
     #[get("/")]
+    #[middleware(Authentication)]
     async fn get_courses(ctx: Context) -> HttpResult<HttpResponse> {
         let service = ctx.di::<AppModule, dyn CourseService>()?;
         let asignatures = service

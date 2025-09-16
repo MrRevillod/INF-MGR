@@ -8,6 +8,7 @@ use shaku::{Component, Interface};
 pub struct Claims {
     pub user_id: String,
     pub session_id: String,
+    pub permissions: Vec<String>,
     pub exp: usize, // Unix timestamp (seconds from epoch)
 }
 
@@ -34,8 +35,10 @@ pub trait TokenService: Interface {
         &self,
         token_kind: TokenKind,
         session_id: &str,
+        permissions: &Vec<String>,
         user_id: &str,
     ) -> AppResult<String>;
+
     fn verify(&self, token_kind: TokenKind, token: &str) -> AppResult<Claims>;
     fn get_token_config(&self, token_kind: TokenKind) -> TokenConfig;
 }
@@ -54,6 +57,7 @@ impl TokenService for JsonWebTokenService {
         &self,
         token_kind: TokenKind,
         session_id: &str,
+        permissions: &Vec<String>,
         user_id: &str,
     ) -> AppResult<String> {
         let TokenConfig { secret, expiration } = self.get_token_config(token_kind);
@@ -65,6 +69,7 @@ impl TokenService for JsonWebTokenService {
 
         let claims = Claims {
             user_id: user_id.to_string(),
+            permissions: permissions.clone(),
             session_id: session_id.to_string(),
             exp: exp_timestamp,
         };
