@@ -8,6 +8,8 @@ graceful_shutdown = false
 event_queue_buffer_size = 100
 client_app_url = "${PUBLIC_URL:http://localhost:3000}"
 documents_dir = "${DOCUMENTS_DIR:./documents}"
+num_of_event_retry = 2
+delay_between_event_retry_ms = 2000
 
 [postgres-db]
 url = "${POSTGRES_DATABASE_URL:postgres://localhost:5432/inf_mgr}"

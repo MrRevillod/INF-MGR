@@ -1,6 +1,5 @@
-use std::fmt::Display;
-
 use crate::shared::errors::AuthError;
+use std::fmt::Display;
 
 mod middleware;
 pub use middleware::RequirePermission;
@@ -8,16 +7,28 @@ pub use middleware::RequirePermission;
 mod service;
 pub use service::Permissions;
 
+#[derive(Clone)]
 pub struct Permission {
     pub resource: String,
     pub action: String,
     pub scope: Option<PermissionScope>,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum PermissionScope {
     All,     // e.g., Admin
     Own,     // e.g., Teacher's own courses
     Related, // e.g., Student's enrolled courses
+}
+
+impl Permission {
+    pub fn matches_without_scope(&self, other: &Permission) -> bool {
+        if self.resource != other.resource || self.action != other.action {
+            return false;
+        }
+
+        true
+    }
 }
 
 impl TryFrom<&str> for Permission {

@@ -37,9 +37,12 @@ pub struct CourseServiceImpl {
 
 #[async_trait]
 pub trait CourseService: Interface {
-    async fn get_all(&self) -> Result<Vec<CourseWithStaff>, AppError>;
-    async fn get_by_id(&self, id: &Uuid) -> Result<CourseWithStaff, AppError>;
+    async fn get_all(
+        &self,
+        filter: CourseFilter,
+    ) -> Result<Vec<CourseWithStaff>, AppError>;
 
+    async fn get_by_id(&self, id: &Uuid) -> Result<CourseWithStaff, AppError>;
     async fn create(&self, input: CreateCourseDto) -> Result<Course, AppError>;
     async fn remove(&self, id: &Uuid) -> Result<(), AppError>;
 
@@ -52,8 +55,11 @@ pub trait CourseService: Interface {
 
 #[async_trait]
 impl CourseService for CourseServiceImpl {
-    async fn get_all(&self) -> Result<Vec<CourseWithStaff>, AppError> {
-        let courses = self.courses.find_many(CourseFilter::default()).await?;
+    async fn get_all(
+        &self,
+        filter: CourseFilter,
+    ) -> Result<Vec<CourseWithStaff>, AppError> {
+        let courses = self.courses.find_many(filter).await?;
         let teacher_ids = courses.iter().map(|c| c.teacher_id).collect::<Vec<_>>();
 
         let teachers = self

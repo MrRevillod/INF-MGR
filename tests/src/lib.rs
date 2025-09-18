@@ -84,6 +84,8 @@ pub async fn init_test_app() -> Result<TestServer, Box<dyn std::error::Error>> {
         rx,
         mailer,
         printer,
+        num_of_event_retry: app_config.num_of_event_retry,
+        delay_between_event_retry_ms: app_config.delay_between_event_retry_ms,
     })
     .run_parallel()
     .await;

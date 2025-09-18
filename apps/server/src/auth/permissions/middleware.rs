@@ -8,20 +8,36 @@ use crate::{
 pub struct RequirePermission {}
 
 impl MiddlewareWithConfig<&str> for RequirePermission {
-    async fn handle(permission: &str, req: Context, next: Next) -> MiddlewareResult {
+    async fn handle(
+        permission: &str,
+        mut ctx: Context,
+        next: Next,
+    ) -> MiddlewareResult {
         let required_permission =
             Permission::try_from(permission).map_err(AppError::from)?;
 
-        let user_permissions = req.extensions.get::<Vec<String>>().ok_or(
-            AppError::from(AuthError::Other(
-                "No permissions found in request context".to_string(),
-            )),
-        )?;
+        let user_permissions: Vec<Permission> = ctx
+            .extensions
+            .get::<Vec<String>>()
+            .ok_or(AppError::from(AuthError::Other(
+                "No permissions found".to_string(),
+            )))?
+            .iter()
+            .filter_map(|p| Permission::try_from(p.as_str()).ok())
+            .collect();
 
-        todo!(
-            "check just first 2 levels of permission hierarchy and save permissions as enums on the request extensions"
-        );
+        let valid_permission = user_permissions
+            .iter()
+            .find(|p| p.matches_without_scope(&required_permission))
+            .ok_or(AppError::from(AuthError::Other(format!(
+                "Missing required permission: {}:{}",
+                required_permission.resource, required_permission.action
+            ))))?;
 
-        next!(req, next)
+        ctx.extensions.remove::<Vec<String>>();
+        ctx.extensions
+            .insert::<Permission>(valid_permission.clone());
+
+        next!(ctx, next)
     }
 }

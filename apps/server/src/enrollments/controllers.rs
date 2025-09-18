@@ -1,4 +1,3 @@
-use sword::__internal::IntoResponse;
 use sword::prelude::*;
 use tokio::fs;
 use uuid::Uuid;
@@ -6,11 +5,8 @@ use uuid::Uuid;
 use crate::{
     auth::{Authentication, permissions::RequirePermission},
     config::ServerConfig,
-    practices::{
-        CreatePracticeDto, EvaluatePracticeDto, PracticeService, PracticeStatus,
-        UpdatePracticeDto,
-    },
-    shared::di::AppModule,
+    practices::*,
+    shared::{FileResponse, di::AppModule},
 };
 
 #[controller("/enrollments")]
@@ -19,7 +15,10 @@ pub struct EnrollmentsController {}
 #[routes]
 impl EnrollmentsController {
     #[post("/{id}/practice")]
-    #[middleware(RequirePermission, config = "practices:create")]
+    #[middleware(Authentication)]
+    #[middleware(RequirePermission, config = "enrollments:update:related")]
+    #[doc = "Crear una práctica para una inscripción específica"]
+    #[doc = "Requiere el permiso 'enrollments:update:related' presente en profesores y superiores"]
     async fn create_practice(ctx: Context) -> HttpResult<HttpResponse> {
         let enrollment_id = ctx.param::<Uuid>("id")?;
         let dto = ctx.validated_body::<CreatePracticeDto>()?;
@@ -33,6 +32,9 @@ impl EnrollmentsController {
     }
 
     #[post("/{id}/practice/{practice_id}/approve")]
+    #[doc = "Aprovar práctica por el supervisor en la empresa."]
+    #[doc = "Este endpoint no requiere autenticación ya que se asume que el supervisor no es usuario del sistema."]
+    #[doc = "Solo se pude aprobar la práctica si su estado es 'Pending' (En espera de aprobación)."]
     async fn approve_practice(ctx: Context) -> HttpResult<HttpResponse> {
         let enrollment_id = ctx.param::<Uuid>("id")?;
         let practice_id = ctx.param::<Uuid>("practice_id")?;
@@ -55,6 +57,9 @@ impl EnrollmentsController {
     }
 
     #[post("/{id}/practice/{practice_id}/decline")]
+    #[doc = "Rechazar práctica por el supervisor en la empresa."]
+    #[doc = "Este endpoint no requiere autenticación ya que se asume que el supervisor no es usuario del sistema."]
+    #[doc = "Solo se pude rechazar la práctica si su estado es 'Pending' (En espera de aprobación)."]
     async fn decline_practice(ctx: Context) -> HttpResult<HttpResponse> {
         let enrollment_id = ctx.param::<Uuid>("id")?;
         let practice_id = ctx.param::<Uuid>("practice_id")?;
@@ -77,6 +82,9 @@ impl EnrollmentsController {
     }
 
     #[post("/{id}/practice/{practice_id}/authorize")]
+    #[doc = "Subir documento de autorización de una práctica"]
+    #[doc = "Este endpoint no requiere autenticación ya que se asume que el supervisor no es usuario del sistema."]
+    #[doc = "Se establece que esta acción es realizable una única vez por práctica."]
     async fn authorize_practice(ctx: Context) -> HttpResult<HttpResponse> {
         let practice_id = ctx.param::<Uuid>("practice_id")?;
         let mut form_data = ctx.multipart().await?;
@@ -101,9 +109,11 @@ impl EnrollmentsController {
     }
 
     #[get("/practice/{practice_id}/docs")]
-    async fn get_practice_docs(
-        ctx: Context,
-    ) -> Result<impl IntoResponse, HttpResponse> {
+    #[middleware(Authentication)]
+    #[middleware(RequirePermission, config = "enrollments:read:related")]
+    #[doc = "Obtener el documento de autorización de una práctica"]
+    #[doc = "Requiere el permiso 'enrollments:read:related' presente en profesores y superiores"]
+    async fn get_practice_docs(ctx: Context) -> HttpResult<FileResponse> {
         let practice_id = ctx.param::<Uuid>("practice_id")?;
         let documents_dir = ctx.config::<ServerConfig>()?.documents_dir;
 
@@ -117,11 +127,14 @@ impl EnrollmentsController {
             HttpResponse::NotFound()
         })?;
 
-        Ok((StatusCode::OK, [("Content-Type", "application/pdf")], buff))
+        Ok(FileResponse::Document(buff))
     }
 
     #[post("/{id}/practice/{practice_id}/evaluate/{evaluation_id}")]
-    async fn evaluate_practice(ctx: Context) -> HttpResult<HttpResponse> {
+    #[doc = "Evaluar práctica por el supervisor en la empresa."]
+    #[doc = "Este endpoint no requiere autenticación ya que se asume que el supervisor no es usuario del sistema."]
+    #[doc = "Solo se pude evaluar la práctica si su estado es 'Approved' (Aprobada)."]
+    async fn evualuate_from_enterprise(ctx: Context) -> HttpResult<HttpResponse> {
         let practice_id = ctx.param::<Uuid>("practice_id")?;
         let enrollment_id = ctx.param::<Uuid>("id")?;
         let evaluation_id = ctx.param::<Uuid>("evaluation_id")?;
@@ -139,6 +152,9 @@ impl EnrollmentsController {
 
     #[patch("/{id}/practice")]
     #[middleware(Authentication)]
+    #[middleware(RequirePermission, config = "enrollments:update:related")]
+    #[doc = "Actualizar una práctica para una inscripción específica"]
+    #[doc = "Requiere el permiso 'enrollments:update:related' presente en profesores y superiores"]
     async fn update_practice(ctx: Context) -> HttpResult<HttpResponse> {
         let enrollment_id = ctx.param::<Uuid>("id")?;
         let dto = ctx.validated_body::<UpdatePracticeDto>()?;
@@ -151,6 +167,9 @@ impl EnrollmentsController {
 
     #[delete("/practice/{practice_id}")]
     #[middleware(Authentication)]
+    #[middleware(RequirePermission, config = "enrollments:delete:related")]
+    #[doc = "Eliminar una práctica por su ID"]
+    #[doc = "Requiere el permiso 'enrollments:delete:related' presente en profesores y superiores"]
     async fn delete_practice(ctx: Context) -> HttpResult<HttpResponse> {
         let practice_id = ctx.param::<Uuid>("practice_id")?;
         let service = ctx.di::<AppModule, dyn PracticeService>()?;

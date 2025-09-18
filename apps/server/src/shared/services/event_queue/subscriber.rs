@@ -1,5 +1,8 @@
 use std::{env, path::Path, sync::Arc};
-use tokio::sync::{Mutex, mpsc::Receiver};
+use tokio::{
+    sync::{Mutex, mpsc::Receiver},
+    time::{Duration, sleep},
+};
 use uuid::Uuid;
 
 use crate::{
@@ -16,12 +19,16 @@ pub struct SubscriberOptions {
     pub rx: Receiver<Event>,
     pub mailer: Mailer,
     pub printer: Printer,
+    pub num_of_event_retry: u8,
+    pub delay_between_event_retry_ms: u64,
 }
 
 pub struct EventSubscriber {
     receiver: Arc<Mutex<Receiver<Event>>>,
     mailer: Arc<Mailer>,
     printer: Arc<Printer>,
+    num_of_event_retry: u8,
+    delay_between_event_retry_ms: u64,
 }
 
 impl EventSubscriber {
@@ -30,6 +37,8 @@ impl EventSubscriber {
             receiver: Arc::new(Mutex::new(options.rx)),
             mailer: Arc::new(options.mailer),
             printer: Arc::new(options.printer),
+            num_of_event_retry: options.num_of_event_retry,
+            delay_between_event_retry_ms: options.delay_between_event_retry_ms,
         }
     }
 
@@ -45,10 +54,27 @@ impl EventSubscriber {
         while let Some(event) = self.receiver.lock().await.recv().await {
             let mailer = self.mailer.clone();
             let printer = self.printer.clone();
+            let num_of_event_retry = self.num_of_event_retry;
+            let delay_between_event_retry_ms = self.delay_between_event_retry_ms;
 
             tokio::spawn(async move {
-                if let Err(e) = Self::handle(event, mailer, printer).await {
-                    tracing::error!("Error processing event: {e}");
+                let mut attempts = 0;
+
+                while attempts < num_of_event_retry {
+                    let handle =
+                        Self::handle(event.clone(), mailer.clone(), printer.clone());
+
+                    match handle.await {
+                        Ok(_) => break,
+                        Err(e) => {
+                            attempts += 1;
+                            tracing::error!(
+                                "Error processing event (attempt {attempts}): {e}"
+                            );
+                        }
+                    }
+
+                    sleep(Duration::from_secs(delay_between_event_retry_ms)).await;
                 }
             });
         }

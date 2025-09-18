@@ -37,7 +37,6 @@ impl Permissions {
             "courses:read:all".to_string(),
             "courses:create".to_string(),
             "courses:update:all".to_string(),
-            "courses:delete".to_string(),
             // Enrollments management
             "enrollments:read:all".to_string(),
             "enrollments:create".to_string(),
@@ -60,7 +59,6 @@ impl Permissions {
             // Related enrollments (students in their courses)
             "enrollments:read:related".to_string(),
             "enrollments:update:related".to_string(),
-            "practices:create".to_string(),
         ]
     }
 

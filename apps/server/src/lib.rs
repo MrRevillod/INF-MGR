@@ -77,14 +77,13 @@ pub mod courses {
     mod repository;
     mod service;
 
+    pub use crate::course_filter;
     pub use controllers::CoursesController;
     pub use dtos::{
         CourseEvaluationDto, CourseResponse, CourseWithStaff, CreateCourseDto,
         UpdateCourseDto,
     };
-
     pub use entity::{Course, CourseEvaluation, CourseStatus};
-
     pub use repository::{CourseFilter, CourseRepository, PostgresCourseRepository};
     pub use service::{CourseService, CourseServiceImpl};
 }
@@ -106,6 +105,7 @@ pub mod enrollments {
     mod repository;
     mod service;
 
+    pub use crate::enrollment_filter;
     pub use controllers::EnrollmentsController;
     pub use dtos::{
         CreateEnrollmentDto, EnrollmentResponse, EnrollmentWithStudentAndPractice,
@@ -113,11 +113,9 @@ pub mod enrollments {
     };
 
     pub use entity::{Enrollment, StudentScore};
-
     pub use repository::{
         EnrollmentFilter, EnrollmentRepository, PostgresEnrollmentRepository,
     };
-
     pub use service::{EnrollmentService, EnrollmentServiceImpl};
 }
 
@@ -127,6 +125,7 @@ pub mod practices {
     mod repository;
     mod service;
 
+    pub use crate::practice_filter;
     pub use dtos::{CreatePracticeDto, EvaluatePracticeDto, UpdatePracticeDto};
     pub use entity::{Practice, PracticeStatus, Practices};
     pub use repository::{
@@ -138,6 +137,8 @@ pub mod practices {
 pub mod shared {
     pub mod errors;
     pub use errors::{AppError, AppResult};
+    use sword::__internal::IntoResponse;
+    use sword::web::StatusCode;
 
     pub mod di {
         mod builder;
@@ -193,6 +194,21 @@ pub mod shared {
             pub use events::*;
             pub use publisher::*;
             pub use subscriber::*;
+        }
+    }
+
+    pub enum FileResponse {
+        Document(Vec<u8>),
+    }
+
+    impl IntoResponse for FileResponse {
+        fn into_response(self) -> axum::response::Response {
+            match self {
+                FileResponse::Document(data) => {
+                    (StatusCode::OK, [("Content-type", "application/pdf")], data)
+                        .into_response()
+                }
+            }
         }
     }
 }

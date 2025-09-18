@@ -9,6 +9,8 @@ pub struct ServerConfig {
     pub event_queue_buffer_size: usize,
     pub client_app_url: String,
     pub documents_dir: String,
+    pub num_of_event_retry: u8,
+    pub delay_between_event_retry_ms: u64,
 }
 
 #[derive(Debug, Deserialize)]
