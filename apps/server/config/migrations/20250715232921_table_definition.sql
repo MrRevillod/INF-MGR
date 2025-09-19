@@ -4,13 +4,12 @@ CREATE TABLE IF NOT EXISTS users (
     name TEXT NOT NULL,
     email TEXT NOT NULL UNIQUE,
     google_id TEXT UNIQUE,
-    roles user_role[] NOT NULL,
+    role user_role NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     deleted_at TIMESTAMP WITH TIME ZONE NULL
 );
 
 CREATE INDEX IF NOT EXISTS users_rut_idx ON users(rut);
-CREATE INDEX IF NOT EXISTS users_roles_deleted_at_idx ON users USING GIN(roles) WHERE deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS users_created_at_idx ON users(created_at DESC);
 
 CREATE TABLE IF NOT EXISTS courses (

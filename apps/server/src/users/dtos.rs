@@ -29,14 +29,14 @@ pub struct CreateUserDto {
     pub email: String,
 
     #[validate(custom(function = "role_validator"))]
-    pub roles: Vec<String>,
+    pub role: String,
 }
 
 impl TryFrom<CreateUserDto> for User {
     type Error = AppError;
 
     fn try_from(dto: CreateUserDto) -> Result<Self, Self::Error> {
-        let roles = from_string_vec_roles(dto.roles)?;
+        let role = Role::from_str(&dto.role)?;
 
         Ok(User {
             id: Uuid::new_v4(),
@@ -44,7 +44,7 @@ impl TryFrom<CreateUserDto> for User {
             name: dto.name,
             email: dto.email,
             google_id: None,
-            roles,
+            role,
             deleted_at: None,
             created_at: Utc::now(),
         })
@@ -69,13 +69,6 @@ impl FromStr for Role {
     }
 }
 
-pub fn from_string_vec_roles(roles: Vec<String>) -> Result<Vec<Role>, AppError> {
-    roles
-        .into_iter()
-        .map(|role| Role::from_str(&role))
-        .collect::<Result<Vec<Role>, AppError>>()
-}
-
 // ============================================================================
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> UPDATE USER DTO <<<<<<<<<<<<<<<<<<<<<<<<<<<
 // ============================================================================
@@ -86,7 +79,7 @@ pub struct UpdateUserDto {
     pub email: Option<String>,
 
     #[validate(custom(function = "role_validator"))]
-    pub roles: Option<Vec<String>>,
+    pub role: Option<String>,
 }
 
 // ============================================================================
@@ -126,7 +119,7 @@ pub struct UserResponse {
     pub rut: String,
     pub name: String,
     pub email: String,
-    pub roles: Vec<Role>,
+    pub role: Role,
     pub created_at: String,
 }
 
@@ -137,7 +130,7 @@ impl From<User> for UserResponse {
             rut: user_model.rut,
             name: user_model.name,
             email: user_model.email,
-            roles: user_model.roles.clone(),
+            role: user_model.role,
             created_at: user_model.created_at.to_rfc3339(),
         }
     }
@@ -187,23 +180,14 @@ fn compute_rut_dv(mut rut: u32) -> String {
     }
 }
 
-/// Valida que la lista de roles sea válida
-pub fn role_validator(roles: &Vec<String>) -> Result<(), ValidationError> {
-    if roles.is_empty() {
-        return Err(ValidationError::new(
-            "La lista de roles no pueden estar vacía",
-        ));
+/// Valida que el rol sea uno de los valores permitidos
+pub fn role_validator(role: &String) -> Result<(), ValidationError> {
+    if role.is_empty() {
+        return Err(ValidationError::new("El rol no puede estar vacío"));
     }
 
-    for role in roles {
-        if role.is_empty() {
-            return Err(ValidationError::new("Rol invalido: no puede estar vacío"));
-        }
-
-        match Role::from_str(role) {
-            Ok(_) => continue,
-            Err(_) => return Err(ValidationError::new("Rol invalido")),
-        }
+    if let Err(_) = Role::from_str(role) {
+        return Err(ValidationError::new("Rol inválido"));
     }
 
     Ok(())

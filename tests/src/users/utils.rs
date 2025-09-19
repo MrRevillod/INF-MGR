@@ -52,17 +52,15 @@ impl TestUser {
             .get("teacher")
             .cloned()
             .unwrap_or(Self::generate_unique_email());
-        let user = UserBuilder::new()
-            .with_roles(vec!["teacher"])
-            .with_email(&email);
 
+        let user = UserBuilder::new().with_role("teacher").with_email(&email);
         let data = Self::create_user(server, user.build()).await;
 
         extract_resource_id(&data)
     }
 
     pub async fn create_teacher_random_email(server: &TestServer) -> String {
-        let user = UserBuilder::new().with_roles(vec!["teacher"]);
+        let user = UserBuilder::new().with_role("teacher");
         let data = Self::create_user(server, user.build()).await;
 
         extract_resource_id(&data)
@@ -73,17 +71,15 @@ impl TestUser {
             .get("student")
             .cloned()
             .unwrap_or(Self::generate_unique_email());
-        let user = UserBuilder::new()
-            .with_roles(vec!["student"])
-            .with_email(&email);
 
+        let user = UserBuilder::new().with_role("student").with_email(&email);
         let data = Self::create_user(server, user.build()).await;
 
         extract_resource_id(&data)
     }
 
     pub async fn create_administrator(server: &TestServer) -> String {
-        let user = UserBuilder::new().with_roles(vec!["administrator"]).build();
+        let user = UserBuilder::new().with_role("administrator").build();
         let data = Self::create_user(server, user).await;
 
         extract_resource_id(&data)
@@ -161,7 +157,7 @@ pub struct UserBuilder {
     rut: String,
     name: String,
     email: String,
-    roles: Vec<String>,
+    role: String,
 }
 
 impl UserBuilder {
@@ -170,7 +166,7 @@ impl UserBuilder {
             rut: TestUser::generate_unique_rut(),
             name: "Test User".to_string(),
             email: TestUser::generate_unique_email(),
-            roles: vec!["administrator".to_string()],
+            role: "administrator".to_string(),
         }
     }
 
@@ -189,8 +185,8 @@ impl UserBuilder {
         self
     }
 
-    pub fn with_roles(mut self, roles: Vec<&str>) -> Self {
-        self.roles = roles.iter().map(|r| r.to_string()).collect();
+    pub fn with_role(mut self, role: &str) -> Self {
+        self.role = role.to_string();
         self
     }
 
@@ -199,7 +195,7 @@ impl UserBuilder {
             "rut": self.rut,
             "name": self.name,
             "email": self.email,
-            "roles": self.roles,
+            "role": self.role,
         })
     }
 }

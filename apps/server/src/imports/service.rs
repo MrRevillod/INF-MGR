@@ -63,7 +63,7 @@ impl ImportService for ImportServiceImpl {
                     rut: data.rut.clone(),
                     email: data.email.clone(),
                     name: data.name.clone(),
-                    roles: vec![Role::Student],
+                    role: Role::Student,
                     ..Default::default()
                 };
 

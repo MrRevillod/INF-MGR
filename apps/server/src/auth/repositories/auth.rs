@@ -3,7 +3,7 @@ use redis::AsyncTypedCommands;
 use shaku::{Component, Interface};
 use std::sync::Arc;
 
-use crate::shared::{AppError, redis::CacheDbConnection};
+use crate::shared::{AppResult, redis::CacheDbConnection};
 
 #[derive(Component)]
 #[shaku(interface = AuthRepository)]
@@ -14,13 +14,13 @@ pub struct OAuthRepository {
 
 #[async_trait]
 pub trait AuthRepository: Interface {
-    async fn save_csrf_token(&self, token: &str) -> Result<(), AppError>;
-    async fn get_csrf_token(&self, token: &str) -> Result<Option<String>, AppError>;
+    async fn save_csrf_token(&self, token: &str) -> AppResult<()>;
+    async fn get_csrf_token(&self, token: &str) -> AppResult<Option<String>>;
 }
 
 #[async_trait]
 impl AuthRepository for OAuthRepository {
-    async fn save_csrf_token(&self, token: &str) -> Result<(), AppError> {
+    async fn save_csrf_token(&self, token: &str) -> AppResult<()> {
         self.redis_db
             .get_connection()
             .set_ex(format!("csrf:{token}"), "valid", 600)
@@ -29,7 +29,7 @@ impl AuthRepository for OAuthRepository {
         Ok(())
     }
 
-    async fn get_csrf_token(&self, token: &str) -> Result<Option<String>, AppError> {
+    async fn get_csrf_token(&self, token: &str) -> AppResult<Option<String>> {
         let result: Option<String> = self
             .redis_db
             .get_connection()

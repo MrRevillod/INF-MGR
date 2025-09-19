@@ -4,19 +4,14 @@ use std::{collections::HashMap, sync::Arc};
 use uuid::Uuid;
 
 use crate::{
-    course_filter,
-    courses::{
-        Course, CourseEvaluation, CourseFilter, CourseRepository, CourseWithStaff,
-        CreateCourseDto, UpdateCourseDto,
-    },
-    enrollment_filter,
-    enrollments::{EnrollmentFilter, EnrollmentRepository},
+    courses::*,
+    enrollments::*,
     shared::{
-        errors::{AppError, Input},
+        AppResult,
+        errors::{AppError, AuthError, Input},
         services::event_queue::{Event, EventQueue},
     },
-    user_filter,
-    users::{User, UserFilter, UserRepository},
+    users::*,
 };
 
 #[derive(Component)]
@@ -37,20 +32,19 @@ pub struct CourseServiceImpl {
 
 #[async_trait]
 pub trait CourseService: Interface {
-    async fn get_all(
-        &self,
-        filter: CourseFilter,
-    ) -> Result<Vec<CourseWithStaff>, AppError>;
+    async fn get_all(&self, filter: CourseFilter)
+    -> AppResult<Vec<CourseWithStaff>>;
 
-    async fn get_by_id(&self, id: &Uuid) -> Result<CourseWithStaff, AppError>;
-    async fn create(&self, input: CreateCourseDto) -> Result<Course, AppError>;
-    async fn remove(&self, id: &Uuid) -> Result<(), AppError>;
+    async fn get_by_id(&self, id: &Uuid) -> AppResult<CourseWithStaff>;
+    async fn create(&self, input: CreateCourseDto) -> AppResult<Course>;
+    async fn remove(&self, id: &Uuid) -> AppResult<()>;
+    async fn update(&self, id: &Uuid, input: UpdateCourseDto) -> AppResult<Course>;
 
-    async fn update(
+    async fn check_is_teacher_course(
         &self,
-        id: &Uuid,
-        input: UpdateCourseDto,
-    ) -> Result<Course, AppError>;
+        course_id: &Uuid,
+        user_id: &Uuid,
+    ) -> AppResult<bool>;
 }
 
 #[async_trait]
@@ -58,7 +52,7 @@ impl CourseService for CourseServiceImpl {
     async fn get_all(
         &self,
         filter: CourseFilter,
-    ) -> Result<Vec<CourseWithStaff>, AppError> {
+    ) -> AppResult<Vec<CourseWithStaff>> {
         let courses = self.courses.find_many(filter).await?;
         let teacher_ids = courses.iter().map(|c| c.teacher_id).collect::<Vec<_>>();
 
@@ -81,7 +75,7 @@ impl CourseService for CourseServiceImpl {
         Ok(result)
     }
 
-    async fn get_by_id(&self, id: &Uuid) -> Result<CourseWithStaff, AppError> {
+    async fn get_by_id(&self, id: &Uuid) -> AppResult<CourseWithStaff> {
         let Some(course) = self.courses.find_by_id(id).await? else {
             return Err(AppError::ResourceNotFound(*id));
         };
@@ -95,7 +89,7 @@ impl CourseService for CourseServiceImpl {
         Ok((course, teacher))
     }
 
-    async fn create(&self, input: CreateCourseDto) -> Result<Course, AppError> {
+    async fn create(&self, input: CreateCourseDto) -> AppResult<Course> {
         let course = Course::from(input);
 
         let filter = course_filter! {
@@ -133,11 +127,7 @@ impl CourseService for CourseServiceImpl {
         Ok(self.courses.save(course).await?)
     }
 
-    async fn update(
-        &self,
-        id: &Uuid,
-        input: UpdateCourseDto,
-    ) -> Result<Course, AppError> {
+    async fn update(&self, id: &Uuid, input: UpdateCourseDto) -> AppResult<Course> {
         let Some(mut course) = self.courses.find_by_id(id).await? else {
             return Err(AppError::ResourceNotFound(*id));
         };
@@ -172,5 +162,21 @@ impl CourseService for CourseServiceImpl {
         }
 
         self.courses.delete(id).await
+    }
+
+    async fn check_is_teacher_course(
+        &self,
+        course_id: &Uuid,
+        user_id: &Uuid,
+    ) -> AppResult<bool> {
+        let (course, _) = self.get_by_id(course_id).await?;
+
+        if &course.teacher_id == user_id {
+            return Ok(true);
+        }
+
+        Err(AppError::from(AuthError::Other(
+            "El usuario no es el profesor de este curso".to_string(),
+        )))
     }
 }

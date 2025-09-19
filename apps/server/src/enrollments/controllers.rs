@@ -3,10 +3,12 @@ use tokio::fs;
 use uuid::Uuid;
 
 use crate::{
-    auth::{Authentication, permissions::RequirePermission},
+    auth::{Authentication, MinimumRequiredRole},
     config::ServerConfig,
+    courses::CourseService,
+    enrollments::EnrollmentService,
     practices::*,
-    shared::{FileResponse, di::AppModule},
+    shared::{FileResponse, context::ContextExt, di::AppModule},
 };
 
 #[controller("/enrollments")]
@@ -16,12 +18,31 @@ pub struct EnrollmentsController {}
 impl EnrollmentsController {
     #[post("/{id}/practice")]
     #[middleware(Authentication)]
-    #[middleware(RequirePermission, config = "enrollments:update:related")]
+    #[middleware(MinimumRequiredRole, config = "teacher")]
     #[doc = "Crear una práctica para una inscripción específica"]
-    #[doc = "Requiere el permiso 'enrollments:update:related' presente en profesores y superiores"]
     async fn create_practice(ctx: Context) -> HttpResult<HttpResponse> {
         let enrollment_id = ctx.param::<Uuid>("id")?;
         let dto = ctx.validated_body::<CreatePracticeDto>()?;
+
+        let owner_validation = ctx.get_ownership_validation()?;
+
+        if owner_validation.required {
+            let enrollment_service = ctx.di::<AppModule, dyn EnrollmentService>()?;
+
+            let (enrollment, _, _) =
+                enrollment_service.get_by_id(&enrollment_id).await?;
+
+            let course_service = ctx.di::<AppModule, dyn CourseService>()?;
+
+            let (course, _) =
+                course_service.get_by_id(&enrollment.course_id).await?;
+
+            if course.teacher_id != owner_validation.user_id {
+                return Err(HttpResponse::Forbidden().message(
+                    "No tienes permiso para crear prácticas en esta inscripción",
+                ));
+            }
+        }
 
         let practice = ctx
             .di::<AppModule, dyn PracticeService>()?
@@ -110,9 +131,7 @@ impl EnrollmentsController {
 
     #[get("/practice/{practice_id}/docs")]
     #[middleware(Authentication)]
-    #[middleware(RequirePermission, config = "enrollments:read:related")]
     #[doc = "Obtener el documento de autorización de una práctica"]
-    #[doc = "Requiere el permiso 'enrollments:read:related' presente en profesores y superiores"]
     async fn get_practice_docs(ctx: Context) -> HttpResult<FileResponse> {
         let practice_id = ctx.param::<Uuid>("practice_id")?;
         let documents_dir = ctx.config::<ServerConfig>()?.documents_dir;
@@ -152,12 +171,31 @@ impl EnrollmentsController {
 
     #[patch("/{id}/practice")]
     #[middleware(Authentication)]
-    #[middleware(RequirePermission, config = "enrollments:update:related")]
+    #[middleware(MinimumRequiredRole, config = "teacher")]
     #[doc = "Actualizar una práctica para una inscripción específica"]
-    #[doc = "Requiere el permiso 'enrollments:update:related' presente en profesores y superiores"]
     async fn update_practice(ctx: Context) -> HttpResult<HttpResponse> {
         let enrollment_id = ctx.param::<Uuid>("id")?;
         let dto = ctx.validated_body::<UpdatePracticeDto>()?;
+
+        let owner_validation = ctx.get_ownership_validation()?;
+
+        if owner_validation.required {
+            let enrollment_service = ctx.di::<AppModule, dyn EnrollmentService>()?;
+
+            let (enrollment, _, _) =
+                enrollment_service.get_by_id(&enrollment_id).await?;
+
+            let course_service = ctx.di::<AppModule, dyn CourseService>()?;
+
+            let (course, _) =
+                course_service.get_by_id(&enrollment.course_id).await?;
+
+            if course.teacher_id != owner_validation.user_id {
+                return Err(HttpResponse::Forbidden().message(
+                    "No tienes permiso para actualizar prácticas en esta inscripción",
+                ));
+            }
+        }
 
         let service = ctx.di::<AppModule, dyn PracticeService>()?;
         let practice = service.update(&enrollment_id, dto).await?;
@@ -167,14 +205,14 @@ impl EnrollmentsController {
 
     #[delete("/practice/{practice_id}")]
     #[middleware(Authentication)]
-    #[middleware(RequirePermission, config = "enrollments:delete:related")]
+    #[middleware(MinimumRequiredRole, config = "secretary")]
     #[doc = "Eliminar una práctica por su ID"]
-    #[doc = "Requiere el permiso 'enrollments:delete:related' presente en profesores y superiores"]
     async fn delete_practice(ctx: Context) -> HttpResult<HttpResponse> {
         let practice_id = ctx.param::<Uuid>("practice_id")?;
         let service = ctx.di::<AppModule, dyn PracticeService>()?;
 
         service.remove(&practice_id).await?;
+
         Ok(HttpResponse::NoContent())
     }
 }

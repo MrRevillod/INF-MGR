@@ -5,9 +5,9 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::{
-    auth::{Session, SessionRepository, TokenKind, TokenService, permissions::*},
+    auth::*,
     shared::{AppResult, errors::AuthError, oauth::OAuthTokenType},
-    users::{User, UserRepository},
+    users::User,
 };
 
 #[derive(Component)]
@@ -17,10 +17,10 @@ pub struct SessionServiceImpl {
     session_repository: Arc<dyn SessionRepository>,
 
     #[shaku(inject)]
-    user_repository: Arc<dyn UserRepository>,
+    jwt: Arc<dyn TokenService>,
 
     #[shaku(inject)]
-    jwt: Arc<dyn TokenService>,
+    oauth_service: Arc<dyn OAuthService>,
 }
 
 #[async_trait]
@@ -37,6 +37,7 @@ pub trait SessionService: Interface {
         refresh_token: String,
         ttl: u64,
     ) -> AppResult<Session>;
+
     async fn close_session(&self, access_token: &str) -> AppResult<()>;
 }
 
@@ -51,17 +52,18 @@ impl SessionService for SessionServiceImpl {
         let user_id = user.id.to_string();
         let session_id = Uuid::new_v4().to_string();
 
-        let permissions = Permissions::build(&user.roles);
-
-        let access_token =
-            self.jwt
-                .sign(TokenKind::Access, &session_id, &permissions, &user_id)?;
+        let access_token = self.jwt.sign(
+            TokenKind::Access,
+            &session_id,
+            &user_id,
+            &user.role.to_string(),
+        )?;
 
         let refresh_token = self.jwt.sign(
             TokenKind::Refresh,
             &session_id,
-            &permissions,
             &user_id,
+            &user.role.to_string(),
         )?;
 
         let (oauth_access_token, oauth_refresh_token) = (
@@ -102,26 +104,25 @@ impl SessionService for SessionServiceImpl {
             return Err(AuthError::SessionExpired.into());
         }
 
-        let user = self
-            .user_repository
-            .find_by_id(&Uuid::parse_str(&claims.user_id).unwrap_or_default())
-            .await?
-            .ok_or_else(|| AuthError::UserNotFound(claims.user_id.clone()))?;
-
-        let permissions = Permissions::build(&user.roles);
+        if let Some((new_google_access, new_google_refresh)) =
+            self.try_refresh_google_tokens(&session).await
+        {
+            session.google_access_token = new_google_access;
+            session.google_refresh_token = new_google_refresh;
+        }
 
         let new_access_token = self.jwt.sign(
             TokenKind::Access,
             &claims.session_id,
-            &permissions,
             &claims.user_id,
+            &claims.role,
         )?;
 
         let new_refresh_token = self.jwt.sign(
             TokenKind::Refresh,
             &claims.session_id,
-            &permissions,
             &claims.user_id,
+            &claims.role,
         )?;
 
         session.access_token = new_access_token;
@@ -137,5 +138,30 @@ impl SessionService for SessionServiceImpl {
         self.session_repository.delete(&claims.session_id).await?;
 
         Ok(())
+    }
+}
+
+impl SessionServiceImpl {
+    async fn try_refresh_google_tokens(
+        &self,
+        session: &Session,
+    ) -> Option<(String, String)> {
+        if session.google_refresh_token.is_empty() {
+            return None;
+        }
+
+        let token_response = self
+            .oauth_service
+            .refresh_oauth_token(&session.google_refresh_token)
+            .await
+            .ok()?;
+
+        let new_access_token = token_response.access_token().secret().clone();
+        let new_refresh_token = token_response
+            .refresh_token()
+            .map(|t| t.secret().clone())
+            .unwrap_or_else(|| session.google_refresh_token.clone());
+
+        Some((new_access_token, new_refresh_token))
     }
 }

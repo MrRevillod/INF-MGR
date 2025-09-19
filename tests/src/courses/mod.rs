@@ -102,7 +102,7 @@ async fn test_delete_course() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[tokio::test]
-async fn test_delete_course_with_active_inscriptions_should_fail()
+async fn test_delete_course_with_active_enrollments_should_fail()
 -> Result<(), Box<dyn std::error::Error>> {
     let app = init_test_app().await?;
     let teacher_id = TestUser::create_teacher(&app).await;

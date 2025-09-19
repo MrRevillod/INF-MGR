@@ -3,10 +3,16 @@ pub mod config;
 pub mod auth {
     mod controllers;
     mod dtos;
-    mod middleware;
+    mod middlewares {
+        mod authentication;
+        pub use authentication::Authentication;
 
-    pub use middleware::Authentication;
-    pub mod permissions;
+        mod role;
+        pub use role::{MinimumRequiredRole, OwnershipValidation};
+    }
+
+    pub use middlewares::Authentication;
+    pub use middlewares::{MinimumRequiredRole, OwnershipValidation};
 
     mod repositories {
         mod auth;
@@ -150,6 +156,7 @@ pub mod shared {
 
     pub mod macros;
 
+    pub mod context;
     pub mod database;
     pub mod layers;
     pub mod oauth;

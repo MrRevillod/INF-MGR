@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use chrono::{DateTime, Utc};
 use sea_query::Iden;
 use serde::{Deserialize, Serialize};
@@ -12,26 +14,26 @@ pub struct User {
     pub name: String,
     pub email: String,
     pub google_id: Option<String>,
-    pub roles: Vec<Role>,
+    pub role: Role,
     pub deleted_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
 }
 
 impl User {
     pub fn is_student(&self) -> bool {
-        self.roles.contains(&Role::Student)
+        self.role == Role::Student
     }
 
     pub fn is_teacher(&self) -> bool {
-        self.roles.contains(&Role::Teacher)
+        self.role == Role::Teacher
     }
 
     pub fn is_administrator(&self) -> bool {
-        self.roles.contains(&Role::Administrator)
+        self.role == Role::Administrator
     }
 
     pub fn is_secretary(&self) -> bool {
-        self.roles.contains(&Role::Secretary)
+        self.role == Role::Secretary
     }
 }
 
@@ -45,6 +47,32 @@ pub enum Role {
     Secretary,
 }
 
+impl Role {
+    pub fn priority(&self) -> u8 {
+        match self {
+            Role::Administrator => 4,
+            Role::Secretary => 3,
+            Role::Teacher => 2,
+            Role::Student => 1,
+        }
+    }
+}
+
+impl Display for Role {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Role::Administrator => "administrator",
+                Role::Student => "student",
+                Role::Teacher => "teacher",
+                Role::Secretary => "secretary",
+            }
+        )
+    }
+}
+
 #[allow(dead_code)]
 pub enum Users {
     Table,
@@ -53,7 +81,7 @@ pub enum Users {
     Name,
     Email,
     GoogleId,
-    Roles,
+    Role,
     CreatedAt,
     DeletedAt,
 }
@@ -67,7 +95,7 @@ impl Iden for Users {
             Users::Name => "name",
             Users::Email => "email",
             Users::GoogleId => "google_id",
-            Users::Roles => "roles",
+            Users::Role => "role",
             Users::CreatedAt => "created_at",
             Users::DeletedAt => "deleted_at",
         }
@@ -82,7 +110,7 @@ impl Default for User {
             name: String::default(),
             email: String::default(),
             google_id: None,
-            roles: vec![Role::Student],
+            role: Role::Student,
             deleted_at: None,
             created_at: Utc::now(),
         }

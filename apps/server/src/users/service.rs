@@ -1,8 +1,11 @@
-use crate::shared::services::event_queue::{Event, EventQueue};
+use crate::{
+    shared::services::event_queue::{Event, EventQueue},
+    users::Role,
+};
 
 use async_trait::async_trait;
 use shaku::{Component, Interface};
-use std::sync::Arc;
+use std::{str::FromStr, sync::Arc};
 use uuid::Uuid;
 
 use crate::{
@@ -11,10 +14,7 @@ use crate::{
         errors::{AppError, Input},
     },
     user_filter,
-    users::{
-        CreateUserDto, UpdateUserDto, User, UserFilter, UserRepository,
-        dtos::from_string_vec_roles,
-    },
+    users::{CreateUserDto, UpdateUserDto, User, UserFilter, UserRepository},
 };
 
 #[derive(Component)]
@@ -122,8 +122,8 @@ impl UserService for UserServiceImpl {
             user.email = e
         }
 
-        if let Some(roles) = input.roles {
-            user.roles = from_string_vec_roles(roles)?;
+        if let Some(role) = input.role {
+            user.role = Role::from_str(&role)?;
         }
 
         self.users.save(user).await

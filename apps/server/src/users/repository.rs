@@ -12,8 +12,8 @@ use sea_query::{
 
 use crate::{
     shared::{
+        AppResult,
         database::{DEFAULT_PAGE_SIZE, DatabaseConnection},
-        errors::AppError,
     },
     users::entity::{User, Users},
 };
@@ -38,19 +38,18 @@ pub struct UserFilter {
 
 #[async_trait]
 pub trait UserRepository: Interface {
-    async fn find_many(&self, filter: UserFilter) -> Result<Vec<User>, AppError>;
-    async fn find_one(&self, filter: UserFilter) -> Result<Option<User>, AppError>;
-    async fn find_by_id(&self, user_id: &Uuid) -> Result<Option<User>, AppError>;
-
-    async fn save(&self, user: User) -> Result<User, AppError>;
-    async fn create_many(&self, users: Vec<User>) -> Result<Vec<User>, AppError>;
-    async fn delete(&self, user_id: &Uuid) -> Result<(), AppError>;
-    async fn count(&self, filter: UserFilter) -> Result<i64, AppError>;
+    async fn find_many(&self, filter: UserFilter) -> AppResult<Vec<User>>;
+    async fn find_one(&self, filter: UserFilter) -> AppResult<Option<User>>;
+    async fn find_by_id(&self, user_id: &Uuid) -> AppResult<Option<User>>;
+    async fn save(&self, user: User) -> AppResult<User>;
+    async fn create_many(&self, users: Vec<User>) -> AppResult<Vec<User>>;
+    async fn delete(&self, user_id: &Uuid) -> AppResult<()>;
+    async fn count(&self, filter: UserFilter) -> AppResult<i64>;
 }
 
 #[async_trait]
 impl UserRepository for PostgresUserRepository {
-    async fn find_many(&self, filter: UserFilter) -> Result<Vec<User>, AppError> {
+    async fn find_many(&self, filter: UserFilter) -> AppResult<Vec<User>> {
         let mut query = Query::select()
             .expr(Expr::cust("*"))
             .from(Users::Table)
@@ -89,7 +88,7 @@ impl UserRepository for PostgresUserRepository {
         Ok(results)
     }
 
-    async fn find_one(&self, filter: UserFilter) -> Result<Option<User>, AppError> {
+    async fn find_one(&self, filter: UserFilter) -> AppResult<Option<User>> {
         let (sql, values) = Query::select()
             .expr(Expr::cust("*"))
             .from(Users::Table)
@@ -111,7 +110,7 @@ impl UserRepository for PostgresUserRepository {
         Ok(user)
     }
 
-    async fn find_by_id(&self, user_id: &Uuid) -> Result<Option<User>, AppError> {
+    async fn find_by_id(&self, user_id: &Uuid) -> AppResult<Option<User>> {
         let (sql, values) = Query::select()
             .expr(Expr::cust("*"))
             .from(Users::Table)
@@ -125,9 +124,9 @@ impl UserRepository for PostgresUserRepository {
         Ok(user)
     }
 
-    async fn save(&self, user: User) -> Result<User, AppError> {
+    async fn save(&self, user: User) -> AppResult<User> {
         let upsert_query = r#"
-            INSERT INTO users (id, rut, name, email, google_id, roles, created_at, deleted_at)
+            INSERT INTO users (id, rut, name, email, google_id, role, created_at, deleted_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             ON CONFLICT (id) 
             DO UPDATE SET 
@@ -135,7 +134,7 @@ impl UserRepository for PostgresUserRepository {
                 name = EXCLUDED.name,
                 email = EXCLUDED.email,
                 google_id = EXCLUDED.google_id,
-                roles = EXCLUDED.roles
+                role = EXCLUDED.role
             WHERE users.deleted_at IS NULL
             RETURNING *
         "#;
@@ -146,7 +145,7 @@ impl UserRepository for PostgresUserRepository {
             .bind(user.name)
             .bind(user.email)
             .bind(user.google_id)
-            .bind(user.roles)
+            .bind(user.role)
             .bind(user.created_at)
             .bind(user.deleted_at)
             .fetch_one(self.database_connection.get_pool())
@@ -155,7 +154,7 @@ impl UserRepository for PostgresUserRepository {
         Ok(saved_user)
     }
 
-    async fn create_many(&self, users: Vec<User>) -> Result<Vec<User>, AppError> {
+    async fn create_many(&self, users: Vec<User>) -> AppResult<Vec<User>> {
         if users.is_empty() {
             return Ok(vec![]);
         }
@@ -171,7 +170,7 @@ impl UserRepository for PostgresUserRepository {
                 arg_index + 2, // name
                 arg_index + 3, // email
                 arg_index + 4, // google_id
-                arg_index + 5, // roles
+                arg_index + 5, // role
                 arg_index + 6, // created_at
                 arg_index + 7, // deleted_at
             ));
@@ -181,7 +180,7 @@ impl UserRepository for PostgresUserRepository {
 
         let query = format!(
             r#" 
-                INSERT INTO users (id, rut, name, email, google_id, roles, created_at, deleted_at)
+                INSERT INTO users (id, rut, name, email, google_id, role, created_at, deleted_at)
                 VALUES {}
                 ON CONFLICT (id) DO NOTHING
                 RETURNING *
@@ -198,7 +197,7 @@ impl UserRepository for PostgresUserRepository {
                 .bind(&user.name)
                 .bind(&user.email)
                 .bind(&user.google_id)
-                .bind(&user.roles)
+                .bind(&user.role)
                 .bind(user.created_at)
                 .bind(user.deleted_at);
         }
@@ -210,7 +209,7 @@ impl UserRepository for PostgresUserRepository {
         Ok(results)
     }
 
-    async fn delete(&self, user_id: &Uuid) -> Result<(), AppError> {
+    async fn delete(&self, user_id: &Uuid) -> AppResult<()> {
         let (sql, values) = Query::update()
             .table(Users::Table)
             .value(Users::DeletedAt, Utc::now())
@@ -224,7 +223,7 @@ impl UserRepository for PostgresUserRepository {
         Ok(())
     }
 
-    async fn count(&self, filter: UserFilter) -> Result<i64, AppError> {
+    async fn count(&self, filter: UserFilter) -> AppResult<i64> {
         let mut query = Query::select()
             .expr(Expr::count(Expr::col(Users::Id)))
             .from(Users::Table)

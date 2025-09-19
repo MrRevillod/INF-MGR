@@ -35,25 +35,25 @@ pub struct PracticeServiceImpl {
 
 #[async_trait]
 pub trait PracticeService: Interface {
-    async fn get_by_id(&self, id: &Uuid) -> Result<Option<Practice>, AppError>;
+    async fn get_by_id(&self, id: &Uuid) -> AppResult<Option<Practice>>;
 
     async fn update(
         &self,
         id: &Uuid,
         input: UpdatePracticeDto,
-    ) -> Result<Practice, AppError>;
+    ) -> AppResult<Practice>;
 
     async fn create(
         &self,
         enrollment_id: &Uuid,
         input: CreatePracticeDto,
-    ) -> Result<Practice, AppError>;
+    ) -> AppResult<Practice>;
 
     async fn authorize(
         &self,
         practice_id: &Uuid,
         document: Vec<u8>,
-    ) -> Result<(), AppError>;
+    ) -> AppResult<()>;
 
     async fn update_status(
         &self,
@@ -70,12 +70,12 @@ pub trait PracticeService: Interface {
         input: EvaluatePracticeDto,
     ) -> AppResult<Practice>;
 
-    async fn remove(&self, id: &Uuid) -> Result<(), AppError>;
+    async fn remove(&self, id: &Uuid) -> AppResult<()>;
 }
 
 #[async_trait]
 impl PracticeService for PracticeServiceImpl {
-    async fn get_by_id(&self, id: &Uuid) -> Result<Option<Practice>, AppError> {
+    async fn get_by_id(&self, id: &Uuid) -> AppResult<Option<Practice>> {
         self.practices.find_by_id(id).await
     }
 
@@ -83,7 +83,7 @@ impl PracticeService for PracticeServiceImpl {
         &self,
         enrollment_id: &Uuid,
         input: CreatePracticeDto,
-    ) -> Result<Practice, AppError> {
+    ) -> AppResult<Practice> {
         let practice = Practice::from(input);
 
         let (enrollment, student, _) =
@@ -157,7 +157,7 @@ impl PracticeService for PracticeServiceImpl {
         &self,
         practice_id: &Uuid,
         doc_bytes: Vec<u8>,
-    ) -> Result<(), AppError> {
+    ) -> AppResult<()> {
         let practice = self
             .practices
             .find_by_id(practice_id)
@@ -177,7 +177,7 @@ impl PracticeService for PracticeServiceImpl {
         &self,
         id: &Uuid,
         input: UpdatePracticeDto,
-    ) -> Result<Practice, AppError> {
+    ) -> AppResult<Practice> {
         let mut practice = self
             .practices
             .find_by_id(id)
@@ -222,7 +222,6 @@ impl PracticeService for PracticeServiceImpl {
         evaluation_id: &Uuid,
         input: EvaluatePracticeDto,
     ) -> AppResult<Practice> {
-        // Obtener enrollment, estudiante y práctica
         let (mut enrollment, student, practice) =
             self.enrollments.get_by_id(enrollment_id).await?;
 
@@ -240,22 +239,20 @@ impl PracticeService for PracticeServiceImpl {
             evaluation.score = input.score;
         }
 
-        // Convertir StudentScore a StudentScoreDto para la actualización
         let student_scores_dto = enrollment
             .student_scores
             .iter()
             .map(|score| StudentScoreDto::from(score.clone()))
             .collect();
 
-        // Guardar el enrollment actualizado
         let update_data = UpdateEnrollmentDto {
             practice_id: None,
             student_scores: Some(student_scores_dto),
         };
+
         let updated_enrollment =
             self.enrollments.update(enrollment_id, update_data).await?;
 
-        // Disparar evento con la nota
         let event_data = (
             student,
             updated_enrollment,
@@ -272,7 +269,7 @@ impl PracticeService for PracticeServiceImpl {
         Ok(practice)
     }
 
-    async fn remove(&self, id: &Uuid) -> Result<(), AppError> {
+    async fn remove(&self, id: &Uuid) -> AppResult<()> {
         let practice = self
             .practices
             .find_by_id(id)

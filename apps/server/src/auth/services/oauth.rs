@@ -1,17 +1,17 @@
 use async_trait::async_trait;
-use oauth2::{AuthorizationCode, CsrfToken, Scope, TokenResponse};
+use oauth2::{AuthorizationCode, CsrfToken, RefreshToken, Scope, TokenResponse};
 
 use shaku::{Component, Interface};
 use std::sync::Arc;
 
 use crate::{
-    auth::{AuthRepository, AuthSuccessParams, CallBackParams, GoogleUserInfo},
+    auth::*,
     shared::{
         AppError, AppResult,
         errors::AuthError,
         oauth::{OAuthClient, OAuthTokenType},
     },
-    users::{User, UserFilter, UserRepository, user_filter},
+    users::*,
 };
 
 #[derive(Component)]
@@ -34,7 +34,12 @@ pub trait OAuthService: Interface {
         &self,
         params: CallBackParams,
     ) -> AppResult<(User, OAuthTokenType)>;
+
     async fn get_user_info(&self, access_token: &str) -> AppResult<GoogleUserInfo>;
+    async fn refresh_oauth_token(
+        &self,
+        refresh_token: &str,
+    ) -> AppResult<OAuthTokenType>;
 }
 
 #[async_trait]
@@ -129,5 +134,21 @@ impl OAuthService for GoogleOAuthService {
         }
 
         Ok((user, token_response))
+    }
+
+    async fn refresh_oauth_token(
+        &self,
+        refresh_token: &str,
+    ) -> AppResult<OAuthTokenType> {
+        let client = self.oauth_client.get_client();
+        let refresh_token = RefreshToken::new(refresh_token.to_string());
+
+        let token_response = client
+            .exchange_refresh_token(&refresh_token)
+            .request_async(self.oauth_client.get_http_client())
+            .await
+            .map_err(|e| AppError::InternalServerError(e.into()))?;
+
+        Ok(token_response)
     }
 }

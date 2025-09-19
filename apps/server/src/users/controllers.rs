@@ -1,9 +1,6 @@
-use crate::auth::Authentication;
-use crate::auth::permissions::RequirePermission;
+use crate::auth::{Authentication, MinimumRequiredRole};
 use crate::shared::di::AppModule;
-use crate::users::{
-    CreateUserDto, GetUsersQueryDto, UpdateUserDto, UserResponse, UserService,
-};
+use crate::users::*;
 
 use serde_json::json;
 use sword::prelude::*;
@@ -16,7 +13,7 @@ pub struct UsersController;
 #[routes]
 impl UsersController {
     #[get("/")]
-    #[middleware(RequirePermission, config = "users:read")]
+    #[middleware(MinimumRequiredRole, config = "secretary")]
     async fn find_all(ctx: Context) -> HttpResult<HttpResponse> {
         let query = ctx
             .validated_query::<GetUsersQueryDto>()?
@@ -43,7 +40,7 @@ impl UsersController {
     }
 
     #[post("/")]
-    #[middleware(RequirePermission, config = "users:create")]
+    #[middleware(MinimumRequiredRole, config = "secretary")]
     async fn create(ctx: Context) -> HttpResult<HttpResponse> {
         let user_data = ctx.validated_body::<CreateUserDto>()?;
         let service = ctx.di::<AppModule, dyn UserService>()?;
@@ -54,7 +51,7 @@ impl UsersController {
     }
 
     #[patch("/{id}")]
-    #[middleware(RequirePermission, config = "users:update")]
+    #[middleware(MinimumRequiredRole, config = "secretary")]
     pub async fn update(ctx: Context) -> HttpResult<HttpResponse> {
         let id = ctx.param::<Uuid>("id")?;
         let user_data = ctx.validated_body::<UpdateUserDto>()?;
@@ -66,7 +63,7 @@ impl UsersController {
     }
 
     #[delete("/{id}")]
-    #[middleware(RequirePermission, config = "users:delete")]
+    #[middleware(MinimumRequiredRole, config = "administrator")]
     async fn remove(ctx: Context) -> HttpResult<HttpResponse> {
         let id = ctx.param::<Uuid>("id")?;
         let service = ctx.di::<AppModule, dyn UserService>()?;
