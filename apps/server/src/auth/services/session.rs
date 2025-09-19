@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 use crate::{
     auth::*,
-    shared::{AppResult, errors::AuthError, oauth::OAuthTokenType},
+    shared::{AppResult, AuthError, OAuthTokenType},
     users::User,
 };
 

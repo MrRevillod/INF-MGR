@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-use crate::shared::validators::validate_uuid;
+use crate::shared::validate_uuid;
 use crate::users::{User, validate_rut_id};
 
 #[derive(Debug, Serialize, Deserialize, Validate, Clone)]

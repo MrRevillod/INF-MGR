@@ -8,7 +8,7 @@ use crate::{
     courses::CourseService,
     enrollments::EnrollmentService,
     practices::*,
-    shared::{FileResponse, context::ContextExt, di::AppModule},
+    shared::{AppModule, ContextExt, FileResponse},
 };
 
 #[controller("/enrollments")]

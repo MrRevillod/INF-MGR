@@ -8,10 +8,9 @@ use crate::{
     imports::{ImportCourseDto, ImportUserDto, ImportedUser},
     shared::{
         AppError,
-        services::event_queue::{Event, EventQueue},
+        services::{Event, EventQueue},
     },
-    user_filter,
-    users::{Role, User, UserFilter, UserRepository},
+    users::*,
 };
 
 #[derive(Component)]

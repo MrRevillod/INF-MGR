@@ -5,7 +5,7 @@ use crate::{
     auth::{Authentication, MinimumRequiredRole},
     courses::*,
     enrollments::*,
-    shared::{context::ContextExt, di::AppModule},
+    shared::{AppModule, ContextExt},
 };
 
 #[controller("/courses")]

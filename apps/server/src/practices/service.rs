@@ -1,8 +1,3 @@
-use crate::{
-    practices::{EvaluatePracticeDto, entity::PracticeStatus},
-    shared::services::event_queue::{Event, EventQueue},
-};
-
 use async_trait::async_trait;
 use shaku::{Component, Interface};
 use std::sync::Arc;
@@ -10,11 +5,9 @@ use uuid::Uuid;
 
 use crate::{
     courses::CourseService,
-    enrollments::{EnrollmentService, StudentScoreDto, UpdateEnrollmentDto},
-    practices::{
-        CreatePracticeDto, Practice, PracticeRepository, UpdatePracticeDto,
-    },
-    shared::{AppResult, errors::AppError},
+    enrollments::*,
+    practices::*,
+    shared::{AppError, AppResult, services::*},
 };
 
 #[derive(Component)]

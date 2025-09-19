@@ -8,21 +8,8 @@ use server::{
     config::*,
     courses::CoursesController,
     enrollments::EnrollmentsController,
+    shared::{services::*, *},
     users::UsersController,
-};
-
-use server::shared::{
-    database::PostgresDatabase,
-    di::{DependencyContainer, InitialComponents},
-    layers::{CorsLayer, LoggerLayer},
-    oauth::GoogleOAuthClient,
-    redis::RedisDatabase,
-    services::{
-        event_queue::*,
-        mailer::{Mailer, MailerConfig},
-        printer::Printer,
-        templates::TemplateConfig,
-    },
 };
 
 #[sword::main]

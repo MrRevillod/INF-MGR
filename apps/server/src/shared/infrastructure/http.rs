@@ -1,4 +1,5 @@
-use sword::web::{Context, HttpResponse};
+use sword::__internal::IntoResponse;
+use sword::web::{Context, HttpResponse, StatusCode};
 
 use crate::auth::OwnershipValidation;
 
@@ -16,5 +17,20 @@ impl ContextExt for Context {
         };
 
         Ok(value.clone())
+    }
+}
+
+pub enum FileResponse {
+    Document(Vec<u8>),
+}
+
+impl IntoResponse for FileResponse {
+    fn into_response(self) -> axum::response::Response {
+        match self {
+            FileResponse::Document(data) => {
+                (StatusCode::OK, [("Content-type", "application/pdf")], data)
+                    .into_response()
+            }
+        }
     }
 }

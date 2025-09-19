@@ -1,13 +1,8 @@
 use shaku::module;
 
-use crate::auth::JsonWebTokenService;
-use crate::shared::database::PostgresDatabase;
-use crate::shared::oauth::GoogleOAuthClient;
-use crate::shared::redis::RedisDatabase;
-use crate::shared::services::event_queue::*;
+use crate::shared::services::*;
+use crate::shared::{GoogleOAuthClient, PostgresDatabase, RedisDatabase};
 
-use crate::shared::services::mailer::Mailer;
-use crate::shared::services::printer::Printer;
 use crate::{auth, courses, enrollments, imports, practices, users};
 
 pub type InitialComponents = (
@@ -16,7 +11,7 @@ pub type InitialComponents = (
     Printer,
     GoogleOAuthClient,
     RedisDatabase,
-    JsonWebTokenService,
+    auth::JsonWebTokenService,
 );
 
 module! {

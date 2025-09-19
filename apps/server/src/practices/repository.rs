@@ -9,7 +9,7 @@ use uuid::Uuid;
 
 use crate::{
     practices::entity::{Practice, Practices},
-    shared::{AppResult, database::DatabaseConnection, errors::AppError},
+    shared::{AppResult, DatabaseConnection, errors::AppError},
 };
 
 #[derive(Component)]

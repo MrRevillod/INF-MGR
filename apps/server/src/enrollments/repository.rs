@@ -7,8 +7,8 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::{
-    enrollments::{Enrollment, entity::Enrollments},
-    shared::{AppResult, database::DatabaseConnection},
+    enrollments::{Enrollment, Enrollments},
+    shared::{AppResult, DatabaseConnection},
 };
 
 #[derive(Component)]

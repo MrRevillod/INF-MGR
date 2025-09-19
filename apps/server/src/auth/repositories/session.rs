@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use crate::{
     auth::Session,
-    shared::{AppError, AppResult, redis::CacheDbConnection},
+    shared::{AppError, AppResult, CacheDbConnection},
 };
 
 #[derive(Component)]

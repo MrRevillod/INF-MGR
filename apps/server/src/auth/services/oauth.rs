@@ -6,11 +6,7 @@ use std::sync::Arc;
 
 use crate::{
     auth::*,
-    shared::{
-        AppError, AppResult,
-        errors::AuthError,
-        oauth::{OAuthClient, OAuthTokenType},
-    },
+    shared::{AppError, AppResult, AuthError, OAuthClient, OAuthTokenType},
     users::*,
 };
 

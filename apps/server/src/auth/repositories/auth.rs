@@ -3,7 +3,7 @@ use redis::AsyncTypedCommands;
 use shaku::{Component, Interface};
 use std::sync::Arc;
 
-use crate::shared::{AppResult, redis::CacheDbConnection};
+use crate::shared::{AppResult, CacheDbConnection};
 
 #[derive(Component)]
 #[shaku(interface = AuthRepository)]

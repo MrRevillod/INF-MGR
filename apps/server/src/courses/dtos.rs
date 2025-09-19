@@ -5,10 +5,7 @@ use validator::Validate;
 
 use crate::{
     courses::{Course, CourseEvaluation, CourseStatus},
-    shared::{
-        errors::{AppError, Input},
-        validators::validate_uuid,
-    },
+    shared::{AppError, Input, validate_uuid},
     users::User,
 };
 

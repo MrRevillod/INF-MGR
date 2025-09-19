@@ -11,11 +11,8 @@ use sea_query::{
 };
 
 use crate::{
-    shared::{
-        AppResult,
-        database::{DEFAULT_PAGE_SIZE, DatabaseConnection},
-    },
-    users::entity::{User, Users},
+    shared::{AppResult, DEFAULT_PAGE_SIZE, DatabaseConnection},
+    users::{User, Users},
 };
 
 #[derive(Component)]

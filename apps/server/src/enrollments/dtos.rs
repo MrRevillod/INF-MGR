@@ -3,10 +3,7 @@ use uuid::Uuid;
 use validator::Validate;
 
 use crate::{
-    enrollments::{Enrollment, EnrollmentFilter, StudentScore},
-    practices::Practice,
-    shared::validators::validate_uuid,
-    users::User,
+    enrollments::*, practices::Practice, shared::validate_uuid, users::User,
 };
 
 // ============================================================================

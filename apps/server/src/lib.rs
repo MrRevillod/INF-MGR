@@ -69,7 +69,7 @@ pub mod users {
         role_validator, validate_rut_id,
     };
 
-    pub use entity::{Role, User};
+    pub use entity::{Role, User, Users};
     pub use repository::{PostgresUserRepository, UserFilter, UserRepository};
     pub use service::{UserService, UserServiceImpl};
 
@@ -89,7 +89,7 @@ pub mod courses {
         CourseEvaluationDto, CourseResponse, CourseWithStaff, CreateCourseDto,
         UpdateCourseDto,
     };
-    pub use entity::{Course, CourseEvaluation, CourseStatus};
+    pub use entity::{Course, CourseEvaluation, CourseStatus, Courses};
     pub use repository::{CourseFilter, CourseRepository, PostgresCourseRepository};
     pub use service::{CourseService, CourseServiceImpl};
 }
@@ -118,7 +118,7 @@ pub mod enrollments {
         GetEnrollmentsDto, StudentScoreDto, UpdateEnrollmentDto,
     };
 
-    pub use entity::{Enrollment, StudentScore};
+    pub use entity::{Enrollment, Enrollments, StudentScore};
     pub use repository::{
         EnrollmentFilter, EnrollmentRepository, PostgresEnrollmentRepository,
     };
@@ -142,49 +142,42 @@ pub mod practices {
 
 pub mod shared {
     pub mod errors;
-    pub use errors::{AppError, AppResult};
-    use sword::__internal::IntoResponse;
-    use sword::web::StatusCode;
-
-    pub mod di {
-        mod builder;
-        mod container;
-
-        pub use builder::DependencyContainer;
-        pub use container::{AppModule, InitialComponents};
-    }
-
+    pub use errors::{AppError, AppResult, AuthError, Input};
     pub mod macros;
 
-    pub mod context;
-    pub mod database;
-    pub mod layers;
-    pub mod oauth;
-    pub mod redis;
+    mod infrastructure {
 
-    pub mod validators {
-        use validator::ValidationError;
+        pub mod di {
+            mod builder;
+            mod container;
 
-        pub fn validate_uuid(uuid: &str) -> Result<(), ValidationError> {
-            if uuid.is_empty() {
-                return Err(ValidationError::new(
-                    "La identificación no puede estar vacía.",
-                ));
-            }
-
-            if uuid::Uuid::parse_str(uuid).is_err() {
-                return Err(ValidationError::new("Identificación inválida."));
-            }
-
-            Ok(())
+            pub use builder::DependencyContainer;
+            pub use container::{AppModule, InitialComponents};
         }
+
+        mod database;
+        mod http;
+        mod layers;
+        mod oauth;
+        mod redis;
+        mod uuid;
+
+        pub use database::*;
+        pub use di::*;
+        pub use http::*;
+        pub use layers::*;
+        pub use oauth::*;
+        pub use redis::*;
+        pub use uuid::validate_uuid;
     }
 
+    pub use infrastructure::*;
+
     pub mod services {
-        pub mod errors;
-        pub mod mailer;
-        pub mod printer;
-        pub mod templates {
+        mod errors;
+        mod mailer;
+        mod printer;
+        mod templates {
             mod context;
             mod files;
 
@@ -192,7 +185,7 @@ pub mod shared {
             pub use files::*;
         }
 
-        pub mod event_queue {
+        mod event_queue {
             mod publisher;
             mod subscriber;
 
@@ -202,20 +195,11 @@ pub mod shared {
             pub use publisher::*;
             pub use subscriber::*;
         }
-    }
 
-    pub enum FileResponse {
-        Document(Vec<u8>),
-    }
-
-    impl IntoResponse for FileResponse {
-        fn into_response(self) -> axum::response::Response {
-            match self {
-                FileResponse::Document(data) => {
-                    (StatusCode::OK, [("Content-type", "application/pdf")], data)
-                        .into_response()
-                }
-            }
-        }
+        pub use errors::*;
+        pub use event_queue::*;
+        pub use mailer::*;
+        pub use printer::*;
+        pub use templates::*;
     }
 }

@@ -1,4 +1,4 @@
-use crate::shared::services::errors::ServiceError;
+use crate::shared::services::ServiceError;
 use serde_json::json;
 use sword::web::HttpResponse;
 use thiserror::Error;

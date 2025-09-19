@@ -9,7 +9,7 @@ use crate::{
     shared::{
         AppResult,
         errors::{AppError, AuthError, Input},
-        services::event_queue::{Event, EventQueue},
+        services::{Event, EventQueue},
     },
     users::*,
 };

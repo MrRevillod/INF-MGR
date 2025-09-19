@@ -1,5 +1,5 @@
 use crate::{
-    shared::services::event_queue::{Event, EventQueue},
+    shared::services::{Event, EventQueue},
     users::Role,
 };
 
@@ -10,11 +10,10 @@ use uuid::Uuid;
 
 use crate::{
     shared::{
-        database::{DEFAULT_PAGE_SIZE, Pagination},
+        DEFAULT_PAGE_SIZE, Pagination,
         errors::{AppError, Input},
     },
-    user_filter,
-    users::{CreateUserDto, UpdateUserDto, User, UserFilter, UserRepository},
+    users::*,
 };
 
 #[derive(Component)]

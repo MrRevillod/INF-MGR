@@ -181,12 +181,12 @@ fn compute_rut_dv(mut rut: u32) -> String {
 }
 
 /// Valida que el rol sea uno de los valores permitidos
-pub fn role_validator(role: &String) -> Result<(), ValidationError> {
+pub fn role_validator(role: &str) -> Result<(), ValidationError> {
     if role.is_empty() {
         return Err(ValidationError::new("El rol no puede estar vacío"));
     }
 
-    if let Err(_) = Role::from_str(role) {
+    if Role::from_str(role).is_err() {
         return Err(ValidationError::new("Rol inválido"));
     }
 
