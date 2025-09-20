@@ -65,7 +65,7 @@ fn handle_validation_error(error: ValidationError) -> HttpResponse {
             ("status", format!("Estado de curso '{value}' inválido."))
         }
         ValidationError::NotAStudent { .. } => {
-            ("studentId", format!("El usuario no es un estudiante"))
+            ("studentId", "El usuario no es un estudiante".into())
         }
         ValidationError::NotATeacher { user_id } => (
             "teacherId",
@@ -78,14 +78,14 @@ fn handle_validation_error(error: ValidationError) -> HttpResponse {
 
         // Constraint violations
         ValidationError::DuplicateEmail { .. } => {
-            ("email", format!("El email ya está en uso"))
+            ("email", "El email ya está en uso".into())
         }
         ValidationError::DuplicateRut { .. } => {
-            ("rut", format!("El RUT ya está en uso"))
+            ("rut", "El RUT ya está en uso".into())
         }
         ValidationError::DuplicateEnrollment { .. } => (
             "enrollment",
-            format!("El estudiante ya está inscrito en el curso"),
+            "El estudiante ya está inscrito en el curso".into(),
         ),
         ValidationError::DuplicateCourse { name, year, .. } => (
             "course",
