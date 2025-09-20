@@ -169,6 +169,14 @@ impl EnrollmentsController {
         Ok(HttpResponse::Ok())
     }
 
+    #[post("/{id}/practice-report/upload")]
+    #[middleware(Authentication)]
+    #[middleware(MinimumRequiredRole, config = "student")]
+    #[doc = "Subir informe de práctica por el estudiante."]
+    async fn upload_practice_report(_: Context) -> HttpResult<HttpResponse> {
+        Ok(HttpResponse::Ok())
+    }
+
     #[patch("/{id}/practice")]
     #[middleware(Authentication)]
     #[middleware(MinimumRequiredRole, config = "teacher")]
