@@ -1,6 +1,6 @@
-use sword::web::HttpResponse;
+use super::{AppError, AuthError, NotFoundError, ValidationError};
 use serde_json::json;
-use super::{AppError, ValidationError, NotFoundError, AuthError};
+use sword::web::HttpResponse;
 
 impl From<AppError> for HttpResponse {
     fn from(error: AppError) -> Self {
@@ -8,50 +8,33 @@ impl From<AppError> for HttpResponse {
             AppError::NotFound { source } => handle_not_found_error(source),
             AppError::Validation { source } => handle_validation_error(source),
             AppError::Unauthorized { source } => handle_auth_error(source),
-            
-            // Infrastructure errors
+
             AppError::PostgresDatabase { source } => {
                 tracing::error!("Database error: {}", source);
                 HttpResponse::InternalServerError()
-                    .data(json!({ 
-                        "error": "DATABASE_ERROR",
-                        "message": "An internal database error occurred"
-                    }))
+                    .message("An internal error occurred")
+                    .data(json!({ "type": "InternalServerError" }))
             }
 
             AppError::RedisDatabase { source } => {
                 tracing::error!("Redis error: {}", source);
                 HttpResponse::InternalServerError()
-                    .data(json!({ 
-                        "error": "CACHE_ERROR",
-                        "message": "An internal cache error occurred"
-                    }))
+                    .message("An internal error occurred")
+                    .data(json!({ "type": "InternalServerError" }))
             }
 
             AppError::Service { source } => {
-                tracing::error!("Service error: {}", source);
+                tracing::error!("Internal Service error: {}", source);
                 HttpResponse::InternalServerError()
-                    .data(json!({ 
-                        "error": "SERVICE_ERROR",
-                        "message": "An internal service error occurred"
-                    }))
+                    .message("An internal error occurred")
+                    .data(json!({ "type": "InternalServerError" }))
             }
 
             AppError::InternalServerError(ref err) => {
                 tracing::error!("Internal error: {}", err);
                 HttpResponse::InternalServerError()
-                    .data(json!({ 
-                        "error": "INTERNAL_ERROR",
-                        "message": "An internal server error occurred"
-                    }))
-            }
-
-            AppError::InvalidOperation(ref message) => {
-                HttpResponse::BadRequest()
-                    .data(json!({ 
-                        "error": "INVALID_OPERATION",
-                        "message": message 
-                    }))
+                    .message("An internal server error occurred")
+                    .data(json!({ "type": "InternalServerError" }))
             }
         }
     }
@@ -65,112 +48,99 @@ fn handle_not_found_error(error: NotFoundError) -> HttpResponse {
         NotFoundError::Practice { id } => ("Practice", id.to_string()),
     };
 
-    HttpResponse::NotFound().data(json!({
-        "error": "RESOURCE_NOT_FOUND",
-        "resource_type": resource_type,
-        "identifier": identifier,
-        "message": error.to_string()
-    }))
+    HttpResponse::NotFound()
+        .message(format!(
+            "{} with ID {} not found",
+            resource_type, identifier
+        ))
+        .data(json!({ "type": "NotFoundError" }))
 }
 
 fn handle_validation_error(error: ValidationError) -> HttpResponse {
     let (field, message) = match &error {
-        // Parsing/Format errors
-        ValidationError::InvalidRole { value } => (
-            "role",
-            format!("Invalid role '{}'. Expected: student, teacher, secretary, admin", value)
-        ),
-        ValidationError::InvalidCourseStatus { value } => (
-            "status",
-            format!("Invalid status '{}'. Expected: active, completed", value)
-        ),
-        ValidationError::InvalidField { field, message } => (
-            field.as_str(),
-            message.clone()
-        ),
-
-        // Business logic validation
-        ValidationError::NotAStudent { user_id } => (
-            "studentId",
-            format!("User {} is not a student", user_id)
-        ),
+        ValidationError::InvalidRole { value } => {
+            ("role", format!("Rol '{value}' inválido."))
+        }
+        ValidationError::InvalidCourseStatus { value } => {
+            ("status", format!("Estado de curso '{value}' inválido."))
+        }
+        ValidationError::NotAStudent { .. } => {
+            ("studentId", format!("El usuario no es un estudiante"))
+        }
         ValidationError::NotATeacher { user_id } => (
             "teacherId",
-            format!("User {} is not a teacher", user_id)
+            format!("El usuario {user_id} no es un profesor"),
         ),
-        ValidationError::CourseHasEnrollments { course_id } => (
-            "courseId",
-            format!("Cannot delete course {}: has active enrollments", course_id)
+        ValidationError::CourseHasEnrollments { .. } => (
+            "course",
+            "El curso tiene inscripciones asociadas y no puede ser eliminado".into(),
         ),
 
         // Constraint violations
-        ValidationError::DuplicateEmail { email } => (
-            "email",
-            format!("Email '{}' is already in use", email)
-        ),
-        ValidationError::DuplicateRut { rut } => (
-            "rut",
-            format!("RUT '{}' is already in use", rut)
-        ),
-        ValidationError::DuplicateEnrollment { student_id, course_id } => (
+        ValidationError::DuplicateEmail { .. } => {
+            ("email", format!("El email ya está en uso"))
+        }
+        ValidationError::DuplicateRut { .. } => {
+            ("rut", format!("El RUT ya está en uso"))
+        }
+        ValidationError::DuplicateEnrollment { .. } => (
             "enrollment",
-            format!("Student {} is already enrolled in course {}", student_id, course_id)
+            format!("El estudiante ya está inscrito en el curso"),
         ),
         ValidationError::DuplicateCourse { name, year, .. } => (
             "course",
-            format!("Course '{}' already exists for year {}", name, year)
+            format!("El curso '{name}' para el año {year} ya existe"),
         ),
 
         // Related entity validation
         ValidationError::InvalidStudentId { student_id } => (
             "studentId",
-            format!("Invalid student ID: {}", student_id)
+            format!("Identificador de estudiante inválido: {student_id}"),
         ),
         ValidationError::InvalidCourseId { course_id } => (
             "courseId",
-            format!("Invalid course ID: {}", course_id)
+            format!("Identificador de curso inválido: {course_id}"),
         ),
         ValidationError::InvalidTeacherId { teacher_id } => (
             "teacherId",
-            format!("Invalid teacher ID: {}", teacher_id)
+            format!("Identificador de profesor inválido: {teacher_id}"),
         ),
     };
 
-    HttpResponse::BadRequest().data(json!({
-        "error": "VALIDATION_ERROR",
-        "field": field,
-        "message": message
-    }))
+    HttpResponse::BadRequest()
+        .message("Invalid request data")
+        .data(json!({
+            "type": "ValidationError",
+            "details": [
+                {
+                    "field": field,
+                    "message": message
+                }
+            ]
+        }))
 }
 
 fn handle_auth_error(source: AuthError) -> HttpResponse {
     tracing::warn!("Unauthorized access: {source}");
 
-    let error_data = match source {
-        AuthError::OAuthError(_) => json!({
-            "error": "oauth_error",
-            "message": "Error en el proceso de autenticación con Google",
-        }),
-        AuthError::UserNotFound(email) => json!({
-            "error": "user_not_found",
-            "details": format!("El usuario con email '{}' no está registrado.", email),
-        }),
-        AuthError::JsonWebTokenError(err) => {
-            eprintln!("JWT error: {:?}", err);
-            json!({
-                "error": "authorization_token_error",
-                "details": "No autorizado"
-            })
+    let (kind, message) = match source {
+        AuthError::OAuthError(_) => {
+            ("OAuthError", "Error de autenticación OAuth".into())
         }
-        AuthError::SessionExpired => json!({
-            "error": "session_expired",
-            "details": "La sesión ha expirado. Por favor, inicie sesión de nuevo."
-        }),
-        AuthError::Other(msg) => json!({
-            "error": "unauthorized",
-            "details": msg
-        }),
+        AuthError::UserNotFound(email) => (
+            "UserNotFound",
+            format!("El usuario con email '{email}' no está registrado."),
+        ),
+        AuthError::JsonWebTokenError(err) => {
+            tracing::error!("JWT error: {}", err);
+            ("AuthenticationError", "Error autenticación".into())
+        }
+        AuthError::SessionExpired => ("SessionExpired", "Sesión expirada".into()),
+        AuthError::Other(msg) => ("AuthenticationError", msg),
     };
 
-    HttpResponse::Unauthorized().data(error_data)
+    HttpResponse::Unauthorized().data(json!({
+        "type": kind,
+        "message": message
+    }))
 }

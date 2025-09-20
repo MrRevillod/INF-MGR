@@ -9,7 +9,7 @@ use server::{
     imports::ImportsController,
     shared::{
         CorsLayer, DependencyContainer, GoogleOAuthClient, InitialComponents,
-        PostgresDatabase, RedisDatabase,
+        PostgresDatabase, RedisDatabase, init_tracing,
         services::{
             EventSubscriber, Mailer, MailerConfig, Printer, TemplateConfig,
             TokioEventQueue,
@@ -21,6 +21,8 @@ use sword::{core::Config, prelude::*};
 use tokio::sync::mpsc;
 
 pub async fn init_test_app() -> Result<TestServer, Box<dyn std::error::Error>> {
+    init_tracing();
+
     let mut app = Application::builder().expect("Failed to build application");
     let config = app.config.clone();
     let event_queue_config = config.get::<EventQueueConfig>()?;

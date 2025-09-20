@@ -9,7 +9,7 @@ client_app_url = "${PUBLIC_URL:http://localhost:3000}"
 documents_dir = "${DOCUMENTS_DIR:./documents}"
 
 [event-queue]
-event_queue_buffer_size = 100
+buffer_size = 100
 num_of_event_retry = 2
 delay_between_event_retry_ms = 2000
 

@@ -11,6 +11,7 @@ pub static PRINTER_TEMPLATES: LazyLock<Templates> = LazyLock::new(|| {
 
 pub static MAILER_TEMPLATES: LazyLock<Templates> = LazyLock::new(|| {
     vec![
+        ("base.html", include_str!("../mailer/templates/base.html")),
         (
             "system:welcome.html",
             include_str!("../mailer/templates/system/welcome.html"),
@@ -22,6 +23,10 @@ pub static MAILER_TEMPLATES: LazyLock<Templates> = LazyLock::new(|| {
         (
             "practice:creation:student.html",
             include_str!("../mailer/templates/practice/creation/student.html"),
+        ),
+        (
+            "practice:creation:secretary.html",
+            include_str!("../mailer/templates/practice/creation/secretary.html"),
         ),
         (
             "practice:approval:supervisor.html",
@@ -46,6 +51,10 @@ pub static MAILER_TEMPLATES: LazyLock<Templates> = LazyLock::new(|| {
         (
             "practice:decline:student.html",
             include_str!("../mailer/templates/practice/decline/student.html"),
+        ),
+        (
+            "practice:decline:secretary.html",
+            include_str!("../mailer/templates/practice/decline/secretary.html"),
         ),
         (
             "practice:decline:teacher.html",

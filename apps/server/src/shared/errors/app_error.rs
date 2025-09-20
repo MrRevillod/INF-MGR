@@ -42,7 +42,4 @@ pub enum AppError {
 
     #[error("Internal server error: {0}")]
     InternalServerError(Box<dyn std::error::Error + Send + Sync>),
-
-    #[error("Invalid operation: {0}")]
-    InvalidOperation(String),
 }

@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 use std::str::FromStr;
+use std::sync::Once;
 use std::time::Duration;
 
 use sword::web::Method;
@@ -13,6 +14,18 @@ use tracing_subscriber::fmt;
 use crate::config::CorsConfig;
 use tracing::Span;
 
+static TRACING_INIT: Once = Once::new();
+
+pub fn init_tracing() {
+    TRACING_INIT.call_once(|| {
+        tracing_subscriber::fmt()
+            .with_target(false)
+            .with_span_events(fmt::format::FmtSpan::NONE)
+            .compact()
+            .init();
+    });
+}
+
 #[allow(non_snake_case)]
 pub fn LoggerLayer() -> TraceLayer<
     tower_http::classify::SharedClassifier<
@@ -22,11 +35,7 @@ pub fn LoggerLayer() -> TraceLayer<
     impl OnRequest<axum::body::Body> + Clone,
     impl OnResponse<axum::body::Body> + Clone,
 > {
-    tracing_subscriber::fmt()
-        .with_target(false)
-        .with_span_events(fmt::format::FmtSpan::NONE)
-        .compact()
-        .init();
+    init_tracing();
 
     TraceLayer::new_for_http()
         .on_request(|req: &http::Request<_>, _: &Span| {

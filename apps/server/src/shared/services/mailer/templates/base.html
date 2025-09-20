@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ course_code | default(value="UCT") }} - {{ subject | default(value="Notificación del Sistema") }}{% endblock %}</title>
+    <style>
+        body {
+            margin: 0; padding: 0;
+            background-color: #fafafa;
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 600px;
+            background-color: #ffffff;
+            border-radius: 8px;
+        }
+        .header {
+            background-color: #0a0a0a;
+            padding: 30px 40px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+        .header h1 {
+            margin: 0;
+            color: #ffffff;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .header p {
+            margin: 8px 0 0 0;
+            color: #a3a3a3;
+            font-size: 14px;
+        }
+        .content {
+            padding: 40px;
+        }
+        .content h2 {
+            margin: 0 0 20px 0;
+            color: #0a0a0a;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .content p {
+            margin: 0 0 20px 0;
+            color: #525252;
+            font-size: 16px;
+        }
+        .info-box {
+            margin: 25px 0;
+            background-color: #f5f5f5;
+            border-left: 4px solid #0a0a0a;
+            border-radius: 4px;
+        }
+        .info-box p {
+            margin: 0;
+            padding: 20px;
+            color: #525252;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+        .signature {
+            border-top: 1px solid #e5e5e5;
+            padding-top: 25px;
+            margin-top: 30px;
+        }
+        .signature p {
+            margin: 0;
+            font-size: 16px;
+            color: #525252;
+        }
+        .signature strong {
+            color: #0a0a0a;
+        }
+        .footer {
+            background-color: #f5f5f5;
+            padding: 25px 40px;
+            text-align: center;
+            border-top: 1px solid #e5e5e5;
+            border-radius: 0 0 8px 8px;
+        }
+        .footer p {
+            margin: 0;
+            font-size: 14px;
+            color: #737373;
+        }
+        .footer small {
+            font-size: 12px;
+            color: #a3a3a3;
+        }
+        a.link {
+            color: #0a0a0a;
+            text-decoration: none;
+            font-weight: bold;
+            border-bottom: 1px solid #e5e5e5;
+        }
+        a {
+            color: #0a0a0a;
+            font-weight: bold;
+        }
+        strong {
+            color: #0a0a0a;
+        }
+    </style>
+</head>
+<body>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #fafafa;">
+        <tr>
+            <td align="center" style="padding: 20px 0;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" class="container">
+
+                    <!-- Header -->
+                    <tr>
+                        <td class="header">
+                            {% block header %}
+                            <h1>Universidad Católica de Temuco</h1>
+                            <p>{% block header_subtitle %}Ingeniería Civil en Informática{% endblock %}</p>
+                            {% endblock %}
+                        </td>
+                    </tr>
+
+                    <!-- Content -->
+                    <tr>
+                        <td class="content">
+                            {% block greeting %}
+                            <h2>{% block greeting_text %}Estimado(a) {% block recipient_name %}Usuario{% endblock %}{% endblock %}</h2>
+                            {% endblock %}
+                            
+                            {% block main_content %}
+                            <p>Contenido principal del correo.</p>
+                            {% endblock %}
+
+                            {% block additional_content %}{% endblock %}
+
+                            {% block signature %}
+                            <div class="signature">
+                                <p>Se despide cordialmente,</p>
+                                <p>
+                                    <strong>{% block signature_team %}Equipo de Prácticas y Tesis{% endblock %}</strong><br>
+                                    <span style="font-weight: normal; color: #525252;">{% block signature_department %}Carrera de Ingeniería Civil en Informática{% endblock %}</span>
+                                </p>
+                            </div>
+                            {% endblock %}
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td class="footer">
+                            {% block footer %}
+                            <p>{% block footer_text %}Este es un correo automático, por favor no responder directamente.{% endblock %}</p>
+                            {% endblock %}
+                        </td>
+                    </tr>
+                    
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

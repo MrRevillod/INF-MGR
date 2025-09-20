@@ -28,7 +28,7 @@ impl EventSubscriber {
     pub async fn run_parallel(self) {
         tokio::spawn(async move {
             if let Err(e) = self.subscribe().await {
-                eprintln!("Error in event subscriber: {e}");
+                tracing::error!("Error in event subscriber: {e}");
             }
         });
     }
@@ -51,7 +51,7 @@ impl EventSubscriber {
                         Ok(_) => break,
                         Err(e) => {
                             attempts += 1;
-                            eprintln!(
+                            tracing::error!(
                                 "Error processing event (attempt {attempts}): {e}"
                             );
                         }

@@ -1,76 +1,18 @@
-<!DOCTYPE html>
-<html lang="es">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <title>{{ course_code }} - Práctica Evaluada</title>
-</head>
+{% block title %}{{ course_code }} - Práctica Evaluada{% endblock %}
 
-<body>
-    <h1>Estimado(a) {{ teacher_name }}</h1>
+{% block greeting_text %}Estimado(a) Profesor(a){% endblock %}
 
-    <p>
-        Junto con saludar, le informamos que la práctica del estudiante 
-        <strong>{{ student_name }}</strong> en la empresa <strong>{{ enterprise_name }}</strong> 
-        ha sido evaluada por el supervisor <strong>{{ supervisor_name }}</strong>.
-    </p>
+{% block main_content %}
+<p>
+    Junto con saludar, le informamos que la práctica del estudiante 
+    <strong>{{ student_name }}</strong> en la empresa <strong>{{ enterprise_name }}</strong> 
+    ha sido evaluada por el supervisor <strong>{{ supervisor_name }}</strong>.
+</p>
 
-    <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #007bff; margin: 20px 0;">
-        <h3>Información de la Práctica:</h3>
-        <ul>
-            <li><strong>Estudiante:</strong> {{ student_name }} ({{ student_email }})</li>
-            <li><strong>Curso:</strong> {{ course_name }} ({{ course_code }})</li>
-            <li><strong>Empresa:</strong> {{ enterprise_name }}</li>
-            <li><strong>Supervisor:</strong> {{ supervisor_name }}</li>
-            <li><strong>Ubicación:</strong> {{ location }}</li>
-            <li><strong>Período de práctica:</strong> {{ start_date }} - {{ end_date }}</li>
-        </ul>
-    </div>
-
-    <div style="background-color: #e8f5e8; padding: 15px; border-left: 4px solid #28a745; margin: 20px 0;">
-        <h3>📋 Estado de Evaluación:</h3>
-        <p style="margin: 0; font-size: 16px;">
-            ✅ <strong>Evaluación completada por el supervisor</strong>
-        </p>
-        <p style="margin: 10px 0 0 0; color: #666;">
-            La evaluación ha sido registrada en el sistema. Puede revisar los detalles 
-            completos accediendo a la plataforma de gestión de prácticas.
-        </p>
-    </div>
-
-    <div style="background-color: #fff3cd; padding: 15px; border-left: 4px solid #ffc107; margin: 20px 0;">
-        <h3>📊 Resultado de la Evaluación:</h3>
-        <p><strong>Puntuación obtenida:</strong> {{ evaluation_score }} / 7.0</p>
-        <p><strong>Comentarios del supervisor:</strong></p>
-        <p style="font-style: italic; margin-left: 15px; color: #555; background-color: #f8f9fa; padding: 10px; border-radius: 5px;">
-            "{{ evaluation_comments }}"
-        </p>
-    </div>
-
-    <p>
-        Como siguiente paso en el proceso, le recomendamos:
-    </p>
-    
-    <ul>
-        <li>Revisar la evaluación del supervisor en la plataforma</li>
-        <li>Coordinar con el estudiante para la entrega final de documentos si corresponde</li>
-        <li>Proceder con la calificación final del curso según los criterios establecidos</li>
-    </ul>
-
-    <p>
-        Puede acceder a toda la información detallada de la práctica y su evaluación 
-        a través de la plataforma de gestión.
-    </p>
-
-    <p>
-        Si tiene alguna consulta respecto a esta evaluación o el proceso en general, 
-        no dude en contactarnos.
-    </p>
-
-    <p>
-        Se despide cordialmente,<br>
-        Equipo de Prácticas y Tesis de la carrera de Ingeniería Civil en Informática
-    </p>
-</body>
-
-</html>
+<p>
+    Puede acceder a toda la información detallada de la práctica y su evaluación 
+    a través de la plataforma de gestión.
+</p>
+{% endblock %}

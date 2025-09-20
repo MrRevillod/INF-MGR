@@ -22,10 +22,9 @@ impl SubscriberHandler {
             "course_code" => course.code,
             "enterprise_name" => practice.enterprise_name,
             "location" => practice.location,
-            "start_date" => format_date(practice.start_date.to_string()),
-            "end_date" => format_date(practice.end_date.to_string()),
             "supervisor_name" => practice.supervisor_name,
             "supervisor_email" => practice.supervisor_email.clone(),
+            "supervisor_phone" => practice.supervisor_phone,
             "teacher_name" => teacher.name.clone(),
         };
 
@@ -93,19 +92,17 @@ impl SubscriberHandler {
     pub async fn practice_declined(&self, event: PracticeDeclinedEvent) {
         let (student, _, practice, course, teacher) = event;
         let email_context = template_ctx! {
-            "student_name" => student.name,
-            "course_name" => course.name,
-            "course_code" => course.code,
-            "enterprise_name" => practice.enterprise_name,
-            "location" => practice.location,
-            "start_date" => format_date(practice.start_date.to_string()),
-            "end_date" => format_date(practice.end_date.to_string()),
-            "supervisor_name" => practice.supervisor_name,
+            "student_name" => student.name.clone(),
+            "course_name" => course.name.clone(),
+            "course_code" => course.code.clone(),
+            "enterprise_name" => practice.enterprise_name.clone(),
+            "location" => practice.location.clone(),
+            "supervisor_name" => practice.supervisor_name.clone(),
             "supervisor_email" => practice.supervisor_email.clone(),
-            "teacher_name" => teacher.name.clone(),
+            "teacher_email" => teacher.email.clone(),
         };
 
-        let (_, _, _) = tokio::join!(
+        let (_, _, _, _) = tokio::join!(
             self.mailer.send(MailTo {
                 subject: "Inscripción a Práctica Rechazada",
                 template: "practice:decline:supervisor",
@@ -121,17 +118,20 @@ impl SubscriberHandler {
             self.mailer.send(MailTo {
                 subject: "Inscripción a Práctica Rechazada",
                 template: "practice:decline:teacher",
-                email: teacher.email,
-                context: email_context,
+                email: teacher.email.clone(),
+                context: email_context.clone(),
             }),
+            self.mailer.send(MailTo {
+                subject: "Inscripción a Práctica Rechazada",
+                template: "practice:decline:secretary",
+                email: self.mailer.context().config().secretary_email.clone(),
+                context: email_context,
+            })
         );
     }
 
     pub async fn practice_created(&self, event: PracticeCreatedEvent) {
         let (student, practice, course, enrollment) = event;
-
-        let start_date = format_date(practice.start_date.to_string());
-        let end_date = format_date(practice.end_date.to_string());
 
         let approval_link = format!(
             "/enrollments/{}/practice/{}/approve",
@@ -146,21 +146,16 @@ impl SubscriberHandler {
         );
 
         let email_context = template_ctx! {
-            "student_name" => student.name,
-            "student_email" => student.email,
-            "enterprise_name" => practice.enterprise_name,
-            "supervisor_name" => practice.supervisor_name,
-            "supervisor_email" => practice.supervisor_email.clone(),
-            "course_name" => course.name,
-            "course_code" => course.code,
-            "location" => practice.location,
-            "start_date" => start_date.clone(),
-            "end_date" => end_date.clone(),
+            "student_name" => student.name.clone(),
+            "enterprise_name" => practice.enterprise_name.clone(),
+            "supervisor_name" => practice.supervisor_name.clone(),
+            "course_name" => course.name.clone(),
+            "course_code" => course.code.clone(),
             "approval_link" => approval_link,
             "rejection_link" => rejection_link
         };
 
-        let (_, _) = tokio::join!(
+        let (_, _, _) = tokio::join!(
             self.mailer.send(MailTo {
                 email: practice.supervisor_email.clone(),
                 subject: "Solicitud de Inscripción de Práctica",
@@ -168,10 +163,16 @@ impl SubscriberHandler {
                 context: email_context.clone(),
             }),
             self.mailer.send(MailTo {
-                email: practice.supervisor_email.clone(),
+                email: student.email.clone(),
                 subject: "Inscripción a Práctica Realizada",
                 template: "practice:creation:student",
-                context: email_context,
+                context: email_context.clone(),
+            }),
+            self.mailer.send(MailTo {
+                email: self.mailer.context().config().secretary_email.clone(),
+                subject: "Nueva Inscripción de Práctica",
+                template: "practice:creation:secretary",
+                context: email_context.clone(),
             })
         );
     }
@@ -182,7 +183,6 @@ impl SubscriberHandler {
     ) -> AppResult<()> {
         let context: RawContext = template_ctx! {
             "name" => name,
-            "email" => email.clone(),
         };
 
         let mail_opts = MailTo {
@@ -215,7 +215,6 @@ impl SubscriberHandler {
         let context = template_ctx! {
             "course_name" => course.name,
             "course_code" => course.code,
-            "teacher_name" => teacher.name.clone(),
         };
 
         let mail_opts = MailTo {
@@ -261,21 +260,13 @@ impl SubscriberHandler {
     }
 
     pub async fn practice_evaluated(&self, event: PracticeEvaluatedEvent) {
-        let (student, practice, course, teacher, score) = event;
+        let (student, practice, course, teacher, _score) = event;
         let email_context = template_ctx! {
-            "student_name" => student.name,
-            "student_email" => student.email,
-            "enterprise_name" => practice.enterprise_name,
-            "supervisor_name" => practice.supervisor_name,
-            "supervisor_email" => practice.supervisor_email.clone(),
-            "course_name" => course.name,
-            "course_code" => course.code,
-            "location" => practice.location,
-            "start_date" => format_date(practice.start_date.to_string()),
-            "end_date" => format_date(practice.end_date.to_string()),
-            "teacher_name" => teacher.name.clone(),
-            "evaluation_score" => score.to_string(),
-            "evaluation_comments" => "Evaluación completada por el supervisor".to_string(),
+            "student_name" => student.name.clone(),
+            "enterprise_name" => practice.enterprise_name.clone(),
+            "supervisor_name" => practice.supervisor_name.clone(),
+            "course_name" => course.name.clone(),
+            "course_code" => course.code.clone(),
         };
 
         let (_, _) = tokio::join!(

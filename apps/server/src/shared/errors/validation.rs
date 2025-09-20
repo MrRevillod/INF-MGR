@@ -3,10 +3,6 @@ use uuid::Uuid;
 
 #[derive(Debug, Error)]
 pub enum ValidationError {
-    // === Parsing/Format Errors ===
-    #[error("Invalid {field}: {message}")]
-    InvalidField { field: String, message: String },
-
     #[error(
         "Invalid role: '{value}' (expected: student, teacher, secretary, admin)"
     )]
@@ -67,16 +63,6 @@ impl ValidationError {
         }
     }
 
-    pub fn invalid_field(
-        field: impl Into<String>,
-        message: impl Into<String>,
-    ) -> Self {
-        Self::InvalidField {
-            field: field.into(),
-            message: message.into(),
-        }
-    }
-
     // === Business Logic Helpers ===
     pub fn not_a_student(user_id: Uuid) -> Self {
         Self::NotAStudent { user_id }
@@ -118,18 +104,5 @@ impl ValidationError {
             name: name.into(),
             year,
         }
-    }
-
-    // === Related Entity Helpers ===
-    pub fn invalid_student_id(student_id: Uuid) -> Self {
-        Self::InvalidStudentId { student_id }
-    }
-
-    pub fn invalid_course_id(course_id: Uuid) -> Self {
-        Self::InvalidCourseId { course_id }
-    }
-
-    pub fn invalid_teacher_id(teacher_id: Uuid) -> Self {
-        Self::InvalidTeacherId { teacher_id }
     }
 }
