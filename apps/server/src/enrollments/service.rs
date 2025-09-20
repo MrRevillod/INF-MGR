@@ -5,16 +5,10 @@ use uuid::Uuid;
 
 use crate::{
     courses::CourseRepository,
-    enrollment_filter,
     enrollments::*,
-    practice_filter,
-    practices::{PracticeFilter, PracticeRepository},
-    shared::{
-        AppResult,
-        errors::{AppError, Input},
-    },
-    user_filter,
-    users::{UserFilter, UserRepository},
+    practices::*,
+    shared::{AppResult, NotFoundError, ValidationError},
+    users::*,
 };
 
 #[derive(Component)]
@@ -87,7 +81,7 @@ impl EnrollmentService for EnrollmentServiceImpl {
                 .iter()
                 .find(|s| s.id == enrollment.student_id)
                 .cloned()
-                .ok_or(AppError::ResourceNotFound(enrollment.student_id))?;
+                .ok_or(NotFoundError::user(enrollment.student_id))?;
 
             let practice = if let Some(practice_id) = enrollment.practice_id {
                 practices.iter().find(|p| p.id == practice_id).cloned()
@@ -109,13 +103,13 @@ impl EnrollmentService for EnrollmentServiceImpl {
             .enrollments
             .find_by_id(id)
             .await?
-            .ok_or(AppError::ResourceNotFound(*id))?;
+            .ok_or(NotFoundError::enrollment(*id))?;
 
         let student = self
             .users
             .find_by_id(&enrollment.student_id)
             .await?
-            .ok_or(AppError::ResourceNotFound(enrollment.student_id))?;
+            .ok_or(NotFoundError::user(enrollment.student_id))?;
 
         let practice = match enrollment.practice_id {
             Some(practice_id) => self.practices.find_by_id(&practice_id).await?,
@@ -134,10 +128,10 @@ impl EnrollmentService for EnrollmentServiceImpl {
         };
 
         if !self.enrollments.find_many(filter).await?.is_empty() {
-            return Err(AppError::Conflict(Input {
-                message: "El estudiante ya está inscrito en este curso.".to_string(),
-                ..Input::default()
-            }));
+            return Err(ValidationError::duplicate_enrollment(
+                enrollment.student_id,
+                enrollment.course_id,
+            ))?;
         }
 
         let (student_exists, course_exists) = {
@@ -150,19 +144,15 @@ impl EnrollmentService for EnrollmentServiceImpl {
         };
 
         let Some(student) = student_exists else {
-            return Err(AppError::ResourceNotFound(enrollment.student_id));
+            return Err(NotFoundError::user(enrollment.student_id))?;
         };
 
         if course_exists.is_none() {
-            return Err(AppError::ResourceNotFound(enrollment.course_id));
+            return Err(NotFoundError::course(enrollment.course_id))?;
         };
 
         if !student.is_student() {
-            return Err(AppError::InvalidInput(Input {
-                field: "studentId".to_string(),
-                message: "El usuario no es un estudiante.".to_string(),
-                value: enrollment.student_id.to_string(),
-            }));
+            return Err(ValidationError::not_a_student(student.id))?;
         }
 
         self.enrollments.save(enrollment).await
@@ -197,7 +187,7 @@ impl EnrollmentService for EnrollmentServiceImpl {
         input: UpdateEnrollmentDto,
     ) -> AppResult<Enrollment> {
         let Some(mut enrollment) = self.enrollments.find_by_id(id).await? else {
-            return Err(AppError::ResourceNotFound(*id));
+            return Err(NotFoundError::enrollment(*id))?;
         };
 
         if let Some(scores) = input.student_scores {
@@ -214,7 +204,7 @@ impl EnrollmentService for EnrollmentServiceImpl {
 
     async fn remove(&self, id: &Uuid) -> AppResult<()> {
         if self.enrollments.find_by_id(id).await?.is_none() {
-            return Err(AppError::ResourceNotFound(*id));
+            return Err(NotFoundError::enrollment(*id))?;
         };
 
         self.enrollments.delete(id).await

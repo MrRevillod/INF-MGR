@@ -11,7 +11,7 @@ use uuid::Uuid;
 use crate::{
     shared::{
         DEFAULT_PAGE_SIZE, Pagination,
-        errors::{AppError, Input},
+        errors::{AppError, NotFoundError, ValidationError},
     },
     users::*,
 };
@@ -69,19 +69,11 @@ impl UserService for UserServiceImpl {
         )?;
 
         if user_by_rut.is_some() {
-            return Err(AppError::Conflict(Input {
-                field: "rut".to_string(),
-                message: "Ya existe un usuario con este RUT".to_string(),
-                value: input.rut.clone(),
-            }));
+            return Err(ValidationError::duplicate_rut(&input.rut))?;
         }
 
         if user_by_email.is_some() {
-            return Err(AppError::Conflict(Input {
-                field: "email".to_string(),
-                message: "Ya existe un usuario con este email".to_string(),
-                value: input.email.clone(),
-            }));
+            return Err(ValidationError::duplicate_email(&input.email))?;
         }
 
         let user = self.users.save(User::try_from(input.clone())?).await?;
@@ -100,7 +92,7 @@ impl UserService for UserServiceImpl {
         input: UpdateUserDto,
     ) -> Result<User, AppError> {
         let Some(mut user) = self.users.find_by_id(&id).await? else {
-            return Err(AppError::ResourceNotFound(id));
+            return Err(NotFoundError::user(id))?;
         };
 
         if let Some(e) = input.email {
@@ -111,11 +103,7 @@ impl UserService for UserServiceImpl {
                 .is_some();
 
             if email_exists && user.email != e {
-                return Err(AppError::Conflict(Input {
-                    field: "email".to_string(),
-                    message: "Ya existe un usuario con este email".to_string(),
-                    value: e.clone(),
-                }));
+                return Err(ValidationError::duplicate_email(&e))?;
             }
 
             user.email = e
@@ -130,7 +118,7 @@ impl UserService for UserServiceImpl {
 
     async fn remove(&self, id: Uuid) -> Result<(), AppError> {
         if self.users.find_by_id(&id).await?.is_none() {
-            return Err(AppError::ResourceNotFound(id));
+            return Err(NotFoundError::user(id))?;
         }
 
         self.users.delete(&id).await

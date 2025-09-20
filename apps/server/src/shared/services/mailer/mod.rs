@@ -1,5 +1,5 @@
-mod context;
-pub use context::{MailTo, MailerConfig};
+mod config;
+pub use config::{MailTo, MailerConfig};
 
 use lettre::{
     Message, SmtpTransport, Transport,
@@ -8,10 +8,10 @@ use lettre::{
 };
 
 use crate::shared::services::{
-    errors::{MailerError, ServiceError},
-    templates::{MAILER_TEMPLATES, TemplateConfig, TemplateContext},
+    MAILER_TEMPLATES, MailerError, ServiceError, TemplateConfig, TemplateContext,
 };
 
+#[derive(Clone)]
 pub struct Mailer {
     transport: SmtpTransport,
     config: MailerConfig,
@@ -70,6 +70,17 @@ impl Mailer {
         self.transport
             .send(&message)
             .map_err(|source| MailerError::SmtpTransport { source })?;
+
+        Ok(())
+    }
+
+    pub async fn send_many(&self, mails: Vec<MailTo>) -> Result<(), ServiceError> {
+        use futures::future::join_all;
+        let results = join_all(mails.into_iter().map(|mail| self.send(mail))).await;
+
+        for result in results {
+            result?;
+        }
 
         Ok(())
     }

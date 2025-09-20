@@ -3,9 +3,10 @@ use sword::web::ResponseBody;
 use uuid::Uuid;
 
 use crate::{
+    app::init_test_app,
     courses::utils::TestCourse,
     enrollments::utils::{EnrollmentBuilder, TestEnrollment},
-    extract_resource_id, init_test_app,
+    extract_resource_id,
     practices::utils::TestPractice,
     users::utils::TestUser,
 };

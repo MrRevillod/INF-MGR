@@ -226,7 +226,7 @@ impl UserRepository for PostgresUserRepository {
             .from(Users::Table)
             .to_owned();
 
-        if let Some(search) = filter.search {
+        if let Some(ref search) = filter.search {
             let search_pattern = format!("%{search}%");
             query = query
                 .and_where(

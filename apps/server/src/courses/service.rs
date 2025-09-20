@@ -7,8 +7,8 @@ use crate::{
     courses::*,
     enrollments::*,
     shared::{
-        AppResult,
-        errors::{AppError, AuthError, Input},
+        AppResult, NotFoundError, ValidationError,
+        errors::{AppError, AuthError},
         services::{Event, EventQueue},
     },
     users::*,
@@ -77,14 +77,14 @@ impl CourseService for CourseServiceImpl {
 
     async fn get_by_id(&self, id: &Uuid) -> AppResult<CourseWithStaff> {
         let Some(course) = self.courses.find_by_id(id).await? else {
-            return Err(AppError::ResourceNotFound(*id));
+            return Err(NotFoundError::course(*id))?;
         };
 
         let teacher = self
             .users
             .find_by_id(&course.teacher_id)
             .await?
-            .ok_or(AppError::ResourceNotFound(course.teacher_id))?;
+            .ok_or(NotFoundError::user(course.teacher_id))?;
 
         Ok((course, teacher))
     }
@@ -99,23 +99,19 @@ impl CourseService for CourseServiceImpl {
         };
 
         if !self.courses.find_many(filter).await?.is_empty() {
-            return Err(AppError::Conflict(Input {
-                message: "Ya existe un curso con el mismo código o nombre y año"
-                    .to_string(),
-                ..Default::default()
-            }));
+            return Err(ValidationError::duplicate_course(
+                &course.name,
+                course.year,
+                &course.code,
+            ))?;
         }
 
         let Some(teacher) = self.users.find_by_id(&course.teacher_id).await? else {
-            return Err(AppError::ResourceNotFound(course.teacher_id));
+            return Err(NotFoundError::user(course.teacher_id))?;
         };
 
         if !teacher.is_teacher() {
-            return Err(AppError::InvalidInput(Input {
-                field: "teacherId".to_string(),
-                message: "El usuario no es un profesor".to_string(),
-                value: course.teacher_id.to_string(),
-            }));
+            return Err(ValidationError::not_a_teacher(teacher.id))?;
         }
 
         let event_data = (course.clone(), teacher.clone());
@@ -129,7 +125,7 @@ impl CourseService for CourseServiceImpl {
 
     async fn update(&self, id: &Uuid, input: UpdateCourseDto) -> AppResult<Course> {
         let Some(mut course) = self.courses.find_by_id(id).await? else {
-            return Err(AppError::ResourceNotFound(*id));
+            return Err(NotFoundError::course(*id))?;
         };
 
         if let Some(teacher_id) = input.teacher_id {
@@ -145,7 +141,7 @@ impl CourseService for CourseServiceImpl {
 
     async fn remove(&self, id: &Uuid) -> Result<(), AppError> {
         let Some(course) = self.courses.find_by_id(id).await? else {
-            return Err(AppError::ResourceNotFound(*id));
+            return Err(NotFoundError::course(*id))?;
         };
 
         let filter = enrollment_filter! {
@@ -153,12 +149,7 @@ impl CourseService for CourseServiceImpl {
         };
 
         if !self.enrollments.find_many(filter).await?.is_empty() {
-            return Err(AppError::InvalidInput(Input {
-                field: "courseId".to_string(),
-                message: "No se puede eliminar un curso con inscripciones activas"
-                    .to_string(),
-                value: course.id.to_string(),
-            }));
+            return Err(ValidationError::course_has_enrollments(course.id))?;
         }
 
         self.courses.delete(id).await

@@ -1,10 +1,8 @@
-use std::{env::var, fs, path::Path, process::Command};
+use crate::shared::services::{PrinterError, ServiceError, templates::*};
+use std::{env::var, path::Path, process::Command};
+use tokio::fs;
 
-use crate::shared::services::{
-    errors::{PrinterError, ServiceError},
-    templates::*,
-};
-
+#[derive(Clone)]
 pub struct Printer {
     template_ctx: TemplateContext,
 }
@@ -33,8 +31,10 @@ impl Printer {
 
         let temp_file = template_dir.join(format!("{}.typ", opts.template));
 
-        fs::write(&temp_file, template).map_err(|source| ServiceError::Printer {
-            source: source.into(),
+        fs::write(&temp_file, template).await.map_err(|source| {
+            ServiceError::Printer {
+                source: source.into(),
+            }
         })?;
 
         let out_file = format!(
@@ -48,13 +48,22 @@ impl Printer {
         if let Some(parent) = out_path.parent()
             && !parent.exists()
         {
-            fs::create_dir_all(parent).map_err(|source| ServiceError::Printer {
-                source: source.into(),
+            fs::create_dir_all(parent).await.map_err(|source| {
+                ServiceError::Printer {
+                    source: source.into(),
+                }
             })?;
         }
 
+        let Some(temp_file) = temp_file.to_str() else {
+            let _ = fs::remove_file(&temp_file).await;
+            return Err(PrinterError::PdfGenerationError(
+                "Failed to generate PDF".to_string(),
+            ))?;
+        };
+
         let output = Command::new("typst")
-            .args(["compile", temp_file.to_str().unwrap(), &out_file])
+            .args(["compile", temp_file, &out_file])
             .output()
             .map_err(|source| ServiceError::Printer {
                 source: source.into(),
@@ -63,11 +72,10 @@ impl Printer {
         if !output.status.success() {
             return Err(PrinterError::PdfGenerationError(
                 "Failed to generate PDF".to_string(),
-            )
-            .into());
+            ))?;
         }
 
-        let _ = std::fs::remove_file(&temp_file);
+        let _ = fs::remove_file(&temp_file).await;
 
         Ok(out_file)
     }

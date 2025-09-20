@@ -1,10 +1,9 @@
-use std::sync::Arc;
-
 use serde::{Deserialize, Serialize};
-use sword::prelude::config;
+use std::sync::Arc;
+use sword::core::config;
 use tera::{Context, Tera};
 
-use crate::shared::services::errors::ServiceError;
+use crate::shared::services::ServiceError;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[config(key = "template-context")]

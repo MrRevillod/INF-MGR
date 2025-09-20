@@ -1,21 +1,27 @@
-use helmet::*;
-use sword::core::Config;
-use sword::prelude::*;
-use tokio::sync::mpsc;
-
+use axum_test::TestServer;
 use server::{
-    auth::{AuthController, JsonWebTokenService, TokenConfig},
-    config::*,
+    auth::{JsonWebTokenService, TokenConfig},
+    config::{
+        AuthConfig, CorsConfig, EventQueueConfig, PostgresDbConfig, RedisConfig,
+    },
     courses::CoursesController,
     enrollments::EnrollmentsController,
-    shared::{services::*, *},
+    imports::ImportsController,
+    shared::{
+        CorsLayer, DependencyContainer, GoogleOAuthClient, InitialComponents,
+        PostgresDatabase, RedisDatabase,
+        services::{
+            EventSubscriber, Mailer, MailerConfig, Printer, TemplateConfig,
+            TokioEventQueue,
+        },
+    },
     users::UsersController,
 };
+use sword::{core::Config, prelude::*};
+use tokio::sync::mpsc;
 
-#[sword::main]
-async fn main() {
-    let mut app = Application::builder()?;
-
+pub async fn init_test_app() -> Result<TestServer, Box<dyn std::error::Error>> {
+    let mut app = Application::builder().expect("Failed to build application");
     let config = app.config.clone();
     let event_queue_config = config.get::<EventQueueConfig>()?;
 
@@ -28,10 +34,10 @@ async fn main() {
 
     let dependency_container = DependencyContainer::builder()
         .with_postgres_db(pg_db)
+        .with_jwt_service(jsonwebtoken_service)
         .with_event_queue(TokioEventQueue::new(tx))
         .with_oauth_client(oauth_client)
         .with_redis_db(redis_db)
-        .with_jwt_service(jsonwebtoken_service)
         .build();
 
     let event_subscriber = EventSubscriber::builder()
@@ -48,22 +54,11 @@ async fn main() {
         .with_controller::<UsersController>()
         .with_controller::<CoursesController>()
         .with_controller::<EnrollmentsController>()
-        .with_controller::<AuthController>()
-        .with_layer(LoggerLayer())
-        .with_layer(CorsLayer(&config.get::<CorsConfig>()?))
-        .with_layer(
-            Helmet::builder()
-                .with_header(XContentTypeOptions::nosniff())
-                .with_header(XFrameOptions::same_origin())
-                .with_header(StrictTransportSecurity::new().max_age(31536000))
-                .with_header(CrossOriginResourcePolicy::same_origin())
-                .with_header(ReferrerPolicy::strict_origin_when_cross_origin())
-                .build(),
-        );
+        .with_controller::<ImportsController>()
+        .with_layer(CorsLayer(&config.get::<CorsConfig>()?));
 
-    app.build().run().await?;
+    Ok(TestServer::new(app.build().router()).expect("Failed to start test server"))
 }
-
 async fn build_initial_components(
     config: Config,
 ) -> Result<InitialComponents, Box<dyn std::error::Error>> {
@@ -71,14 +66,25 @@ async fn build_initial_components(
     let mailer_config = config.get::<MailerConfig>()?;
     let template_config = config.get::<TemplateConfig>()?;
 
-    let pg_db = PostgresDatabase::new(&config.get::<PostgresDbConfig>()?).await?;
+    let pg_db = PostgresDatabase::new(&config.get::<PostgresDbConfig>()?)
+        .await
+        .expect("Failed to create database connection");
 
-    pg_db.migrate().await?;
+    pg_db.migrate().await.expect("Failed to run migrations");
 
-    let mailer = Mailer::new(&mailer_config, &template_config)?;
-    let printer = Printer::new(&template_config)?;
+    sqlx::query("TRUNCATE TABLE users, courses, enrollments, practices CASCADE")
+        .execute(&pg_db.pool)
+        .await?;
+
+    let mailer = Mailer::new(&mailer_config, &template_config)
+        .expect("Failed to create mailer");
+    let printer = Printer::new(&template_config).expect("Failed to create printer");
+
     let oauth_client = GoogleOAuthClient::new(&config.get::<AuthConfig>()?);
-    let redis_db = RedisDatabase::new(&config.get::<RedisConfig>()?).await?;
+
+    let redis_db = RedisDatabase::new(&config.get::<RedisConfig>()?)
+        .await
+        .expect("Failed to create Redis connection");
 
     let jsonwebtoken_service = JsonWebTokenService::new(
         TokenConfig {

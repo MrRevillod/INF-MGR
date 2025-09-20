@@ -1,7 +1,7 @@
 pub mod utils;
 
 use crate::{
-    enrollments::utils::TestEnrollment, extract_resource_id, init_test_app,
+    app::init_test_app, enrollments::utils::TestEnrollment, extract_resource_id,
     users::utils::TestUser,
 };
 

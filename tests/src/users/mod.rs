@@ -1,6 +1,6 @@
 pub mod utils;
 
-use crate::{extract_resource_id, init_test_app};
+use crate::{app::init_test_app, extract_resource_id};
 use serde_json::json;
 use utils::*;
 

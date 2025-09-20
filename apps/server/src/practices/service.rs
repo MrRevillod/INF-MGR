@@ -7,7 +7,7 @@ use crate::{
     courses::CourseService,
     enrollments::*,
     practices::*,
-    shared::{AppError, AppResult, services::*},
+    shared::{AppResult, NotFoundError, services::*},
 };
 
 #[derive(Component)]
@@ -113,11 +113,10 @@ impl PracticeService for PracticeServiceImpl {
         let (enrollment, student, practice) =
             self.enrollments.get_by_id(enrollment_id).await?;
 
-        let mut practice =
-            practice.ok_or(AppError::ResourceNotFound(*practice_id))?;
+        let mut practice = practice.ok_or(NotFoundError::practice(*practice_id))?;
 
         if practice.id != *practice_id {
-            return Err(AppError::ResourceNotFound(*practice_id));
+            return Err(NotFoundError::practice(*practice_id))?;
         }
 
         let (course, teacher) =
@@ -132,15 +131,15 @@ impl PracticeService for PracticeServiceImpl {
                     .publish(Event::PracticeApproved(event_data))
                     .await;
             }
+
             PracticeStatus::Declined => {
                 practice.practice_status = PracticeStatus::Declined;
                 self.event_queue
                     .publish(Event::PracticeDeclined(event_data))
                     .await;
             }
-            _ => unreachable!(
-                "Only Approved or Declined statuses are allowed in this method"
-            ),
+
+            PracticeStatus::Pending => {}
         }
 
         self.practices.save(practice).await
@@ -155,7 +154,7 @@ impl PracticeService for PracticeServiceImpl {
             .practices
             .find_by_id(practice_id)
             .await?
-            .ok_or(AppError::ResourceNotFound(*practice_id))?;
+            .ok_or(NotFoundError::practice(*practice_id))?;
 
         let event_data = (practice, doc_bytes);
 
@@ -175,7 +174,7 @@ impl PracticeService for PracticeServiceImpl {
             .practices
             .find_by_id(id)
             .await?
-            .ok_or(AppError::ResourceNotFound(*id))?;
+            .ok_or(NotFoundError::practice(*id))?;
 
         if let Some(enterprise_name) = input.enterprise_name {
             practice.enterprise_name = enterprise_name;
@@ -226,7 +225,7 @@ impl PracticeService for PracticeServiceImpl {
             .iter_mut()
             .find(|s| s.evaluation_id == *evaluation_id);
 
-        let practice = practice.ok_or(AppError::ResourceNotFound(*practice_id))?;
+        let practice = practice.ok_or(NotFoundError::practice(*practice_id))?;
 
         if let Some(evaluation) = updated_evaluation {
             evaluation.score = input.score;
@@ -243,17 +242,9 @@ impl PracticeService for PracticeServiceImpl {
             student_scores: Some(student_scores_dto),
         };
 
-        let updated_enrollment =
-            self.enrollments.update(enrollment_id, update_data).await?;
+        self.enrollments.update(enrollment_id, update_data).await?;
 
-        let event_data = (
-            student,
-            updated_enrollment,
-            practice.clone(),
-            course,
-            teacher,
-            input.score,
-        );
+        let event_data = (student, practice.clone(), course, teacher, input.score);
 
         self.event_queue
             .publish(Event::PracticeEvaluated(event_data))
@@ -267,7 +258,7 @@ impl PracticeService for PracticeServiceImpl {
             .practices
             .find_by_id(id)
             .await?
-            .ok_or(AppError::ResourceNotFound(*id))?;
+            .ok_or(NotFoundError::practice(*id))?;
 
         self.practices.delete(&practice.id).await
     }

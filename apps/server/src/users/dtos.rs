@@ -5,7 +5,7 @@ use uuid::Uuid;
 use validator::{Validate, ValidationError};
 
 use crate::{
-    shared::errors::{AppError, Input},
+    shared::errors::{AppError, ValidationError as AppValidationError},
     users::{Role, User, UserFilter},
 };
 
@@ -60,11 +60,7 @@ impl FromStr for Role {
             "teacher" => Ok(Role::Teacher),
             "student" => Ok(Role::Student),
             "secretary" => Ok(Role::Secretary),
-            _ => Err(AppError::InvalidInput(Input {
-                field: "role".to_string(),
-                message: "Rol inválido".to_string(),
-                value: role.to_string(),
-            })),
+            _ => Err(AppValidationError::invalid_role(role))?,
         }
     }
 }

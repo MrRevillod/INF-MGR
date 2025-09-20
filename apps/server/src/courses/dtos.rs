@@ -1,11 +1,11 @@
 use serde::{Deserialize, Serialize};
-use sqlx::prelude::FromRow;
+use sqlx::FromRow;
 use uuid::Uuid;
 use validator::Validate;
 
 use crate::{
     courses::{Course, CourseEvaluation, CourseStatus},
-    shared::{AppError, Input, validate_uuid},
+    shared::{AppError, ValidationError as AppValidationError, validate_uuid},
     users::User,
 };
 
@@ -103,11 +103,7 @@ impl FromStr for CourseStatus {
         match s {
             "active" => Ok(CourseStatus::Active),
             "completed" => Ok(CourseStatus::Completed),
-            _ => Err(AppError::InvalidInput(Input {
-                field: "status".to_string(),
-                message: "El estado debe ser 'active' o 'completed'.".to_string(),
-                value: s.to_string(),
-            })),
+            _ => Err(AppValidationError::invalid_course_status(s.to_string()))?,
         }
     }
 }
