@@ -1,28 +1,17 @@
-<!DOCTYPE html>
-<html lang="es">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <title>{{ course_code }} - Inscripción de Curso</title>
-</head>
+{% block title %}{{ course_code }} - Inscripción de Curso{% endblock %}
 
-<body>
-    <h1>Estimado(a) {{ teacher_name }}</h1>
+{% block greeting_text %}Estimado(a) Profesor(a){% endblock %}
 
-    <p>
-        Junto con saludar, le informamos que ha sido registrado (a) como docente encargado del curso
-        {{ course_code }} - {{ course_name }}.
-    </p>
+{% block main_content %}
+<p>
+    Junto con saludar, le informamos que ha sido registrado (a) como docente encargado del curso
+    <strong>{{ course_code }} - {{ course_name }}</strong>.
+</p>
 
-    <p>
-        Si tiene alguna duda o necesita más información, por favor contáctese con la secretaría de la carrera: 
-        <strong>{{ secretary_email }}</strong>.
-    </p>
-
-    <p>
-        Se despide cordialmente,<br>
-        Equipo de Prácticas y Tesis de la carrera de Ingeniería Civil en Informática
-    </p>
-</body>
-
-</html>
+<p>
+    Si tiene alguna duda o necesita más información, 
+    por favor acerquese a la oficina de secretaría de la carrera.
+</p>
+{% endblock %}

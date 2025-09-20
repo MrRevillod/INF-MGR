@@ -1,9 +1,6 @@
 use crate::{
     auth::JsonWebTokenService,
-    shared::{
-        database::PostgresDatabase, di::AppModule, oauth::GoogleOAuthClient, redis::RedisDatabase,
-        services::event_queue::TokioEventQueue,
-    },
+    shared::{services::TokioEventQueue, *},
 };
 
 #[derive(Default)]

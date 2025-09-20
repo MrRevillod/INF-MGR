@@ -1,5 +1,5 @@
-mod context;
-pub use context::{MailTo, MailerConfig};
+mod config;
+pub use config::{MailTo, MailerConfig};
 
 use lettre::{
     Message, SmtpTransport, Transport,
@@ -8,10 +8,10 @@ use lettre::{
 };
 
 use crate::shared::services::{
-    errors::{MailerError, ServiceError},
-    templates::{MAILER_TEMPLATES, TemplateConfig, TemplateContext},
+    MAILER_TEMPLATES, MailerError, ServiceError, TemplateConfig, TemplateContext,
 };
 
+#[derive(Clone)]
 pub struct Mailer {
     transport: SmtpTransport,
     config: MailerConfig,
@@ -23,14 +23,18 @@ impl Mailer {
         config: &MailerConfig,
         template_config: &TemplateConfig,
     ) -> Result<Self, ServiceError> {
-        let creds = Credentials::new(config.smtp_username.clone(), config.smtp_password.clone());
+        let creds = Credentials::new(
+            config.smtp_username.clone(),
+            config.smtp_password.clone(),
+        );
 
         let transporter = SmtpTransport::relay(&config.smtp_host)
             .map_err(|source| MailerError::SmtpTransport { source })?
             .credentials(creds)
             .build();
 
-        let templates = TemplateContext::new(MAILER_TEMPLATES.clone(), template_config.clone())?;
+        let templates =
+            TemplateContext::new(MAILER_TEMPLATES.clone(), template_config.clone())?;
 
         Ok(Mailer {
             transport: transporter,
@@ -66,6 +70,17 @@ impl Mailer {
         self.transport
             .send(&message)
             .map_err(|source| MailerError::SmtpTransport { source })?;
+
+        Ok(())
+    }
+
+    pub async fn send_many(&self, mails: Vec<MailTo>) -> Result<(), ServiceError> {
+        use futures::future::join_all;
+        let results = join_all(mails.into_iter().map(|mail| self.send(mail))).await;
+
+        for result in results {
+            result?;
+        }
 
         Ok(())
     }

@@ -10,8 +10,9 @@ pub fn students() -> Vec<User> {
         id: Uuid::new_v4(),
         rut: "56315776-3".to_string(),
         name: "Student USER".to_string(),
-        email: std::env::var("TEST_STUDENT_EMAIL").expect("TEST_STUDENT_EMAIL must be set in .env"),
-        roles: vec![Role::Student],
+        email: std::env::var("TEST_STUDENT_EMAIL")
+            .expect("TEST_STUDENT_EMAIL must be set in .env"),
+        role: Role::Student,
         created_at: chrono::Utc::now(),
         deleted_at: None,
         google_id: None,
@@ -23,8 +24,9 @@ pub fn teachers() -> Vec<User> {
         id: Uuid::new_v4(),
         rut: "21940032-2".to_string(),
         name: "Teacher USER".to_string(),
-        email: std::env::var("TEST_TEACHER_EMAIL").expect("TEST_TEACHER_EMAIL must be set in .env"),
-        roles: vec![Role::Teacher],
+        email: std::env::var("TEST_TEACHER_EMAIL")
+            .expect("TEST_TEACHER_EMAIL must be set in .env"),
+        role: Role::Teacher,
         created_at: chrono::Utc::now(),
         deleted_at: None,
         google_id: None,

@@ -1,5 +1,6 @@
+use helmet::*;
 use sword::core::Config;
-use sword::prelude::Application;
+use sword::prelude::*;
 use tokio::sync::mpsc;
 
 use server::{
@@ -7,21 +8,8 @@ use server::{
     config::*,
     courses::CoursesController,
     enrollments::EnrollmentsController,
+    shared::{services::*, *},
     users::UsersController,
-};
-
-use server::shared::{
-    database::PostgresDatabase,
-    di::{DependencyContainer, InitialComponents},
-    layers::{CorsLayer, HelmetLayer, LoggerLayer},
-    oauth::GoogleOAuthClient,
-    redis::RedisDatabase,
-    services::{
-        event_queue::*,
-        mailer::{Mailer, MailerConfig},
-        printer::Printer,
-        templates::TemplateConfig,
-    },
 };
 
 #[sword::main]
@@ -29,14 +17,14 @@ async fn main() {
     let mut app = Application::builder()?;
 
     let config = app.config.clone();
-    let app_config = config.get::<ApplicationConfig>().expect("Invalid app config");
+    let event_queue_config = config.get::<EventQueueConfig>()?;
 
     let (pg_db, mailer, printer, oauth_client, redis_db, jsonwebtoken_service) =
         build_initial_components(config.clone())
             .await
             .expect("Failed to build dependencies");
 
-    let (tx, rx) = mpsc::channel(app_config.event_queue_buffer_size);
+    let (tx, rx) = mpsc::channel(event_queue_config.buffer_size);
 
     let dependency_container = DependencyContainer::builder()
         .with_postgres_db(pg_db)
@@ -46,13 +34,14 @@ async fn main() {
         .with_jwt_service(jsonwebtoken_service)
         .build();
 
-    EventSubscriber::new(SubscriberOptions {
-        rx,
-        mailer,
-        printer,
-    })
-    .run_parallel()
-    .await;
+    let event_subscriber = EventSubscriber::builder()
+        .with_receiver(rx)
+        .with_mailer(mailer)
+        .with_printer(printer)
+        .with_config(event_queue_config)
+        .build();
+
+    event_subscriber.run_parallel().await;
 
     app = app
         .with_shaku_di_module(dependency_container)?
@@ -62,7 +51,15 @@ async fn main() {
         .with_controller::<AuthController>()
         .with_layer(LoggerLayer())
         .with_layer(CorsLayer(&config.get::<CorsConfig>()?))
-        .with_layer(HelmetLayer());
+        .with_layer(
+            Helmet::builder()
+                .with_header(XContentTypeOptions::nosniff())
+                .with_header(XFrameOptions::same_origin())
+                .with_header(StrictTransportSecurity::new().max_age(31536000))
+                .with_header(CrossOriginResourcePolicy::same_origin())
+                .with_header(ReferrerPolicy::strict_origin_when_cross_origin())
+                .build(),
+        );
 
     app.build().run().await?;
 }
@@ -74,20 +71,14 @@ async fn build_initial_components(
     let mailer_config = config.get::<MailerConfig>()?;
     let template_config = config.get::<TemplateConfig>()?;
 
-    let pg_db = PostgresDatabase::new(&config.get::<PostgresDbConfig>()?)
-        .await
-        .expect("Failed to create database connection");
+    let pg_db = PostgresDatabase::new(&config.get::<PostgresDbConfig>()?).await?;
 
-    pg_db.migrate().await.expect("Failed to create database connection");
+    pg_db.migrate().await?;
 
-    let mailer = Mailer::new(&mailer_config, &template_config).expect("Failed to create mailer");
-    let printer = Printer::new(&template_config).expect("Failed to create printer");
-
+    let mailer = Mailer::new(&mailer_config, &template_config)?;
+    let printer = Printer::new(&template_config)?;
     let oauth_client = GoogleOAuthClient::new(&config.get::<AuthConfig>()?);
-
-    let redis_db = RedisDatabase::new(&config.get::<RedisConfig>()?)
-        .await
-        .expect("Failed to create Redis connection");
+    let redis_db = RedisDatabase::new(&config.get::<RedisConfig>()?).await?;
 
     let jsonwebtoken_service = JsonWebTokenService::new(
         TokenConfig {
@@ -100,5 +91,12 @@ async fn build_initial_components(
         },
     );
 
-    Ok((pg_db, mailer, printer, oauth_client, redis_db, jsonwebtoken_service))
+    Ok((
+        pg_db,
+        mailer,
+        printer,
+        oauth_client,
+        redis_db,
+        jsonwebtoken_service,
+    ))
 }

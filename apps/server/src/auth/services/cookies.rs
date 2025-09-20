@@ -17,7 +17,8 @@ impl CookieBuilder {
     }
 
     pub fn max_age(mut self, exp_ms: usize) -> Self {
-        self.cookie.set_max_age(Duration::milliseconds(exp_ms as i64));
+        self.cookie
+            .set_max_age(Duration::milliseconds(exp_ms as i64));
         self
     }
 

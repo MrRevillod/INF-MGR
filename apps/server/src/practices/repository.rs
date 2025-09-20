@@ -9,7 +9,7 @@ use uuid::Uuid;
 
 use crate::{
     practices::entity::{Practice, Practices},
-    shared::{database::DatabaseConnection, errors::AppError},
+    shared::{AppResult, DatabaseConnection, errors::AppError},
 };
 
 #[derive(Component)]
@@ -26,17 +26,22 @@ pub struct PracticeFilter {
 
 #[async_trait]
 pub trait PracticeRepository: Interface {
-    async fn find_many(&self, filter: PracticeFilter) -> Result<Vec<Practice>, AppError>;
-
-    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Practice>, AppError>;
-    async fn save(&self, practice: Practice) -> Result<Practice, AppError>;
-    async fn delete(&self, id: &Uuid) -> Result<(), AppError>;
+    async fn find_many(
+        &self,
+        filter: PracticeFilter,
+    ) -> Result<Vec<Practice>, AppError>;
+    async fn find_by_id(&self, id: &Uuid) -> AppResult<Option<Practice>>;
+    async fn save(&self, practice: Practice) -> AppResult<Practice>;
+    async fn delete(&self, id: &Uuid) -> AppResult<()>;
 }
 
 #[async_trait]
 impl PracticeRepository for PostgresPracticeRepository {
-    async fn find_many(&self, filter: PracticeFilter) -> Result<Vec<Practice>, AppError> {
-        let mut query = Query::select().expr(Expr::cust("*")).from(Practices::Table).to_owned();
+    async fn find_many(&self, filter: PracticeFilter) -> AppResult<Vec<Practice>> {
+        let mut query = Query::select()
+            .expr(Expr::cust("*"))
+            .from(Practices::Table)
+            .to_owned();
 
         if let Some(ids) = &filter.ids {
             query.and_where(Expr::col(Practices::Id).is_in(ids.clone()));
@@ -51,7 +56,7 @@ impl PracticeRepository for PostgresPracticeRepository {
         Ok(practices)
     }
 
-    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Practice>, AppError> {
+    async fn find_by_id(&self, id: &Uuid) -> AppResult<Option<Practice>> {
         let (sql, values) = Query::select()
             .expr(Expr::cust("*"))
             .from(Practices::Table)
@@ -65,7 +70,7 @@ impl PracticeRepository for PostgresPracticeRepository {
         Ok(practice)
     }
 
-    async fn save(&self, practice: Practice) -> Result<Practice, AppError> {
+    async fn save(&self, practice: Practice) -> AppResult<Practice> {
         let query = r#"
             INSERT INTO practices (id, enterprise_name,location, description, supervisor_name, supervisor_email, supervisor_phone, start_date, end_date, practice_status)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
@@ -98,7 +103,7 @@ impl PracticeRepository for PostgresPracticeRepository {
         Ok(result)
     }
 
-    async fn delete(&self, id: &Uuid) -> Result<(), AppError> {
+    async fn delete(&self, id: &Uuid) -> AppResult<()> {
         let (sql, values) = Query::delete()
             .from_table(Practices::Table)
             .and_where(Expr::col(Practices::Id).eq(*id))

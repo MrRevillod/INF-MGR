@@ -1,5 +1,5 @@
 use serde::Deserialize;
-use sword::prelude::config;
+use sword::core::config;
 
 #[derive(Debug, Clone, Deserialize)]
 #[config(key = "mailer")]

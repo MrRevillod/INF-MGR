@@ -1,14 +1,11 @@
 use serde::{Deserialize, Serialize};
-use sqlx::prelude::FromRow;
+use sqlx::FromRow;
 use uuid::Uuid;
 use validator::Validate;
 
 use crate::{
     courses::{Course, CourseEvaluation, CourseStatus},
-    shared::{
-        errors::{AppError, Input},
-        validators::validate_uuid,
-    },
+    shared::{AppError, ValidationError as AppValidationError, validate_uuid},
     users::User,
 };
 
@@ -19,7 +16,11 @@ use crate::{
 #[derive(Serialize, Deserialize, Debug, Clone, Validate)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateCourseDto {
-    #[validate(range(min = 2000, max = 2100, message = "El año debe tener 4 dígitos."))]
+    #[validate(range(
+        min = 2000,
+        max = 2100,
+        message = "El año debe tener 4 dígitos."
+    ))]
     pub year: i32,
 
     #[validate(
@@ -56,7 +57,11 @@ impl From<CreateCourseDto> for Course {
             year: dto.year,
             code: dto.code,
             name: dto.name,
-            evaluations: dto.evaluations.into_iter().map(CourseEvaluation::from).collect(),
+            evaluations: dto
+                .evaluations
+                .into_iter()
+                .map(CourseEvaluation::from)
+                .collect(),
 
             teacher_id: Uuid::parse_str(&dto.teacher_id).unwrap(),
             course_status: CourseStatus::Active,
@@ -98,11 +103,7 @@ impl FromStr for CourseStatus {
         match s {
             "active" => Ok(CourseStatus::Active),
             "completed" => Ok(CourseStatus::Completed),
-            _ => Err(AppError::InvalidInput(Input {
-                field: "status".to_string(),
-                message: "El estado debe ser 'active' o 'completed'.".to_string(),
-                value: s.to_string(),
-            })),
+            _ => Err(AppValidationError::invalid_course_status(s.to_string()))?,
         }
     }
 }
@@ -213,7 +214,9 @@ fn validate_weights(weights: &[i32]) -> Result<(), ValidationError> {
     Ok(())
 }
 
-fn validate_evaluation_weights(evaluations: &[CourseEvaluationDto]) -> Result<(), ValidationError> {
+fn validate_evaluation_weights(
+    evaluations: &[CourseEvaluationDto],
+) -> Result<(), ValidationError> {
     let weights: Vec<i32> = evaluations.iter().map(|e| e.weight).collect();
     validate_weights(&weights)
 }

@@ -1,19 +1,19 @@
-use crate::shared::services::event_queue::{Event, EventQueue};
+use crate::{
+    shared::services::{Event, EventQueue},
+    users::Role,
+};
 
 use async_trait::async_trait;
 use shaku::{Component, Interface};
-use std::sync::Arc;
+use std::{str::FromStr, sync::Arc};
 use uuid::Uuid;
 
 use crate::{
     shared::{
-        database::{DEFAULT_PAGE_SIZE, Pagination},
-        errors::{AppError, Input},
+        DEFAULT_PAGE_SIZE, Pagination,
+        errors::{AppError, NotFoundError, ValidationError},
     },
-    user_filter,
-    users::{
-        CreateUserDto, UpdateUserDto, User, UserFilter, UserRepository, dtos::from_string_vec_roles,
-    },
+    users::*,
 };
 
 #[derive(Component)]
@@ -28,7 +28,10 @@ pub struct UserServiceImpl {
 
 #[async_trait]
 pub trait UserService: Interface {
-    async fn get_all(&self, filter: UserFilter) -> Result<Pagination<User>, AppError>;
+    async fn get_all(
+        &self,
+        filter: UserFilter,
+    ) -> Result<Pagination<User>, AppError>;
 
     async fn create(&self, user: CreateUserDto) -> Result<User, AppError>;
     async fn update(&self, id: Uuid, user: UpdateUserDto) -> Result<User, AppError>;
@@ -37,7 +40,10 @@ pub trait UserService: Interface {
 
 #[async_trait]
 impl UserService for UserServiceImpl {
-    async fn get_all(&self, filter: UserFilter) -> Result<Pagination<User>, AppError> {
+    async fn get_all(
+        &self,
+        filter: UserFilter,
+    ) -> Result<Pagination<User>, AppError> {
         let results = self.users.find_many(filter.clone()).await?;
         let total = self.users.count(filter.clone()).await?;
 
@@ -63,51 +69,48 @@ impl UserService for UserServiceImpl {
         )?;
 
         if user_by_rut.is_some() {
-            return Err(AppError::Conflict(Input {
-                field: "rut".to_string(),
-                message: "Ya existe un usuario con este RUT".to_string(),
-                value: input.rut.clone(),
-            }));
+            return Err(ValidationError::duplicate_rut(&input.rut))?;
         }
 
         if user_by_email.is_some() {
-            return Err(AppError::Conflict(Input {
-                field: "email".to_string(),
-                message: "Ya existe un usuario con este email".to_string(),
-                value: input.email.clone(),
-            }));
+            return Err(ValidationError::duplicate_email(&input.email))?;
         }
 
         let user = self.users.save(User::try_from(input.clone())?).await?;
         let event_data = (user.name.clone(), user.email.clone());
 
-        self.event_queue.publish(Event::UserCreated(event_data)).await;
+        self.event_queue
+            .publish(Event::UserCreated(event_data))
+            .await;
 
         Ok(user)
     }
 
-    async fn update(&self, id: Uuid, input: UpdateUserDto) -> Result<User, AppError> {
+    async fn update(
+        &self,
+        id: Uuid,
+        input: UpdateUserDto,
+    ) -> Result<User, AppError> {
         let Some(mut user) = self.users.find_by_id(&id).await? else {
-            return Err(AppError::ResourceNotFound(id));
+            return Err(NotFoundError::user(id))?;
         };
 
         if let Some(e) = input.email {
-            let email_exists =
-                self.users.find_one(user_filter! { email: e.clone() }).await?.is_some();
+            let email_exists = self
+                .users
+                .find_one(user_filter! { email: e.clone() })
+                .await?
+                .is_some();
 
             if email_exists && user.email != e {
-                return Err(AppError::Conflict(Input {
-                    field: "email".to_string(),
-                    message: "Ya existe un usuario con este email".to_string(),
-                    value: e.clone(),
-                }));
+                return Err(ValidationError::duplicate_email(&e))?;
             }
 
             user.email = e
         }
 
-        if let Some(roles) = input.roles {
-            user.roles = from_string_vec_roles(roles)?;
+        if let Some(role) = input.role {
+            user.role = Role::from_str(&role)?;
         }
 
         self.users.save(user).await
@@ -115,7 +118,7 @@ impl UserService for UserServiceImpl {
 
     async fn remove(&self, id: Uuid) -> Result<(), AppError> {
         if self.users.find_by_id(&id).await?.is_none() {
-            return Err(AppError::ResourceNotFound(id));
+            return Err(NotFoundError::user(id))?;
         }
 
         self.users.delete(&id).await

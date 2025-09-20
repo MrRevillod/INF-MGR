@@ -2,6 +2,7 @@
 macro_rules! filter {
     ($struct_name:ident, { $($field:ident $(: $value:expr)?),* $(,)? }) => {
         {
+            #[allow(unused_mut)]
             let mut filter = $struct_name::default();
             $(
                 filter.$field = Some($crate::filter!(@assign $field $(: $value)?));

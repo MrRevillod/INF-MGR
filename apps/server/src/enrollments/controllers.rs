@@ -1,14 +1,14 @@
-use std::io::Read;
-
-use axum::{http::StatusCode, response::IntoResponse};
 use sword::prelude::*;
+use tokio::fs;
 use uuid::Uuid;
 
 use crate::{
-    practices::{
-        CreatePracticeDto, EvaluatePracticeDto, PracticeService, PracticeStatus, UpdatePracticeDto,
-    },
-    shared::di::AppModule,
+    auth::{Authentication, MinimumRequiredRole},
+    config::ServerConfig,
+    courses::CourseService,
+    enrollments::EnrollmentService,
+    practices::*,
+    shared::{AppModule, ContextExt, FileResponse},
 };
 
 #[controller("/enrollments")]
@@ -17,17 +17,45 @@ pub struct EnrollmentsController {}
 #[routes]
 impl EnrollmentsController {
     #[post("/{id}/practice")]
+    #[middleware(Authentication)]
+    #[middleware(MinimumRequiredRole, config = "teacher")]
+    #[doc = "Crear una práctica para una inscripción específica"]
     async fn create_practice(ctx: Context) -> HttpResult<HttpResponse> {
         let enrollment_id = ctx.param::<Uuid>("id")?;
         let dto = ctx.validated_body::<CreatePracticeDto>()?;
 
-        let service = ctx.di::<AppModule, dyn PracticeService>()?;
+        let owner_validation = ctx.get_ownership_validation()?;
 
-        let practice = service.create(&enrollment_id, dto).await?;
+        if owner_validation.required {
+            let enrollment_service = ctx.di::<AppModule, dyn EnrollmentService>()?;
+
+            let (enrollment, _, _) =
+                enrollment_service.get_by_id(&enrollment_id).await?;
+
+            let course_service = ctx.di::<AppModule, dyn CourseService>()?;
+
+            let (course, _) =
+                course_service.get_by_id(&enrollment.course_id).await?;
+
+            if course.teacher_id != owner_validation.user_id {
+                return Err(HttpResponse::Forbidden().message(
+                    "No tienes permiso para crear prácticas en esta inscripción",
+                ));
+            }
+        }
+
+        let practice = ctx
+            .di::<AppModule, dyn PracticeService>()?
+            .create(&enrollment_id, dto)
+            .await?;
+
         Ok(HttpResponse::Created().data(practice))
     }
 
     #[post("/{id}/practice/{practice_id}/approve")]
+    #[doc = "Aprovar práctica por el supervisor en la empresa."]
+    #[doc = "Este endpoint no requiere autenticación ya que se asume que el supervisor no es usuario del sistema."]
+    #[doc = "Solo se pude aprobar la práctica si su estado es 'Pending' (En espera de aprobación)."]
     async fn approve_practice(ctx: Context) -> HttpResult<HttpResponse> {
         let enrollment_id = ctx.param::<Uuid>("id")?;
         let practice_id = ctx.param::<Uuid>("practice_id")?;
@@ -50,6 +78,9 @@ impl EnrollmentsController {
     }
 
     #[post("/{id}/practice/{practice_id}/decline")]
+    #[doc = "Rechazar práctica por el supervisor en la empresa."]
+    #[doc = "Este endpoint no requiere autenticación ya que se asume que el supervisor no es usuario del sistema."]
+    #[doc = "Solo se pude rechazar la práctica si su estado es 'Pending' (En espera de aprobación)."]
     async fn decline_practice(ctx: Context) -> HttpResult<HttpResponse> {
         let enrollment_id = ctx.param::<Uuid>("id")?;
         let practice_id = ctx.param::<Uuid>("practice_id")?;
@@ -72,45 +103,57 @@ impl EnrollmentsController {
     }
 
     #[post("/{id}/practice/{practice_id}/authorize")]
+    #[doc = "Subir documento de autorización de una práctica"]
+    #[doc = "Este endpoint no requiere autenticación ya que se asume que el supervisor no es usuario del sistema."]
+    #[doc = "Se establece que esta acción es realizable una única vez por práctica."]
     async fn authorize_practice(ctx: Context) -> HttpResult<HttpResponse> {
         let practice_id = ctx.param::<Uuid>("practice_id")?;
-        let form_data = ctx.multipart().await?;
+        let mut form_data = ctx.multipart().await?;
 
-        let Some(field) = form_data.fields().first() else {
-            return Err(HttpResponse::BadRequest());
-        };
+        while let Some(field) = form_data.next_field().await.ok().flatten() {
+            if field.name() != Some("auth_doc") {
+                return Err(HttpResponse::BadRequest());
+            }
 
-        if field.name != Some("auth_doc".into()) {
-            return Err(HttpResponse::BadRequest());
+            let service = ctx.di::<AppModule, dyn PracticeService>()?;
+            let field_bytes = field
+                .bytes()
+                .await
+                .map_err(|_| HttpResponse::BadRequest())?;
+
+            service
+                .authorize(&practice_id, field_bytes.to_vec())
+                .await?;
         }
-
-        let service = ctx.di::<AppModule, dyn PracticeService>()?;
-
-        service.authorize(&practice_id, field.data.bytes()).await?;
 
         Ok(HttpResponse::Ok())
     }
 
     #[get("/practice/{practice_id}/docs")]
-    async fn get_practice_docs(ctx: Context) -> Result<impl IntoResponse, HttpResponse> {
+    #[middleware(Authentication)]
+    #[doc = "Obtener el documento de autorización de una práctica"]
+    async fn get_practice_docs(ctx: Context) -> HttpResult<FileResponse> {
         let practice_id = ctx.param::<Uuid>("practice_id")?;
+        let documents_dir = ctx.config::<ServerConfig>()?.documents_dir;
 
         let file_path = format!(
             "{}/practices/{}/authorization.pdf",
-            std::env::var("DOCUMENTS_DIR").unwrap_or(".".to_string()),
-            practice_id
+            documents_dir, practice_id
         );
 
-        let buff = tokio::fs::read(&file_path).await.map_err(|e| {
+        let buff = fs::read(&file_path).await.map_err(|e| {
             tracing::error!("Failed to open/read file {}: {e}", file_path);
             HttpResponse::NotFound()
         })?;
 
-        Ok((StatusCode::OK, [("Content-Type", "application/pdf")], buff))
+        Ok(FileResponse::Document(buff))
     }
 
     #[post("/{id}/practice/{practice_id}/evaluate/{evaluation_id}")]
-    async fn evaluate_practice(ctx: Context) -> HttpResult<HttpResponse> {
+    #[doc = "Evaluar práctica por el supervisor en la empresa."]
+    #[doc = "Este endpoint no requiere autenticación ya que se asume que el supervisor no es usuario del sistema."]
+    #[doc = "Solo se pude evaluar la práctica si su estado es 'Approved' (Aprobada)."]
+    async fn evualuate_from_enterprise(ctx: Context) -> HttpResult<HttpResponse> {
         let practice_id = ctx.param::<Uuid>("practice_id")?;
         let enrollment_id = ctx.param::<Uuid>("id")?;
         let evaluation_id = ctx.param::<Uuid>("evaluation_id")?;
@@ -127,9 +170,32 @@ impl EnrollmentsController {
     }
 
     #[patch("/{id}/practice")]
+    #[middleware(Authentication)]
+    #[middleware(MinimumRequiredRole, config = "teacher")]
+    #[doc = "Actualizar una práctica para una inscripción específica"]
     async fn update_practice(ctx: Context) -> HttpResult<HttpResponse> {
         let enrollment_id = ctx.param::<Uuid>("id")?;
         let dto = ctx.validated_body::<UpdatePracticeDto>()?;
+
+        let owner_validation = ctx.get_ownership_validation()?;
+
+        if owner_validation.required {
+            let enrollment_service = ctx.di::<AppModule, dyn EnrollmentService>()?;
+
+            let (enrollment, _, _) =
+                enrollment_service.get_by_id(&enrollment_id).await?;
+
+            let course_service = ctx.di::<AppModule, dyn CourseService>()?;
+
+            let (course, _) =
+                course_service.get_by_id(&enrollment.course_id).await?;
+
+            if course.teacher_id != owner_validation.user_id {
+                return Err(HttpResponse::Forbidden().message(
+                    "No tienes permiso para actualizar prácticas en esta inscripción",
+                ));
+            }
+        }
 
         let service = ctx.di::<AppModule, dyn PracticeService>()?;
         let practice = service.update(&enrollment_id, dto).await?;
@@ -138,11 +204,15 @@ impl EnrollmentsController {
     }
 
     #[delete("/practice/{practice_id}")]
+    #[middleware(Authentication)]
+    #[middleware(MinimumRequiredRole, config = "secretary")]
+    #[doc = "Eliminar una práctica por su ID"]
     async fn delete_practice(ctx: Context) -> HttpResult<HttpResponse> {
         let practice_id = ctx.param::<Uuid>("practice_id")?;
         let service = ctx.di::<AppModule, dyn PracticeService>()?;
 
         service.remove(&practice_id).await?;
+
         Ok(HttpResponse::NoContent())
     }
 }

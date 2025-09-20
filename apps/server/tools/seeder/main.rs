@@ -11,7 +11,8 @@ use std::time::Duration;
 
 #[tokio::main]
 async fn main() -> Result<(), sqlx::Error> {
-    let db_uri = std::env::var("POSTGRES_DATABASE_URL").expect("ENV POSTGRES_DATABASE_URL not set");
+    let db_uri = std::env::var("POSTGRES_DATABASE_URL")
+        .expect("ENV POSTGRES_DATABASE_URL not set");
 
     let pool = PgPoolOptions::new()
         .min_connections(1)

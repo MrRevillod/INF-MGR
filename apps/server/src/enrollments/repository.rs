@@ -7,8 +7,8 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::{
-    enrollments::{Enrollment, entity::Enrollments},
-    shared::{database::DatabaseConnection, errors::AppError},
+    enrollments::{Enrollment, Enrollments},
+    shared::{AppResult, DatabaseConnection},
 };
 
 #[derive(Component)]
@@ -26,18 +26,31 @@ pub struct EnrollmentFilter {
 
 #[async_trait]
 pub trait EnrollmentRepository: Interface {
-    async fn find_many(&self, filter: EnrollmentFilter) -> Result<Vec<Enrollment>, AppError>;
+    async fn find_many(
+        &self,
+        filter: EnrollmentFilter,
+    ) -> AppResult<Vec<Enrollment>>;
 
-    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Enrollment>, AppError>;
-    async fn save(&self, enrollment: Enrollment) -> Result<Enrollment, AppError>;
-    async fn create_many(&self, enrollments: Vec<Enrollment>) -> Result<Vec<Enrollment>, AppError>;
-    async fn delete(&self, id: &Uuid) -> Result<(), AppError>;
+    async fn find_by_id(&self, id: &Uuid) -> AppResult<Option<Enrollment>>;
+    async fn save(&self, enrollment: Enrollment) -> AppResult<Enrollment>;
+    async fn create_many(
+        &self,
+        enrollments: Vec<Enrollment>,
+    ) -> AppResult<Vec<Enrollment>>;
+
+    async fn delete(&self, id: &Uuid) -> AppResult<()>;
 }
 
 #[async_trait]
 impl EnrollmentRepository for PostgresEnrollmentRepository {
-    async fn find_many(&self, filter: EnrollmentFilter) -> Result<Vec<Enrollment>, AppError> {
-        let mut query = Query::select().expr(Expr::cust("*")).from(Enrollments::Table).to_owned();
+    async fn find_many(
+        &self,
+        filter: EnrollmentFilter,
+    ) -> AppResult<Vec<Enrollment>> {
+        let mut query = Query::select()
+            .expr(Expr::cust("*"))
+            .from(Enrollments::Table)
+            .to_owned();
 
         if let Some(user_id) = filter.student_id {
             query.and_where(Expr::col(Enrollments::StudentId).eq(user_id));
@@ -56,7 +69,7 @@ impl EnrollmentRepository for PostgresEnrollmentRepository {
         Ok(result)
     }
 
-    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Enrollment>, AppError> {
+    async fn find_by_id(&self, id: &Uuid) -> AppResult<Option<Enrollment>> {
         let (sql, values) = Query::select()
             .expr(Expr::cust("*"))
             .from(Enrollments::Table)
@@ -70,7 +83,7 @@ impl EnrollmentRepository for PostgresEnrollmentRepository {
         Ok(model)
     }
 
-    async fn save(&self, enrollment: Enrollment) -> Result<Enrollment, AppError> {
+    async fn save(&self, enrollment: Enrollment) -> AppResult<Enrollment> {
         let query = r#"
             INSERT INTO enrollments (id, student_id, course_id, practice_id, student_scores)
             VALUES ($1, $2, $3, $4, $5)
@@ -92,7 +105,10 @@ impl EnrollmentRepository for PostgresEnrollmentRepository {
         Ok(result)
     }
 
-    async fn create_many(&self, enrollments: Vec<Enrollment>) -> Result<Vec<Enrollment>, AppError> {
+    async fn create_many(
+        &self,
+        enrollments: Vec<Enrollment>,
+    ) -> AppResult<Vec<Enrollment>> {
         if enrollments.is_empty() {
             return Ok(vec![]);
         }
@@ -124,7 +140,6 @@ impl EnrollmentRepository for PostgresEnrollmentRepository {
 
         let mut sqlx_query = sqlx::query_as::<_, Enrollment>(&query);
 
-        // Bind all parameters for all enrollments
         for enrollment in &enrollments {
             sqlx_query = sqlx_query
                 .bind(enrollment.id)
@@ -139,13 +154,15 @@ impl EnrollmentRepository for PostgresEnrollmentRepository {
         Ok(results)
     }
 
-    async fn delete(&self, id: &Uuid) -> Result<(), AppError> {
+    async fn delete(&self, id: &Uuid) -> AppResult<()> {
         let (sql, values) = Query::delete()
             .from_table(Enrollments::Table)
             .and_where(Expr::col(Enrollments::Id).eq(*id))
             .build_sqlx(PostgresQueryBuilder);
 
-        sqlx::query_with(&sql, values).execute(self.db_connection.get_pool()).await?;
+        sqlx::query_with(&sql, values)
+            .execute(self.db_connection.get_pool())
+            .await?;
 
         Ok(())
     }

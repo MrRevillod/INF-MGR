@@ -1,10 +1,17 @@
 [application]
 port = 8000
 host = "0.0.0.0"
-event_queue_buffer_size = 100
 body_limit = "5MB"
-allowed_mime_types = ["application/pdf"]
+request_timeout_seconds = 15
+graceful_shutdown = false
+
 client_app_url = "${PUBLIC_URL:http://localhost:3000}"
+documents_dir = "${DOCUMENTS_DIR:./documents}"
+
+[event-queue]
+buffer_size = 100
+num_of_event_retry = 2
+delay_between_event_retry_ms = 2000
 
 [postgres-db]
 url = "${POSTGRES_DATABASE_URL:postgres://localhost:5432/inf_mgr}"
@@ -17,7 +24,7 @@ acquire_timeout_ms = 5000
 url = "${REDIS_DATABASE_URL}"
 
 [auth]
-access_jwt_secret = "${SESSION_JWT_SECRET}"
+access_jwt_secret = "${ACCESS_JWT_SECRET}"
 refresh_jwt_secret = "${REFRESH_JWT_SECRET}"
 
 access_exp_ms = 900000     # 15 minutes

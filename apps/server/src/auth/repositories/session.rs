@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use crate::{
     auth::Session,
-    shared::{AppError, AppResult, redis::CacheDbConnection},
+    shared::{AppError, AppResult, CacheDbConnection},
 };
 
 #[derive(Component)]
@@ -28,16 +28,16 @@ impl SessionRepository for RedisSessionRepository {
         let mut client = self.redis_db.get_connection();
         let data: String = client.get(format!("session:{session_id}")).await?;
 
-        let session: Session =
-            serde_json::from_str(&data).map_err(|e| AppError::InternalServerError(e.into()))?;
+        let session: Session = serde_json::from_str(&data)
+            .map_err(|e| AppError::InternalServerError(e.into()))?;
 
         Ok(Some(session))
     }
 
     async fn save(&self, session: Session, ttl: u64) -> AppResult<()> {
         let mut client = self.redis_db.get_connection();
-        let data =
-            serde_json::to_string(&session).map_err(|e| AppError::InternalServerError(e.into()))?;
+        let data = serde_json::to_string(&session)
+            .map_err(|e| AppError::InternalServerError(e.into()))?;
 
         let key = format!("session:{}", session.id);
         let _: () = client.set_ex(key, data, ttl).await?;

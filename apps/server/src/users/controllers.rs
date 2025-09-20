@@ -1,22 +1,32 @@
+use crate::auth::{Authentication, MinimumRequiredRole};
 use crate::shared::di::AppModule;
-use crate::users::{CreateUserDto, GetUsersQueryDto, UpdateUserDto, UserResponse, UserService};
+use crate::users::*;
 
 use serde_json::json;
-use sword::{prelude::*, web::HttpResult};
+use sword::prelude::*;
 use uuid::Uuid;
 
 #[controller("/users")]
+#[middleware(Authentication)]
 pub struct UsersController;
 
 #[routes]
 impl UsersController {
     #[get("/")]
+    #[middleware(MinimumRequiredRole, config = "secretary")]
     async fn find_all(ctx: Context) -> HttpResult<HttpResponse> {
-        let query = ctx.validated_query::<GetUsersQueryDto>()?.unwrap_or_default();
+        let query = ctx
+            .validated_query::<GetUsersQueryDto>()?
+            .unwrap_or_default();
+
         let service = ctx.di::<AppModule, dyn UserService>()?;
 
         let data = service.get_all(query.into()).await?;
-        let users = data.items.into_iter().map(UserResponse::from).collect::<Vec<_>>();
+        let users = data
+            .items
+            .into_iter()
+            .map(UserResponse::from)
+            .collect::<Vec<_>>();
 
         let json = json!({
             "users": users,
@@ -30,6 +40,7 @@ impl UsersController {
     }
 
     #[post("/")]
+    #[middleware(MinimumRequiredRole, config = "secretary")]
     async fn create(ctx: Context) -> HttpResult<HttpResponse> {
         let user_data = ctx.validated_body::<CreateUserDto>()?;
         let service = ctx.di::<AppModule, dyn UserService>()?;
@@ -40,6 +51,7 @@ impl UsersController {
     }
 
     #[patch("/{id}")]
+    #[middleware(MinimumRequiredRole, config = "secretary")]
     pub async fn update(ctx: Context) -> HttpResult<HttpResponse> {
         let id = ctx.param::<Uuid>("id")?;
         let user_data = ctx.validated_body::<UpdateUserDto>()?;
@@ -51,6 +63,7 @@ impl UsersController {
     }
 
     #[delete("/{id}")]
+    #[middleware(MinimumRequiredRole, config = "administrator")]
     async fn remove(ctx: Context) -> HttpResult<HttpResponse> {
         let id = ctx.param::<Uuid>("id")?;
         let service = ctx.di::<AppModule, dyn UserService>()?;

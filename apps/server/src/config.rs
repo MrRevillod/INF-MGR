@@ -3,11 +3,19 @@ use sword::prelude::config;
 
 #[derive(Debug, Deserialize)]
 #[config(key = "application")]
-pub struct ApplicationConfig {
+pub struct ServerConfig {
     pub port: u16,
     pub host: String,
-    pub event_queue_buffer_size: usize,
     pub client_app_url: String,
+    pub documents_dir: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[config(key = "event-queue")]
+pub struct EventQueueConfig {
+    pub buffer_size: usize,
+    pub num_of_event_retry: u8,
+    pub delay_between_event_retry_ms: u64,
 }
 
 #[derive(Debug, Deserialize)]
@@ -26,7 +34,7 @@ pub struct RedisConfig {
     pub url: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize)]
 #[config(key = "auth")]
 pub struct AuthConfig {
     pub access_jwt_secret: String,

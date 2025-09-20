@@ -8,6 +8,7 @@ use shaku::{Component, Interface};
 pub struct Claims {
     pub user_id: String,
     pub session_id: String,
+    pub role: String,
     pub exp: usize, // Unix timestamp (seconds from epoch)
 }
 
@@ -30,7 +31,14 @@ pub struct JsonWebTokenService {
 }
 
 pub trait TokenService: Interface {
-    fn sign(&self, token_kind: TokenKind, session_id: &str, user_id: &str) -> AppResult<String>;
+    fn sign(
+        &self,
+        token_kind: TokenKind,
+        session_id: &str,
+        user_id: &str,
+        role: &str,
+    ) -> AppResult<String>;
+
     fn verify(&self, token_kind: TokenKind, token: &str) -> AppResult<Claims>;
     fn get_token_config(&self, token_kind: TokenKind) -> TokenConfig;
 }
@@ -45,7 +53,13 @@ impl JsonWebTokenService {
 }
 
 impl TokenService for JsonWebTokenService {
-    fn sign(&self, token_kind: TokenKind, session_id: &str, user_id: &str) -> AppResult<String> {
+    fn sign(
+        &self,
+        token_kind: TokenKind,
+        session_id: &str,
+        user_id: &str,
+        role: &str,
+    ) -> AppResult<String> {
         let TokenConfig { secret, expiration } = self.get_token_config(token_kind);
 
         // Convert milliseconds to proper Unix timestamp
@@ -57,6 +71,7 @@ impl TokenService for JsonWebTokenService {
             user_id: user_id.to_string(),
             session_id: session_id.to_string(),
             exp: exp_timestamp,
+            role: role.to_string(),
         };
 
         let token = jsonwebtoken::encode(
