@@ -100,7 +100,6 @@ pub mod imports {
     mod service;
 
     pub use controllers::ImportsController;
-    pub use dtos::{ImportCourseDto, ImportUserDto, ImportedUser};
     pub use service::{ImportService, ImportServiceImpl};
 }
 

@@ -41,17 +41,17 @@ pub trait EnrollmentService: Interface {
 
     async fn create(&self, input: CreateEnrollmentDto) -> AppResult<Enrollment>;
 
-    async fn create_many(
-        &self,
-        course_id: &Uuid,
-        students: Vec<Uuid>,
-    ) -> AppResult<()>;
-
     async fn update(
         &self,
         id: &Uuid,
         input: UpdateEnrollmentDto,
     ) -> AppResult<Enrollment>;
+
+    async fn upload_final_report(
+        &self,
+        id: &Uuid,
+        doc_bytes: Vec<u8>,
+    ) -> AppResult<()>;
 
     async fn remove(&self, id: &Uuid) -> AppResult<()>;
 }
@@ -158,27 +158,8 @@ impl EnrollmentService for EnrollmentServiceImpl {
         self.enrollments.save(enrollment).await
     }
 
-    async fn create_many(
-        &self,
-        couse_id: &Uuid,
-        students: Vec<Uuid>,
-    ) -> AppResult<()> {
-        for student_id in students {
-            let input = CreateEnrollmentDto {
-                student_id: student_id.to_string(),
-                course_id: couse_id.to_string(),
-            };
-
-            if let Err(e) = self.create(input).await {
-                tracing::error!(
-                    "Error creating enrollment for student {student_id}: {e}"
-                );
-
-                continue;
-            }
-        }
-
-        Ok(())
+    async fn upload_final_report(&self, _: &Uuid, _: Vec<u8>) -> AppResult<()> {
+        todo!()
     }
 
     async fn update(
