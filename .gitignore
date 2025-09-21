@@ -4,6 +4,15 @@ target
 .svelte-kit
 /build
 
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.ruff_cache/
+.pytest_cache/
+*.egg-info/
+
 logs
 *.log
 npm-debug.log*

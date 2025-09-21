@@ -8,11 +8,13 @@ run DOCKERARGS="":
 
 lint:
 	cargo clippy --all-features -- -D warnings && \
-	cd apps/client && npm run lint && cd ../..
+	cd apps/client && npm run lint && cd ../.. && \
+	cd apps/students-api && uv run ruff check . 
 
 fmt:
 	cargo fmt --verbose && \
-	cd apps/client && npm run format && cd ../..
+	cd apps/client && npm run format && cd ../.. && \
+	cd apps/students-api && uv run ruff format .
 
 fmt-check:
 	cargo fmt --check && \
@@ -50,3 +52,5 @@ test-clean:
 	docker compose -f {{COMPOSE_TEST_FILE}} down -v
 	docker volume rm inf-mgr_rust_target_cache inf-mgr_cargo_cache 2>/dev/null || true
 	rm -f tests/config tests/tools apps/server/tools/tools apps/server/config/config
+
+

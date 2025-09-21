@@ -50,10 +50,23 @@ services:
     networks:
       - my_networks
 
+
+  students_api_base:
+    build:
+      context: .
+      dockerfile: ./apps/students-api/Dockerfile
+    volumes:
+      - ./apps/students-api:/app
+      - uv_cache:/root/.cache/uv
+    networks:
+      - my_networks
+
+
 volumes:
   cargo_cache:
   server_target:
   client_node_modules:
+  uv_cache:
 
 
 networks:

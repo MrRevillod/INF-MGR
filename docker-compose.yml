@@ -54,7 +54,7 @@ services:
       file: docker-compose.base.yml
       service: postgres_base
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data_dev:/var/lib/postgresql/data
     env_file:
@@ -72,6 +72,23 @@ services:
     networks:
       - my_networks
 
+  students_api_dev:
+    container_name: inf_mgr_students_api_dev
+    extends:
+      file: docker-compose.base.yml
+      service: students_api_base
+    build:
+      target: dev
+    env_file:
+      - .env
+    ports:
+      - "7000:7000"
+    depends_on:
+      postgres_dev:
+        condition: service_healthy
+    networks:
+      - my_networks
+
 networks:
   my_networks:
     driver: bridge
@@ -81,3 +98,4 @@ volumes:
   server_target:
   cargo_cache:
   client_node_modules:
+  uv_cache:
