@@ -96,7 +96,8 @@ curl http://localhost:7000/courses
 curl http://localhost:7000/enrollments
 
 # Ver estudiantes de un curso específico en un año específico (UCT)
-curl http://localhost:7000/uct/courses/{course_id}/{year}/student
+curl -i -H "x-api-key: en.env" http://localhost:7000/uct/courses/{course_id}/{year}/student
+
 
 # Documentación interactiva
 open http://localhost:7000/docs

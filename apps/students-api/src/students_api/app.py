@@ -1,10 +1,10 @@
 from fastapi import Depends, FastAPI, HTTPException
 from sqlmodel import Session, select
 
-# Importar nuestros modelos y conexión
 from .database.connection import create_db_and_tables, get_session
 from .database.models import Course, Enrollment, Student
 from .database.seed import create_sample_data
+from .security import verify_api_key
 
 app = FastAPI(
     title="Students API",
@@ -27,7 +27,10 @@ async def health():
 
 @app.get("/uct/courses/{course_code}/{year}/student")
 def get_students_by_course_and_year(
-    course_code: str, year: int, session: Session = Depends(get_session)
+    course_code: str,
+    year: int,
+    session: Session = Depends(get_session),
+    _: str = Depends(verify_api_key)  # Solo para validación, no necesitamos el valor
 ):
     """Obtener estudiantes matriculados en un curso específico de un año específico"""
 
