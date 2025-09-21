@@ -11,10 +11,19 @@ uv init --name students-api
 ```bash
  uv sync 
  ```
-## Probar Ruff
+## Probar Ruff (Dentro del contenedor Docker)
 ```bash
-uv run ruff check . # Verificar código
-uv run ruff format . # Formatear código
+# IMPORTANTE: Ejecutar desde el directorio raíz del proyecto
+cd /home/benjamin/Proyecto_practicas/INF-MGR
+
+# Verificar código
+docker exec inf_mgr_students_api_dev uv run ruff check .
+
+# Formatear código
+docker exec inf_mgr_students_api_dev uv run ruff format .
+
+# Arreglar errores automáticamente
+docker exec inf_mgr_students_api_dev uv run ruff check --fix .
 ```
 ## Herramientas Configuradas
 - **Astral UV** - Gestor de paquetes Python
@@ -40,7 +49,7 @@ docker compose down         # Parar contenedor
 
 ### Acceso
 - **Local**: http://localhost:7000
-- **Docker**: http://localhost:7001
+- **Docker**: http://localhost:7000
 
 ## API Base con FastAPI
 - **FastAPI** - API REST en puerto 7000
@@ -73,3 +82,21 @@ docker-compose ps
 - `/` - Mensaje de bienvenida
 - `/health` - Estado de la API
 
+
+# Ver la API corriendo
+curl http://localhost:7000/
+
+# Ver estudiantes
+curl http://localhost:7000/students
+
+# Ver cursos  
+curl http://localhost:7000/courses
+
+# Ver matrículas
+curl http://localhost:7000/enrollments
+
+# Ver estudiantes de un curso específico en un año específico (UCT)
+curl http://localhost:7000/uct/courses/{course_id}/{year}/student
+
+# Documentación interactiva
+open http://localhost:7000/docs

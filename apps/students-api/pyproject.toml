@@ -4,7 +4,13 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = ["fastapi>=0.104.1", "uvicorn[standard]>=0.24.0"]
+dependencies = [
+    "fastapi>=0.104.1",
+    "uvicorn[standard]>=0.24.0",
+    "sqlmodel>=0.0.14",
+    "psycopg2-binary>=2.9.7",
+    "python-dotenv>=1.0.0",
+]
 
 [project.optional-dependencies]
 dev = ["ruff>=0.1.7"]
@@ -27,7 +33,9 @@ select = [
     "C4", # flake8-comprehensions
     "UP", # pyupgrade
 ]
-ignore = []
+ignore = [
+    "B008", # Do not perform function call in argument defaults (FastAPI Depends is OK)
+]
 
 [tool.ruff.format]
 quote-style = "double"
