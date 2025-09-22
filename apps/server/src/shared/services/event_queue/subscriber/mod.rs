@@ -84,6 +84,9 @@ impl EventSubscriber {
             Event::PracticeEvaluated(event) => {
                 handler.practice_evaluated(event).await
             }
+            Event::FinalReportUploaded(event) => {
+                handler.final_report_uploaded(event).await?
+            }
         }
 
         Ok(())

@@ -6,6 +6,11 @@ use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Type};
 use uuid::Uuid;
 
+pub type Teacher = User;
+pub type Student = User;
+pub type Secretary = User;
+pub type Administrator = User;
+
 #[derive(Serialize, Deserialize, FromRow, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct User {

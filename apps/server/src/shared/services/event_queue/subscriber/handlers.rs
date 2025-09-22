@@ -1,7 +1,5 @@
-use std::{env, path::Path};
-use uuid::Uuid;
-
 use crate::shared::{AppResult, services::*};
+use uuid::Uuid;
 
 #[derive(Clone)]
 pub struct SubscriberHandler {
@@ -60,25 +58,25 @@ impl SubscriberHandler {
         self.mailer
             .send_many(vec![
                 MailTo {
-                    subject: "Información de Práctica Aprobada",
+                    subject: "Información de Práctica Aprobada".into(),
                     template: "practice:approval:supervisor",
                     email: practice.supervisor_email.clone(),
                     context: template_ctx.clone(),
                 },
                 MailTo {
-                    subject: "Práctica Aprobada",
+                    subject: "Práctica Aprobada".into(),
                     template: "practice:approval:student",
                     email: student.email,
                     context: template_ctx.clone(),
                 },
                 MailTo {
-                    subject: "Práctica Aprobada",
+                    subject: "Práctica Aprobada".into(),
                     template: "practice:approval:teacher",
                     email: teacher.email.clone(),
                     context: template_ctx.clone(),
                 },
                 MailTo {
-                    subject: "Práctica Aprobada",
+                    subject: "Práctica Aprobada".into(),
                     template: "practice:approval:secretary",
                     context: template_ctx,
                     email: self.mailer.context().config().secretary_email.clone(),
@@ -104,25 +102,25 @@ impl SubscriberHandler {
 
         let (_, _, _, _) = tokio::join!(
             self.mailer.send(MailTo {
-                subject: "Inscripción a Práctica Rechazada",
+                subject: "Inscripción a Práctica Rechazada".into(),
                 template: "practice:decline:supervisor",
                 email: practice.supervisor_email.clone(),
                 context: email_context.clone(),
             }),
             self.mailer.send(MailTo {
-                subject: "Inscripción a Práctica Rechazada",
+                subject: "Inscripción a Práctica Rechazada".into(),
                 template: "practice:decline:student",
                 email: student.email,
                 context: email_context.clone(),
             }),
             self.mailer.send(MailTo {
-                subject: "Inscripción a Práctica Rechazada",
+                subject: "Inscripción a Práctica Rechazada".into(),
                 template: "practice:decline:teacher",
                 email: teacher.email.clone(),
                 context: email_context.clone(),
             }),
             self.mailer.send(MailTo {
-                subject: "Inscripción a Práctica Rechazada",
+                subject: "Inscripción a Práctica Rechazada".into(),
                 template: "practice:decline:secretary",
                 email: self.mailer.context().config().secretary_email.clone(),
                 context: email_context,
@@ -158,19 +156,19 @@ impl SubscriberHandler {
         let (_, _, _) = tokio::join!(
             self.mailer.send(MailTo {
                 email: practice.supervisor_email.clone(),
-                subject: "Solicitud de Inscripción de Práctica",
+                subject: "Solicitud de Inscripción de Práctica".into(),
                 template: "practice:creation:supervisor",
                 context: email_context.clone(),
             }),
             self.mailer.send(MailTo {
                 email: student.email.clone(),
-                subject: "Inscripción a Práctica Realizada",
+                subject: "Inscripción a Práctica Realizada".into(),
                 template: "practice:creation:student",
                 context: email_context.clone(),
             }),
             self.mailer.send(MailTo {
                 email: self.mailer.context().config().secretary_email.clone(),
-                subject: "Nueva Inscripción de Práctica",
+                subject: "Nueva Inscripción de Práctica".into(),
                 template: "practice:creation:secretary",
                 context: email_context.clone(),
             })
@@ -186,7 +184,7 @@ impl SubscriberHandler {
         };
 
         let mail_opts = MailTo {
-            subject: "Bienvenido (a) a la plataforma",
+            subject: "Bienvenido (a) a la plataforma".into(),
             email,
             template: "system:welcome",
             context,
@@ -218,7 +216,7 @@ impl SubscriberHandler {
         };
 
         let mail_opts = MailTo {
-            subject: "Asignación de Curso",
+            subject: "Asignación de Curso".into(),
             email: teacher.email.clone(),
             template: "course:creation:teacher",
             context,
@@ -231,30 +229,35 @@ impl SubscriberHandler {
 
     pub async fn practice_authorized(
         &self,
-        (practice, doc_bytes): PracticeAuthorizedEvent,
+        event: PracticeAuthorizedEvent,
     ) -> AppResult<()> {
+        let (student, course, teacher, practice, doc_bytes) = event;
         let practice_static_dir =
             format!("practices/{}/authorization.pdf", practice.id);
 
-        let documents_dir = env::var("DOCUMENTS_DIR").unwrap_or(".".to_string());
-        let out_path_str = format!("{documents_dir}/{practice_static_dir}");
-        let out_path = Path::new(&out_path_str);
+        let context = template_ctx! {
+            "student_name" => student.name.clone(),
+            "student_rut" => student.rut.clone(),
+            "enterprise_name" => practice.enterprise_name.clone(),
+            "course_code" => course.code.clone(),
+        };
 
-        if let Some(parent) = out_path.parent()
-            && !parent.exists()
-        {
-            std::fs::create_dir_all(parent).map_err(|source| {
-                ServiceError::Printer {
-                    source: source.into(),
-                }
-            })?;
-        }
+        self.printer.archive(practice_static_dir, doc_bytes).await?;
 
-        tokio::fs::write(out_path, doc_bytes)
-            .await
-            .map_err(|source| ServiceError::Printer {
-                source: source.into(),
-            })?;
+        let (_, _) = tokio::join!(
+            self.mailer.send(MailTo {
+                subject: "Práctica Autorizada".into(),
+                template: "practice:authorization:secretary",
+                email: self.mailer.context().config().secretary_email.clone(),
+                context: context.clone(),
+            }),
+            self.mailer.send(MailTo {
+                subject: "Práctica Autorizada".into(),
+                template: "practice:authorization:teacher",
+                email: teacher.email.clone(),
+                context
+            }),
+        );
 
         Ok(())
     }
@@ -271,17 +274,56 @@ impl SubscriberHandler {
 
         let (_, _) = tokio::join!(
             self.mailer.send(MailTo {
-                subject: "Práctica Evaluada",
+                subject: "Práctica Evaluada".into(),
                 template: "practice:evaluation:teacher",
                 email: teacher.email.clone(),
                 context: email_context.clone(),
             }),
             self.mailer.send(MailTo {
-                subject: "Evaluación de Práctica Completada",
+                subject: "Evaluación de Práctica Completada".into(),
                 template: "practice:evaluation:supervisor",
                 email: practice.supervisor_email.clone(),
                 context: email_context,
             }),
         );
+    }
+
+    pub async fn final_report_uploaded(
+        &self,
+        event: FinalReportUploadedEvent,
+    ) -> AppResult<()> {
+        let (enrollment, course, teacher, student, doc_bytes) = event;
+
+        let report_static_path = format!(
+            "practices/{}/report.pdf",
+            enrollment.practice_id.unwrap_or_default()
+        );
+
+        self.printer.archive(report_static_path, doc_bytes).await?;
+
+        let subject = format!("{} - Informe final subido", course.code);
+
+        let ctx = template_ctx! {
+            "student_name" => student.name.clone(),
+            "course_name" => course.name.clone(),
+            "course_code" => course.code.clone(),
+        };
+
+        let (_, _) = tokio::join!(
+            self.mailer.send(MailTo {
+                subject: subject.clone(),
+                template: "report-upload:teacher",
+                email: teacher.email.clone(),
+                context: ctx.clone(),
+            }),
+            self.mailer.send(MailTo {
+                subject,
+                template: "report-upload:student",
+                email: student.email.clone(),
+                context: ctx,
+            }),
+        );
+
+        Ok(())
     }
 }

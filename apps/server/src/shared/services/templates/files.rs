@@ -72,5 +72,21 @@ pub static MAILER_TEMPLATES: LazyLock<Templates> = LazyLock::new(|| {
             "course:creation:teacher.html",
             include_str!("../mailer/templates/course/creation/teacher.html"),
         ),
+        (
+            "report-upload:teacher.html",
+            include_str!("../mailer/templates/report-upload/teacher.html"),
+        ),
+        (
+            "report-upload:student.html",
+            include_str!("../mailer/templates/report-upload/student.html"),
+        ),
+        (
+            "authorization:secretary.html",
+            include_str!("../mailer/templates/authorization/secretary.html"),
+        ),
+        (
+            "authorization:teacher.html",
+            include_str!("../mailer/templates/authorization/teacher.html"),
+        ),
     ]
 });

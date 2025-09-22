@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}{{ course_code }} - Autorización de Práctica{% endblock %}
+
+{% block greeting_text %}Estimado(a) Profesor(a){% endblock %}
+
+{% block main_content %}
+<p>
+    Junto con saludar, le informamos que se ha recibido y procesado el documento 
+    de autorización de práctica de su estudiante <strong>{{ student_name }}</strong> 
+    para la empresa <strong>{{ enterprise_name }}</strong>.
+</p>
+
+<p>
+    La práctica ha sido formalmente autorizada y el estudiante puede proceder 
+    con el inicio de sus actividades. El documento de autorización está disponible 
+    para consulta en la plataforma.
+</p>
+{% endblock %}

@@ -107,7 +107,7 @@ impl EnrollmentsController {
     #[doc = "Este endpoint no requiere autenticación ya que se asume que el supervisor no es usuario del sistema."]
     #[doc = "Se establece que esta acción es realizable una única vez por práctica."]
     async fn authorize_practice(ctx: Context) -> HttpResult<HttpResponse> {
-        let practice_id = ctx.param::<Uuid>("practice_id")?;
+        let enrollment_id = ctx.param::<Uuid>("id")?;
         let mut form_data = ctx.multipart().await?;
 
         while let Some(field) = form_data.next_field().await.ok().flatten() {
@@ -122,7 +122,7 @@ impl EnrollmentsController {
                 .map_err(|_| HttpResponse::BadRequest())?;
 
             service
-                .authorize(&practice_id, field_bytes.to_vec())
+                .authorize(&enrollment_id, field_bytes.to_vec())
                 .await?;
         }
 
@@ -173,7 +173,26 @@ impl EnrollmentsController {
     #[middleware(Authentication)]
     #[middleware(MinimumRequiredRole, config = "student")]
     #[doc = "Subir informe de práctica por el estudiante."]
-    async fn upload_practice_report(_: Context) -> HttpResult<HttpResponse> {
+    async fn upload_practice_report(ctx: Context) -> HttpResult<HttpResponse> {
+        let enrollment_id = ctx.param::<Uuid>("id")?;
+        let mut form_data = ctx.multipart().await?;
+
+        while let Some(field) = form_data.next_field().await.ok().flatten() {
+            if field.name() != Some("report") {
+                return Err(HttpResponse::BadRequest());
+            }
+
+            let service = ctx.di::<AppModule, dyn EnrollmentService>()?;
+            let field_bytes = field
+                .bytes()
+                .await
+                .map_err(|_| HttpResponse::BadRequest())?;
+
+            service
+                .upload_final_report(&enrollment_id, field_bytes.to_vec())
+                .await?;
+        }
+
         Ok(HttpResponse::Ok())
     }
 

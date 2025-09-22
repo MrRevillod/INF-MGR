@@ -75,6 +75,15 @@ fn handle_validation_error(error: ValidationError) -> HttpResponse {
             "course",
             "El curso tiene inscripciones asociadas y no puede ser eliminado".into(),
         ),
+        ValidationError::NoPracticeAssociated => (
+            "practice",
+            "La inscripción no tiene una práctica asociada".into(),
+        ),
+
+        ValidationError::FinalReportUploadExpired => (
+            "finalReport",
+            "El período para subir el informe final ha expirado".into(),
+        ),
 
         // Constraint violations
         ValidationError::DuplicateEmail { .. } => {

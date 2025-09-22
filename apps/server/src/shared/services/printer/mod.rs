@@ -1,5 +1,12 @@
-use crate::shared::services::{PrinterError, ServiceError, templates::*};
-use std::{env::var, path::Path, process::Command};
+use crate::shared::{
+    AppResult,
+    services::{PrinterError, ServiceError, templates::*},
+};
+use std::{
+    env::{self, var},
+    path::Path,
+    process::Command,
+};
 use tokio::fs;
 
 #[derive(Clone)]
@@ -78,5 +85,30 @@ impl Printer {
         let _ = fs::remove_file(&temp_file).await;
 
         Ok(out_file)
+    }
+
+    pub async fn archive(&self, path: String, file: Vec<u8>) -> AppResult<()> {
+        let documents_dir = env::var("DOCUMENTS_DIR").unwrap_or(".".into());
+
+        let outh_path_str = format!("{documents_dir}/{path}");
+        let out_path = Path::new(&outh_path_str);
+
+        if let Some(parent) = out_path.parent()
+            && !parent.exists()
+        {
+            tokio::fs::create_dir_all(parent).await.map_err(|source| {
+                ServiceError::Printer {
+                    source: source.into(),
+                }
+            })?;
+        }
+
+        tokio::fs::write(out_path, file).await.map_err(|source| {
+            ServiceError::Printer {
+                source: source.into(),
+            }
+        })?;
+
+        Ok(())
     }
 }

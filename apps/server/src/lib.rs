@@ -69,7 +69,9 @@ pub mod users {
         role_validator, validate_rut_id,
     };
 
-    pub use entity::{Role, User, Users};
+    pub use entity::{
+        Administrator, Role, Secretary, Student, Teacher, User, Users,
+    };
     pub use repository::{PostgresUserRepository, UserFilter, UserRepository};
     pub use service::{UserService, UserServiceImpl};
 
