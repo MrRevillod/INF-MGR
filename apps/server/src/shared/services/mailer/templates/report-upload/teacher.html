@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Actualización de estado{% endblock %}
+
+{% block greeting_text %}Estimado(a) Profesor(a){% endblock %}
+
+{% block main_content %}
+<p>
+    Junto con saludar, informamos que el estudiante {{ student_name }} ha subido el informe 
+    final del curso {{ course_name }} - {{ course_code }} a la plataforma exitosamente.
+</p>
+
+<p>
+    La plataforma evaluará el documento según la rúbrica establecida.
+    Una vez evaluado, se le notificará vía correo electrónico.
+</p>
+
+{% endblock %}

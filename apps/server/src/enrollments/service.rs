@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use chrono::{Duration, Utc};
 use shaku::{Component, Interface};
 use std::sync::Arc;
 use uuid::Uuid;
@@ -7,7 +8,10 @@ use crate::{
     courses::CourseRepository,
     enrollments::*,
     practices::*,
-    shared::{AppResult, NotFoundError, ValidationError},
+    shared::{
+        AppResult, NotFoundError, ValidationError,
+        services::{Event, EventQueue},
+    },
     users::*,
 };
 
@@ -25,6 +29,9 @@ pub struct EnrollmentServiceImpl {
 
     #[shaku(inject)]
     practices: Arc<dyn PracticeRepository>,
+
+    #[shaku(inject)]
+    event_queue: Arc<dyn EventQueue>,
 }
 
 #[async_trait]
@@ -158,8 +165,42 @@ impl EnrollmentService for EnrollmentServiceImpl {
         self.enrollments.save(enrollment).await
     }
 
-    async fn upload_final_report(&self, _: &Uuid, _: Vec<u8>) -> AppResult<()> {
-        todo!()
+    async fn upload_final_report(
+        &self,
+        id: &Uuid,
+        doc_bytes: Vec<u8>,
+    ) -> AppResult<()> {
+        let (enrollment, student, practice) = self.get_by_id(id).await?;
+
+        let Some(practice) = practice else {
+            return Err(ValidationError::NoPracticeAssociated)?;
+        };
+
+        let course = self
+            .courses
+            .find_by_id(&enrollment.course_id)
+            .await?
+            .ok_or(NotFoundError::course(enrollment.course_id))?;
+
+        let teacher = self
+            .users
+            .find_by_id(&course.teacher_id)
+            .await?
+            .ok_or(NotFoundError::user(course.teacher_id))?;
+
+        let limit_upload_date = practice.end_date + Duration::days(14);
+
+        if Utc::now() > limit_upload_date {
+            return Err(ValidationError::FinalReportUploadExpired)?;
+        }
+
+        let event_data = (enrollment, course, teacher, student, doc_bytes);
+
+        self.event_queue
+            .publish(Event::FinalReportUploaded(event_data))
+            .await;
+
+        Ok(())
     }
 
     async fn update(

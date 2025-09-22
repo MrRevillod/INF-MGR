@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Actualización de estado{% endblock %}
+
+{% block recipient_name %}{{ student_name }}{% endblock %}
+
+{% block main_content %}
+<p>
+    Junto con saludar, informamos que el informe final del curso {{ course_name }}
+    ha sido subido a la plataforma de Prácticas y Tesis exitosamente.
+</p>
+
+<p>
+    El documento será evaluado según la rúbrica establecida en la plataforma.
+    Una vez evaluado, se le notificará vía correo electrónico.
+</p>
+
+{% endblock %}

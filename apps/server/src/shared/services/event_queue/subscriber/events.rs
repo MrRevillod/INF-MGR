@@ -1,5 +1,8 @@
 use crate::{
-    courses::Course, enrollments::Enrollment, practices::Practice, users::User,
+    courses::Course,
+    enrollments::Enrollment,
+    practices::Practice,
+    users::{Student, Teacher, User},
 };
 
 #[derive(Debug, Clone)]
@@ -12,13 +15,15 @@ pub enum Event {
     UserCreated(UserCreatedEvent),
     ManyUsersCreated(ManyUsersCreatedEvent),
     CourseCreated(CourseCreatedEvent),
+    FinalReportUploaded(FinalReportUploadedEvent),
 }
 
 pub type PracticeCreatedEvent = (User, Practice, Course, Enrollment);
 pub type PracticeApprovedEvent = (User, Enrollment, Practice, Course, User);
 pub type PracticeDeclinedEvent = (User, Enrollment, Practice, Course, User);
-pub type PracticeAuthorizedEvent = (Practice, Vec<u8>);
+pub type PracticeAuthorizedEvent = (Student, Course, Teacher, Practice, Vec<u8>);
 pub type PracticeEvaluatedEvent = (User, Practice, Course, User, f64);
 pub type UserCreatedEvent = (String, String);
 pub type ManyUsersCreatedEvent = Vec<(String, String)>;
 pub type CourseCreatedEvent = (Course, User);
+pub type FinalReportUploadedEvent = (Enrollment, Course, User, User, Vec<u8>);

@@ -21,6 +21,12 @@ pub enum ValidationError {
     #[error("Cannot delete course: has active enrollments")]
     CourseHasEnrollments { course_id: Uuid },
 
+    #[error("Cannot upload final report: enrollment has no associated practice")]
+    NoPracticeAssociated,
+
+    #[error("Final report upload period has expired")]
+    FinalReportUploadExpired,
+
     // === Constraint Violations (400, not 409) ===
     #[error("Email '{email}' is already in use")]
     DuplicateEmail { email: String },

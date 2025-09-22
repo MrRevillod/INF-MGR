@@ -44,7 +44,7 @@ pub trait PracticeService: Interface {
 
     async fn authorize(
         &self,
-        practice_id: &Uuid,
+        enrollment_id: &Uuid,
         document: Vec<u8>,
     ) -> AppResult<()>;
 
@@ -147,16 +147,17 @@ impl PracticeService for PracticeServiceImpl {
 
     async fn authorize(
         &self,
-        practice_id: &Uuid,
-        doc_bytes: Vec<u8>,
+        enrollment_id: &Uuid,
+        document: Vec<u8>,
     ) -> AppResult<()> {
-        let practice = self
-            .practices
-            .find_by_id(practice_id)
-            .await?
-            .ok_or(NotFoundError::practice(*practice_id))?;
+        let (enrollment, student, practice) =
+            self.enrollments.get_by_id(enrollment_id).await?;
 
-        let event_data = (practice, doc_bytes);
+        let practice = practice.ok_or(NotFoundError::practice(*enrollment_id))?;
+        let (course, teacher) =
+            self.courses.get_by_id(&enrollment.course_id).await?;
+
+        let event_data = (student, course, teacher, practice, document);
 
         self.event_queue
             .publish(Event::PracticeAuthorized(event_data))

@@ -12,7 +12,7 @@ pub struct MailerConfig {
 
 #[derive(Debug, Clone)]
 pub struct MailTo {
-    pub subject: &'static str,
+    pub subject: String,
     pub email: String,
     pub template: &'static str,
     pub context: Vec<(&'static str, String)>,
