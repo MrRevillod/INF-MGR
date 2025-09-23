@@ -44,6 +44,7 @@ sqlx = { version = "0.8.6", default-features = false, features = [
     "uuid",
     "derive",
     "migrate",
+    "macros",
 ] }
 
 sea-query-sqlx = { version = "0.8.0-rc.9", default-features = false, features = [

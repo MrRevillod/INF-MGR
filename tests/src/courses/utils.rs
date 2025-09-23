@@ -65,7 +65,7 @@ impl TestCourse {
     }
 
     pub async fn create(app: &TestServer, course: &Value) -> Value {
-        let response = app.post("/courses").json(&course).await;
+        let response = app.post("/test/courses").json(&course).await;
         let body = response.json::<ResponseBody>();
 
         assert_eq!(

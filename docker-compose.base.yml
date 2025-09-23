@@ -50,23 +50,25 @@ services:
     networks:
       - my_networks
 
-
   students_api_base:
     build:
-      context: .
-      dockerfile: ./apps/students-api/Dockerfile
+      context: ./apps/students-api
+      dockerfile: Dockerfile
     volumes:
       - ./apps/students-api:/app
-      - uv_cache:/root/.cache/uv
+      - students_api_cargo_cache:/usr/local/cargo/registry
+      - students_api_target:/app/target
+    ports:
+      - "8080:8080"
     networks:
       - my_networks
-
 
 volumes:
   cargo_cache:
   server_target:
   client_node_modules:
-  uv_cache:
+  students_api_target:
+  students_api_cargo_cache:
 
 
 networks:

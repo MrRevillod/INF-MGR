@@ -1,23 +1,52 @@
-# Imagen base con UV
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS base
+# -----------------------------------------------------------------------
+# BUILDER STAGE ---------------------------------------------------------
+# -----------------------------------------------------------------------
 
-# Directorio de trabajo
+FROM rust:1.89-bullseye AS builder
+
 WORKDIR /app
 
-# Copiar archivos de configuración
-COPY apps/students-api/pyproject.toml apps/students-api/uv.lock* ./
+COPY Cargo.toml ./
+COPY src ./src
+COPY config ./config
 
-# Instalar dependencias de desarrollo
-RUN uv sync --frozen 
+RUN cargo build --release
 
-# Target DESARROLLO (con watch/reload)
-FROM base AS dev
-COPY apps/students-api/ .
-EXPOSE 7000
-CMD ["uv", "run", "uvicorn", "src.students_api.app:app", "--host", "0.0.0.0", "--port", "7000", "--reload"]
+# -----------------------------------------------------------------------
+# DEVELOPMENT STAGE -----------------------------------------------------
+# -----------------------------------------------------------------------
 
-# Target PRODUCCIÓN (con workers)
-FROM base AS prod
-COPY apps/students-api/ .
-EXPOSE 7000
-CMD ["uv", "run", "uvicorn", "src.students_api.app:app", "--host", "0.0.0.0", "--port", "7000", "--workers", "4"]
+FROM rust:1.89-bullseye AS dev
+
+WORKDIR /app
+
+RUN cargo install cargo-watch
+
+EXPOSE 8080
+
+CMD ["cargo", "watch", "-x", "run"]
+
+# -----------------------------------------------------------------------
+# PRODUCTION STAGE ------------------------------------------------------
+# -----------------------------------------------------------------------
+
+FROM debian:bullseye-slim AS production
+
+WORKDIR /app
+
+# Instalar dependencias necesarias
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /app/target/release/students-api /usr/local/bin/students-api
+
+COPY --from=builder /app/config ./config
+
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+RUN chown -R appuser:appuser /app
+USER appuser
+
+EXPOSE 8080
+
+CMD ["students-api"]

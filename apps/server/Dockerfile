@@ -2,7 +2,7 @@
 # BUILDER STAGE ---------------------------------------------------------
 # -----------------------------------------------------------------------
 
-FROM rust:1.88-bullseye AS builder
+FROM rust:1.89-bullseye AS builder
 
 WORKDIR /app
 
@@ -15,9 +15,11 @@ RUN wget https://github.com/typst/typst/releases/download/v0.13.1/typst-x86_64-u
 COPY Cargo.toml Cargo.lock ./
 COPY tests/Cargo.toml ./tests/
 COPY apps/server/Cargo.toml apps/server/Cargo.lock ./apps/server/
+COPY apps/students-api/Cargo.toml ./apps/students-api/
 
 RUN mkdir -p ./tests/src && echo 'fn main() {}' > ./tests/src/lib.rs
 RUN mkdir -p ./apps/server/src && echo 'fn main() { println!("Caching dependencies"); }' > ./apps/server/src/main.rs
+RUN mkdir -p ./apps/students-api/src && echo 'fn main() { println!("Caching dependencies"); }' > ./apps/students-api/src/main.rs
 
 RUN cd apps/server && cargo build --release
 RUN rm -rf ./tests/src ./apps/server/src ./apps/server/target/release/deps/server*
@@ -25,6 +27,8 @@ RUN rm -rf ./tests/src ./apps/server/src ./apps/server/target/release/deps/serve
 COPY apps/server/src ./apps/server/src
 COPY apps/server/tools ./apps/server/tools
 COPY apps/server/config ./apps/server/config
+COPY apps/students-api/src ./apps/students-api/src
+COPY apps/students-api/config ./apps/students-api/config
 
 RUN cd apps/server && cargo build --release
 
@@ -32,7 +36,7 @@ RUN cd apps/server && cargo build --release
 # DEVELOPMENT STAGE -----------------------------------------------------
 # -----------------------------------------------------------------------
 
-FROM rust:1.88-bullseye AS dev
+FROM rust:1.89-bullseye AS dev
 
 # Instalar Typst (template engine para generar PDFs)
 RUN wget https://github.com/typst/typst/releases/download/v0.13.1/typst-x86_64-unknown-linux-musl.tar.xz \
@@ -47,6 +51,7 @@ WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
 
 COPY apps/server ./apps/server
+COPY apps/students-api ./apps/students-api
 COPY tests ./tests
 
 ENV CARGO_TARGET_DIR /app/target
