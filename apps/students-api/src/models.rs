@@ -17,13 +17,6 @@ pub struct Course {
     pub year: i32,
 }
 
-#[derive(Debug, Serialize, Deserialize, FromRow)]
-pub struct Enrollment {
-    pub id: String,
-    pub student_id: String,
-    pub course_id: String,
-}
-
 impl Student {
     /// Formats RUT to standard format: without dots, with dash
     /// Examples: "12.345.678-9" -> "12345678-9", "12345678-9" -> "12345678-9"
