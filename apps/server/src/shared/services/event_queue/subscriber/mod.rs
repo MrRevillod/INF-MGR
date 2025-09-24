@@ -71,10 +71,6 @@ impl EventSubscriber {
             Event::UserCreated(event) => handler.user_created(event).await?,
             Event::PracticeCreated(event) => handler.practice_created(event).await,
             Event::PracticeDeclined(event) => handler.practice_declined(event).await,
-
-            Event::ManyUsersCreated(event) => {
-                handler.many_users_created(event).await?
-            }
             Event::PracticeApproved(event) => {
                 handler.practice_approved(event).await?
             }
@@ -86,6 +82,9 @@ impl EventSubscriber {
             }
             Event::FinalReportUploaded(event) => {
                 handler.final_report_uploaded(event).await?
+            }
+            Event::ImportedStudents(event) => {
+                handler.imported_students(event).await?
             }
         }
 

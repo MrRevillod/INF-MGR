@@ -2,7 +2,7 @@
 # BUILDER STAGE ---------------------------------------------------------
 # -----------------------------------------------------------------------
 
-FROM rust:1.89-bullseye AS builder
+FROM rust:1.90-bullseye AS builder
 
 WORKDIR /app
 
@@ -22,7 +22,7 @@ WORKDIR /app
 
 RUN cargo install cargo-watch
 
-EXPOSE 8080
+EXPOSE 80
 
 CMD ["cargo", "watch", "-x", "run"]
 
@@ -34,7 +34,6 @@ FROM debian:bullseye-slim AS production
 
 WORKDIR /app
 
-# Instalar dependencias necesarias
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
@@ -47,6 +46,6 @@ RUN groupadd -r appuser && useradd -r -g appuser appuser
 RUN chown -R appuser:appuser /app
 USER appuser
 
-EXPOSE 8080
+EXPOSE 80
 
 CMD ["students-api"]

@@ -8,13 +8,11 @@ run DOCKERARGS="":
 
 lint:
 	cargo clippy --all-features -- -D warnings && \
-	cd apps/client && npm run lint && cd ../.. && \
-	cd apps/students-api && uv run ruff check . 
+	cd apps/client && npm run lint && cd ../.. 
 
 fmt:
 	cargo fmt --verbose && \
-	cd apps/client && npm run format && cd ../.. && \
-	cd apps/students-api && uv run ruff format .
+	cd apps/client && npm run format && cd ../..
 
 fmt-check:
 	cargo fmt --check && \

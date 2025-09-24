@@ -19,11 +19,6 @@ pub struct CourseParams {
 
 #[routes]
 impl AppController {
-    #[get("/health")]
-    async fn health() -> HttpResponse {
-        HttpResponse::Ok()
-    }
-
     #[get("/courses/{year}/{code}/students")]
     #[middleware(RequireApiKey)]
     async fn get_students(ctx: Context) -> HttpResult<HttpResponse> {

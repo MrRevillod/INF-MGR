@@ -1,4 +1,4 @@
-FROM rust:1.88-bullseye
+FROM rust:1.90-bullseye
 
 WORKDIR /app
 
@@ -13,7 +13,6 @@ COPY apps/server/ ./apps/server/
 COPY tests/src ./tests/src
 COPY tests/Cargo.toml ./tests/
 
-# Create documents directory
 RUN mkdir -p /app/documents
 
 ENV CARGO_TARGET_DIR /app/target

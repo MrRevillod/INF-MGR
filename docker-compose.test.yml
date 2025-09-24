@@ -22,6 +22,21 @@ services:
       - DOCUMENTS_DIR=/app/documents
     command: sh -c "cd /app/tests && ln -sf ../apps/server/config config && tail -f /dev/null"
 
+  students_api_test:
+    container_name: inf_mgr_students_api_test
+    extends:
+      file: docker-compose.base.yml
+      service: students_api_base
+    ports:
+      - "9001:80"
+    env_file:
+      - .env.test
+    depends_on:
+      postgres_test:
+        condition: service_healthy
+    networks:
+      - my_networks
+
   postgres_test:
     container_name: inf_mgr_postgres_test
     environment:
