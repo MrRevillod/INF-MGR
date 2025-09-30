@@ -37,14 +37,18 @@ impl TestUser {
         let response = server.post("/users").json(&user).await;
         let body = response.json::<ResponseBody>();
 
+        assert!(body.data.is_some(), "Response data should not be None");
+
+        let data = body.data.as_ref().unwrap();
+
         assert_eq!(
             response.status_code(),
             201,
             "{}",
-            format!("Failed to create user - response: {}", body.data)
+            format!("Failed to create user - response: {}", data)
         );
 
-        body.data
+        data.clone()
     }
 
     pub async fn create_teacher(server: &TestServer) -> String {
@@ -94,16 +98,21 @@ impl TestUser {
             .patch(&format!("/users/{}", user_id))
             .json(&update_data)
             .await;
+
         let body = response.json::<ResponseBody>();
+
+        assert!(body.data.is_some(), "Response data should not be None");
+
+        let data = body.data.as_ref().unwrap();
 
         assert_eq!(
             response.status_code(),
             200,
             "{}",
-            format!("Failed to update user - response: {}", body.data)
+            format!("Failed to update user - response: {:?}", body)
         );
 
-        body.data
+        data.clone()
     }
 
     pub async fn delete(server: &TestServer, user_id: &str) {

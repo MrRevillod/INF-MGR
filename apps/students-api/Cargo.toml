@@ -1,0 +1,19 @@
+[package]
+name = "students-api"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+dotenv = "0.15.0"
+regex = "1.11.2"
+serde = { version = "1.0.226", features = ["derive"] }
+sqlx = { version = "0.8.6", default-features = false, features = [
+    "runtime-tokio",
+    "tls-native-tls",
+    "postgres",
+    "migrate",
+    "macros",
+] }
+
+sword = "0.1.8"
+validator = "0.20.0"

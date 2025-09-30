@@ -54,6 +54,10 @@ pub mod services {
         pub use subscriber::*;
     }
 
+    mod validation;
+
+    pub use validation::PdfValidationService;
+
     pub use crate::template_ctx;
     pub use errors::*;
     pub use event_queue::*;

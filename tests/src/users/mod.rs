@@ -199,9 +199,11 @@ async fn test_update_user_valid_role_change()
         TestUser::update_no_extract(&app, &user_id, update_user).await;
 
     assert_eq!(updated_response.code, 200);
+    assert!(updated_response.data.is_some());
+
+    let updated_response = updated_response.data.unwrap();
 
     let updated_role = updated_response
-        .data
         .get("role")
         .and_then(|role| role.as_str())
         .expect("Updated role should be present");

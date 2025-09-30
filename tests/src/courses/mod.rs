@@ -45,7 +45,7 @@ async fn test_get_courses() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(response.status_code(), 200);
 
     let body = response.json::<ResponseBody>();
-    assert!(body.data.is_array());
+    assert!(body.data.is_some_and(|d| d.is_array()));
 
     Ok(())
 }
@@ -147,12 +147,10 @@ async fn test_create_course_invalid_year_too_low()
     let response = TestCourse::create_without_extract(&app, &new_course).await;
 
     assert_eq!(response.code, 400);
+    assert!(response.errors.is_some());
 
-    let error_arr = response
-        .data
-        .get("errors")
-        .and_then(|e| e.as_array())
-        .expect("Response data should be an array");
+    let errors = response.errors.as_ref().unwrap();
+    let error_arr = errors.as_array().expect("Response data should be an array");
 
     assert!(!error_arr.is_empty(), "Expected validation errors");
 
@@ -220,12 +218,10 @@ async fn test_create_course_invalid_code_format()
     let response = TestCourse::create_without_extract(&app, &new_course).await;
 
     assert_eq!(response.code, 400);
+    assert!(response.errors.is_some());
 
-    let error_arr = response
-        .data
-        .get("errors")
-        .and_then(|e| e.as_array())
-        .expect("Response data should be an array");
+    let errors = response.errors.as_ref().unwrap();
+    let error_arr = errors.as_array().expect("Response data should be an array");
 
     assert!(!error_arr.is_empty(), "Expected validation errors");
     assert_eq!(
@@ -536,7 +532,11 @@ async fn test_create_course_duplicate() -> Result<(), Box<dyn std::error::Error>
     assert_eq!(response1.status_code(), 201);
 
     let body1 = response1.json::<ResponseBody>();
-    let course_id = body1.data.get("id").and_then(|id| id.as_str()).unwrap();
+    assert!(body1.data.is_some());
+
+    let body1 = body1.data.as_ref().unwrap();
+
+    let course_id = body1.get("id").and_then(|id| id.as_str()).unwrap();
 
     // Try to create duplicate
     let response2 = app.post("/courses").json(&asignature_data).await;
@@ -573,7 +573,15 @@ async fn test_update_course_invalid_teacher_id()
 
     let create_response = app.post("/courses").json(&new_course).await;
     let body = create_response.json::<ResponseBody>();
-    let course_id = body.data.get("id").and_then(|id| id.as_str()).unwrap();
+    assert!(body.data.is_some());
+
+    let course_id = body
+        .data
+        .as_ref()
+        .unwrap()
+        .get("id")
+        .and_then(|id| id.as_str())
+        .unwrap();
 
     // Try to update with invalid teacher_id
     let update_course = json!({
@@ -688,7 +696,9 @@ async fn test_create_course_valid_name_boundaries()
         TestCourse::create_without_extract(&app, &min_name_asignature).await;
     assert_eq!(response.code, 201);
 
-    let min_course_id = TestCourse::extract_id(&response.data);
+    assert!(response.data.is_some());
+
+    let min_course_id = TestCourse::extract_id(&response.data.as_ref().unwrap());
 
     // Test maximum length (100 characters)
     let max_name = "A".repeat(100);
@@ -709,7 +719,10 @@ async fn test_create_course_valid_name_boundaries()
     assert_eq!(response2.status_code(), 201);
 
     let body2 = response2.json::<ResponseBody>();
-    let max_course_id = body2.data.get("id").and_then(|id| id.as_str()).unwrap();
+    assert!(body2.data.is_some());
+
+    let body2 = body2.data.as_ref().unwrap();
+    let max_course_id = body2.get("id").and_then(|id| id.as_str()).unwrap();
 
     app.delete(&format!("/courses/{}", min_course_id)).await;
     app.delete(&format!("/courses/{}", max_course_id)).await;
@@ -915,10 +928,10 @@ async fn test_update_course_evaluations_weights_not_sum_100()
         TestCourse::update_should_fail(&app, &created_course_id, &update_data, 400)
             .await;
 
-    let error_message = update_response
-        .data
-        .get("errors")
-        .and_then(|errors| errors.as_array())
+    let errors = update_response.errors.expect("Should have errors");
+
+    let error_message = errors
+        .as_array()
         .and_then(|arr| arr.first())
         .and_then(|err| err.get("message"))
         .and_then(|m| m.as_str())

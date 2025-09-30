@@ -1,0 +1,10 @@
+[application]
+port = 80
+host = "0.0.0.0"
+body_limit = "5MB"
+request_timeout_seconds = 15
+graceful_shutdown = false
+
+[api]
+db_url = "${STUDENTS_API_DB_URI}"
+api_key = "${STUDENTS_API_KEY}"

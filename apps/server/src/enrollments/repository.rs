@@ -33,6 +33,10 @@ pub trait EnrollmentRepository: Interface {
 
     async fn find_by_id(&self, id: &Uuid) -> AppResult<Option<Enrollment>>;
     async fn save(&self, enrollment: Enrollment) -> AppResult<Enrollment>;
+    async fn create_many(
+        &self,
+        enrollments: Vec<Enrollment>,
+    ) -> AppResult<Vec<Enrollment>>;
     async fn delete(&self, id: &Uuid) -> AppResult<()>;
 }
 
@@ -98,6 +102,42 @@ impl EnrollmentRepository for PostgresEnrollmentRepository {
             .await?;
 
         Ok(result)
+    }
+
+    async fn create_many(
+        &self,
+        enrollments: Vec<Enrollment>,
+    ) -> AppResult<Vec<Enrollment>> {
+        if enrollments.is_empty() {
+            return Ok(vec![]);
+        }
+
+        let mut tx = self.db_connection.get_pool().begin().await?;
+        let mut created_enrollments = Vec::with_capacity(enrollments.len());
+
+        let query = r#"
+            INSERT INTO enrollments (id, student_id, course_id, practice_id, student_scores)
+            VALUES ($1, $2, $3, $4, $5)
+            ON CONFLICT (student_id, course_id) DO NOTHING
+            RETURNING *
+        "#;
+
+        for enrollment in enrollments {
+            if let Some(created) = sqlx::query_as::<_, Enrollment>(query)
+                .bind(enrollment.id)
+                .bind(enrollment.student_id)
+                .bind(enrollment.course_id)
+                .bind(enrollment.practice_id)
+                .bind(&enrollment.student_scores)
+                .fetch_optional(&mut *tx)
+                .await?
+            {
+                created_enrollments.push(created);
+            }
+        }
+
+        tx.commit().await?;
+        Ok(created_enrollments)
     }
 
     async fn delete(&self, id: &Uuid) -> AppResult<()> {

@@ -6,7 +6,8 @@ use std::time::Duration;
 use sword::web::Method;
 use sword::web::header::HeaderName;
 
-use axum::http;
+use sword::__internal::{AxumRequest, AxumResponse};
+
 use tower_http::cors::CorsLayer;
 use tower_http::trace::{MakeSpan, OnRequest, OnResponse, TraceLayer};
 use tracing_subscriber::fmt;
@@ -38,14 +39,14 @@ pub fn LoggerLayer() -> TraceLayer<
     init_tracing();
 
     TraceLayer::new_for_http()
-        .on_request(|req: &http::Request<_>, _: &Span| {
+        .on_request(|req: &AxumRequest, _: &Span| {
             tracing::info!(
                 "HTTP - METHOD: [{}] - PATH: [{}]",
                 req.method(),
                 req.uri().path()
             );
         })
-        .on_response(|res: &http::Response<_>, latency: Duration, _: &Span| {
+        .on_response(|res: &AxumResponse, latency: Duration, _: &Span| {
             tracing::info!(
                 "HTTP - STATUS: [{}] - LATENCY: [{}ms]",
                 res.status().as_u16(),

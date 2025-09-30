@@ -28,14 +28,17 @@ impl TestPractice {
         let response = app.post(&route).json(&data).await;
         let body = response.json::<ResponseBody>();
 
-        assert_eq!(
-            response.status_code(),
-            201,
-            "Failed to create practice: {}",
-            body.data
-        );
+        assert_eq!(response.status_code(), 201);
 
-        body.data
+        if let Some(errors) = &body.errors {
+            return errors.clone();
+        };
+
+        if let Some(data) = &body.data {
+            return data.clone();
+        };
+
+        panic!("Response body should contain either data or errors");
     }
 
     pub async fn create(
@@ -47,14 +50,11 @@ impl TestPractice {
         let response = app.post(&route).json(&data).await;
         let body = response.json::<ResponseBody>();
 
-        assert_eq!(
-            response.status_code(),
-            201,
-            "Failed to create practice: {}",
-            body.data
-        );
+        assert_eq!(response.status_code(), 201,);
 
-        extract_resource_id(&body.data)
+        assert!(body.data.is_some(), "Response data should not be None");
+
+        extract_resource_id(&body.data.unwrap())
     }
 
     pub async fn approve(

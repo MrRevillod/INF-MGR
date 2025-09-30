@@ -39,3 +39,5 @@ tests/files/*
 
 tests/config
 apps/server/config
+
+service-account.json

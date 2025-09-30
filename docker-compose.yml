@@ -37,7 +37,6 @@ services:
       service: nginx_base
     volumes:
       - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./apps/docs:/usr/share/nginx/html/docs:ro
     depends_on:
       - server_dev
       - client_dev
@@ -81,8 +80,6 @@ services:
       target: dev
     env_file:
       - .env
-    ports:
-      - "7000:7000"
     depends_on:
       postgres_dev:
         condition: service_healthy
@@ -98,4 +95,5 @@ volumes:
   server_target:
   cargo_cache:
   client_node_modules:
-  uv_cache:
+  students_api_target:
+  students_api_cargo_cache:

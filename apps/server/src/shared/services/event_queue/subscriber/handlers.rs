@@ -1,4 +1,7 @@
-use crate::shared::{AppResult, services::*};
+use crate::{
+    imports::ImportedStudent,
+    shared::{AppResult, services::*},
+};
 use uuid::Uuid;
 
 #[derive(Clone)]
@@ -195,12 +198,12 @@ impl SubscriberHandler {
         Ok(())
     }
 
-    pub async fn many_users_created(
+    pub async fn imported_students(
         &self,
-        data: ManyUsersCreatedEvent,
+        data: Vec<ImportedStudent>,
     ) -> AppResult<()> {
         for user in data {
-            self.user_created(user).await?;
+            self.user_created((user.name, user.email)).await?;
         }
 
         Ok(())
