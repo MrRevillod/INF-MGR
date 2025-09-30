@@ -3,7 +3,7 @@ use shaku::module;
 use crate::shared::services::*;
 use crate::shared::{GoogleOAuthClient, PostgresDatabase, RedisDatabase};
 
-use crate::{auth, courses, enrollments, imports, practices, users};
+use crate::{auth, courses, enrollments, imports, meetings, practices, users};
 
 pub type InitialComponents = (
     PostgresDatabase,
@@ -39,6 +39,9 @@ module! {
 
             users::PostgresUserRepository,
             users::UserServiceImpl,
+
+            meetings::MeetingRepositoryImpl,
+            meetings::MeetingServiceImpl,
 
             imports::ImportServiceImpl,
 

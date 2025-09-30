@@ -21,7 +21,6 @@ pub struct StudentScore {
     pub score: f64,
 }
 
-#[allow(dead_code)]
 pub enum Enrollments {
     Table,
     Id,

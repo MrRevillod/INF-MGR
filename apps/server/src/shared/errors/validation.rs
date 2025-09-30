@@ -11,6 +11,12 @@ pub enum ValidationError {
     #[error("Invalid course status: '{value}' (expected: active, completed)")]
     InvalidCourseStatus { value: String },
 
+    #[error("Invalid MeetingStatus: {0}")]
+    InvalidMeetingStatus(String),
+
+    #[error("Invalid datetime: {0}")]
+    InvalidDatetime(String),
+
     // === Business Logic Validation (400, not 409) ===
     #[error("User {user_id} is not a student")]
     NotAStudent { user_id: Uuid },
@@ -110,5 +116,9 @@ impl ValidationError {
             name: name.into(),
             year,
         }
+    }
+
+    pub fn invalid_datetime(value: impl Into<String>) -> Self {
+        Self::InvalidDatetime(value.into())
     }
 }

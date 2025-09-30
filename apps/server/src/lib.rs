@@ -127,6 +127,8 @@ pub mod enrollments {
     pub use service::{EnrollmentService, EnrollmentServiceImpl};
 }
 
+pub mod meetings;
+
 pub mod practices {
     mod dtos;
     mod entity;

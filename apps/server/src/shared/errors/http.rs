@@ -46,6 +46,7 @@ fn handle_not_found_error(error: NotFoundError) -> HttpResponse {
         NotFoundError::Course { id } => ("Course", id.to_string()),
         NotFoundError::Enrollment { id } => ("Enrollment", id.to_string()),
         NotFoundError::Practice { id } => ("Practice", id.to_string()),
+        NotFoundError::Meeting { id } => ("Meeting", id.to_string()),
     };
 
     HttpResponse::NotFound()
@@ -64,6 +65,11 @@ fn handle_validation_error(error: ValidationError) -> HttpResponse {
         ValidationError::InvalidCourseStatus { value } => {
             ("status", format!("Estado de curso '{value}' inválido."))
         }
+
+        ValidationError::InvalidMeetingStatus(value) => {
+            ("status", format!("Estado de reunión '{value}' inválido."))
+        }
+
         ValidationError::NotAStudent { .. } => {
             ("studentId", "El usuario no es un estudiante".into())
         }
@@ -113,6 +119,11 @@ fn handle_validation_error(error: ValidationError) -> HttpResponse {
         ValidationError::InvalidTeacherId { teacher_id } => (
             "teacherId",
             format!("Identificador de profesor inválido: {teacher_id}"),
+        ),
+
+        ValidationError::InvalidDatetime(value) => (
+            "startDate",
+            format!("Fecha y hora inválida: '{value}'. Use el formato ISO 8601."),
         ),
     };
 
