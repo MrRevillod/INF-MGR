@@ -44,6 +44,7 @@
 		"target": true,
 		"**/.svelte-kit": true,
 		".husky": true,
+		"**/config/config": true,
 	},
 	"explorer.fileNesting.enabled": true,
 	"explorer.fileNesting.expand": false,

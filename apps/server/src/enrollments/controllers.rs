@@ -1,5 +1,7 @@
+use bytes::Bytes;
 use sword::prelude::*;
 use tokio::fs;
+use tracing::error;
 use uuid::Uuid;
 
 use crate::{
@@ -8,7 +10,7 @@ use crate::{
     courses::CourseService,
     enrollments::EnrollmentService,
     practices::*,
-    shared::{AppModule, ContextExt, FileResponse},
+    shared::{AppModule, ContextExt, FileResponse, services::PdfValidationService},
 };
 
 #[controller("/enrollments")]
@@ -19,7 +21,6 @@ impl EnrollmentsController {
     #[post("/{id}/practice")]
     #[middleware(Authentication)]
     #[middleware(MinimumRequiredRole, config = "teacher")]
-    #[doc = "Crear una práctica para una inscripción específica"]
     async fn create_practice(ctx: Context) -> HttpResult<HttpResponse> {
         let enrollment_id = ctx.param::<Uuid>("id")?;
         let dto = ctx.validated_body::<CreatePracticeDto>()?;
@@ -53,10 +54,7 @@ impl EnrollmentsController {
     }
 
     #[post("/{id}/practice/{practice_id}/approve")]
-    #[doc = "Aprovar práctica por el supervisor en la empresa."]
-    #[doc = "Este endpoint no requiere autenticación ya que se asume que el supervisor no es usuario del sistema."]
-    #[doc = "Solo se pude aprobar la práctica si su estado es 'Pending' (En espera de aprobación)."]
-    async fn approve_practice(ctx: Context) -> HttpResult<HttpResponse> {
+    async fn supervisor_approve_practice(ctx: Context) -> HttpResult<HttpResponse> {
         let enrollment_id = ctx.param::<Uuid>("id")?;
         let practice_id = ctx.param::<Uuid>("practice_id")?;
 
@@ -78,10 +76,7 @@ impl EnrollmentsController {
     }
 
     #[post("/{id}/practice/{practice_id}/decline")]
-    #[doc = "Rechazar práctica por el supervisor en la empresa."]
-    #[doc = "Este endpoint no requiere autenticación ya que se asume que el supervisor no es usuario del sistema."]
-    #[doc = "Solo se pude rechazar la práctica si su estado es 'Pending' (En espera de aprobación)."]
-    async fn decline_practice(ctx: Context) -> HttpResult<HttpResponse> {
+    async fn supervisor_decline_practice(ctx: Context) -> HttpResult<HttpResponse> {
         let enrollment_id = ctx.param::<Uuid>("id")?;
         let practice_id = ctx.param::<Uuid>("practice_id")?;
 
@@ -103,28 +98,17 @@ impl EnrollmentsController {
     }
 
     #[post("/{id}/practice/{practice_id}/authorize")]
-    #[doc = "Subir documento de autorización de una práctica"]
-    #[doc = "Este endpoint no requiere autenticación ya que se asume que el supervisor no es usuario del sistema."]
-    #[doc = "Se establece que esta acción es realizable una única vez por práctica."]
-    async fn authorize_practice(ctx: Context) -> HttpResult<HttpResponse> {
+    #[middleware(PdfValidationService, config = "auth_doc")]
+    async fn supervisor_auth_practice(ctx: Context) -> HttpResult<HttpResponse> {
         let enrollment_id = ctx.param::<Uuid>("id")?;
-        let mut form_data = ctx.multipart().await?;
 
-        while let Some(field) = form_data.next_field().await.ok().flatten() {
-            if field.name() != Some("auth_doc") {
-                return Err(HttpResponse::BadRequest());
-            }
+        let auth_doc = ctx.extensions.get::<Bytes>().ok_or(
+            HttpResponse::BadRequest().message("Missing required document"),
+        )?;
 
-            let service = ctx.di::<AppModule, dyn PracticeService>()?;
-            let field_bytes = field
-                .bytes()
-                .await
-                .map_err(|_| HttpResponse::BadRequest())?;
+        let service = ctx.di::<AppModule, dyn PracticeService>()?;
 
-            service
-                .authorize(&enrollment_id, field_bytes.to_vec())
-                .await?;
-        }
+        service.authorize(&enrollment_id, auth_doc.to_vec()).await?;
 
         Ok(HttpResponse::Ok())
     }
@@ -142,7 +126,7 @@ impl EnrollmentsController {
         );
 
         let buff = fs::read(&file_path).await.map_err(|e| {
-            tracing::error!("Failed to open/read file {}: {e}", file_path);
+            error!("Failed to open/read file {}: {e}", file_path);
             HttpResponse::NotFound()
         })?;
 
@@ -150,9 +134,6 @@ impl EnrollmentsController {
     }
 
     #[post("/{id}/practice/{practice_id}/evaluate/{evaluation_id}")]
-    #[doc = "Evaluar práctica por el supervisor en la empresa."]
-    #[doc = "Este endpoint no requiere autenticación ya que se asume que el supervisor no es usuario del sistema."]
-    #[doc = "Solo se pude evaluar la práctica si su estado es 'Approved' (Aprobada)."]
     async fn evualuate_from_enterprise(ctx: Context) -> HttpResult<HttpResponse> {
         let practice_id = ctx.param::<Uuid>("practice_id")?;
         let enrollment_id = ctx.param::<Uuid>("id")?;
@@ -172,26 +153,19 @@ impl EnrollmentsController {
     #[post("/{id}/practice-report/upload")]
     #[middleware(Authentication)]
     #[middleware(MinimumRequiredRole, config = "student")]
-    #[doc = "Subir informe de práctica por el estudiante."]
+    #[middleware(PdfValidationService, config = "report")]
     async fn upload_practice_report(ctx: Context) -> HttpResult<HttpResponse> {
         let enrollment_id = ctx.param::<Uuid>("id")?;
-        let mut form_data = ctx.multipart().await?;
 
-        while let Some(field) = form_data.next_field().await.ok().flatten() {
-            if field.name() != Some("report") {
-                return Err(HttpResponse::BadRequest());
-            }
+        let report = ctx.extensions.get::<Bytes>().ok_or(
+            HttpResponse::BadRequest().message("Missing required document"),
+        )?;
 
-            let service = ctx.di::<AppModule, dyn EnrollmentService>()?;
-            let field_bytes = field
-                .bytes()
-                .await
-                .map_err(|_| HttpResponse::BadRequest())?;
+        let service = ctx.di::<AppModule, dyn EnrollmentService>()?;
 
-            service
-                .upload_final_report(&enrollment_id, field_bytes.to_vec())
-                .await?;
-        }
+        service
+            .upload_final_report(&enrollment_id, report.to_vec())
+            .await?;
 
         Ok(HttpResponse::Ok())
     }

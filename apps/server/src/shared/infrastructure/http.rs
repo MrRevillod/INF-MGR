@@ -25,7 +25,7 @@ pub enum FileResponse {
 }
 
 impl IntoResponse for FileResponse {
-    fn into_response(self) -> axum::response::Response {
+    fn into_response(self) -> sword::__internal::AxumResponse {
         match self {
             FileResponse::Document(data) => {
                 (StatusCode::OK, [("Content-type", "application/pdf")], data)
