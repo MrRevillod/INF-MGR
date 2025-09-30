@@ -75,7 +75,9 @@ impl TestCourse {
             format!("Failed to create course: {:?}", body.data)
         );
 
-        body.data
+        assert!(body.data.is_some());
+
+        body.data.unwrap()
     }
 
     pub async fn update(app: &TestServer, course_id: &str, course: &Value) -> Value {
@@ -92,7 +94,9 @@ impl TestCourse {
             format!("Failed to update course: {:?}", body.data)
         );
 
-        body.data
+        assert!(body.data.is_some());
+
+        body.data.unwrap()
     }
 
     pub async fn delete(app: &TestServer, course_id: &str) {

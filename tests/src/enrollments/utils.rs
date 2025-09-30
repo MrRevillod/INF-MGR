@@ -19,14 +19,10 @@ impl TestEnrollment {
         let response = app.post("/courses/enroll").json(enrollment).await;
         let body = response.json::<ResponseBody>();
 
-        assert_eq!(
-            response.status_code(),
-            201,
-            "Failed to create enrollment: {}",
-            body.data
-        );
+        assert!(body.data.is_some());
+        assert_eq!(response.status_code(), 201);
 
-        body.data
+        body.data.unwrap()
     }
 
     pub async fn delete(app: &TestServer, enrollment_id: &str) {

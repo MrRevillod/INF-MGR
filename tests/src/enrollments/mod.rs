@@ -161,7 +161,9 @@ pub async fn create_enrollment_and_decline_practice()
 
     let json = create_practice_res.json::<ResponseBody>().data;
 
-    let practice_id = extract_resource_id(&json);
+    assert!(json.is_some(), "Response data should not be None");
+
+    let practice_id = extract_resource_id(&json.unwrap());
 
     let decline_practice_res = app
         .post(&format!(
@@ -255,7 +257,9 @@ pub async fn decline_already_approved_practice_should_fail()
 
     let json = create_practice_res.json::<ResponseBody>().data;
 
-    let practice_id = extract_resource_id(&json);
+    assert!(json.is_some(), "Response data should not be None");
+
+    let practice_id = extract_resource_id(&json.unwrap());
 
     let approve_practice_res = app
         .post(&format!(
@@ -317,13 +321,10 @@ pub async fn evaluate_practice_with_valid_grade_should_succeed()
     let practice_id =
         TestPractice::create(&app, &enrollment_id, practice_data).await;
 
-    // Approve practice first
     TestPractice::approve(&app, &enrollment_id, &practice_id).await;
 
-    // Get the evaluation ID from course evaluations
     let evaluation_id = course["evaluations"][0]["id"].as_str().unwrap();
 
-    // Evaluate with valid grade (between 1.0 and 7.0)
     TestPractice::evaluate(
         &app,
         &enrollment_id,
