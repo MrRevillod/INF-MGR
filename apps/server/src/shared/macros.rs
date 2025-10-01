@@ -64,6 +64,13 @@ macro_rules! meeting_filter {
 }
 
 #[macro_export]
+macro_rules! meeting_req_filter {
+    ($($field:ident $(: $value:expr)?),* $(,)?) => {
+        $crate::filter!(MeetingRequestFilter, { $($field $(: $value)?),* })
+    };
+}
+
+#[macro_export]
 macro_rules! template_ctx {
     ($($key:expr => $value:expr),* $(,)?) => {
         {

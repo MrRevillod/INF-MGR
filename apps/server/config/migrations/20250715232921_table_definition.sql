@@ -55,12 +55,3 @@ CREATE TABLE IF NOT EXISTS enrollments (
 CREATE INDEX IF NOT EXISTS enrollments_student_id_idx ON enrollments(student_id);
 CREATE INDEX IF NOT EXISTS enrollments_course_id_idx ON enrollments(course_id);
 CREATE INDEX IF NOT EXISTS enrollments_practice_id_idx ON enrollments(practice_id) WHERE practice_id IS NOT NULL;
-
-CREATE TABLE IF NOT EXISTS meetings (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    teacher_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
-    student_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
-    start_date TIMESTAMP WITH TIME ZONE NOT NULL,
-    status meeting_status NOT NULL DEFAULT 'pending',
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL
-)

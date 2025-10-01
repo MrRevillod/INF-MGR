@@ -70,6 +70,12 @@ fn handle_validation_error(error: ValidationError) -> HttpResponse {
             ("status", format!("Estado de reunión '{value}' inválido."))
         }
 
+        ValidationError::NotEnoughAttendees => (
+            "attendees",
+            "Se requieren al menos 2 asistentes para crear una solicitud de reunión"
+                .into(),
+        ),
+
         ValidationError::NotAStudent { .. } => {
             ("studentId", "El usuario no es un estudiante".into())
         }

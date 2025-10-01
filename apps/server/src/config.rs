@@ -19,6 +19,13 @@ pub struct StudentsApiConfig {
 }
 
 #[derive(Debug, Deserialize)]
+#[config(key = "google-calendar")]
+pub struct GoogleCalendarConfig {
+    pub calendar_id: String,
+    pub service_account_path: String,
+}
+
+#[derive(Debug, Deserialize)]
 #[config(key = "event-queue")]
 pub struct EventQueueConfig {
     pub buffer_size: usize,

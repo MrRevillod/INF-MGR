@@ -8,6 +8,7 @@ use server::{
     config::*,
     courses::CoursesController,
     enrollments::EnrollmentsController,
+    meetings::MeetingsController,
     shared::{services::*, *},
     users::UsersController,
 };
@@ -19,10 +20,17 @@ async fn main() {
     let config = app.config.clone();
     let event_queue_config = config.get::<EventQueueConfig>()?;
 
-    let (pg_db, mailer, printer, oauth_client, redis_db, jsonwebtoken_service) =
-        build_initial_components(config.clone())
-            .await
-            .expect("Failed to build dependencies");
+    let (
+        pg_db,
+        mailer,
+        printer,
+        oauth_client,
+        redis_db,
+        jsonwebtoken_service,
+        calendar_hub,
+    ) = build_initial_components(config.clone())
+        .await
+        .expect("Failed to build dependencies");
 
     let (tx, rx) = mpsc::channel(event_queue_config.buffer_size);
 
@@ -32,6 +40,7 @@ async fn main() {
         .with_oauth_client(oauth_client)
         .with_redis_db(redis_db)
         .with_jwt_service(jsonwebtoken_service)
+        .with_calendar_hub(calendar_hub)
         .build();
 
     let event_subscriber = EventSubscriber::builder()
@@ -49,6 +58,7 @@ async fn main() {
         .with_controller::<CoursesController>()
         .with_controller::<EnrollmentsController>()
         .with_controller::<AuthController>()
+        .with_controller::<MeetingsController>()
         .with_layer(LoggerLayer())
         .with_layer(CorsLayer(&config.get::<CorsConfig>()?))
         .with_layer(
@@ -70,6 +80,7 @@ async fn build_initial_components(
     let auth_config = config.get::<AuthConfig>()?;
     let mailer_config = config.get::<MailerConfig>()?;
     let template_config = config.get::<TemplateConfig>()?;
+    let calendar_config = config.get::<GoogleCalendarConfig>()?;
 
     let pg_db = PostgresDatabase::new(&config.get::<PostgresDbConfig>()?).await?;
 
@@ -79,6 +90,12 @@ async fn build_initial_components(
     let printer = Printer::new(&template_config)?;
     let oauth_client = GoogleOAuthClient::new(&config.get::<AuthConfig>()?);
     let redis_db = RedisDatabase::new(&config.get::<RedisConfig>()?).await?;
+
+    let google_calendar_hub = CalendarHub::new(
+        &calendar_config.service_account_path,
+        &calendar_config.calendar_id,
+    )
+    .await;
 
     let jsonwebtoken_service = JsonWebTokenService::new(
         TokenConfig {
@@ -98,5 +115,6 @@ async fn build_initial_components(
         oauth_client,
         redis_db,
         jsonwebtoken_service,
+        google_calendar_hub,
     ))
 }

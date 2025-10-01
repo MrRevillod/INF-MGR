@@ -13,3 +13,11 @@ pub fn validate_uuid(uuid: &str) -> Result<(), ValidationError> {
 
     Ok(())
 }
+
+pub fn validate_uuids(uuids: &Vec<String>) -> Result<(), ValidationError> {
+    for uuid in uuids {
+        validate_uuid(uuid)?;
+    }
+
+    Ok(())
+}

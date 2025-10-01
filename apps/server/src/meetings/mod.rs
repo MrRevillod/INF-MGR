@@ -1,11 +1,38 @@
 mod controllers;
-mod dtos;
-mod entity;
-mod repository;
-mod service;
+mod dtos {
+    mod meeting;
+    mod meeting_req;
+
+    pub use meeting::*;
+    pub use meeting_req::*;
+}
+
+mod entities {
+    mod meeting;
+    mod meeting_req;
+
+    pub use meeting::*;
+    pub use meeting_req::*;
+}
+
+mod repositories {
+    mod meeting;
+    mod meeting_req;
+
+    pub use meeting::*;
+    pub use meeting_req::*;
+}
+
+mod services {
+    mod meeting;
+    mod meeting_req;
+
+    pub use meeting::*;
+    pub use meeting_req::*;
+}
 
 pub use controllers::*;
 pub use dtos::*;
-pub use entity::*;
-pub use repository::*;
-pub use service::*;
+pub use entities::*;
+pub use repositories::*;
+pub use services::*;

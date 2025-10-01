@@ -12,6 +12,7 @@ pub type InitialComponents = (
     GoogleOAuthClient,
     RedisDatabase,
     auth::JsonWebTokenService,
+    CalendarHub,
 );
 
 module! {
@@ -20,6 +21,7 @@ module! {
             RedisDatabase,
             PostgresDatabase,
             GoogleOAuthClient,
+            CalendarHub,
 
             TokioEventQueue,
 
@@ -40,13 +42,16 @@ module! {
             users::PostgresUserRepository,
             users::UserServiceImpl,
 
-            meetings::MeetingRepositoryImpl,
+            meetings::PostgresMeetingRepository,
             meetings::MeetingServiceImpl,
 
             imports::ImportServiceImpl,
 
             practices::PostgresPracticeRepository,
             practices::PracticeServiceImpl,
+
+            meetings::PostgresMeetingRequestsRepository,
+            meetings::MeetingRequestServiceImpl,
         ],
         providers = []
     }

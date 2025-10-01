@@ -34,10 +34,3 @@ CREATE TYPE practice_status AS ENUM (
     'approved',
     'declined'
 );
-
-DROP TYPE IF EXISTS meeting_status CASCADE;
-CREATE TYPE meeting_status AS ENUM (
-    'scheduled',
-    'completed',
-    'pending'
-);

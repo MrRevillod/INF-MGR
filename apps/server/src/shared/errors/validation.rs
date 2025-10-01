@@ -33,6 +33,9 @@ pub enum ValidationError {
     #[error("Final report upload period has expired")]
     FinalReportUploadExpired,
 
+    #[error("Cannot create meeting request with less than 2 attendees")]
+    NotEnoughAttendees,
+
     // === Constraint Violations (400, not 409) ===
     #[error("Email '{email}' is already in use")]
     DuplicateEmail { email: String },

@@ -29,7 +29,7 @@ pub mod infrastructure {
     pub use http::*;
     pub use layers::*;
     pub use oauth::*;
-    pub use uuid::validate_uuid;
+    pub use uuid::*;
 }
 
 pub use infrastructure::*;
@@ -55,8 +55,14 @@ pub mod services {
     }
 
     mod validation;
-
     pub use validation::PdfValidationService;
+
+    mod calendar {
+        mod hub;
+        pub use hub::*;
+    }
+
+    pub use calendar::*;
 
     pub use crate::template_ctx;
     pub use errors::*;
