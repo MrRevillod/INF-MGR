@@ -15,11 +15,22 @@ impl MeetingsController {
     #[get("/")]
     #[middleware(Authentication)]
     #[middleware(MinimumRequiredRole, config = "student")]
-    async fn list_meetings(_: Context) -> HttpResult<HttpResponse> {
-        todo!()
+    async fn list_meetings(ctx: Context) -> HttpResult<HttpResponse> {
+        let query = ctx
+            .validated_query::<GetMeetingsQueryDto>()?
+            .unwrap_or_default();
+
+        let filter = MeetingFilter::from(query);
+
+        let meetings = ctx
+            .di::<AppModule, dyn MeetingService>()?
+            .get_all(filter)
+            .await?;
+
+        Ok(HttpResponse::Ok().data(meetings))
     }
 
-    #[get("/schedule")]
+    #[get("/schedule/{meeting_id}")]
     #[middleware(Authentication)]
     #[middleware(MinimumRequiredRole, config = "teacher")]
     async fn schedule_meeting(_: Context) -> HttpResult<HttpResponse> {

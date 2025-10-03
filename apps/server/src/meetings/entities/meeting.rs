@@ -1,6 +1,7 @@
 use crate::types::*;
 
 #[derive(Clone, Debug, Serialize, Deserialize, FromRow)]
+#[serde(rename_all = "camelCase")]
 pub struct Meeting {
     pub id: Uuid,
     pub google_event_id: Option<String>,
