@@ -10,6 +10,7 @@ pub struct MinimumRequiredRole;
 pub struct OwnershipValidation {
     pub required: bool,
     pub user_id: Uuid,
+    pub user_role: Role,
 }
 
 impl MiddlewareWithConfig<&str> for MinimumRequiredRole {
@@ -36,6 +37,7 @@ impl MiddlewareWithConfig<&str> for MinimumRequiredRole {
         let ownership_validation = OwnershipValidation {
             required: user_role_priority < 3, // Solo Teacher(2) y Student(1) necesitan validación
             user_id: user.id,
+            user_role: user.role.clone(),
         };
 
         ctx.extensions.insert(ownership_validation);

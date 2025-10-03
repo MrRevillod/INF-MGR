@@ -55,4 +55,3 @@ CREATE TABLE IF NOT EXISTS enrollments (
 CREATE INDEX IF NOT EXISTS enrollments_student_id_idx ON enrollments(student_id);
 CREATE INDEX IF NOT EXISTS enrollments_course_id_idx ON enrollments(course_id);
 CREATE INDEX IF NOT EXISTS enrollments_practice_id_idx ON enrollments(practice_id) WHERE practice_id IS NOT NULL;
-

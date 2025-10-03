@@ -329,4 +329,40 @@ impl SubscriberHandler {
 
         Ok(())
     }
+
+    pub async fn meeting_request_created(
+        &self,
+        event: MeetingRequestCreatedEvent,
+    ) -> AppResult<()> {
+        let (teacher, course, students) = event;
+
+        let student_names: Vec<String> =
+            students.iter().map(|s| s.name.clone()).collect();
+
+        let formatted_student_names = if student_names.len() > 1 {
+            let last = student_names.last().cloned().unwrap_or_default();
+            let others = &student_names[..student_names.len() - 1];
+            format!("{} y {}", others.join(", "), last)
+        } else {
+            student_names.first().cloned().unwrap_or_default()
+        };
+
+        let context = template_ctx! {
+            "teacher_name" => teacher.name.clone(),
+            "student_names" => formatted_student_names,
+            "course_code" => course.code.clone(),
+            "course_name" => course.name.clone(),
+        };
+
+        let mail_opts = MailTo {
+            subject: format!("{} - Nueva solicitud de reunión", course.code),
+            email: teacher.email.clone(),
+            template: "meeting-req:creation:teacher",
+            context,
+        };
+
+        self.mailer.send(mail_opts).await?;
+
+        Ok(())
+    }
 }

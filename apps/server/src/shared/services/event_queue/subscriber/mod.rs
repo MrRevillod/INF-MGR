@@ -86,6 +86,9 @@ impl EventSubscriber {
             Event::ImportedStudents(event) => {
                 handler.imported_students(event).await?
             }
+            Event::MeetingRequestCreated(event) => {
+                handler.meeting_request_created(event).await?
+            }
         }
 
         Ok(())

@@ -17,6 +17,7 @@ pub enum Event {
     ImportedStudents(Vec<ImportedStudent>),
     CourseCreated(CourseCreatedEvent),
     FinalReportUploaded(FinalReportUploadedEvent),
+    MeetingRequestCreated(MeetingRequestCreatedEvent),
 }
 
 pub type PracticeCreatedEvent = (User, Practice, Course, Enrollment);
@@ -27,3 +28,4 @@ pub type PracticeEvaluatedEvent = (User, Practice, Course, User, f64);
 pub type UserCreatedEvent = (String, String);
 pub type CourseCreatedEvent = (Course, User);
 pub type FinalReportUploadedEvent = (Enrollment, Course, User, User, Vec<u8>);
+pub type MeetingRequestCreatedEvent = (Teacher, Course, Vec<Student>);

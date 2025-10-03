@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}{{ course_code }} - Solicitud de Reunión{% endblock %}
+
+{% block greeting_text %}Estimado(a) Profesor(a){% endblock %}
+
+{% block main_content %}
+<p>
+    Junto con saludar, le informamos que los estudiantes <strong>{{ student_names }}</strong> 
+    han solicitado una reunión para el curso <strong>{{ course_code }} - {{ course_name }}</strong>.
+</p>
+
+<p>
+    Puede revisar y gestionar la solicitud de reunión en la plataforma.
+</p>
+{% endblock %}

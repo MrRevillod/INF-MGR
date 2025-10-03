@@ -31,7 +31,6 @@ pub enum CourseStatus {
     Completed,
 }
 
-#[allow(dead_code)]
 pub enum Courses {
     Table,
     Id,
