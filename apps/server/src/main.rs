@@ -28,6 +28,7 @@ async fn main() {
         redis_db,
         jsonwebtoken_service,
         calendar_hub,
+        config_service,
     ) = build_initial_components(config.clone())
         .await
         .expect("Failed to build dependencies");
@@ -41,6 +42,7 @@ async fn main() {
         .with_redis_db(redis_db)
         .with_jwt_service(jsonwebtoken_service)
         .with_calendar_hub(calendar_hub)
+        .with_config_service(config_service)
         .build();
 
     let event_subscriber = EventSubscriber::builder()
@@ -116,5 +118,6 @@ async fn build_initial_components(
         redis_db,
         jsonwebtoken_service,
         google_calendar_hub,
+        ConfigServiceImpl::new(config),
     ))
 }

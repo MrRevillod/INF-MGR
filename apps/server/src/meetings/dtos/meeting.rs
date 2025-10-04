@@ -1,10 +1,14 @@
-use crate::{meetings::MeetingFilter, shared::validate_uuid, types::*};
+use crate::{
+    meetings::MeetingFilter,
+    shared::{validate_rfc3339, validate_uuid},
+    types::*,
+};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Validate)]
 pub struct ScheduleMeetingDto {
-    #[validate(custom(function = validate_uuid))]
-    pub meeting_id: String,
+    #[validate(custom(function = validate_rfc3339))]
     pub start_date: String,
+    #[validate(custom(function = validate_rfc3339))]
     pub end_date: Option<String>,
 }
 

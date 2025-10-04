@@ -1,5 +1,6 @@
 use serde::Deserialize;
-use sword::prelude::config;
+use shaku::{Component, Interface};
+use sword::core::{Config, config};
 
 #[derive(Debug, Deserialize)]
 #[config(key = "application")]
@@ -18,7 +19,7 @@ pub struct StudentsApiConfig {
     pub api_url: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 #[config(key = "google-calendar")]
 pub struct GoogleCalendarConfig {
     pub calendar_id: String,
@@ -71,4 +72,36 @@ pub struct CorsConfig {
     pub allow_credentials: bool,
     pub allowed_http_methods: Vec<String>,
     pub allowed_http_headers: Vec<String>,
+}
+
+// ---------------- Config Service ---------------------------
+
+pub trait ConfigService: Interface {
+    fn inner(&self) -> &Config;
+}
+
+#[derive(Component)]
+#[shaku(interface = ConfigService)]
+pub struct ConfigServiceImpl {
+    inner: Config,
+}
+
+impl ConfigService for ConfigServiceImpl {
+    fn inner(&self) -> &Config {
+        &self.inner
+    }
+}
+
+impl ConfigServiceImpl {
+    pub fn new(config: Config) -> Self {
+        Self { inner: config }
+    }
+}
+
+impl From<ConfigServiceImpl> for ConfigServiceImplParameters {
+    fn from(value: ConfigServiceImpl) -> Self {
+        Self {
+            inner: value.inner.clone(),
+        }
+    }
 }

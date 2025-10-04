@@ -13,7 +13,7 @@ pub mod types {
 
     pub type QueryBuilder<'args> = SqlxQueryBuilder<'args, Postgres>;
     pub use async_trait::async_trait;
-    pub use chrono::{DateTime, Utc};
+    pub use chrono::{DateTime, Duration, Utc};
     pub use serde::{Deserialize, Serialize};
     pub use shaku::{Component, Interface};
     pub use sqlx::{FromRow, Postgres, QueryBuilder as SqlxQueryBuilder, Type};
@@ -28,4 +28,6 @@ pub mod types {
     };
 
     pub use sea_query_sqlx::SqlxBinder;
+
+    pub use google_calendar3::api::{Event, EventAttendee, EventDateTime};
 }

@@ -1,5 +1,6 @@
 use crate::{
     auth::JsonWebTokenService,
+    config::ConfigServiceImpl,
     shared::{
         services::{CalendarHub, TokioEventQueue},
         *,
@@ -14,6 +15,7 @@ pub struct DependencyContainer {
     redis_db: Option<RedisDatabase>,
     jwt_service: Option<JsonWebTokenService>,
     calendar_hub: Option<CalendarHub>,
+    config_service: Option<ConfigServiceImpl>,
 }
 
 impl DependencyContainer {
@@ -53,6 +55,11 @@ impl DependencyContainer {
         self
     }
 
+    pub fn with_config_service(mut self, conf: ConfigServiceImpl) -> Self {
+        self.config_service = Some(conf);
+        self
+    }
+
     pub fn build(self) -> AppModule {
         let postgres_db = self.postgres_db.expect("PostgresDatabase is required");
         let event_queue = self.event_queue.expect("TokioEventQueue is required");
@@ -62,6 +69,8 @@ impl DependencyContainer {
         let jwt_service = self.jwt_service.expect("JsonWebTokenService is required");
         let calendar_hub = self.calendar_hub.expect("CalendarHub is required");
 
+        let conf_service = self.config_service.expect("Config Service is required");
+
         AppModule::builder()
             .with_component_parameters::<PostgresDatabase>(postgres_db.into())
             .with_component_parameters::<TokioEventQueue>(event_queue.into())
@@ -69,6 +78,7 @@ impl DependencyContainer {
             .with_component_parameters::<RedisDatabase>(redis_db.into())
             .with_component_parameters::<JsonWebTokenService>(jwt_service.into())
             .with_component_parameters::<CalendarHub>(calendar_hub.into())
+            .with_component_parameters::<ConfigServiceImpl>(conf_service.into())
             .build()
     }
 }

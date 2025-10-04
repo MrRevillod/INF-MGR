@@ -17,6 +17,9 @@ pub enum NotFoundError {
 
     #[error("Meeting with id {id} not found")]
     Meeting { id: Uuid },
+
+    #[error("Meeting request with id {id} not found")]
+    MeetingRequest { id: Uuid },
 }
 
 impl NotFoundError {
@@ -38,5 +41,9 @@ impl NotFoundError {
 
     pub fn meeting(id: Uuid) -> Self {
         Self::Meeting { id }
+    }
+
+    pub fn meeting_request(id: Uuid) -> Self {
+        Self::MeetingRequest { id }
     }
 }
