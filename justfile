@@ -8,30 +8,30 @@ run DOCKERARGS="":
 
 lint:
 	cargo clippy --all-features -- -D warnings && \
-	cd apps/client && npm run lint && cd ../.. 
+	cd apps/client && pnpm lint && cd ../.. 
 
 fmt:
 	cargo fmt --verbose && \
-	cd apps/client && npm run format && cd ../..
+	cd apps/client && pnpm format && cd ../..
 
 fmt-check:
 	cargo fmt --check && \
-	cd apps/client && npm run format && cd ../..
+	cd apps/client && pnpm format && cd ../..
 
 check:
 	cargo check --all-features
-	cd apps/client && npm run check && cd ../..
+	cd apps/client && pnpm check && cd ../..
 
 db-seed:
 	docker exec inf_mgr_server_dev cargo run -p server --bin seeder --features seeder
 
 web-install package="":
-	cd apps/client && npm install {{package}} && cd ../..
-	docker exec inf_mgr_client_dev npm install {{package}}
+	cd apps/client && pnpm add {{package}} && cd ../..
+	docker exec inf_mgr_client_dev pnpm add {{package}}
 
 web-install-dev package:
-	cd apps/client && npm install --save-dev {{package}} && cd ../..
-	docker exec inf_mgr_client_dev npm install --save-dev {{package}}
+	cd apps/client && pnpm add {{package}} -D && cd ../..
+	docker exec inf_mgr_client_dev pnpm add {{package}} -D
 
 # Testing commands
 
