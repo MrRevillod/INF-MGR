@@ -1,4 +1,9 @@
-use crate::shared::{AppResult, errors::AuthError};
+use std::sync::Arc;
+
+use crate::{
+    config::{AuthConfig, ConfigService},
+    shared::{AppResult, errors::AuthError},
+};
 use chrono::{Duration, Utc};
 use jsonwebtoken::{EncodingKey, Header};
 use serde::{Deserialize, Serialize};
@@ -26,8 +31,8 @@ pub enum TokenKind {
 #[derive(Component)]
 #[shaku(interface = TokenService)]
 pub struct JsonWebTokenService {
-    access_config: TokenConfig,
-    refresh_config: TokenConfig,
+    #[shaku(inject)]
+    config: Arc<dyn ConfigService>,
 }
 
 pub trait TokenService: Interface {
@@ -41,15 +46,6 @@ pub trait TokenService: Interface {
 
     fn verify(&self, token_kind: TokenKind, token: &str) -> AppResult<Claims>;
     fn get_token_config(&self, token_kind: TokenKind) -> TokenConfig;
-}
-
-impl JsonWebTokenService {
-    pub fn new(access_config: TokenConfig, refresh_config: TokenConfig) -> Self {
-        Self {
-            access_config,
-            refresh_config,
-        }
-    }
 }
 
 impl TokenService for JsonWebTokenService {
@@ -98,18 +94,18 @@ impl TokenService for JsonWebTokenService {
     }
 
     fn get_token_config(&self, token_kind: TokenKind) -> TokenConfig {
-        match token_kind {
-            TokenKind::Access => self.access_config.clone(),
-            TokenKind::Refresh => self.refresh_config.clone(),
-        }
-    }
-}
+        let auth_config =
+            self.config.inner().get::<AuthConfig>().unwrap_or_default();
 
-impl From<JsonWebTokenService> for JsonWebTokenServiceParameters {
-    fn from(service: JsonWebTokenService) -> Self {
-        JsonWebTokenServiceParameters {
-            access_config: service.access_config,
-            refresh_config: service.refresh_config,
+        match token_kind {
+            TokenKind::Access => TokenConfig {
+                secret: auth_config.access_jwt_secret,
+                expiration: auth_config.access_exp_ms,
+            },
+            TokenKind::Refresh => TokenConfig {
+                secret: auth_config.refresh_jwt_secret,
+                expiration: auth_config.refresh_exp_ms,
+            },
         }
     }
 }

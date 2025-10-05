@@ -14,7 +14,6 @@ pub type InitialComponents = (
     Printer,
     GoogleOAuthClient,
     RedisDatabase,
-    auth::JsonWebTokenService,
     CalendarHub,
     ConfigServiceImpl,
 );

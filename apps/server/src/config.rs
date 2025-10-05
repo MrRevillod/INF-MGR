@@ -50,7 +50,7 @@ pub struct RedisConfig {
     pub url: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Default)]
 #[config(key = "auth")]
 pub struct AuthConfig {
     pub access_jwt_secret: String,

@@ -86,12 +86,12 @@ impl MeetingService for MeetingServiceImpl {
             summary: meeting.summary.clone(),
             description: meeting.description.clone(),
             start: Some(EventDateTime {
-                date_time: Some(start_date.into()),
+                date_time: Some(start_date),
                 time_zone: Some("America/Santiago".into()),
                 ..Default::default()
             }),
             end: Some(EventDateTime {
-                date_time: Some(end_date.into()),
+                date_time: Some(end_date),
                 time_zone: Some("America/Santiago".into()),
                 ..Default::default()
             }),

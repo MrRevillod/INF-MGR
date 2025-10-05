@@ -1,5 +1,4 @@
 use crate::{
-    auth::JsonWebTokenService,
     config::ConfigServiceImpl,
     shared::{
         services::{CalendarHub, TokioEventQueue},
@@ -13,7 +12,6 @@ pub struct DependencyContainer {
     event_queue: Option<TokioEventQueue>,
     oauth_client: Option<GoogleOAuthClient>,
     redis_db: Option<RedisDatabase>,
-    jwt_service: Option<JsonWebTokenService>,
     calendar_hub: Option<CalendarHub>,
     config_service: Option<ConfigServiceImpl>,
 }
@@ -45,11 +43,6 @@ impl DependencyContainer {
         self
     }
 
-    pub fn with_jwt_service(mut self, service: JsonWebTokenService) -> Self {
-        self.jwt_service = Some(service);
-        self
-    }
-
     pub fn with_calendar_hub(mut self, hub: CalendarHub) -> Self {
         self.calendar_hub = Some(hub);
         self
@@ -66,9 +59,7 @@ impl DependencyContainer {
         let oauth_client = self.oauth_client.expect("GoogleOAuthClient is required");
 
         let redis_db = self.redis_db.expect("RedisDatabase is required");
-        let jwt_service = self.jwt_service.expect("JsonWebTokenService is required");
         let calendar_hub = self.calendar_hub.expect("CalendarHub is required");
-
         let conf_service = self.config_service.expect("Config Service is required");
 
         AppModule::builder()
@@ -76,7 +67,6 @@ impl DependencyContainer {
             .with_component_parameters::<TokioEventQueue>(event_queue.into())
             .with_component_parameters::<GoogleOAuthClient>(oauth_client.into())
             .with_component_parameters::<RedisDatabase>(redis_db.into())
-            .with_component_parameters::<JsonWebTokenService>(jwt_service.into())
             .with_component_parameters::<CalendarHub>(calendar_hub.into())
             .with_component_parameters::<ConfigServiceImpl>(conf_service.into())
             .build()
