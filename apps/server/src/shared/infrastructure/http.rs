@@ -1,10 +1,12 @@
 use sword::__internal::IntoResponse;
-use sword::web::{Context, HttpResponse, StatusCode};
+use sword::web::{Context, HttpResponse, HttpResult, StatusCode};
 
 use crate::auth::OwnershipValidation;
+use crate::users::User;
 
 pub trait ContextExt {
     fn get_ownership_validation(&self) -> Result<OwnershipValidation, HttpResponse>;
+    fn get_current_user(&self) -> HttpResult<User>;
 }
 
 impl ContextExt for Context {
@@ -17,6 +19,17 @@ impl ContextExt for Context {
         };
 
         Ok(value.clone())
+    }
+
+    fn get_current_user(&self) -> HttpResult<User> {
+        let user = self.extensions.get::<User>();
+
+        let Some(user) = user else {
+            return Err(HttpResponse::InternalServerError()
+                .message("User not found in context"));
+        };
+
+        Ok(user.clone())
     }
 }
 

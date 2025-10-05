@@ -31,8 +31,11 @@ mod services {
     pub use meeting_req::*;
 }
 
+mod traits;
+
 pub use controllers::*;
 pub use dtos::*;
 pub use entities::*;
 pub use repositories::*;
 pub use services::*;
+pub use traits::*;

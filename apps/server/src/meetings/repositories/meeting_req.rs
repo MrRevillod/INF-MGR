@@ -8,19 +8,7 @@ use crate::{
 #[shaku(interface = MeetingRequestsRepository)]
 pub struct PostgresMeetingRequestsRepository {
     #[shaku(inject)]
-    #[allow(unused)]
     db_connection: Arc<dyn DatabaseConnection>,
-}
-
-#[async_trait]
-pub trait MeetingRequestsRepository: Interface {
-    async fn find_many(
-        &self,
-        filter: MeetingRequestFilter,
-    ) -> AppResult<Vec<MeetingRequest>>;
-
-    async fn create(&self, meeting_req: MeetingRequest)
-    -> AppResult<MeetingRequest>;
 }
 
 #[async_trait]
@@ -48,6 +36,17 @@ impl MeetingRequestsRepository for PostgresMeetingRequestsRepository {
             .await?;
 
         Ok(meeting_reqs)
+    }
+
+    async fn find_by_id(&self, id: &Uuid) -> AppResult<Option<MeetingRequest>> {
+        let meeting_req = sqlx::query_as::<_, MeetingRequest>(
+            "SELECT * FROM meeting_requests WHERE id = $1",
+        )
+        .bind(id)
+        .fetch_optional(self.db_connection.get_pool())
+        .await?;
+
+        Ok(meeting_req)
     }
 
     async fn create(

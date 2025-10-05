@@ -47,6 +47,7 @@ fn handle_not_found_error(error: NotFoundError) -> HttpResponse {
         NotFoundError::Enrollment { id } => ("Enrollment", id.to_string()),
         NotFoundError::Practice { id } => ("Practice", id.to_string()),
         NotFoundError::Meeting { id } => ("Meeting", id.to_string()),
+        NotFoundError::MeetingRequest { id } => ("MeetingRequest", id.to_string()),
     };
 
     HttpResponse::NotFound()

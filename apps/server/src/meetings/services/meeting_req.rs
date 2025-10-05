@@ -2,7 +2,7 @@ use crate::{
     courses::*,
     meetings::*,
     types::*,
-    users::{Role, UserRepository},
+    users::{Role, User, UserRepository},
 };
 
 use crate::shared::{
@@ -24,19 +24,6 @@ pub struct MeetingRequestServiceImpl {
 
     #[shaku(inject)]
     courses: Arc<dyn CourseRepository>,
-}
-
-#[async_trait]
-pub trait MeetingRequestService: Interface {
-    async fn get_all(
-        &self,
-        filter: MeetingRequestFilter,
-    ) -> AppResult<Vec<MeetingRequest>>;
-
-    async fn create(
-        &self,
-        input: CreateMeetingRequestDto,
-    ) -> AppResult<MeetingRequest>;
 }
 
 #[async_trait]
@@ -91,5 +78,30 @@ impl MeetingRequestService for MeetingRequestServiceImpl {
             .await;
 
         Ok(meeting_req)
+    }
+
+    async fn can_schedule(
+        &self,
+        user: &User,
+        meeting_req_id: &Uuid,
+    ) -> AppResult<bool> {
+        let Some(meeting_req) = self.meeting_reqs.find_by_id(meeting_req_id).await?
+        else {
+            return Err(NotFoundError::meeting_request(*meeting_req_id))?;
+        };
+
+        if !meeting_req
+            .attendees
+            .iter()
+            .any(|attendee_id| attendee_id == &user.id)
+        {
+            return Ok(false);
+        }
+
+        if meeting_req.status != MeetingStatus::Requested {
+            return Ok(false);
+        }
+
+        Ok(true)
     }
 }

@@ -1,4 +1,5 @@
 pub mod errors;
+use chrono::{DateTime, Utc};
 pub use errors::{AppError, AppResult, AuthError, NotFoundError, ValidationError};
 pub mod macros;
 
@@ -81,5 +82,15 @@ pub mod services {
 
         date.map(|date| date.with_timezone(&Santiago).format("%d/%m/%y").to_string())
             .unwrap_or_default()
+    }
+}
+
+pub fn validate_rfc3339(date_str: &str) -> Result<(), validator::ValidationError> {
+    match DateTime::parse_from_rfc3339(date_str) {
+        Ok(dt) => {
+            let _utc: DateTime<Utc> = dt.with_timezone(&Utc);
+            Ok(())
+        }
+        Err(_) => Err(validator::ValidationError::new("invalid_datetime")),
     }
 }

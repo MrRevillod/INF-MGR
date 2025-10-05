@@ -4,7 +4,7 @@ use sword::prelude::*;
 use tokio::sync::mpsc;
 
 use server::{
-    auth::{AuthController, JsonWebTokenService, TokenConfig},
+    auth::AuthController,
     config::*,
     courses::CoursesController,
     enrollments::EnrollmentsController,
@@ -26,8 +26,8 @@ async fn main() {
         printer,
         oauth_client,
         redis_db,
-        jsonwebtoken_service,
         calendar_hub,
+        config_service,
     ) = build_initial_components(config.clone())
         .await
         .expect("Failed to build dependencies");
@@ -39,8 +39,8 @@ async fn main() {
         .with_event_queue(TokioEventQueue::new(tx))
         .with_oauth_client(oauth_client)
         .with_redis_db(redis_db)
-        .with_jwt_service(jsonwebtoken_service)
         .with_calendar_hub(calendar_hub)
+        .with_config_service(config_service)
         .build();
 
     let event_subscriber = EventSubscriber::builder()
@@ -77,7 +77,6 @@ async fn main() {
 async fn build_initial_components(
     config: Config,
 ) -> Result<InitialComponents, Box<dyn std::error::Error>> {
-    let auth_config = config.get::<AuthConfig>()?;
     let mailer_config = config.get::<MailerConfig>()?;
     let template_config = config.get::<TemplateConfig>()?;
     let calendar_config = config.get::<GoogleCalendarConfig>()?;
@@ -97,24 +96,13 @@ async fn build_initial_components(
     )
     .await;
 
-    let jsonwebtoken_service = JsonWebTokenService::new(
-        TokenConfig {
-            secret: auth_config.access_jwt_secret,
-            expiration: auth_config.access_exp_ms,
-        },
-        TokenConfig {
-            secret: auth_config.refresh_jwt_secret,
-            expiration: auth_config.refresh_exp_ms,
-        },
-    );
-
     Ok((
         pg_db,
         mailer,
         printer,
         oauth_client,
         redis_db,
-        jsonwebtoken_service,
         google_calendar_hub,
+        ConfigServiceImpl::new(config),
     ))
 }
