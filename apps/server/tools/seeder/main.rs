@@ -21,7 +21,7 @@ async fn main() -> Result<(), sqlx::Error> {
         .connect(&db_uri)
         .await?;
 
-    sqlx::query("TRUNCATE TABLE users, courses, enrollments, practices CASCADE")
+    sqlx::query("TRUNCATE TABLE users, courses, enrollments, practices, meeting_requests, meetings CASCADE")
         .execute(&pool)
         .await?;
 

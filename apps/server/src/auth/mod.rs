@@ -30,10 +30,6 @@ mod services {
     pub use jsonwebtoken::{
         Claims, JsonWebTokenService, TokenConfig, TokenKind, TokenService,
     };
-
-    mod cookies;
-
-    pub use cookies::CookieBuilder;
 }
 
 pub use services::{Claims, TokenConfig, TokenKind, TokenService};
