@@ -1,6 +1,6 @@
 use crate::{
     auth::{TokenKind, TokenService},
-    shared::di::AppModule,
+    shared::{di::AppModule, infrastructure::http::ContextExt},
     users::UserRepository,
 };
 
@@ -11,16 +11,11 @@ pub struct Authentication;
 
 impl Middleware for Authentication {
     async fn handle(mut ctx: Context, next: Next) -> MiddlewareResult {
-        let cookies = ctx.cookies()?;
+        let (access_token, _) = ctx.get_bearer_tokens()?;
 
-        let Some(access_cookie) = cookies.get("access") else {
-            return Err(HttpResponse::Unauthorized());
-        };
-
-        let token_service = ctx.di::<AppModule, dyn TokenService>()?;
-
-        let token_claims =
-            token_service.verify(TokenKind::Access, access_cookie.value())?;
+        let token_claims = ctx
+            .di::<AppModule, dyn TokenService>()?
+            .verify(TokenKind::Access, &access_token)?;
 
         let Ok(user_id) = Uuid::parse_str(&token_claims.user_id) else {
             return Err(HttpResponse::Unauthorized());
