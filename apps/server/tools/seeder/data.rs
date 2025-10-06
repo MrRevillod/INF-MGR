@@ -3,6 +3,7 @@ use server::{
     users::{Role, User},
 };
 
+use chrono::Utc;
 use uuid::Uuid;
 
 pub fn students() -> Vec<User> {
@@ -13,7 +14,7 @@ pub fn students() -> Vec<User> {
         email: std::env::var("TEST_STUDENT_EMAIL")
             .expect("TEST_STUDENT_EMAIL must be set in .env"),
         role: Role::Student,
-        created_at: chrono::Utc::now(),
+        created_at: Utc::now(),
         deleted_at: None,
         google_id: None,
     }]
@@ -27,7 +28,21 @@ pub fn teachers() -> Vec<User> {
         email: std::env::var("TEST_TEACHER_EMAIL")
             .expect("TEST_TEACHER_EMAIL must be set in .env"),
         role: Role::Teacher,
-        created_at: chrono::Utc::now(),
+        created_at: Utc::now(),
+        deleted_at: None,
+        google_id: None,
+    }]
+}
+
+pub fn administrators() -> Vec<User> {
+    vec![User {
+        id: Uuid::new_v4(),
+        rut: "11111111-1".to_string(),
+        name: "Admin USER".to_string(),
+        email: std::env::var("TEST_ADMIN_EMAIL")
+            .expect("TEST_ADMIN_EMAIL must be set in .env"),
+        role: Role::Administrator,
+        created_at: Utc::now(),
         deleted_at: None,
         google_id: None,
     }]

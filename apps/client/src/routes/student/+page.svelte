@@ -4,7 +4,7 @@
 	import { goto } from "$app/navigation"
 	import { useQuery } from "$lib/shared/hooks/useQuery"
 	import { useEncodeData } from "$lib/shared/hooks/useUrlData"
-	import { getStudentInscriptionsQuery } from "$users/querys"
+	// import { getStudentInscriptionsQuery } from "$users/querys"
 
 	import PageTitle from "$lib/components/ui/PageTitle.svelte"
 	import CourseCard from "$lib/features/courses/components/Card.svelte"
@@ -12,9 +12,9 @@
 
 	const { data: page }: PageProps = $props()
 
-	const { data: inscriptions, isLoading } = $derived(
-		useQuery(() => getStudentInscriptionsQuery(page?.user?.id ?? ""))
-	)
+	// const { data: inscriptions, isLoading } = $derived(
+	// 	useQuery(() => getStudentInscriptionsQuery(page?.user?.id ?? ""))
+	// )
 </script>
 
 <section class="space-y-6">
@@ -34,11 +34,11 @@
 				<h2 class="text-text-primary text-lg font-semibold">Cursos</h2>
 			</div>
 
-			{#if $isLoading}
+			<!-- {#if isLoading}
 				<p>Cargando cursos...</p>
 			{:else}
 				<ul class="flex w-5/6 list-none flex-col gap-2">
-					{#each $inscriptions ?? [] as inscription (inscription.id)}
+					{#each inscriptions ?? [] as inscription (inscription.id)}
 						<CourseCard
 							code={inscription.asignature.code}
 							name={inscription.asignature.name}
@@ -53,7 +53,7 @@
 						/>
 					{/each}
 				</ul>
-			{/if}
+			{/if} -->
 		</section>
 	</section>
 </section>

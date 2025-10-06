@@ -1,5 +1,5 @@
 import type { ApiResponse } from "$api/types"
-import { AxiosError, type AxiosResponse } from "axios"
+import axios, { type AxiosResponse } from "axios"
 
 export const UknownError = {
 	data: null,
@@ -20,10 +20,10 @@ export const tryHttp = async <T>(
 		const response = await props.fn(props.args)
 		return response.data as ApiResponse<T>
 	} catch (error: unknown) {
-		if (error instanceof AxiosError) {
-			throw new Error(error?.response?.data ?? UknownError)
+		if (axios.isAxiosError(error) && error.response?.data) {
+			throw new Error(error.response.data)
+		} else {
+			throw new Error(JSON.stringify(UknownError))
 		}
-
-		return UknownError as ApiResponse<T>
 	}
 }

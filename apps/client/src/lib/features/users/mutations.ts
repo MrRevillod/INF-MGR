@@ -10,7 +10,7 @@ export const updateUserMutation = <E>(id: string, data: Record<string, unknown>)
 		return api.patch<User>(`users/${id}`, data)
 	}
 
-	return createMutation<ApiResponse<User>, E, unknown, unknown>({
+	return createMutation<ApiResponse<User>, E, unknown, unknown>(() => ({
 		mutationKey: ["update-user", id],
 		mutationFn: () => tryHttp<User>({ fn: request, args: data }),
 		onSuccess: () => {
@@ -18,5 +18,5 @@ export const updateUserMutation = <E>(id: string, data: Record<string, unknown>)
 				queryKey: ["user", id],
 			})
 		},
-	})
+	}))
 }

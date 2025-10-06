@@ -10,7 +10,10 @@ use crate::{
     courses::CourseService,
     enrollments::EnrollmentService,
     practices::*,
-    shared::{AppModule, ContextExt, FileResponse, services::PdfValidationService},
+    shared::{
+        AppModule, ContextExt, FileResponse,
+        services::{FileValidationConfig, FileValidationService},
+    },
 };
 
 #[controller("/enrollments")]
@@ -98,7 +101,7 @@ impl EnrollmentsController {
     }
 
     #[post("/{id}/practice/{practice_id}/authorize")]
-    #[middleware(PdfValidationService, config = "auth_doc")]
+    #[middleware(FileValidationService, config = FileValidationConfig { kind: "pdf", name: "auth_doc" })]
     async fn supervisor_auth_practice(ctx: Context) -> HttpResult<HttpResponse> {
         let enrollment_id = ctx.param::<Uuid>("id")?;
 
@@ -153,7 +156,7 @@ impl EnrollmentsController {
     #[post("/{id}/practice-report/upload")]
     #[middleware(Authentication)]
     #[middleware(MinimumRequiredRole, config = "student")]
-    #[middleware(PdfValidationService, config = "report")]
+    #[middleware(FileValidationService, config = FileValidationConfig { kind: "zip", name: "report" })]
     async fn upload_practice_report(ctx: Context) -> HttpResult<HttpResponse> {
         let enrollment_id = ctx.param::<Uuid>("id")?;
 

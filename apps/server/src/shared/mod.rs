@@ -56,7 +56,7 @@ pub mod services {
     }
 
     mod validation;
-    pub use validation::PdfValidationService;
+    pub use validation::*;
 
     mod calendar {
         mod hub;

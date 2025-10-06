@@ -5,8 +5,7 @@
 	import PageTitle from "$lib/components/ui/PageTitle.svelte"
 	import StudentCalifications from "$lib/features/courses/components/StudentScores.svelte"
 
-	const { data }: PageData = $props()
-	const { inscription, user } = data
+	const { inscription, user }: PageData = $props()
 </script>
 
 <section class="space-y-6">

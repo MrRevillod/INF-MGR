@@ -1,4 +1,3 @@
-import type { Course, Inscription } from "$lib/features/courses/schemas"
 import type { User } from "$users/schemas"
 
 import { api } from "$api/client"
@@ -31,27 +30,9 @@ export const getUsersQuery = (params: GetUsersParams) => {
 		})
 	}
 
-	return createQuery({
+	return createQuery(() => ({
 		queryKey: ["users", search, page],
 		staleTime: 1000 * 60 * 1,
 		queryFn: () => tryHttp<GetUsersResponseData>({ fn: request }),
-	})
-}
-
-type StudentInscriptionsResponse = Array<
-	Inscription & {
-		asignature: Course
-	}
->
-
-export const getStudentInscriptionsQuery = (userId: string) => {
-	const request = () => {
-		return api.get<StudentInscriptionsResponse>(`inscriptions?userId=${userId}`)
-	}
-
-	return createQuery({
-		queryKey: ["student-inscriptions", userId],
-		staleTime: 1000 * 60 * 1,
-		queryFn: () => tryHttp<StudentInscriptionsResponse>({ fn: request }),
-	})
+	}))
 }

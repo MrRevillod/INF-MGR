@@ -32,6 +32,7 @@ async fn main() -> Result<(), sqlx::Error> {
 
     create_users(&pool, teachers.clone()).await;
     create_users(&pool, students.clone()).await;
+    create_users(&pool, administrators()).await;
 
     let info_1164_course = info_1164(&teachers);
 

@@ -1,5 +1,6 @@
 mod controllers;
 mod dtos;
+
 mod middlewares {
     mod authentication;
     pub use authentication::Authentication;
@@ -20,6 +21,9 @@ mod repositories {
 }
 
 mod services {
+    mod cookies;
+    pub use cookies::CookieBuilder;
+
     mod oauth;
     pub use oauth::{GoogleOAuthService, OAuthService};
 
