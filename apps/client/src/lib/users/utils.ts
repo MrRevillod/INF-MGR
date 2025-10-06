@@ -1,5 +1,5 @@
 import type { User } from "$users/schemas"
-import type { TableColumn } from "$components/Table.svelte"
+import type { TableColumn } from "$lib/shared/components/Table.svelte"
 
 export const spanishRoles = {
 	student: "Estudiante",
@@ -9,25 +9,11 @@ export const spanishRoles = {
 	coordinator: "Coordinador (a)",
 }
 
-export const formatRoles = (roles: string[]): string => {
-	if (!roles || roles.length === 0) {
-		return "Sin roles"
-	}
-
-	return roles
-		.map(role => spanishRoles[role as keyof typeof spanishRoles] ?? role)
-		.join(", ")
-}
-
 export const tableColumns: TableColumn<User>[] = [
 	{ key: "rut", label: "RUT" },
 	{ key: "name", label: "Nombre" },
 	{ key: "email", label: "Correo electrónico" },
-	{
-		key: "roles",
-		label: "Roles",
-		formatter: value => formatRoles(value.roles as string[]),
-	},
+	{ key: "role", label: "Rol" },
 ]
 
 export const RutFormatter = (rut: string): string => {

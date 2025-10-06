@@ -85,9 +85,9 @@ pub struct UpdateUserDto {
 #[derive(Serialize, Deserialize, Validate, Default)]
 pub struct GetUsersQueryDto {
     #[validate(length(
-        min = 1,
+        min = 0,
         max = 100,
-        message = "El término de búsqueda debe tener entre 1 y 100 caracteres."
+        message = "El término de búsqueda debe tener entre 0 y 100 caracteres."
     ))]
     pub search: Option<String>,
 

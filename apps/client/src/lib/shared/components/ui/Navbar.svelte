@@ -15,9 +15,9 @@
 	import cx from "clsx"
 
 	const routes = [
-		{ title: "Inicio", path: "/", icon: HomeIcon },
-		{ title: "Usuarios", path: "/dashboard/users", icon: UserGroupIcon },
-		{ title: "Cursos", path: "/dashboard/courses", icon: ComputerDesktopIcon },
+		{ title: "Inicio", path: "/admin", icon: HomeIcon },
+		{ title: "Usuarios", path: "/admin/users", icon: UserGroupIcon },
+		{ title: "Cursos", path: "/admin/courses", icon: ComputerDesktopIcon },
 	]
 
 	const bottomActions = [

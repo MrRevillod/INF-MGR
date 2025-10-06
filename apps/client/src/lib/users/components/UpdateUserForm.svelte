@@ -1,27 +1,22 @@
 <script lang="ts">
 	import type { User } from "$users/schemas"
-	import type { Conflicts } from "$lib/shared/api/types"
 
-	import { useMutation } from "$lib/shared/hooks/useMutation"
+	import { useMutation } from "$lib/shared/hooks/useTanstack"
+	import { RutFormatter } from "../utils"
 	import { updateUserMutation } from "../mutations"
-	import { RutFormatter, formatRoles } from "../utils"
 
-	import Field from "$lib/components/ui/Field.svelte"
+	import Field from "$lib/shared/components/ui/Field.svelte"
 
-	interface Props {
-		user: User | null
-	}
-
-	const { user }: Props = $props()
+	const { user }: { user: User | null } = $props()
 
 	const defaultData = $derived({
 		email: user?.email,
-		roles: user?.roles,
+		roles: user?.role,
 		password: "",
 		confirmPassword: "",
 	})
 
-	const { mutate } = useMutation<User, Conflicts>(() =>
+	const { mutate } = useMutation<User>(() =>
 		updateUserMutation(user?.id ?? "", defaultData)
 	)
 
@@ -44,7 +39,7 @@
 	<Field label="Nombre" value={user?.name ?? ""} />
 
 	<Field label="Correo electrónico" value={user?.email ?? ""} />
-	<Field label="Roles" value={formatRoles(user?.roles ?? [])} />
+	<Field label="Rol" value={user?.role ?? "Sin rol"} />
 
 	<Field label="Contraseña" value="********" />
 

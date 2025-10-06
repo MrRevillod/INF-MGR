@@ -46,7 +46,6 @@
 
 <div class="flex h-screen items-center justify-center">
 	<div class="text-center">
-		<h1 class="text-2xl font-semibold text-gray-900">Procesando autenticación...</h1>
 		<p class="mt-2 text-gray-600">Redirigiendo...</p>
 		<div class="mt-4">
 			<div

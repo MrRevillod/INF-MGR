@@ -15,8 +15,8 @@ const config = {
 			$components: "src/lib/components",
 			$stores: "src/lib/stores",
 			$shared: "src/lib/shared",
-			$users: "src/lib/features/users",
-			$asignatures: "src/lib/features/asignatures",
+			$users: "src/lib/users",
+			$courses: "src/lib/courses",
 		},
 	},
 }
