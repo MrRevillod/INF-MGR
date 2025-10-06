@@ -1,18 +1,27 @@
 <script lang="ts">
-	import { googleLoginMutation } from "$lib/features/auth/querys"
+	import { api } from "$lib/shared/api/client"
+	import { useMutation } from "$lib/shared/hooks/useTanstack"
+	import { createMutation } from "@tanstack/svelte-query"
+	import { type ApiResponse, req as tryRequest } from "$api/utils"
 
-	let { data, error, isError, mutate } = googleLoginMutation()
+	let loginMutation = createMutation<ApiResponse<string>, ApiResponse, unknown>(
+		() => ({
+			mutationKey: ["google-login"],
+			mutationFn: () => tryRequest(() => api.post("auth/login")),
+			onMutate: () => {},
+		})
+	)
+
+	let { mutate, error, isError } = useMutation(() => loginMutation)
 
 	const onClick = () => {
-		mutate(null, {
+		mutate(undefined, {
 			onSuccess: response => {
 				window.location.href = response.data ?? "/"
 			},
 		})
 	}
 </script>
-
-<a href={data?.data ?? "#"}>Login Callback</a> <br />
 
 <button onclick={onClick}>Login with Google</button>
 

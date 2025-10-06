@@ -1,14 +1,14 @@
 <script lang="ts">
 	import { goto } from "$app/navigation"
-	import { useQuery } from "$lib/shared/hooks/useQuery"
+	import { useQuery } from "$lib/shared/hooks/useTanstack"
 	import { tableColumns } from "$users/utils"
 	import { getUsersQuery } from "$users/querys"
 	import { useEncodeData } from "$lib/shared/hooks/useUrlData"
 
-	import Table from "$lib/components/Table.svelte"
-	import Button from "$lib/components/ui/Button.svelte"
-	import SearchBar from "$lib/components/SearchBar.svelte"
-	import PageTitle from "$lib/components/ui/PageTitle.svelte"
+	import Table from "$lib/shared/components/Table.svelte"
+	import Button from "$lib/shared/components/ui/Button.svelte"
+	import SearchBar from "$lib/shared/components/SearchBar.svelte"
+	import PageTitle from "$lib/shared/components/ui/PageTitle.svelte"
 
 	let search = $state("")
 	let currentPage = $state(1)
@@ -57,13 +57,8 @@
 		data={data?.users ?? []}
 		columns={tableColumns}
 		pagination={paginationProps}
-		onDetailsClick={item => {
-			const pageData = {
-				user: item,
-			}
-
-			goto(`/users/${item.id}?${useEncodeData(pageData)}`)
-		}}
+		onDetailsClick={item =>
+			goto(`/users/${item.id}?${useEncodeData({ user: item })}`)}
 		{isError}
 		{isLoading}
 	/>

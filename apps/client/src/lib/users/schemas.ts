@@ -5,16 +5,15 @@ export interface User {
 	rut: string
 	name: string
 	email: string
-	roles: Role[]
+	role: Role
 	createdAt: string
 	deletedAt: string | null
 }
 
 const RoleDto = v.union([
-	v.literal("administrator"),
 	v.literal("student"),
 	v.literal("teacher"),
-	v.literal("coordinator"),
+	v.literal("administrator"),
 	v.literal("secretary"),
 ])
 
@@ -26,7 +25,7 @@ export const CreateUserSchema = v.object({
 	email: v.string(),
 	password: v.string(),
 	confirmPassword: v.string(),
-	roles: v.array(RoleDto),
+	role: RoleDto,
 })
 
 export type CreateUserSchemaType = v.InferInput<typeof CreateUserSchema>
@@ -35,7 +34,7 @@ export const UpdateUserSchema = v.object({
 	email: v.optional(v.string()),
 	password: v.optional(v.string()),
 	confirmPassword: v.optional(v.string()),
-	roles: v.optional(v.array(RoleDto)),
+	role: v.optional(RoleDto),
 })
 
 export type UpdateUserSchemaType = v.InferInput<typeof UpdateUserSchema>

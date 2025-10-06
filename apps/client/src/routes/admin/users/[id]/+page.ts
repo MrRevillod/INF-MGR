@@ -1,4 +1,4 @@
-import type { User } from "$lib/features/users/schemas"
+import type { User } from "$lib/users/schemas"
 import type { PageLoad } from "./$types"
 
 import { useDecodeData } from "$lib/shared/hooks/useUrlData"
@@ -13,6 +13,6 @@ export const load: PageLoad = async ({ url }) => {
 
 	return {
 		user: decoded.user as User,
-		roles: decoded.user.roles as User["roles"],
+		role: decoded.user.role as User["role"],
 	}
 }

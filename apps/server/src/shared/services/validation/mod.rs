@@ -1,14 +1,16 @@
+use infer::archive::{is_pdf, is_zip};
 use std::{collections::HashMap, sync::LazyLock};
-
 use sword::prelude::*;
 
 pub struct FileValidationService;
 
-static VALIDATION_FUNCTIONS: LazyLock<HashMap<&'static str, fn(&[u8]) -> bool>> =
+type ValidationFunction = fn(&[u8]) -> bool;
+
+static VALIDATION_FUNCTIONS: LazyLock<HashMap<&'static str, ValidationFunction>> =
     LazyLock::new(|| {
         HashMap::from([
-            ("pdf", infer::archive::is_pdf as fn(&[u8]) -> bool),
-            ("zip", infer::archive::is_zip as fn(&[u8]) -> bool),
+            ("pdf", is_pdf as fn(&[u8]) -> bool),
+            ("zip", is_zip as fn(&[u8]) -> bool),
         ])
     });
 

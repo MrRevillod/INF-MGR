@@ -1,13 +1,13 @@
 <script lang="ts">
 	import type { PageProps } from "./$types"
 
-	import { goto } from "$app/navigation"
-	import { useQuery } from "$lib/shared/hooks/useQuery"
-	import { useEncodeData } from "$lib/shared/hooks/useUrlData"
+	// import { goto } from "$app/navigation"
+	// import { useQuery } from "$lib/shared/hooks/useQuery"
+	// import { useEncodeData } from "$lib/shared/hooks/useUrlData"
 	// import { getStudentInscriptionsQuery } from "$users/querys"
 
-	import PageTitle from "$lib/components/ui/PageTitle.svelte"
-	import CourseCard from "$lib/features/courses/components/Card.svelte"
+	import PageTitle from "$lib/shared/components/ui/PageTitle.svelte"
+	// import CourseCard from "$lib/features/courses/components/Card.svelte"
 	import UpdateUserForm from "$lib/features/users/components/UpdateUserForm.svelte"
 
 	const { data: page }: PageProps = $props()

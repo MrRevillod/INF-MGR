@@ -1,16 +1,16 @@
 <script lang="ts">
 	import type { PageData } from "./$types"
 
-	import Acordion from "$lib/components/ui/Acordion.svelte"
-	import PageTitle from "$lib/components/ui/PageTitle.svelte"
-	import StudentCalifications from "$lib/features/courses/components/StudentScores.svelte"
+	import Acordion from "$lib/shared/components/ui/Acordion.svelte"
+	import PageTitle from "$lib/shared/components/ui/PageTitle.svelte"
+	import StudentCalifications from "$lib/courses/components/StudentScores.svelte"
 
-	const { inscription, user }: PageData = $props()
+	const { inscription }: PageData = $props()
 </script>
 
 <section class="space-y-6">
 	<PageTitle
-		title={`${inscription.course?.name} - ${user?.name ?? "Cargando..."}`}
+		title={`${inscription.course?.name} - ${"Cargando..."}`}
 		description={`${inscription.course?.code} - ${inscription.course?.year}`}
 	/>
 

@@ -9,32 +9,24 @@ impl From<AppError> for HttpResponse {
             AppError::Validation { source } => handle_validation_error(source),
             AppError::Unauthorized { source } => handle_auth_error(source),
 
+            AppError::InternalServerError(ref err) => {
+                tracing::error!("Internal error: {}", err);
+                HttpResponse::InternalServerError()
+            }
+
             AppError::PostgresDatabase { source } => {
                 tracing::error!("Database error: {}", source);
                 HttpResponse::InternalServerError()
-                    .message("An internal error occurred")
-                    .data(json!({ "type": "InternalServerError" }))
             }
 
             AppError::RedisDatabase { source } => {
                 tracing::error!("Redis error: {}", source);
                 HttpResponse::InternalServerError()
-                    .message("An internal error occurred")
-                    .data(json!({ "type": "InternalServerError" }))
             }
 
             AppError::Service { source } => {
                 tracing::error!("Internal Service error: {}", source);
                 HttpResponse::InternalServerError()
-                    .message("An internal error occurred")
-                    .data(json!({ "type": "InternalServerError" }))
-            }
-
-            AppError::InternalServerError(ref err) => {
-                tracing::error!("Internal error: {}", err);
-                HttpResponse::InternalServerError()
-                    .message("An internal server error occurred")
-                    .data(json!({ "type": "InternalServerError" }))
             }
         }
     }
@@ -50,12 +42,9 @@ fn handle_not_found_error(error: NotFoundError) -> HttpResponse {
         NotFoundError::MeetingRequest { id } => ("MeetingRequest", id.to_string()),
     };
 
-    HttpResponse::NotFound()
-        .message(format!(
-            "{} with ID {} not found",
-            resource_type, identifier
-        ))
-        .data(json!({ "type": "NotFoundError" }))
+    HttpResponse::NotFound().message(format!(
+        "{resource_type} de id '{identifier}' no encontrado"
+    ))
 }
 
 fn handle_validation_error(error: ValidationError) -> HttpResponse {
@@ -136,38 +125,26 @@ fn handle_validation_error(error: ValidationError) -> HttpResponse {
 
     HttpResponse::BadRequest()
         .message("Invalid request data")
-        .data(json!({
-            "type": "ValidationError",
-            "details": [
-                {
-                    "field": field,
-                    "message": message
-                }
-            ]
-        }))
+        .errors(json!({ field: [ { "message": message } ] }))
 }
 
 fn handle_auth_error(source: AuthError) -> HttpResponse {
     tracing::warn!("Unauthorized access: {source}");
 
-    let (kind, message) = match source {
-        AuthError::OAuthError(_) => {
-            ("OAuthError", "Error de autenticación OAuth".into())
+    let message = match source {
+        AuthError::OAuthError(_) => "Error de autenticación OAuth".into(),
+        AuthError::UserNotFound(email) => {
+            format!("El usuario con email '{email}' no está registrado.")
         }
-        AuthError::UserNotFound(email) => (
-            "UserNotFound",
-            format!("El usuario con email '{email}' no está registrado."),
-        ),
         AuthError::JsonWebTokenError(err) => {
             tracing::error!("JWT error: {}", err);
-            ("AuthenticationError", "Error autenticación".into())
+            "Error autenticación".into()
         }
-        AuthError::SessionExpired => ("SessionExpired", "Sesión expirada".into()),
-        AuthError::Other(msg) => ("AuthenticationError", msg),
+        AuthError::SessionExpired => "Sesión expirada".into(),
+        AuthError::Other(msg) => msg,
     };
 
-    HttpResponse::Unauthorized().data(json!({
-        "type": kind,
-        "message": message
-    }))
+    HttpResponse::Unauthorized()
+        .message(message)
+        .error("AuthError")
 }

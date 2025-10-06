@@ -13,9 +13,7 @@ export const load: PageLoad = async ({ url }) => {
 	}
 
 	return {
-		data: {
-			inscription: decoded.inscription as Inscription,
-			user: null as User | null,
-		},
+		inscription: decoded.inscription as Inscription,
+		user: null as User | null,
 	}
 }
