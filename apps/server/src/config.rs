@@ -9,7 +9,6 @@ pub struct ServerConfig {
     pub host: String,
     pub client_app_url: String,
     pub documents_dir: String,
-    pub students_api_url: String,
 }
 
 #[derive(Debug, Deserialize)]

@@ -1,8 +1,17 @@
 export type ApiResponse<T = unknown> = {
-	data: T | null
+	data?: T
 	status: number
+	success: boolean
 	timestamp: string
 	message: string
+	error?: string
+	errors?: Record<
+		string,
+		{
+			message: string
+			code?: string
+		}[]
+	>
 }
 
 export type Conflicts = {

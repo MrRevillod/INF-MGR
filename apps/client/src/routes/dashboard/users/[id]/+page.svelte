@@ -5,7 +5,7 @@
 	import { useQuery } from "$lib/shared/hooks/useQuery"
 	import { formatRoles } from "$users/utils"
 	import { useEncodeData } from "$lib/shared/hooks/useUrlData"
-	import { getStudentInscriptionsQuery } from "$users/querys"
+	// import { getStudentInscriptionsQuery } from "$users/querys"
 
 	import PageTitle from "$lib/components/ui/PageTitle.svelte"
 	import AsignatureCard from "$lib/features/courses/components/Card.svelte"
@@ -13,9 +13,9 @@
 
 	const { data: page }: PageProps = $props()
 
-	const { data: inscriptions, isLoading } = $derived(
-		useQuery(() => getStudentInscriptionsQuery(page.user.id))
-	)
+	// const { data: inscriptions, isLoading } = $derived(
+	// 	useQuery(() => getStudentInscriptionsQuery(page.user.id))
+	// )
 </script>
 
 <section class="space-y-6">
@@ -39,7 +39,7 @@
 			</div>
 
 			<div>
-				{#if $isLoading}
+				<!-- {#if $isLoading}
 					<p>Cargando asignaturas...</p>
 				{:else}
 					<ul class="flex w-5/6 list-none flex-col gap-2">
@@ -61,7 +61,7 @@
 							/>
 						{/each}
 					</ul>
-				{/if}
+				{/if} -->
 			</div>
 		</section>
 	</section>

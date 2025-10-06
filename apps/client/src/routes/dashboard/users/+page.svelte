@@ -13,16 +13,16 @@
 	let search = $state("")
 	let currentPage = $state(1)
 
-	const { data, isLoading, isError, refetch } = $derived(
-		useQuery(() => getUsersQuery({ search, page: currentPage }))
+	const { data, isLoading, isError, refetch } = useQuery(() =>
+		getUsersQuery({ search, page: currentPage })
 	)
 
 	const paginationProps = $derived({
 		currentPage,
-		totalPages: $data?.totalPages ?? 1,
-		totalUsers: $data?.totalUsers ?? 0,
-		hasNext: $data?.hasNext ?? false,
-		hasPrevious: $data?.hasPrevious ?? false,
+		totalPages: data?.totalPages ?? 1,
+		totalUsers: data?.totalUsers ?? 0,
+		hasNext: data?.hasNext ?? false,
+		hasPrevious: data?.hasPrevious ?? false,
 		onPageChange: (page: number) => (currentPage = page),
 	})
 
@@ -43,10 +43,10 @@
 
 		<div class="flex items-center gap-3">
 			<Button
-				onclick={() => $refetch()}
+				onclick={() => refetch()}
 				variant="secondary"
-				disabled={$isLoading}
-				text={$isLoading ? "Cargando..." : "Actualizar"}
+				disabled={isLoading}
+				text={isLoading ? "Cargando..." : "Actualizar"}
 			/>
 
 			<Button onclick={() => {}} variant="primary" text="Nuevo usuario" />
@@ -54,10 +54,8 @@
 	</div>
 
 	<Table
-		data={$data?.users ?? []}
+		data={data?.users ?? []}
 		columns={tableColumns}
-		isError={$isError}
-		isLoading={$isLoading}
 		pagination={paginationProps}
 		onDetailsClick={item => {
 			const pageData = {
@@ -66,5 +64,7 @@
 
 			goto(`/users/${item.id}?${useEncodeData(pageData)}`)
 		}}
+		{isError}
+		{isLoading}
 	/>
 </div>

@@ -21,15 +21,13 @@
 		confirmPassword: "",
 	})
 
-	const { mutate } = $derived(
-		useMutation<User, Conflicts>(() =>
-			updateUserMutation(user?.id ?? "", defaultData)
-		)
+	const { mutate } = useMutation<User, Conflicts>(() =>
+		updateUserMutation(user?.id ?? "", defaultData)
 	)
 
 	const onSubmit = (data: Record<string, unknown>) => {
 		console.log("Updated data:", data)
-		$mutate(data, {
+		mutate(data, {
 			onSuccess: () => {
 				console.log("User updated successfully")
 			},
