@@ -38,6 +38,7 @@ documents/*
 tests/files/*
 
 tests/config
-apps/server/config
+apps/server/config/*
+!apps/server/config/migrations/
 
 service-account.json
