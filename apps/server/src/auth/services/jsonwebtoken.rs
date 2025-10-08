@@ -23,6 +23,7 @@ pub struct TokenConfig {
     pub expiration: usize,
 }
 
+#[derive(Clone, Copy)]
 pub enum TokenKind {
     Access,
     Refresh,
@@ -81,14 +82,14 @@ impl TokenService for JsonWebTokenService {
     }
 
     fn verify(&self, token_kind: TokenKind, token: &str) -> AppResult<Claims> {
-        let TokenConfig { secret, .. } = self.get_token_config(token_kind);
+        let TokenConfig { secret, .. } = self.get_token_config(token_kind.clone());
 
         let token_data = jsonwebtoken::decode::<Claims>(
             token,
             &jsonwebtoken::DecodingKey::from_secret(secret.as_ref()),
             &jsonwebtoken::Validation::default(),
         )
-        .map_err(AuthError::from)?;
+        .map_err(|e| AuthError::from(e))?;
 
         Ok(token_data.claims)
     }

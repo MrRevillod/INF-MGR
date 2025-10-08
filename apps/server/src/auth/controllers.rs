@@ -88,8 +88,6 @@ impl AuthController {
             .close_session(&access_token)
             .await?;
 
-        Ok(HttpResponse::Ok().data(json!({
-            "message": "Session closed successfully"
-        })))
+        Ok(HttpResponse::Ok().message("Session closed successfully"))
     }
 }

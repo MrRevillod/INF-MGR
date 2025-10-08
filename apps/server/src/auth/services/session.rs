@@ -75,6 +75,7 @@ impl SessionService for SessionServiceImpl {
         );
 
         let session = Session::builder()
+            .session_id(Uuid::parse_str(&session_id).expect("Valid UUID"))
             .user_id(user_id)
             .access_token(access_token)
             .refresh_token(refresh_token)

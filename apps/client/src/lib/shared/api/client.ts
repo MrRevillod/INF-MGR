@@ -45,10 +45,33 @@ protectedApi.interceptors.response.use(
 		// So We can try to refresh the session making a req to "/auth/refresh"
 		// if the refresh req is successfull, retry the original request
 		return api
-			.post("/auth/refresh")
+			.post(
+				"/auth/refresh",
+				{},
+				{
+					headers: { Authorization: originalRequest.headers["Authorization"] },
+				}
+			)
 			.then(response => {
-				if (response.status === 200) return protectedApi(originalRequest)
+				if (response.status === 200) {
+					console.log("Refresh response:", response.data)
+
+					const { access_token, refresh_token } = response.data.data
+
+					if (!access_token || !refresh_token) {
+						return Promise.reject(new Error("Invalid refresh response"))
+					}
+
+					localStorage.setItem("ACCESS", access_token)
+					localStorage.setItem("REFRESH", refresh_token)
+
+					delete originalRequest.headers["Authorization"]
+					return protectedApi(originalRequest)
+				}
 			})
-			.catch(error => Promise.reject(error))
+			.catch(error => {
+				console.error("Refresh error:", error)
+				return Promise.reject(error)
+			})
 	}
 )

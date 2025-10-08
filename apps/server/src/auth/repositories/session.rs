@@ -26,12 +26,18 @@ pub trait SessionRepository: Interface {
 impl SessionRepository for RedisSessionRepository {
     async fn get(&self, session_id: &str) -> AppResult<Option<Session>> {
         let mut client = self.redis_db.get_connection();
-        let data: String = client.get(format!("session:{session_id}")).await?;
+        let key = format!("session:{session_id}");
 
-        let session: Session = serde_json::from_str(&data)
-            .map_err(|e| AppError::InternalServerError(e.into()))?;
+        let data: Option<String> = client.get(&key).await?;
 
-        Ok(Some(session))
+        match data {
+            Some(json_str) => {
+                let session: Session = serde_json::from_str(&json_str)
+                    .map_err(|e| AppError::InternalServerError(e.into()))?;
+                Ok(Some(session))
+            }
+            None => Ok(None),
+        }
     }
 
     async fn save(&self, session: Session, ttl: u64) -> AppResult<()> {
@@ -40,7 +46,8 @@ impl SessionRepository for RedisSessionRepository {
             .map_err(|e| AppError::InternalServerError(e.into()))?;
 
         let key = format!("session:{}", session.id);
-        let _: () = client.set_ex(key, data, ttl).await?;
+
+        let _: () = client.set_ex(&key, data, ttl).await?;
 
         Ok(())
     }

@@ -34,18 +34,20 @@ impl ContextExt for Context {
     }
 
     fn get_bearer_tokens(&self) -> HttpResult<(String, String)> {
-        // Get tokens from Authorization header in format: Bearer access_token,refresh_token
         let Some(auth_header) = self.header("authorization") else {
-            return Err(HttpResponse::Unauthorized().message("Authorization header missing"));
+            return Err(
+                HttpResponse::Unauthorized().message("Authorization header missing")
+            );
         };
 
         if !auth_header.starts_with("Bearer ") {
-            return Err(HttpResponse::Unauthorized().message("Invalid authorization header format"));
+            return Err(HttpResponse::Unauthorized()
+                .message("Invalid authorization header format"));
         }
 
         let tokens_str = auth_header.trim_start_matches("Bearer ");
         let tokens: Vec<&str> = tokens_str.split(',').collect();
-        
+
         if tokens.len() != 2 {
             return Err(HttpResponse::Unauthorized().message("Invalid bearer token format. Expected: Bearer access_token,refresh_token"));
         }
@@ -54,7 +56,8 @@ impl ContextExt for Context {
         let refresh_token = tokens[1].trim().to_string();
 
         if access_token.is_empty() || refresh_token.is_empty() {
-            return Err(HttpResponse::Unauthorized().message("Access token or refresh token is empty"));
+            return Err(HttpResponse::Unauthorized()
+                .message("Access token or refresh token is empty"));
         }
 
         Ok((access_token, refresh_token))
