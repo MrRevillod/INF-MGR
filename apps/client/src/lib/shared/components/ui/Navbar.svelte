@@ -1,4 +1,5 @@
 <script lang="ts">
+	import cx from "clsx"
 	import type { Component } from "svelte"
 
 	import {
@@ -9,10 +10,10 @@
 		UserCircleIcon,
 	} from "@fvilers/heroicons-svelte/20/solid"
 
-	import { appStore } from "$lib/shared/app.store.svelte"
-	import { afterNavigate } from "$app/navigation"
-
-	import cx from "clsx"
+	import { appStore } from "$lib/shared/stores/app.store.svelte"
+	import { useLogoutMutation } from "$lib/auth/queries"
+	import { afterNavigate, goto } from "$app/navigation"
+	import { authStore } from "$lib/shared/stores/auth.store.svelte"
 
 	const routes = [
 		{ title: "Inicio", path: "/admin", icon: HomeIcon },
@@ -22,8 +23,17 @@
 
 	const bottomActions = [
 		{ title: "Mi perfil", path: "/profile", icon: UserCircleIcon },
-		{ title: "Cerrar sesión", path: "/logout", icon: ArrowLeftStartOnRectangleIcon },
 	]
+
+	const logoutMutation = useLogoutMutation()
+
+	const handleLogout = () => {
+		logoutMutation.mutate(undefined, {})
+
+		appStore.clear()
+		authStore.reset()
+		goto("/auth/login")
+	}
 
 	afterNavigate(navigate => {
 		const route = navigate.to?.url.pathname ?? ""
@@ -64,6 +74,15 @@
 		{#each bottomActions as action (action.title)}
 			{@render navItem(action)}
 		{/each}
+
+		<button
+			onclick={() => handleLogout()}
+			title="Cerrar sesión"
+			class={"text-text-secondary hover:text-text-primary hover:bg-hover-bg flex items-center justify-center rounded-lg px-2 py-3 text-base font-medium transition-all duration-200 lg:justify-start lg:gap-3 lg:px-3"}
+		>
+			<ArrowLeftStartOnRectangleIcon class="h-6 w-6 flex-shrink-0" />
+			<span class="hidden lg:block">Cerrar sesión</span>
+		</button>
 	</div>
 
 	<div class="border-border flex items-center justify-between border-t p-2 lg:p-4">

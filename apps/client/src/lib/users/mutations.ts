@@ -2,7 +2,7 @@ import type { User } from "./schemas"
 import type { ApiResponse } from "$api/utils"
 
 import { api } from "$api/client"
-import { req as tryHttp } from "$api/utils"
+import { TryFn } from "$api/utils"
 import { createMutation, useQueryClient } from "@tanstack/svelte-query"
 
 export const updateUserMutation = (id: string, data: Record<string, unknown>) => {
@@ -12,7 +12,7 @@ export const updateUserMutation = (id: string, data: Record<string, unknown>) =>
 
 	return createMutation<ApiResponse<User>, ApiResponse, unknown>(() => ({
 		mutationKey: ["update-user", id],
-		mutationFn: () => tryHttp<User>(request, data),
+		mutationFn: () => TryFn<User>(request, data),
 		onSuccess: () => {
 			useQueryClient().invalidateQueries({
 				queryKey: ["user", id],

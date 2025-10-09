@@ -9,6 +9,11 @@ class ApplicationStore {
 	setRoute(route: string) {
 		this.currentRoute = route
 	}
+
+	clear() {
+		this.pageTitle = ""
+		this.currentRoute = ""
+	}
 }
 
 export const appStore = new ApplicationStore()

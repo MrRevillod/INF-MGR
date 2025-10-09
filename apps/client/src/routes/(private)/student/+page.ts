@@ -1,4 +1,4 @@
-import type { User } from "$lib/features/users/schemas"
+import type { User } from "$lib/users/schemas"
 import type { PageLoad } from "./$types"
 
 export const load: PageLoad = async () => {

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from "$app/navigation"
 	import { tableColumns } from "$users/utils"
-	import { getUsersQuery } from "$lib/users/querys.svelte"
+	import { getUsersQuery } from "$lib/users/querys"
 	import { useEncodeData } from "$lib/shared/hooks/useUrlData"
 
 	import Table from "$lib/shared/components/Table.svelte"
@@ -14,12 +14,14 @@
 
 	const query = getUsersQuery(() => ({ search, page: currentPage }))
 
+	const { data: res, isError, isLoading, refetch } = $derived(query)
+
 	const paginationProps = $derived({
 		currentPage,
-		totalPages: query.data?.data?.totalPages ?? 1,
-		totalUsers: query.data?.data?.totalUsers ?? 0,
-		hasNext: query.data?.data?.hasNext ?? false,
-		hasPrevious: query.data?.data?.hasPrevious ?? false,
+		totalPages: res?.data?.totalPages ?? 1,
+		totalUsers: res?.data?.totalUsers ?? 0,
+		hasNext: res?.data?.hasNext ?? false,
+		hasPrevious: res?.data?.hasPrevious ?? false,
 		onPageChange: (page: number) => (currentPage = page),
 	})
 
@@ -40,10 +42,10 @@
 
 		<div class="flex items-center gap-3">
 			<Button
-				onclick={() => query.refetch()}
+				onclick={() => refetch()}
 				variant="secondary"
-				disabled={query.isLoading}
-				text={query.isLoading ? "Cargando..." : "Actualizar"}
+				disabled={isLoading}
+				text={isLoading ? "Cargando..." : "Actualizar"}
 			/>
 
 			<Button onclick={() => {}} variant="primary" text="Nuevo usuario" />
@@ -51,12 +53,12 @@
 	</div>
 
 	<Table
-		data={query.data?.data?.users ?? []}
+		data={res?.data?.users ?? []}
 		columns={tableColumns}
 		pagination={paginationProps}
 		onDetailsClick={item =>
 			goto(`/users/${item.id}?${useEncodeData({ user: item })}`)}
-		isError={query.isError}
-		isLoading={query.isLoading}
+		{isError}
+		{isLoading}
 	/>
 </div>

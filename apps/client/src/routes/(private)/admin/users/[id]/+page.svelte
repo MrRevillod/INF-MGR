@@ -3,13 +3,12 @@
 
 	// import { goto } from "$app/navigation"
 	// import { useQuery } from "$lib/shared/hooks/useQuery"
-	import { formatRoles } from "$users/utils"
 	// import { useEncodeData } from "$lib/shared/hooks/useUrlData"
 	// import { getStudentInscriptionsQuery } from "$users/querys"
 
 	import PageTitle from "$lib/shared/components/ui/PageTitle.svelte"
 	// import AsignatureCard from "$lib/features/courses/components/Card.svelte"
-	import UpdateUserForm from "$lib/features/users/components/UpdateUserForm.svelte"
+	import UpdateUserForm from "$lib/users/components/UpdateUserForm.svelte"
 
 	const { data: page }: PageProps = $props()
 
@@ -21,7 +20,7 @@
 <section class="space-y-6">
 	<PageTitle
 		title={`Perfil de ${page.user?.name ?? "Cargando..."}`}
-		description={`Tipo de usuario: ${formatRoles(page.user?.roles ?? [])}`}
+		description={`Tipo de usuario: ${page.user?.role ?? []}`}
 	/>
 
 	<section class="flex w-full flex-row items-start justify-between gap-12">

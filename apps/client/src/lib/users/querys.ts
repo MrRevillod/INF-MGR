@@ -3,7 +3,7 @@ import type { ApiResponse } from "$api/utils"
 
 import { protectedApi } from "$api/client"
 import { createQuery } from "@tanstack/svelte-query"
-import { req as tryRequest } from "$api/utils"
+import { TryFn } from "$api/utils"
 
 export interface GetUsersParams {
 	search?: string
@@ -25,7 +25,7 @@ export const getUsersQuery = (getParams: () => GetUsersParams) => {
 		return {
 			queryKey: ["users", params.search, params.page] as const,
 			staleTime: 1000 * 60 * 1,
-			queryFn: () => tryRequest(() => protectedApi.get("users", { params })),
+			queryFn: () => TryFn(() => protectedApi.get("users", { params })),
 		}
 	})
 }

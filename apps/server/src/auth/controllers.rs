@@ -90,4 +90,10 @@ impl AuthController {
 
         Ok(HttpResponse::Ok().message("Session closed successfully"))
     }
+
+    #[get("/me")]
+    #[middleware(Authentication)]
+    async fn me(ctx: Context) -> HttpResult<HttpResponse> {
+        Ok(HttpResponse::Ok().data(ctx.get_current_user()?))
+    }
 }

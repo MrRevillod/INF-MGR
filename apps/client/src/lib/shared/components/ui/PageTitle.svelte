@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { appStore } from "$lib/shared/app.store.svelte"
+	import { appStore } from "$lib/shared/stores/app.store.svelte"
 
 	interface PageTitleProps {
 		title?: string

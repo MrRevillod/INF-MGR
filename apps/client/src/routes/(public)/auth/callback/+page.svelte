@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from "$app/navigation"
+	import { authStore } from "$lib/shared/stores/auth.store.svelte"
 	import { jwtDecode } from "jwt-decode"
 
 	interface TokenClaims {
@@ -33,12 +34,15 @@
 		localStorage.setItem("ACCESS", access)
 		localStorage.setItem("REFRESH", refresh)
 
+		authStore.accessToken = access
+		authStore.refreshToken = refresh
+
 		try {
 			const claims = jwtDecode<TokenClaims>(access)
-			const route = roleRoutes[claims.role] ?? "/"
-			goto(route)
+			goto(roleRoutes[claims.role] ?? "/")
 		} catch (error) {
 			console.error("Error decoding token:", error)
+			authStore.reset()
 			goto("/auth/login")
 		}
 	})
