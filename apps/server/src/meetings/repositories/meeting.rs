@@ -25,7 +25,7 @@ impl MeetingRepository {
             .fetch_all(self.db_connection.get_pool())
             .await?;
 
-        return Ok(meetings);
+        Ok(meetings)
     }
 
     pub async fn save(&self, meeting: &Meeting) -> AppResult<Meeting> {

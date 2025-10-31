@@ -27,7 +27,7 @@ impl OnRequest for Authentication {
             .user_repository
             .find_by_id(&user_id)
             .await?
-            .ok_or_else(|| HttpResponse::Unauthorized())?;
+            .ok_or_else(HttpResponse::Unauthorized)?;
 
         if user.deleted_at.is_some() {
             return Err(HttpResponse::Unauthorized());

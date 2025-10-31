@@ -94,7 +94,7 @@ impl CourseService {
             .publish(Event::CourseCreated(event_data))
             .await;
 
-        Ok(self.courses.save(course).await?)
+        self.courses.save(course).await
     }
 
     pub async fn update(
@@ -114,7 +114,8 @@ impl CourseService {
             course.evaluations =
                 evaluation.into_iter().map(CourseEvaluation::from).collect();
         }
-        Ok(self.courses.save(course).await?)
+
+        self.courses.save(course).await
     }
 
     pub async fn remove(&self, id: &Uuid) -> Result<(), AppError> {
