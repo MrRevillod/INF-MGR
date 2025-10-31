@@ -1,62 +1,30 @@
-use async_trait::async_trait;
 use reqwest::Client as HttpClient;
-use shaku::{Component, Interface};
 use std::sync::Arc;
+use sword::core::injectable;
 use uuid::Uuid;
 
 use crate::{
-    config::StudentsApiConfig,
     courses::{Course, CourseRepository},
     enrollments::{Enrollment, EnrollmentRepository},
     imports::ImportedStudent,
     shared::{
         AppError, NotFoundError,
-        services::{Event, EventQueue},
+        event_handler::{Event, EventQueue},
     },
     users::*,
 };
 
-#[derive(Component)]
-#[shaku(interface = ImportService)]
-pub struct ImportServiceImpl {
-    #[shaku(inject)]
-    courses: Arc<dyn CourseRepository>,
-
-    #[shaku(inject)]
-    users: Arc<dyn UserRepository>,
-
-    #[shaku(inject)]
-    event_queue: Arc<dyn EventQueue>,
-
-    #[shaku(inject)]
-    enrollments: Arc<dyn EnrollmentRepository>,
+#[injectable]
+pub struct ImportService {
+    courses: Arc<CourseRepository>,
+    users: Arc<UserRepository>,
+    event_queue: Arc<EventQueue>,
+    enrollments: Arc<EnrollmentRepository>,
 }
 
-#[async_trait]
-pub trait ImportService: Interface {
-    async fn import_course_students(
+impl ImportService {
+    pub async fn import_course_students(
         &self,
-        config: StudentsApiConfig,
-        course_id: &Uuid,
-    ) -> Result<(), AppError>;
-
-    async fn get_students(
-        &self,
-        config: StudentsApiConfig,
-        course: &Course,
-    ) -> Result<Vec<ImportedStudent>, AppError>;
-
-    async fn classify_imported_students(
-        &self,
-        students: Vec<ImportedStudent>,
-    ) -> Result<(Vec<ImportedStudent>, Vec<User>), AppError>;
-}
-
-#[async_trait]
-impl ImportService for ImportServiceImpl {
-    async fn import_course_students(
-        &self,
-        config: StudentsApiConfig,
         course_id: &Uuid,
     ) -> Result<(), AppError> {
         let course = self
@@ -65,7 +33,7 @@ impl ImportService for ImportServiceImpl {
             .await?
             .ok_or(NotFoundError::course(*course_id))?;
 
-        let students = self.get_students(config, &course).await?;
+        let students = self.get_students(&course).await?;
 
         let (imported_students, existing_students) =
             self.classify_imported_students(students).await?;
@@ -111,7 +79,7 @@ impl ImportService for ImportServiceImpl {
         Ok(())
     }
 
-    async fn classify_imported_students(
+    pub async fn classify_imported_students(
         &self,
         students: Vec<ImportedStudent>,
     ) -> Result<(Vec<ImportedStudent>, Vec<User>), AppError> {
@@ -137,17 +105,15 @@ impl ImportService for ImportServiceImpl {
         Ok((imported_students, existing_students))
     }
 
-    async fn get_students(
+    pub async fn get_students(
         &self,
-        config: StudentsApiConfig,
         course: &Course,
     ) -> Result<Vec<ImportedStudent>, AppError> {
         let Course { year, code, .. } = course;
-        let StudentsApiConfig { api_key, api_url } = config;
 
         let response = HttpClient::new()
-            .get(format!("{api_url}/courses/{year}/{code}/students"))
-            .header("x-api-key", api_key)
+            .get(format!("url/courses/{year}/{code}/students"))
+            .header("x-api-key", "sample")
             .send()
             .await
             .map_err(|e| {
@@ -160,6 +126,7 @@ impl ImportService for ImportServiceImpl {
                 "Students API returned error status: {}",
                 response.status()
             );
+
             return Err(AppError::InternalServerError(
                 "Failed to fetch students from Students API".into(),
             ));

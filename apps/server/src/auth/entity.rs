@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Session {
     pub id: Uuid,
     pub access_token: String,
@@ -33,12 +33,10 @@ pub struct SessionBuilder {
 
 impl SessionBuilder {
     pub fn new() -> Self {
-        Self {
-            ..Default::default()
-        }
+        Self::default()
     }
 
-    pub fn session_id(mut self, id: Uuid) -> Self {
+    pub const fn session_id(mut self, id: Uuid) -> Self {
         self.id = Some(id);
         self
     }

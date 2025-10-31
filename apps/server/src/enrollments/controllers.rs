@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use bytes::Bytes;
 use sword::prelude::*;
 use tokio::fs;
@@ -10,36 +12,33 @@ use crate::{
     courses::CourseService,
     enrollments::EnrollmentService,
     practices::*,
-    shared::{
-        AppModule, ContextExt, FileResponse,
-        services::{FileValidationConfig, FileValidationService},
-    },
+    shared::{FileValidationConfig, FileValidationService, http::ContextExt},
+    users::Role,
 };
 
 #[controller("/enrollments")]
-pub struct EnrollmentsController {}
+pub struct EnrollmentsController {
+    courses: Arc<CourseService>,
+    enrollments: Arc<EnrollmentService>,
+    practices: Arc<PracticeService>,
+    server_config: ServerConfig,
+}
 
 #[routes]
 impl EnrollmentsController {
     #[post("/{id}/practice")]
-    #[middleware(Authentication)]
-    #[middleware(MinimumRequiredRole, config = "teacher")]
-    async fn create_practice(ctx: Context) -> HttpResult<HttpResponse> {
-        let enrollment_id = ctx.param::<Uuid>("id")?;
-        let dto = ctx.validated_body::<CreatePracticeDto>()?;
-
-        let owner_validation = ctx.get_ownership_validation()?;
+    #[uses(Authentication)]
+    #[uses(MinimumRequiredRole, config = Role::Teacher)]
+    async fn create_practice(&self, req: Request) -> HttpResult {
+        let enrollment_id = req.param::<Uuid>("id")?;
+        let dto = req.body_validator::<CreatePracticeDto>()?;
+        let owner_validation = req.get_ownership_validation()?;
 
         if owner_validation.required {
-            let enrollment_service = ctx.di::<AppModule, dyn EnrollmentService>()?;
-
             let (enrollment, _, _) =
-                enrollment_service.get_by_id(&enrollment_id).await?;
+                self.enrollments.get_by_id(&enrollment_id).await?;
 
-            let course_service = ctx.di::<AppModule, dyn CourseService>()?;
-
-            let (course, _) =
-                course_service.get_by_id(&enrollment.course_id).await?;
+            let (course, _) = self.courses.get_by_id(&enrollment.course_id).await?;
 
             if course.teacher_id != owner_validation.user_id {
                 return Err(HttpResponse::Forbidden().message(
@@ -48,22 +47,17 @@ impl EnrollmentsController {
             }
         }
 
-        let practice = ctx
-            .di::<AppModule, dyn PracticeService>()?
-            .create(&enrollment_id, dto)
-            .await?;
+        let practice = self.practices.create(&enrollment_id, dto).await?;
 
         Ok(HttpResponse::Created().data(practice))
     }
 
     #[post("/{id}/practice/{practice_id}/approve")]
-    async fn supervisor_approve_practice(ctx: Context) -> HttpResult<HttpResponse> {
-        let enrollment_id = ctx.param::<Uuid>("id")?;
-        let practice_id = ctx.param::<Uuid>("practice_id")?;
+    async fn supervisor_approve_practice(&self, req: Request) -> HttpResult {
+        let enrollment_id = req.param::<Uuid>("id")?;
+        let practice_id = req.param::<Uuid>("practice_id")?;
 
-        let service = ctx.di::<AppModule, dyn PracticeService>()?;
-
-        let Some(practice) = service.get_by_id(&practice_id).await? else {
+        let Some(practice) = self.practices.get_by_id(&practice_id).await? else {
             return Err(HttpResponse::NotFound());
         };
 
@@ -71,7 +65,7 @@ impl EnrollmentsController {
             return Err(HttpResponse::BadRequest());
         }
 
-        service
+        self.practices
             .update_status(&enrollment_id, &practice_id, PracticeStatus::Approved)
             .await?;
 
@@ -79,13 +73,11 @@ impl EnrollmentsController {
     }
 
     #[post("/{id}/practice/{practice_id}/decline")]
-    async fn supervisor_decline_practice(ctx: Context) -> HttpResult<HttpResponse> {
-        let enrollment_id = ctx.param::<Uuid>("id")?;
-        let practice_id = ctx.param::<Uuid>("practice_id")?;
+    async fn supervisor_decline_practice(&self, req: Request) -> HttpResult {
+        let enrollment_id = req.param::<Uuid>("id")?;
+        let practice_id = req.param::<Uuid>("practice_id")?;
 
-        let service = ctx.di::<AppModule, dyn PracticeService>()?;
-
-        let Some(practice) = service.get_by_id(&practice_id).await? else {
+        let Some(practice) = self.practices.get_by_id(&practice_id).await? else {
             return Err(HttpResponse::NotFound());
         };
 
@@ -93,7 +85,7 @@ impl EnrollmentsController {
             return Err(HttpResponse::BadRequest());
         }
 
-        service
+        self.practices
             .update_status(&enrollment_id, &practice_id, PracticeStatus::Declined)
             .await?;
 
@@ -101,52 +93,52 @@ impl EnrollmentsController {
     }
 
     #[post("/{id}/practice/{practice_id}/authorize")]
-    #[middleware(FileValidationService, config = FileValidationConfig { kind: "pdf", name: "auth_doc" })]
-    async fn supervisor_auth_practice(ctx: Context) -> HttpResult<HttpResponse> {
-        let enrollment_id = ctx.param::<Uuid>("id")?;
+    #[uses(FileValidationService, config = FileValidationConfig { kind: "pdf", name: "auth_doc" })]
+    async fn supervisor_auth_practice(&self, req: Request) -> HttpResult {
+        let enrollment_id = req.param::<Uuid>("id")?;
 
-        let auth_doc = ctx.extensions.get::<Bytes>().ok_or(
+        let auth_doc = req.extensions.get::<Bytes>().ok_or(
             HttpResponse::BadRequest().message("Missing required document"),
         )?;
 
-        let service = ctx.di::<AppModule, dyn PracticeService>()?;
-
-        service.authorize(&enrollment_id, auth_doc.to_vec()).await?;
+        self.practices
+            .authorize(&enrollment_id, auth_doc.to_vec())
+            .await?;
 
         Ok(HttpResponse::Ok())
     }
 
     #[get("/practice/{practice_id}/docs")]
-    #[middleware(Authentication)]
+    #[uses(Authentication)]
     #[doc = "Obtener el documento de autorización de una práctica"]
-    async fn get_practice_docs(ctx: Context) -> HttpResult<FileResponse> {
-        let practice_id = ctx.param::<Uuid>("practice_id")?;
-        let documents_dir = ctx.config::<ServerConfig>()?.documents_dir;
+    async fn practice_docs(&self, req: Request) -> FileResult {
+        let practice_id = req.param::<Uuid>("practice_id")?;
 
         let file_path = format!(
             "{}/practices/{}/authorization.pdf",
-            documents_dir, practice_id
+            self.server_config.documents_dir, practice_id
         );
 
         let buff = fs::read(&file_path).await.map_err(|e| {
-            error!("Failed to open/read file {}: {e}", file_path);
+            error!("Failed to open/read file {file_path}: {e}");
             HttpResponse::NotFound()
         })?;
 
-        Ok(FileResponse::Document(buff))
+        Ok(FileResponse::builder()
+            .filename("authorization.pdf")
+            .content_type("application/pdf")
+            .bytes(buff))
     }
 
     #[post("/{id}/practice/{practice_id}/evaluate/{evaluation_id}")]
-    async fn evualuate_from_enterprise(ctx: Context) -> HttpResult<HttpResponse> {
-        let practice_id = ctx.param::<Uuid>("practice_id")?;
-        let enrollment_id = ctx.param::<Uuid>("id")?;
-        let evaluation_id = ctx.param::<Uuid>("evaluation_id")?;
+    async fn evualuate_from_enterprise(&self, req: Request) -> HttpResult {
+        let practice_id = req.param::<Uuid>("practice_id")?;
+        let enrollment_id = req.param::<Uuid>("id")?;
+        let evaluation_id = req.param::<Uuid>("evaluation_id")?;
 
-        let dto = ctx.validated_body::<EvaluatePracticeDto>()?;
+        let dto = req.body_validator::<EvaluatePracticeDto>()?;
 
-        let practice_service = ctx.di::<AppModule, dyn PracticeService>()?;
-
-        practice_service
+        self.practices
             .evaluate(&enrollment_id, &practice_id, &evaluation_id, dto)
             .await?;
 
@@ -154,19 +146,17 @@ impl EnrollmentsController {
     }
 
     #[post("/{id}/practice-report/upload")]
-    #[middleware(Authentication)]
-    #[middleware(MinimumRequiredRole, config = "student")]
-    #[middleware(FileValidationService, config = FileValidationConfig { kind: "zip", name: "report" })]
-    async fn upload_practice_report(ctx: Context) -> HttpResult<HttpResponse> {
-        let enrollment_id = ctx.param::<Uuid>("id")?;
+    #[uses(Authentication)]
+    #[uses(MinimumRequiredRole, config = Role::Student)]
+    #[uses(FileValidationService, config = FileValidationConfig { kind: "zip", name: "report" })]
+    async fn upload_practice_report(&self, req: Request) -> HttpResult {
+        let enrollment_id = req.param::<Uuid>("id")?;
 
-        let report = ctx.extensions.get::<Bytes>().ok_or(
+        let report = req.extensions.get::<Bytes>().ok_or(
             HttpResponse::BadRequest().message("Missing required document"),
         )?;
 
-        let service = ctx.di::<AppModule, dyn EnrollmentService>()?;
-
-        service
+        self.enrollments
             .upload_final_report(&enrollment_id, report.to_vec())
             .await?;
 
@@ -174,25 +164,20 @@ impl EnrollmentsController {
     }
 
     #[patch("/{id}/practice")]
-    #[middleware(Authentication)]
-    #[middleware(MinimumRequiredRole, config = "teacher")]
+    #[uses(Authentication)]
+    #[uses(MinimumRequiredRole, config = Role::Teacher)]
     #[doc = "Actualizar una práctica para una inscripción específica"]
-    async fn update_practice(ctx: Context) -> HttpResult<HttpResponse> {
-        let enrollment_id = ctx.param::<Uuid>("id")?;
-        let dto = ctx.validated_body::<UpdatePracticeDto>()?;
+    async fn update_practice(&self, req: Request) -> HttpResult {
+        let enrollment_id = req.param::<Uuid>("id")?;
+        let dto = req.body_validator::<UpdatePracticeDto>()?;
 
-        let owner_validation = ctx.get_ownership_validation()?;
+        let owner_validation = req.get_ownership_validation()?;
 
         if owner_validation.required {
-            let enrollment_service = ctx.di::<AppModule, dyn EnrollmentService>()?;
-
             let (enrollment, _, _) =
-                enrollment_service.get_by_id(&enrollment_id).await?;
+                self.enrollments.get_by_id(&enrollment_id).await?;
 
-            let course_service = ctx.di::<AppModule, dyn CourseService>()?;
-
-            let (course, _) =
-                course_service.get_by_id(&enrollment.course_id).await?;
+            let (course, _) = self.courses.get_by_id(&enrollment.course_id).await?;
 
             if course.teacher_id != owner_validation.user_id {
                 return Err(HttpResponse::Forbidden().message(
@@ -201,21 +186,18 @@ impl EnrollmentsController {
             }
         }
 
-        let service = ctx.di::<AppModule, dyn PracticeService>()?;
-        let practice = service.update(&enrollment_id, dto).await?;
+        let practice = self.practices.update(&enrollment_id, dto).await?;
 
         Ok(HttpResponse::Ok().data(practice))
     }
 
     #[delete("/practice/{practice_id}")]
-    #[middleware(Authentication)]
-    #[middleware(MinimumRequiredRole, config = "secretary")]
+    #[uses(Authentication)]
+    #[uses(MinimumRequiredRole, config = Role::Secretary)]
     #[doc = "Eliminar una práctica por su ID"]
-    async fn delete_practice(ctx: Context) -> HttpResult<HttpResponse> {
-        let practice_id = ctx.param::<Uuid>("practice_id")?;
-        let service = ctx.di::<AppModule, dyn PracticeService>()?;
-
-        service.remove(&practice_id).await?;
+    async fn delete_practice(&self, req: Request) -> HttpResult {
+        let practice_id = req.param::<Uuid>("practice_id")?;
+        self.practices.remove(&practice_id).await?;
 
         Ok(HttpResponse::NoContent())
     }

@@ -1,5 +1,6 @@
+use std::sync::Arc;
+
 use crate::auth::{Authentication, MinimumRequiredRole};
-use crate::shared::di::AppModule;
 use crate::users::*;
 
 use serde_json::json;
@@ -7,21 +8,22 @@ use sword::prelude::*;
 use uuid::Uuid;
 
 #[controller("/users")]
-#[middleware(Authentication)]
-pub struct UsersController;
+#[uses(Authentication)]
+pub struct UsersController {
+    users: Arc<UserService>,
+}
 
 #[routes]
 impl UsersController {
     #[get("/")]
-    #[middleware(MinimumRequiredRole, config = "secretary")]
-    async fn find_all(ctx: Context) -> HttpResult<HttpResponse> {
-        let query = ctx
-            .validated_query::<GetUsersQueryDto>()?
+    #[uses(MinimumRequiredRole, config = Role::Secretary)]
+    async fn find_all(&self, req: Request) -> HttpResult {
+        let query = req
+            .query_validator::<GetUsersQueryDto>()?
             .unwrap_or_default();
 
-        let service = ctx.di::<AppModule, dyn UserService>()?;
+        let data = self.users.get_all(query.into()).await?;
 
-        let data = service.get_all(query.into()).await?;
         let users = data
             .items
             .into_iter()
@@ -40,35 +42,31 @@ impl UsersController {
     }
 
     #[post("/")]
-    #[middleware(MinimumRequiredRole, config = "secretary")]
-    async fn create(ctx: Context) -> HttpResult<HttpResponse> {
-        let user_data = ctx.validated_body::<CreateUserDto>()?;
-        let service = ctx.di::<AppModule, dyn UserService>()?;
-
-        let user = service.create(user_data).await?;
+    #[uses(MinimumRequiredRole, config = Role::Secretary)]
+    async fn create(&self, req: Request) -> HttpResult {
+        let user_data = req.body_validator::<CreateUserDto>()?;
+        let user = self.users.create(user_data).await?;
 
         Ok(HttpResponse::Created().data(UserResponse::from(user)))
     }
 
     #[patch("/{id}")]
-    #[middleware(MinimumRequiredRole, config = "secretary")]
-    pub async fn update(ctx: Context) -> HttpResult<HttpResponse> {
-        let id = ctx.param::<Uuid>("id")?;
-        let user_data = ctx.validated_body::<UpdateUserDto>()?;
+    #[uses(MinimumRequiredRole, config = Role::Secretary)]
+    pub async fn update(&self, req: Request) -> HttpResult {
+        let id = req.param::<Uuid>("id")?;
+        let user_data = req.body_validator::<UpdateUserDto>()?;
 
-        let service = ctx.di::<AppModule, dyn UserService>()?;
-        let user = service.update(id, user_data).await?;
+        let user = self.users.update(id, user_data).await?;
 
         Ok(HttpResponse::Ok().data(UserResponse::from(user)))
     }
 
     #[delete("/{id}")]
-    #[middleware(MinimumRequiredRole, config = "administrator")]
-    async fn remove(ctx: Context) -> HttpResult<HttpResponse> {
-        let id = ctx.param::<Uuid>("id")?;
-        let service = ctx.di::<AppModule, dyn UserService>()?;
+    #[uses(MinimumRequiredRole, config = Role::Administrator)]
+    async fn remove(&self, req: Request) -> HttpResult {
+        let id = req.param::<Uuid>("id")?;
 
-        service.remove(id).await?;
+        self.users.remove(id).await?;
 
         Ok(HttpResponse::Ok())
     }

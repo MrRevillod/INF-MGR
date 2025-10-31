@@ -11,8 +11,19 @@ pub use dtos::{
     GetEnrollmentsDto, StudentScoreDto, UpdateEnrollmentDto,
 };
 
-pub use entity::{Enrollment, Enrollments, StudentScore};
-pub use repository::{
-    EnrollmentFilter, EnrollmentRepository, PostgresEnrollmentRepository,
-};
-pub use service::{EnrollmentService, EnrollmentServiceImpl};
+pub use entity::{Enrollment, StudentScore};
+pub use repository::{EnrollmentFilter, EnrollmentRepository};
+pub use service::EnrollmentService;
+
+use sword::prelude::*;
+
+pub struct EnrollmentsModule;
+
+impl Module for EnrollmentsModule {
+    type Controller = EnrollmentsController;
+
+    fn register_components(container: &mut DependencyContainer) {
+        container.register_component::<EnrollmentRepository>();
+        container.register_component::<EnrollmentService>();
+    }
+}

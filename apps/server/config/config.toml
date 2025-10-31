@@ -8,10 +8,6 @@ graceful_shutdown = false
 client_app_url = "${PUBLIC_URL:http://localhost:3000}"
 documents_dir = "${DOCUMENTS_DIR:./documents}"
 
-[students-api]
-api_key = "${STUDENTS_API_KEY}"
-api_url = "${STUDENTS_API_URL:http://localhost:8080}"
-
 [event-queue]
 buffer_size = 100
 num_of_event_retry = 2
@@ -31,9 +27,13 @@ url = "${REDIS_DATABASE_URL}"
 access_jwt_secret = "${ACCESS_JWT_SECRET}"
 refresh_jwt_secret = "${REFRESH_JWT_SECRET}"
 
-access_exp_ms = 900000       # 15 minutes
-refresh_exp_ms = 604800000   # 7 days
-session_ttl_seconds = 604800 # 7 days
+access_exp_ms = 120000    # 2 minutes (for testing)
+refresh_exp_ms = 600000   # 10 minutes (for testing)
+session_ttl_seconds = 600 # 10 minutes (for testing)
+
+# access_exp_ms = 900000       # 15 minutes
+# refresh_exp_ms = 604800000   # 7 days
+# session_ttl_seconds = 604800 # 7 days
 
 google_client_id = "${GOOGLE_CLIENT_ID}"
 google_client_secret = "${GOOGLE_CLIENT_SECRET}"
@@ -45,8 +45,8 @@ service_account_path = "${GOOGLE_SERVICE_ACCOUNT_PATH}"
 
 [cors]
 allow_credentials = false
-allowed_http_methods = ["GET", "POST", "PUT", "PATCH", "DELETE"]
-allowed_http_headers = ["Content-Type", "Authorization"]
+allow_methods = ["GET", "POST", "PUT", "PATCH", "DELETE"]
+allow_headers = ["Content-Type", "Authorization"]
 
 [mailer]
 smtp_host = "${SMTP_HOST:localhost}"

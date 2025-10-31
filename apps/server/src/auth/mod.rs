@@ -1,53 +1,32 @@
 mod controllers;
 mod dtos;
-
-mod middlewares {
-    mod authentication;
-    pub use authentication::Authentication;
-
-    mod role;
-    pub use role::{MinimumRequiredRole, OwnershipValidation};
-}
+mod entity;
+mod middlewares;
+mod repositories;
+mod services;
 
 pub use middlewares::Authentication;
 pub use middlewares::{MinimumRequiredRole, OwnershipValidation};
-
-mod repositories {
-    mod auth;
-    mod session;
-
-    pub use auth::{AuthRepository, OAuthRepository};
-    pub use session::{RedisSessionRepository, SessionRepository};
-}
-
-mod services {
-    mod cookies;
-    pub use cookies::CookieBuilder;
-
-    mod oauth;
-    pub use oauth::{GoogleOAuthService, OAuthService};
-
-    mod session;
-    pub use session::{SessionService, SessionServiceImpl};
-
-    mod jsonwebtoken;
-    pub use jsonwebtoken::{
-        Claims, JsonWebTokenService, TokenConfig, TokenKind, TokenService,
-    };
-}
-
-pub use services::{Claims, TokenConfig, TokenKind, TokenService};
+pub use repositories::{OAuthRepository, SessionRepository};
 
 pub use controllers::AuthController;
-pub use repositories::{
-    AuthRepository, OAuthRepository, RedisSessionRepository, SessionRepository,
-};
-
 pub use dtos::*;
-pub use services::{
-    GoogleOAuthService, JsonWebTokenService, OAuthService, SessionService,
-    SessionServiceImpl,
-};
-
-mod entity;
 pub use entity::Session;
+pub use services::{Claims, JsonWebTokenService, TokenConfig, TokenKind};
+pub use services::{OAuthService, SessionService};
+
+use sword::prelude::*;
+
+pub struct AuthModule;
+
+impl Module for AuthModule {
+    type Controller = AuthController;
+
+    fn register_components(container: &mut DependencyContainer) {
+        container.register_component::<OAuthRepository>();
+        container.register_component::<SessionRepository>();
+        container.register_component::<JsonWebTokenService>();
+        container.register_component::<OAuthService>();
+        container.register_component::<SessionService>();
+    }
+}

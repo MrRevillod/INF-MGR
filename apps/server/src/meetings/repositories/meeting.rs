@@ -1,19 +1,18 @@
+use sword::core::injectable;
+
 use crate::{
     meetings::*,
-    shared::{AppResult, DatabaseConnection},
+    shared::{AppResult, PostgresDatabase},
     types::*,
 };
 
-#[derive(Component)]
-#[shaku(interface = MeetingRepository)]
-pub struct PostgresMeetingRepository {
-    #[shaku(inject)]
-    db_connection: Arc<dyn DatabaseConnection>,
+#[injectable]
+pub struct MeetingRepository {
+    db_connection: Arc<PostgresDatabase>,
 }
 
-#[async_trait]
-impl MeetingRepository for PostgresMeetingRepository {
-    async fn find_many(&self, filter: MeetingFilter) -> AppResult<Vec<Meeting>> {
+impl MeetingRepository {
+    pub async fn find_many(&self, filter: MeetingFilter) -> AppResult<Vec<Meeting>> {
         let mut query = QueryBuilder::new("SELECT * FROM meetings WHERE 1=1");
 
         if let Some(attendee_id) = filter.attendee_id {
@@ -29,7 +28,7 @@ impl MeetingRepository for PostgresMeetingRepository {
         return Ok(meetings);
     }
 
-    async fn save(&self, meeting: &Meeting) -> AppResult<Meeting> {
+    pub async fn save(&self, meeting: &Meeting) -> AppResult<Meeting> {
         let saved_meeting = sqlx::query_as::<_, Meeting>(
             "INSERT INTO meetings (id, google_event_id, summary, description, start_date, end_date, attendees, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)

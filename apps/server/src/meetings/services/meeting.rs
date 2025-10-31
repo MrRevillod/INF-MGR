@@ -1,37 +1,28 @@
+use sword::core::injectable;
+
 use crate::{
-    config::{ConfigService, GoogleCalendarConfig},
+    config::GoogleCalendarConfig,
     meetings::*,
-    shared::{AppError, AppResult, NotFoundError, services::CalendarService},
+    shared::{AppError, AppResult, NotFoundError},
     types::*,
     users::UserRepository,
 };
 
-#[derive(Component)]
-#[shaku(interface = MeetingService)]
-pub struct MeetingServiceImpl {
-    #[shaku(inject)]
-    meetings: Arc<dyn MeetingRepository>,
-
-    #[shaku(inject)]
-    meeting_reqs: Arc<dyn MeetingRequestsRepository>,
-
-    #[shaku(inject)]
-    calendar: Arc<dyn CalendarService>,
-
-    #[shaku(inject)]
-    config: Arc<dyn ConfigService>,
-
-    #[shaku(inject)]
-    users: Arc<dyn UserRepository>,
+#[injectable]
+pub struct MeetingService {
+    config: GoogleCalendarConfig,
+    users: Arc<UserRepository>,
+    meetings: Arc<MeetingRepository>,
+    calendar: Arc<CalendarService>,
+    meeting_reqs: Arc<MeetingRequestsRepository>,
 }
 
-#[async_trait]
-impl MeetingService for MeetingServiceImpl {
-    async fn get_all(&self, filter: MeetingFilter) -> AppResult<Vec<Meeting>> {
+impl MeetingService {
+    pub async fn get_all(&self, filter: MeetingFilter) -> AppResult<Vec<Meeting>> {
         self.meetings.find_many(filter).await
     }
 
-    async fn schedule(
+    pub async fn schedule(
         &self,
         meeting_req_id: &Uuid,
         input: ScheduleMeetingDto,
@@ -75,12 +66,7 @@ impl MeetingService for MeetingServiceImpl {
             emails
         };
 
-        let calendar_id = &self
-            .config
-            .inner()
-            .get::<GoogleCalendarConfig>()
-            .unwrap_or_default()
-            .calendar_id;
+        let calendar_id = &self.config.calendar_id;
 
         let event = Event {
             summary: meeting.summary.clone(),

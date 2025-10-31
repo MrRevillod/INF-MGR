@@ -1,19 +1,18 @@
+use sword::core::injectable;
+
 use crate::{
     meetings::*,
-    shared::{AppResult, DatabaseConnection},
+    shared::{AppResult, PostgresDatabase},
     types::*,
 };
 
-#[derive(Component)]
-#[shaku(interface = MeetingRequestsRepository)]
-pub struct PostgresMeetingRequestsRepository {
-    #[shaku(inject)]
-    db_connection: Arc<dyn DatabaseConnection>,
+#[injectable]
+pub struct MeetingRequestsRepository {
+    db_connection: Arc<PostgresDatabase>,
 }
 
-#[async_trait]
-impl MeetingRequestsRepository for PostgresMeetingRequestsRepository {
-    async fn find_many(
+impl MeetingRequestsRepository {
+    pub async fn find_many(
         &self,
         f: MeetingRequestFilter,
     ) -> AppResult<Vec<MeetingRequest>> {
@@ -38,7 +37,7 @@ impl MeetingRequestsRepository for PostgresMeetingRequestsRepository {
         Ok(meeting_reqs)
     }
 
-    async fn find_by_id(&self, id: &Uuid) -> AppResult<Option<MeetingRequest>> {
+    pub async fn find_by_id(&self, id: &Uuid) -> AppResult<Option<MeetingRequest>> {
         let meeting_req = sqlx::query_as::<_, MeetingRequest>(
             "SELECT * FROM meeting_requests WHERE id = $1",
         )
@@ -49,7 +48,7 @@ impl MeetingRequestsRepository for PostgresMeetingRequestsRepository {
         Ok(meeting_req)
     }
 
-    async fn create(
+    pub async fn create(
         &self,
         meeting_req: MeetingRequest,
     ) -> AppResult<MeetingRequest> {

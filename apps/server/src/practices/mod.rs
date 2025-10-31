@@ -5,8 +5,19 @@ mod service;
 
 pub use crate::practice_filter;
 pub use dtos::{CreatePracticeDto, EvaluatePracticeDto, UpdatePracticeDto};
-pub use entity::{Practice, PracticeStatus, Practices};
-pub use repository::{
-    PostgresPracticeRepository, PracticeFilter, PracticeRepository,
-};
-pub use service::{PracticeService, PracticeServiceImpl};
+pub use entity::{Practice, PracticeStatus};
+pub use repository::{PracticeFilter, PracticeRepository};
+pub use service::PracticeService;
+
+use sword::prelude::*;
+
+pub struct PracticesModule;
+
+impl Module for PracticesModule {
+    type Controller = NonControllerModule;
+
+    fn register_components(container: &mut DependencyContainer) {
+        container.register_component::<PracticeService>();
+        container.register_component::<PracticeRepository>();
+    }
+}

@@ -1,5 +1,0 @@
-[advisories]
-ignore = [
-    "RUSTSEC-2023-0071", # RSA Marvin Attack - No afecta: solo usamos PostgreSQL, no MySQL
-    "RUSTSEC-2024-0370", # proc-macro-error unmaintained - Bajo impacto: solo tiempo de compilación
-]

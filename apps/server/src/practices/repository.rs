@@ -1,22 +1,14 @@
-use std::sync::Arc;
-
-use async_trait::async_trait;
-use sea_query::{Expr, ExprTrait, PostgresQueryBuilder, Query};
-use sea_query_sqlx::SqlxBinder;
-use shaku::{Component, Interface};
-use sqlx::{Postgres, query_as_with as sqlx_query};
-use uuid::Uuid;
+use sword::core::injectable;
 
 use crate::{
-    practices::entity::{Practice, Practices},
-    shared::{AppResult, DatabaseConnection, errors::AppError},
+    practices::entity::Practice,
+    shared::{AppResult, PostgresDatabase},
+    types::*,
 };
 
-#[derive(Component)]
-#[shaku(interface = PracticeRepository)]
-pub struct PostgresPracticeRepository {
-    #[shaku(inject)]
-    pub db_connection: Arc<dyn DatabaseConnection>,
+#[injectable]
+pub struct PracticeRepository {
+    pub db_connection: Arc<PostgresDatabase>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -24,54 +16,41 @@ pub struct PracticeFilter {
     pub ids: Option<Vec<Uuid>>,
 }
 
-#[async_trait]
-pub trait PracticeRepository: Interface {
-    async fn find_many(
+impl PracticeRepository {
+    pub async fn find_many(
         &self,
         filter: PracticeFilter,
-    ) -> Result<Vec<Practice>, AppError>;
-    async fn find_by_id(&self, id: &Uuid) -> AppResult<Option<Practice>>;
-    async fn save(&self, practice: Practice) -> AppResult<Practice>;
-    async fn delete(&self, id: &Uuid) -> AppResult<()>;
-}
+    ) -> AppResult<Vec<Practice>> {
+        let mut query = QueryBuilder::new("SELECT * FROM practices WHERE 1=1");
 
-#[async_trait]
-impl PracticeRepository for PostgresPracticeRepository {
-    async fn find_many(&self, filter: PracticeFilter) -> AppResult<Vec<Practice>> {
-        let mut query = Query::select()
-            .expr(Expr::cust("*"))
-            .from(Practices::Table)
-            .to_owned();
-
-        if let Some(ids) = &filter.ids {
-            query.and_where(Expr::col(Practices::Id).is_in(ids.clone()));
+        if let Some(ids) = &filter.ids
+            && !ids.is_empty()
+        {
+            query.push(" AND id = ANY(");
+            query.push_bind(ids);
+            query.push(")");
         }
 
-        let (sql, values) = query.build_sqlx(PostgresQueryBuilder);
-
-        let practices = sqlx_query::<Postgres, Practice, _>(&sql, values)
+        let practices = query
+            .build_query_as::<Practice>()
             .fetch_all(self.db_connection.get_pool())
             .await?;
 
         Ok(practices)
     }
 
-    async fn find_by_id(&self, id: &Uuid) -> AppResult<Option<Practice>> {
-        let (sql, values) = Query::select()
-            .expr(Expr::cust("*"))
-            .from(Practices::Table)
-            .and_where(Expr::col(Practices::Id).eq(*id))
-            .build_sqlx(PostgresQueryBuilder);
-
-        let practice = sqlx_query::<Postgres, Practice, _>(&sql, values)
-            .fetch_optional(self.db_connection.get_pool())
-            .await?;
+    pub async fn find_by_id(&self, id: &Uuid) -> AppResult<Option<Practice>> {
+        let practice =
+            sqlx::query_as::<_, Practice>("SELECT * FROM practices WHERE id = $1")
+                .bind(id)
+                .fetch_optional(self.db_connection.get_pool())
+                .await?;
 
         Ok(practice)
     }
 
-    async fn save(&self, practice: Practice) -> AppResult<Practice> {
-        let query = r#"
+    pub async fn save(&self, practice: Practice) -> AppResult<Practice> {
+        let query = r"
             INSERT INTO practices (id, enterprise_name,location, description, supervisor_name, supervisor_email, supervisor_phone, start_date, end_date, practice_status)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             ON CONFLICT (id) DO UPDATE SET 
@@ -85,7 +64,7 @@ impl PracticeRepository for PostgresPracticeRepository {
                 end_date = EXCLUDED.end_date,
                 practice_status = EXCLUDED.practice_status
             RETURNING *
-        "#;
+        ";
 
         let result = sqlx::query_as::<_, Practice>(query)
             .bind(practice.id)
@@ -103,13 +82,9 @@ impl PracticeRepository for PostgresPracticeRepository {
         Ok(result)
     }
 
-    async fn delete(&self, id: &Uuid) -> AppResult<()> {
-        let (sql, values) = Query::delete()
-            .from_table(Practices::Table)
-            .and_where(Expr::col(Practices::Id).eq(*id))
-            .build_sqlx(PostgresQueryBuilder);
-
-        sqlx::query_with::<Postgres, _>(&sql, values)
+    pub async fn delete(&self, id: &Uuid) -> AppResult<()> {
+        sqlx::query("DELETE FROM practices WHERE id = $1")
+            .bind(id)
             .execute(self.db_connection.get_pool())
             .await?;
 

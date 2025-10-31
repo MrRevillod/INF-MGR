@@ -38,7 +38,7 @@ impl TryFrom<CreateUserDto> for User {
     fn try_from(dto: CreateUserDto) -> Result<Self, Self::Error> {
         let role = Role::from_str(&dto.role)?;
 
-        Ok(User {
+        Ok(Self {
             id: Uuid::new_v4(),
             rut: dto.rut,
             name: dto.name,
@@ -56,10 +56,10 @@ impl FromStr for Role {
 
     fn from_str(role: &str) -> Result<Self, Self::Err> {
         match role.to_lowercase().as_str() {
-            "administrator" => Ok(Role::Administrator),
-            "teacher" => Ok(Role::Teacher),
-            "student" => Ok(Role::Student),
-            "secretary" => Ok(Role::Secretary),
+            "administrator" => Ok(Self::Administrator),
+            "teacher" => Ok(Self::Teacher),
+            "student" => Ok(Self::Student),
+            "secretary" => Ok(Self::Secretary),
             _ => Err(AppValidationError::invalid_role(role))?,
         }
     }
@@ -97,10 +97,10 @@ pub struct GetUsersQueryDto {
 
 impl From<GetUsersQueryDto> for UserFilter {
     fn from(dto: GetUsersQueryDto) -> Self {
-        UserFilter {
+        Self {
             search: dto.search,
             page: dto.page.unwrap_or(1) as u64,
-            ..UserFilter::default()
+            ..Self::default()
         }
     }
 }
@@ -121,7 +121,7 @@ pub struct UserResponse {
 
 impl From<User> for UserResponse {
     fn from(user_model: User) -> Self {
-        UserResponse {
+        Self {
             id: user_model.id.to_string(),
             rut: user_model.rut,
             name: user_model.name,

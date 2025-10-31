@@ -1,4 +1,3 @@
-use sea_query::Iden;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Type};
 use uuid::Uuid;
@@ -19,26 +18,4 @@ pub struct Enrollment {
 pub struct StudentScore {
     pub evaluation_id: Uuid,
     pub score: f64,
-}
-
-pub enum Enrollments {
-    Table,
-    Id,
-    StudentId,
-    CourseId,
-    PracticeId,
-    StudentScores,
-}
-
-impl Iden for Enrollments {
-    fn unquoted(&self) -> &str {
-        match self {
-            Enrollments::Table => "enrollments",
-            Enrollments::Id => "id",
-            Enrollments::StudentId => "student_id",
-            Enrollments::CourseId => "course_id",
-            Enrollments::PracticeId => "practice_id",
-            Enrollments::StudentScores => "student_scores",
-        }
-    }
 }

@@ -3,14 +3,14 @@ import type { ApiResponse } from "$api/utils"
 
 import { protectedApi } from "$api/client"
 import { createQuery } from "@tanstack/svelte-query"
-import { req as tryRequest } from "$api/utils"
+import { TryFn } from "$api/utils"
 
-interface GetUsersParams {
+export interface GetUsersParams {
 	search?: string
 	page?: number
 }
 
-interface GetUsersData {
+export interface GetUsersData {
 	users: User[]
 	currentPage: number
 	totalPages: number
@@ -19,10 +19,13 @@ interface GetUsersData {
 	hasPrevious: boolean
 }
 
-export const getUsersQuery = (params: GetUsersParams) => {
-	return createQuery<ApiResponse<GetUsersData>, ApiResponse>(() => ({
-		queryKey: ["users", params.search, params.page],
-		staleTime: 1000 * 60 * 1,
-		queryFn: () => tryRequest(() => protectedApi.get("users", { params: params })),
-	}))
+export const getUsersQuery = (getParams: () => GetUsersParams) => {
+	return createQuery<ApiResponse<GetUsersData>, ApiResponse>(() => {
+		const params = getParams()
+		return {
+			queryKey: ["users", params.search, params.page] as const,
+			staleTime: 1000 * 60 * 1,
+			queryFn: () => TryFn(() => protectedApi.get("users", { params })),
+		}
+	})
 }

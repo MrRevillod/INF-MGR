@@ -1,5 +1,5 @@
 use super::{AuthError, NotFoundError, ValidationError};
-use crate::shared::services::ServiceError;
+use crate::shared::event_handler::ServiceError;
 use thiserror::Error;
 
 #[derive(Debug, Error)]

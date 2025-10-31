@@ -1,25 +1,16 @@
-use async_trait::async_trait;
-use chrono::Utc;
-use sea_query_sqlx::SqlxBinder;
-use shaku::{Component, Interface};
-use sqlx::{Postgres, query_as_with as sqlx_query};
 use std::sync::Arc;
+use sword::core::injectable;
 use uuid::Uuid;
 
-use sea_query::{
-    Expr, ExprTrait, Order, PostgresQueryBuilder, Query, extension::postgres::PgExpr,
-};
-
 use crate::{
-    shared::{AppResult, DEFAULT_PAGE_SIZE, DatabaseConnection},
-    users::{User, Users},
+    shared::{AppResult, DEFAULT_PAGE_SIZE, PostgresDatabase},
+    types::*,
+    users::User,
 };
 
-#[derive(Component)]
-#[shaku(interface = UserRepository)]
-pub struct PostgresUserRepository {
-    #[shaku(inject)]
-    database_connection: Arc<dyn DatabaseConnection>,
+#[injectable]
+pub struct UserRepository {
+    database_connection: Arc<PostgresDatabase>,
 }
 
 #[derive(Default, Clone)]
@@ -33,96 +24,85 @@ pub struct UserFilter {
     pub ruts: Option<Vec<String>>,
 }
 
-#[async_trait]
-pub trait UserRepository: Interface {
-    async fn find_many(&self, filter: UserFilter) -> AppResult<Vec<User>>;
-    async fn find_one(&self, filter: UserFilter) -> AppResult<Option<User>>;
-    async fn find_by_id(&self, user_id: &Uuid) -> AppResult<Option<User>>;
-    async fn save(&self, user: User) -> AppResult<User>;
-    async fn create_many(&self, users: Vec<User>) -> AppResult<Vec<User>>;
-    async fn delete(&self, user_id: &Uuid) -> AppResult<()>;
-    async fn count(&self, filter: UserFilter) -> AppResult<i64>;
-}
+impl UserRepository {
+    pub async fn find_many(&self, filter: UserFilter) -> AppResult<Vec<User>> {
+        let mut query = QueryBuilder::new("SELECT * FROM users WHERE 1=1");
 
-#[async_trait]
-impl UserRepository for PostgresUserRepository {
-    async fn find_many(&self, filter: UserFilter) -> AppResult<Vec<User>> {
-        let mut query = Query::select()
-            .expr(Expr::cust("*"))
-            .from(Users::Table)
-            .to_owned();
-
-        if let Some(ids) = &filter.ids {
-            query.and_where(Expr::col(Users::Id).is_in(ids.clone()));
+        if let Some(ids) = &filter.ids
+            && !ids.is_empty()
+        {
+            query.push(" AND id = ANY(");
+            query.push_bind(ids);
+            query.push(")");
         }
 
-        if let Some(ruts) = &filter.ruts {
-            query.and_where(Expr::col(Users::Rut).is_in(ruts.clone()));
+        if let Some(ruts) = &filter.ruts
+            && !ruts.is_empty()
+        {
+            query.push(" AND rut = ANY(");
+            query.push_bind(ruts);
+            query.push(")");
         }
 
-        if let Some(search) = &filter.search {
+        if let Some(search) = filter.search {
             let pattern = format!("%{search}%");
-
-            query.and_where(
-                Expr::col(Users::Name)
-                    .ilike(pattern.clone())
-                    .or(Expr::col(Users::Email).ilike(pattern.clone()))
-                    .or(Expr::col(Users::Rut).ilike(pattern.clone())),
-            );
+            query.push(" AND (name ILIKE ");
+            query.push_bind(pattern.clone());
+            query.push(" OR email ILIKE ");
+            query.push_bind(pattern.clone());
+            query.push(" OR rut ILIKE ");
+            query.push_bind(pattern);
+            query.push(")");
         }
 
-        query.order_by(Users::CreatedAt, Order::Desc);
-        query.limit(DEFAULT_PAGE_SIZE);
+        query.push(" ORDER BY created_at DESC ");
+        query.push(" LIMIT ").push_bind(DEFAULT_PAGE_SIZE as i64);
+        query
+            .push(" OFFSET ")
+            .push_bind((filter.page.saturating_sub(1) * DEFAULT_PAGE_SIZE) as i64);
 
-        query.offset(filter.page.saturating_sub(1) * DEFAULT_PAGE_SIZE);
-
-        let (sql, values) = query.build_sqlx(PostgresQueryBuilder);
-
-        let results = sqlx_query::<Postgres, User, _>(&sql, values)
+        let results = query
+            .build_query_as::<User>()
             .fetch_all(self.database_connection.get_pool())
             .await?;
 
         Ok(results)
     }
 
-    async fn find_one(&self, filter: UserFilter) -> AppResult<Option<User>> {
-        let (sql, values) = Query::select()
-            .expr(Expr::cust("*"))
-            .from(Users::Table)
-            .apply_if(filter.id, |q, value| {
-                q.and_where(Expr::col(Users::Id).eq(value));
-            })
-            .apply_if(filter.rut, |q, value| {
-                q.and_where(Expr::col(Users::Rut).eq(value));
-            })
-            .apply_if(filter.email, |q, value| {
-                q.and_where(Expr::col(Users::Email).eq(value));
-            })
-            .build_sqlx(PostgresQueryBuilder);
+    pub async fn find_one(&self, filter: UserFilter) -> AppResult<Option<User>> {
+        let mut query = QueryBuilder::new("SELECT * FROM users WHERE 1=1");
 
-        let user = sqlx_query::<Postgres, User, _>(&sql, values)
+        if let Some(id) = filter.id {
+            query.push(" AND id = ").push_bind(id);
+        }
+
+        if let Some(rut) = filter.rut {
+            query.push(" AND rut = ").push_bind(rut);
+        }
+
+        if let Some(email) = filter.email {
+            query.push(" AND email = ").push_bind(email);
+        }
+
+        let user = query
+            .build_query_as::<User>()
             .fetch_optional(self.database_connection.get_pool())
             .await?;
 
         Ok(user)
     }
 
-    async fn find_by_id(&self, user_id: &Uuid) -> AppResult<Option<User>> {
-        let (sql, values) = Query::select()
-            .expr(Expr::cust("*"))
-            .from(Users::Table)
-            .and_where(Expr::col(Users::Id).eq(*user_id))
-            .build_sqlx(PostgresQueryBuilder);
-
-        let user = sqlx_query::<Postgres, User, _>(&sql, values)
+    pub async fn find_by_id(&self, user_id: &Uuid) -> AppResult<Option<User>> {
+        let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = $1")
+            .bind(user_id)
             .fetch_optional(self.database_connection.get_pool())
             .await?;
 
         Ok(user)
     }
 
-    async fn save(&self, user: User) -> AppResult<User> {
-        let upsert_query = r#"
+    pub async fn save(&self, user: User) -> AppResult<User> {
+        let upsert_query = r"
             INSERT INTO users (id, rut, name, email, google_id, role, created_at, deleted_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             ON CONFLICT (id) 
@@ -134,7 +114,7 @@ impl UserRepository for PostgresUserRepository {
                 role = EXCLUDED.role
             WHERE users.deleted_at IS NULL
             RETURNING *
-        "#;
+        ";
 
         let saved_user = sqlx::query_as::<_, User>(upsert_query)
             .bind(user.id)
@@ -151,7 +131,7 @@ impl UserRepository for PostgresUserRepository {
         Ok(saved_user)
     }
 
-    async fn create_many(&self, users: Vec<User>) -> AppResult<Vec<User>> {
+    pub async fn create_many(&self, users: Vec<User>) -> AppResult<Vec<User>> {
         if users.is_empty() {
             return Ok(vec![]);
         }
@@ -176,12 +156,12 @@ impl UserRepository for PostgresUserRepository {
         }
 
         let query = format!(
-            r#" 
+            r" 
                 INSERT INTO users (id, rut, name, email, google_id, role, created_at, deleted_at)
                 VALUES {}
                 ON CONFLICT (id) DO NOTHING
                 RETURNING *
-            "#,
+            ",
             query_values.join(", ")
         );
 
@@ -206,41 +186,31 @@ impl UserRepository for PostgresUserRepository {
         Ok(results)
     }
 
-    async fn delete(&self, user_id: &Uuid) -> AppResult<()> {
-        let (sql, values) = Query::update()
-            .table(Users::Table)
-            .value(Users::DeletedAt, Utc::now())
-            .and_where(Expr::col(Users::Id).eq(*user_id))
-            .build_sqlx(PostgresQueryBuilder);
-
-        sqlx::query_with(&sql, values)
+    pub async fn delete(&self, user_id: &Uuid) -> AppResult<()> {
+        sqlx::query("DELETE FROM users WHERE id = $1")
+            .bind(user_id)
             .execute(self.database_connection.get_pool())
             .await?;
 
         Ok(())
     }
 
-    async fn count(&self, filter: UserFilter) -> AppResult<i64> {
-        let mut query = Query::select()
-            .expr(Expr::count(Expr::col(Users::Id)))
-            .from(Users::Table)
-            .to_owned();
+    pub async fn count(&self, filter: UserFilter) -> AppResult<i64> {
+        let mut query = QueryBuilder::new("SELECT COUNT(id) FROM users WHERE 1=1");
 
-        if let Some(ref search) = filter.search {
-            let search_pattern = format!("%{search}%");
-            query = query
-                .and_where(
-                    Expr::col(Users::Name)
-                        .ilike(&search_pattern)
-                        .or(Expr::col(Users::Email).ilike(&search_pattern))
-                        .or(Expr::col(Users::Rut).ilike(&search_pattern)),
-                )
-                .to_owned();
+        if let Some(search) = filter.search {
+            let pattern = format!("%{search}%");
+            query.push(" AND (name ILIKE ");
+            query.push_bind(pattern.clone());
+            query.push(" OR email ILIKE ");
+            query.push_bind(pattern.clone());
+            query.push(" OR rut ILIKE ");
+            query.push_bind(pattern);
+            query.push(")");
         }
 
-        let (sql, values) = query.build_sqlx(PostgresQueryBuilder);
-
-        let count: (i64,) = sqlx::query_as_with(&sql, values)
+        let count: (i64,) = query
+            .build_query_as()
             .fetch_one(self.database_connection.get_pool())
             .await?;
 

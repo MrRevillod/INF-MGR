@@ -1,7 +1,6 @@
 use std::fmt::Display;
 
 use chrono::{DateTime, Utc};
-use sea_query::Iden;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Type};
 use uuid::Uuid;
@@ -42,18 +41,19 @@ impl User {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Type, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, Type, Eq, PartialEq, Default)]
 #[serde(rename_all = "lowercase")]
 #[sqlx(type_name = "user_role", rename_all = "lowercase")]
 pub enum Role {
     Administrator,
-    Student,
     Teacher,
     Secretary,
+    #[default]
+    Student,
 }
 
 impl Role {
-    pub fn priority(&self) -> u8 {
+    pub const fn priority(&self) -> u8 {
         match self {
             Role::Administrator => 4,
             Role::Secretary => 3,
@@ -69,41 +69,12 @@ impl Display for Role {
             f,
             "{}",
             match self {
-                Role::Administrator => "administrator",
-                Role::Student => "student",
-                Role::Teacher => "teacher",
-                Role::Secretary => "secretary",
+                Self::Administrator => "administrator",
+                Self::Student => "student",
+                Self::Teacher => "teacher",
+                Self::Secretary => "secretary",
             }
         )
-    }
-}
-
-#[allow(dead_code)]
-pub enum Users {
-    Table,
-    Id,
-    Rut,
-    Name,
-    Email,
-    GoogleId,
-    Role,
-    CreatedAt,
-    DeletedAt,
-}
-
-impl Iden for Users {
-    fn unquoted(&self) -> &str {
-        match self {
-            Users::Table => "users",
-            Users::Id => "id",
-            Users::Rut => "rut",
-            Users::Name => "name",
-            Users::Email => "email",
-            Users::GoogleId => "google_id",
-            Users::Role => "role",
-            Users::CreatedAt => "created_at",
-            Users::DeletedAt => "deleted_at",
-        }
     }
 }
 
@@ -115,7 +86,7 @@ impl Default for User {
             name: String::default(),
             email: String::default(),
             google_id: None,
-            role: Role::Student,
+            role: Role::default(),
             deleted_at: None,
             created_at: Utc::now(),
         }

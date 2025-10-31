@@ -11,7 +11,7 @@ type Response<T> = Promise<ApiResponse<T>>
  * @Generics
  * T - The expected type of the response "data" field.
  */
-export const req = async <T>(fn: Request<T>, args?: RequestArgs): Response<T> => {
+export const TryFn = async <T>(fn: Request<T>, args?: RequestArgs): Response<T> => {
 	try {
 		return (await fn(args)).data as ApiResponse<T>
 	} catch (error: unknown) {

@@ -50,19 +50,6 @@ services:
     networks:
       - my_networks
 
-  students_api_base:
-    build:
-      context: ./apps/students-api
-      dockerfile: Dockerfile
-    volumes:
-      - ./apps/students-api:/app
-      - students_api_cargo_cache:/usr/local/cargo/registry
-      - students_api_target:/app/target
-    ports:
-      - "8080:80"
-    networks:
-      - my_networks
-
 volumes:
   cargo_cache:
   server_target:

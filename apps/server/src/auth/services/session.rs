@@ -1,7 +1,6 @@
-use async_trait::async_trait;
 use oauth2::TokenResponse;
-use shaku::{Component, Interface};
 use std::sync::Arc;
+use sword::core::injectable;
 use uuid::Uuid;
 
 use crate::{
@@ -10,40 +9,15 @@ use crate::{
     users::User,
 };
 
-#[derive(Component)]
-#[shaku(interface = SessionService)]
-pub struct SessionServiceImpl {
-    #[shaku(inject)]
-    session_repository: Arc<dyn SessionRepository>,
-
-    #[shaku(inject)]
-    jwt: Arc<dyn TokenService>,
-
-    #[shaku(inject)]
-    oauth_service: Arc<dyn OAuthService>,
+#[injectable]
+pub struct SessionService {
+    session_repository: Arc<SessionRepository>,
+    jwt: Arc<JsonWebTokenService>,
+    oauth_service: Arc<OAuthService>,
 }
 
-#[async_trait]
-pub trait SessionService: Interface {
-    async fn create_session(
-        &self,
-        user: &User,
-        oauth_token: OAuthTokenType,
-        ttl: u64,
-    ) -> AppResult<Session>;
-
-    async fn refresh_session(
-        &self,
-        refresh_token: String,
-        ttl: u64,
-    ) -> AppResult<Session>;
-
-    async fn close_session(&self, access_token: &str) -> AppResult<()>;
-}
-
-#[async_trait]
-impl SessionService for SessionServiceImpl {
-    async fn create_session(
+impl SessionService {
+    pub async fn create_session(
         &self,
         user: &User,
         oauth_token: OAuthTokenType,
@@ -75,6 +49,7 @@ impl SessionService for SessionServiceImpl {
         );
 
         let session = Session::builder()
+            .session_id(Uuid::parse_str(&session_id).expect("Valid UUID"))
             .user_id(user_id)
             .access_token(access_token)
             .refresh_token(refresh_token)
@@ -87,7 +62,7 @@ impl SessionService for SessionServiceImpl {
         Ok(session)
     }
 
-    async fn refresh_session(
+    pub async fn refresh_session(
         &self,
         refresh_token: String,
         ttl: u64,
@@ -133,16 +108,14 @@ impl SessionService for SessionServiceImpl {
         Ok(session)
     }
 
-    async fn close_session(&self, access_token: &str) -> AppResult<()> {
+    pub async fn close_session(&self, access_token: &str) -> AppResult<()> {
         let claims = self.jwt.verify(TokenKind::Access, access_token)?;
         self.session_repository.delete(&claims.session_id).await?;
 
         Ok(())
     }
-}
 
-impl SessionServiceImpl {
-    async fn try_refresh_google_tokens(
+    pub async fn try_refresh_google_tokens(
         &self,
         session: &Session,
     ) -> Option<(String, String)> {

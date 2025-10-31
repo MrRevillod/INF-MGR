@@ -1,3 +1,5 @@
+use sword::core::injectable;
+
 use crate::{
     courses::*,
     meetings::*,
@@ -7,35 +9,26 @@ use crate::{
 
 use crate::shared::{
     errors::*,
-    services::{Event, EventQueue},
+    event_handler::{Event, EventQueue},
 };
 
-#[derive(Component)]
-#[shaku(interface =  MeetingRequestService)]
-pub struct MeetingRequestServiceImpl {
-    #[shaku(inject)]
-    meeting_reqs: Arc<dyn MeetingRequestsRepository>,
-
-    #[shaku(inject)]
-    users: Arc<dyn UserRepository>,
-
-    #[shaku(inject)]
-    event_queue: Arc<dyn EventQueue>,
-
-    #[shaku(inject)]
-    courses: Arc<dyn CourseRepository>,
+#[injectable]
+pub struct MeetingRequestService {
+    meeting_reqs: Arc<MeetingRequestsRepository>,
+    users: Arc<UserRepository>,
+    event_queue: Arc<EventQueue>,
+    courses: Arc<CourseRepository>,
 }
 
-#[async_trait]
-impl MeetingRequestService for MeetingRequestServiceImpl {
-    async fn get_all(
+impl MeetingRequestService {
+    pub async fn get_all(
         &self,
         filter: MeetingRequestFilter,
     ) -> AppResult<Vec<MeetingRequest>> {
         self.meeting_reqs.find_many(filter).await
     }
 
-    async fn create(
+    pub async fn create(
         &self,
         input: CreateMeetingRequestDto,
     ) -> AppResult<MeetingRequest> {
@@ -80,7 +73,7 @@ impl MeetingRequestService for MeetingRequestServiceImpl {
         Ok(meeting_req)
     }
 
-    async fn can_schedule(
+    pub async fn can_schedule(
         &self,
         user: &User,
         meeting_req_id: &Uuid,

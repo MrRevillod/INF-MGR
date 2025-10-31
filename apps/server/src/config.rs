@@ -1,8 +1,7 @@
 use serde::Deserialize;
-use shaku::{Component, Interface};
-use sword::core::{Config, config};
+use sword::core::config;
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[config(key = "application")]
 pub struct ServerConfig {
     pub port: u16,
@@ -11,21 +10,14 @@ pub struct ServerConfig {
     pub documents_dir: String,
 }
 
-#[derive(Debug, Deserialize)]
-#[config(key = "students-api")]
-pub struct StudentsApiConfig {
-    pub api_key: String,
-    pub api_url: String,
-}
-
-#[derive(Debug, Deserialize, Default)]
+#[derive(Clone, Debug, Deserialize, Default)]
 #[config(key = "google-calendar")]
 pub struct GoogleCalendarConfig {
     pub calendar_id: String,
     pub service_account_path: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[config(key = "event-queue")]
 pub struct EventQueueConfig {
     pub buffer_size: usize,
@@ -33,7 +25,7 @@ pub struct EventQueueConfig {
     pub delay_between_event_retry_ms: u64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[config(key = "postgres-db")]
 pub struct PostgresDbConfig {
     pub url: String,
@@ -43,13 +35,13 @@ pub struct PostgresDbConfig {
     pub acquire_timeout_ms: u64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[config(key = "redis")]
 pub struct RedisConfig {
     pub url: String,
 }
 
-#[derive(Deserialize, Default)]
+#[derive(Clone, Deserialize, Default)]
 #[config(key = "auth")]
 pub struct AuthConfig {
     pub access_jwt_secret: String,
@@ -63,44 +55,4 @@ pub struct AuthConfig {
     pub google_client_id: String,
     pub google_client_secret: String,
     pub google_redirect_url: String,
-}
-
-#[derive(Debug, Deserialize)]
-#[config(key = "cors")]
-pub struct CorsConfig {
-    pub allow_credentials: bool,
-    pub allowed_http_methods: Vec<String>,
-    pub allowed_http_headers: Vec<String>,
-}
-
-// ---------------- Config Service ---------------------------
-
-pub trait ConfigService: Interface {
-    fn inner(&self) -> &Config;
-}
-
-#[derive(Component)]
-#[shaku(interface = ConfigService)]
-pub struct ConfigServiceImpl {
-    inner: Config,
-}
-
-impl ConfigService for ConfigServiceImpl {
-    fn inner(&self) -> &Config {
-        &self.inner
-    }
-}
-
-impl ConfigServiceImpl {
-    pub fn new(config: Config) -> Self {
-        Self { inner: config }
-    }
-}
-
-impl From<ConfigServiceImpl> for ConfigServiceImplParameters {
-    fn from(value: ConfigServiceImpl) -> Self {
-        Self {
-            inner: value.inner.clone(),
-        }
-    }
 }

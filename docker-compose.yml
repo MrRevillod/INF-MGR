@@ -73,21 +73,6 @@ services:
     networks:
       - my_networks
 
-  students_api_dev:
-    container_name: inf_mgr_students_api_dev
-    extends:
-      file: docker-compose.base.yml
-      service: students_api_base
-    build:
-      target: dev
-    env_file:
-      - .env
-    depends_on:
-      postgres_dev:
-        condition: service_healthy
-    networks:
-      - my_networks
-
 networks:
   my_networks:
     driver: bridge
@@ -97,5 +82,3 @@ volumes:
   server_target:
   cargo_cache:
   client_node_modules:
-  students_api_target:
-  students_api_cargo_cache:

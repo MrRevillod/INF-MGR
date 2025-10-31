@@ -1,4 +1,6 @@
 import axios from "axios"
+import { authStore } from "../stores/auth.store.svelte"
+import { goto } from "$app/navigation"
 
 const axiosOpts = {
 	baseURL: "/api",
@@ -10,22 +12,25 @@ export const api = axios.create({ ...axiosOpts })
 
 export const protectedApi = axios.create({ ...axiosOpts })
 
-protectedApi.interceptors.request.use(config => {
-	if (typeof window !== "undefined") {
-		const access = localStorage.getItem("ACCESS")
-		const refresh = localStorage.getItem("REFRESH")
+protectedApi.interceptors.request.use(
+	config => {
+		if (typeof window !== "undefined") {
+			const access = localStorage.getItem("ACCESS")
+			const refresh = localStorage.getItem("REFRESH")
 
-		if (access && refresh) {
-			if (!config.headers) {
-				config.headers = {}
+			if (access && refresh) {
+				if (!config.headers) {
+					config.headers = {}
+				}
+				config.headers["Authorization"] = `Bearer ${access},${refresh}`
+			} else {
+				return Promise.reject(new Error("No authentication tokens found"))
 			}
-
-			config.headers["Authorization"] = `Bearer ${access},${refresh}`
 		}
-	}
-
-	return config
-})
+		return config
+	},
+	error => Promise.reject(error)
+)
 
 // Axios instance for protected server routes
 // Includes a response interceptor to automatically refresh the session when it expires
@@ -34,21 +39,67 @@ protectedApi.interceptors.request.use(config => {
 protectedApi.interceptors.response.use(
 	async response => response,
 	async error => {
-		// If the error is not a 401 (unauthorized), reject the promise
+		// Si el error es del request interceptor (no hay tokens)
+		if (error.message === "No authentication tokens found") {
+			authStore.reset()
+			goto("/auth/login")
+			return Promise.reject(error)
+		}
+
+		// Si el error no es 401, rechazar
 		if (error?.response?.status !== 401) {
 			return Promise.reject(error)
 		}
 
-		// If the error is 401, the session maybe have expired
 		const originalRequest = error.config
 
-		// So We can try to refresh the session making a req to "/auth/refresh"
-		// if the refresh req is successfull, retry the original request
-		return api
-			.post("/auth/refresh")
-			.then(response => {
-				if (response.status === 200) return protectedApi(originalRequest)
-			})
-			.catch(error => Promise.reject(error))
+		// ✅ Prevenir loop infinito de refresh
+		if (originalRequest._retry) {
+			authStore.reset()
+			localStorage.removeItem("ACCESS")
+			localStorage.removeItem("REFRESH")
+			goto("/auth/login")
+			return Promise.reject(error)
+		}
+
+		originalRequest._retry = true
+
+		try {
+			const response = await api.post(
+				"/auth/refresh",
+				{},
+				{
+					headers: {
+						Authorization: originalRequest.headers["Authorization"],
+					},
+				}
+			)
+
+			if (response.status === 200) {
+				const { access_token, refresh_token } = response.data.data
+
+				if (!access_token || !refresh_token) {
+					throw new Error("Invalid refresh response")
+				}
+
+				localStorage.setItem("ACCESS", access_token)
+				localStorage.setItem("REFRESH", refresh_token)
+
+				// Actualizar el header con los nuevos tokens
+				originalRequest.headers["Authorization"] =
+					`Bearer ${access_token},${refresh_token}`
+
+				return protectedApi(originalRequest)
+			}
+		} catch (refreshError) {
+			console.error("Refresh failed:", refreshError)
+
+			authStore.reset()
+			localStorage.removeItem("ACCESS")
+			localStorage.removeItem("REFRESH")
+			goto("/auth/login")
+
+			return Promise.reject(refreshError)
+		}
 	}
 )

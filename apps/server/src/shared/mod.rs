@@ -1,96 +1,11 @@
 pub mod errors;
-use chrono::{DateTime, Utc};
-pub use errors::{AppError, AppResult, AuthError, NotFoundError, ValidationError};
+pub use errors::*;
+pub mod event_handler;
+pub mod http;
 pub mod macros;
 
-pub mod infrastructure {
-    pub mod di {
-        mod builder;
-        mod container;
+mod injectables;
+pub use injectables::*;
 
-        pub use builder::DependencyContainer;
-        pub use container::{AppModule, InitialComponents};
-    }
-
-    mod databases {
-        mod postgres;
-        mod redis;
-
-        pub use postgres::*;
-        pub use redis::*;
-    }
-
-    pub mod http;
-    pub mod layers;
-    pub mod oauth;
-    pub mod uuid;
-
-    pub use databases::*;
-    pub use di::*;
-    pub use http::*;
-    pub use layers::*;
-    pub use oauth::*;
-    pub use uuid::*;
-}
-
-pub use infrastructure::*;
-
-pub mod services {
-    pub mod errors;
-    pub mod mailer;
-    pub mod printer;
-    pub mod templates {
-        mod context;
-        mod files;
-
-        pub use context::*;
-        pub use files::*;
-    }
-
-    pub mod event_queue {
-        pub mod publisher;
-        pub mod subscriber;
-
-        pub use publisher::*;
-        pub use subscriber::*;
-    }
-
-    mod validation;
-    pub use validation::*;
-
-    mod calendar {
-        mod hub;
-        pub use hub::*;
-    }
-
-    pub use calendar::*;
-
-    pub use crate::template_ctx;
-    pub use errors::*;
-    pub use event_queue::*;
-    pub use mailer::*;
-    pub use printer::*;
-    pub use templates::*;
-
-    use chrono::{DateTime, Utc};
-    use chrono_tz::America::Santiago;
-
-    pub fn format_date(date: String) -> String {
-        let date = DateTime::parse_from_rfc3339(&date)
-            .map(|dt| dt.with_timezone(&Utc))
-            .ok();
-
-        date.map(|date| date.with_timezone(&Santiago).format("%d/%m/%y").to_string())
-            .unwrap_or_default()
-    }
-}
-
-pub fn validate_rfc3339(date_str: &str) -> Result<(), validator::ValidationError> {
-    match DateTime::parse_from_rfc3339(date_str) {
-        Ok(dt) => {
-            let _utc: DateTime<Utc> = dt.with_timezone(&Utc);
-            Ok(())
-        }
-        Err(_) => Err(validator::ValidationError::new("invalid_datetime")),
-    }
-}
+mod validation;
+pub use validation::*;
