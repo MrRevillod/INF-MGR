@@ -1,6 +1,5 @@
-use async_trait::async_trait;
-use shaku::{Component, Interface};
 use std::{collections::HashMap, sync::Arc};
+use sword::core::injectable;
 use uuid::Uuid;
 
 use crate::{
@@ -9,47 +8,22 @@ use crate::{
     shared::{
         AppResult, NotFoundError, ValidationError,
         errors::{AppError, AuthError},
-        services::{Event, EventQueue},
+        event_handler::{Event, EventQueue},
     },
     users::*,
 };
 
-#[derive(Component)]
-#[shaku(interface = CourseService)]
-pub struct CourseServiceImpl {
-    #[shaku(inject)]
-    courses: Arc<dyn CourseRepository>,
+#[injectable]
+pub struct CourseService {
+    courses: Arc<CourseRepository>,
+    users: Arc<UserRepository>,
 
-    #[shaku(inject)]
-    users: Arc<dyn UserRepository>,
-
-    #[shaku(inject)]
-    enrollments: Arc<dyn EnrollmentRepository>,
-
-    #[shaku(inject)]
-    event_queue: Arc<dyn EventQueue>,
+    enrollments: Arc<EnrollmentRepository>,
+    event_queue: Arc<EventQueue>,
 }
 
-#[async_trait]
-pub trait CourseService: Interface {
-    async fn get_all(&self, filter: CourseFilter)
-    -> AppResult<Vec<CourseWithStaff>>;
-
-    async fn get_by_id(&self, id: &Uuid) -> AppResult<CourseWithStaff>;
-    async fn create(&self, input: CreateCourseDto) -> AppResult<Course>;
-    async fn remove(&self, id: &Uuid) -> AppResult<()>;
-    async fn update(&self, id: &Uuid, input: UpdateCourseDto) -> AppResult<Course>;
-
-    async fn check_is_teacher_course(
-        &self,
-        course_id: &Uuid,
-        user_id: &Uuid,
-    ) -> AppResult<bool>;
-}
-
-#[async_trait]
-impl CourseService for CourseServiceImpl {
-    async fn get_all(
+impl CourseService {
+    pub async fn get_all(
         &self,
         filter: CourseFilter,
     ) -> AppResult<Vec<CourseWithStaff>> {
@@ -75,7 +49,7 @@ impl CourseService for CourseServiceImpl {
         Ok(result)
     }
 
-    async fn get_by_id(&self, id: &Uuid) -> AppResult<CourseWithStaff> {
+    pub async fn get_by_id(&self, id: &Uuid) -> AppResult<CourseWithStaff> {
         let Some(course) = self.courses.find_by_id(id).await? else {
             return Err(NotFoundError::course(*id))?;
         };
@@ -89,7 +63,7 @@ impl CourseService for CourseServiceImpl {
         Ok((course, teacher))
     }
 
-    async fn create(&self, input: CreateCourseDto) -> AppResult<Course> {
+    pub async fn create(&self, input: CreateCourseDto) -> AppResult<Course> {
         let course = Course::from(input);
 
         let filter = course_filter! {
@@ -123,7 +97,11 @@ impl CourseService for CourseServiceImpl {
         Ok(self.courses.save(course).await?)
     }
 
-    async fn update(&self, id: &Uuid, input: UpdateCourseDto) -> AppResult<Course> {
+    pub async fn update(
+        &self,
+        id: &Uuid,
+        input: UpdateCourseDto,
+    ) -> AppResult<Course> {
         let Some(mut course) = self.courses.find_by_id(id).await? else {
             return Err(NotFoundError::course(*id))?;
         };
@@ -139,7 +117,7 @@ impl CourseService for CourseServiceImpl {
         Ok(self.courses.save(course).await?)
     }
 
-    async fn remove(&self, id: &Uuid) -> Result<(), AppError> {
+    pub async fn remove(&self, id: &Uuid) -> Result<(), AppError> {
         let Some(course) = self.courses.find_by_id(id).await? else {
             return Err(NotFoundError::course(*id))?;
         };
@@ -155,7 +133,7 @@ impl CourseService for CourseServiceImpl {
         self.courses.delete(id).await
     }
 
-    async fn check_is_teacher_course(
+    pub async fn check_is_teacher_course(
         &self,
         course_id: &Uuid,
         user_id: &Uuid,

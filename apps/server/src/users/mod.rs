@@ -10,8 +10,21 @@ pub use dtos::{
     validate_rut_id,
 };
 
-pub use entity::{Administrator, Role, Secretary, Student, Teacher, User, Users};
-pub use repository::{PostgresUserRepository, UserFilter, UserRepository};
-pub use service::{UserService, UserServiceImpl};
+pub use entity::{Administrator, Role, Secretary, Student, Teacher, User};
+pub use repository::{UserFilter, UserRepository};
+pub use service::UserService;
 
 pub use crate::user_filter;
+
+use sword::prelude::*;
+
+pub struct UsersModule;
+
+impl Module for UsersModule {
+    type Controller = UsersController;
+
+    fn register_components(container: &mut DependencyContainer) {
+        container.register_component::<UserService>();
+        container.register_component::<UserRepository>();
+    }
+}

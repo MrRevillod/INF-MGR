@@ -1,46 +1,24 @@
-use crate::{
-    shared::services::{Event, EventQueue},
-    users::Role,
-};
-
-use async_trait::async_trait;
-use shaku::{Component, Interface};
 use std::{str::FromStr, sync::Arc};
+use sword::core::injectable;
 use uuid::Uuid;
 
 use crate::{
     shared::{
         DEFAULT_PAGE_SIZE, Pagination,
         errors::{AppError, NotFoundError, ValidationError},
+        event_handler::{Event, EventQueue},
     },
     users::*,
 };
 
-#[derive(Component)]
-#[shaku(interface = UserService)]
-pub struct UserServiceImpl {
-    #[shaku(inject)]
-    users: Arc<dyn UserRepository>,
-
-    #[shaku(inject)]
-    event_queue: Arc<dyn EventQueue>,
+#[injectable]
+pub struct UserService {
+    users: Arc<UserRepository>,
+    event_queue: Arc<EventQueue>,
 }
 
-#[async_trait]
-pub trait UserService: Interface {
-    async fn get_all(
-        &self,
-        filter: UserFilter,
-    ) -> Result<Pagination<User>, AppError>;
-
-    async fn create(&self, user: CreateUserDto) -> Result<User, AppError>;
-    async fn update(&self, id: Uuid, user: UpdateUserDto) -> Result<User, AppError>;
-    async fn remove(&self, id: Uuid) -> Result<(), AppError>;
-}
-
-#[async_trait]
-impl UserService for UserServiceImpl {
-    async fn get_all(
+impl UserService {
+    pub async fn get_all(
         &self,
         filter: UserFilter,
     ) -> Result<Pagination<User>, AppError> {
@@ -58,7 +36,7 @@ impl UserService for UserServiceImpl {
         })
     }
 
-    async fn create(&self, input: CreateUserDto) -> Result<User, AppError> {
+    pub async fn create(&self, input: CreateUserDto) -> Result<User, AppError> {
         let (user_by_rut, user_by_email) = tokio::try_join!(
             self.users.find_one(user_filter! {
                 rut: input.rut.clone(),
@@ -86,7 +64,7 @@ impl UserService for UserServiceImpl {
         Ok(user)
     }
 
-    async fn update(
+    pub async fn update(
         &self,
         id: Uuid,
         input: UpdateUserDto,
@@ -106,7 +84,7 @@ impl UserService for UserServiceImpl {
                 return Err(ValidationError::duplicate_email(&e))?;
             }
 
-            user.email = e
+            user.email = e;
         }
 
         if let Some(role) = input.role {
@@ -116,7 +94,7 @@ impl UserService for UserServiceImpl {
         self.users.save(user).await
     }
 
-    async fn remove(&self, id: Uuid) -> Result<(), AppError> {
+    pub async fn remove(&self, id: Uuid) -> Result<(), AppError> {
         if self.users.find_by_id(&id).await?.is_none() {
             return Err(NotFoundError::user(id))?;
         }

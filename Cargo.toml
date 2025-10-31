@@ -1,3 +1,3 @@
 [workspace]
 resolver = "2"
-members = ["apps/server", "apps/students-api", "tests"]
+members = ["apps/server"]

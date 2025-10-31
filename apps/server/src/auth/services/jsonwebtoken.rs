@@ -1,13 +1,12 @@
-use std::sync::Arc;
-
 use crate::{
-    config::{AuthConfig, ConfigService},
+    config::AuthConfig,
     shared::{AppResult, errors::AuthError},
 };
+
 use chrono::{Duration, Utc};
 use jsonwebtoken::{EncodingKey, Header};
 use serde::{Deserialize, Serialize};
-use shaku::{Component, Interface};
+use sword::core::injectable;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Claims {
@@ -29,28 +28,13 @@ pub enum TokenKind {
     Refresh,
 }
 
-#[derive(Component)]
-#[shaku(interface = TokenService)]
+#[injectable]
 pub struct JsonWebTokenService {
-    #[shaku(inject)]
-    config: Arc<dyn ConfigService>,
+    config: AuthConfig,
 }
 
-pub trait TokenService: Interface {
-    fn sign(
-        &self,
-        token_kind: TokenKind,
-        session_id: &str,
-        user_id: &str,
-        role: &str,
-    ) -> AppResult<String>;
-
-    fn verify(&self, token_kind: TokenKind, token: &str) -> AppResult<Claims>;
-    fn get_token_config(&self, token_kind: TokenKind) -> TokenConfig;
-}
-
-impl TokenService for JsonWebTokenService {
-    fn sign(
+impl JsonWebTokenService {
+    pub fn sign(
         &self,
         token_kind: TokenKind,
         session_id: &str,
@@ -81,31 +65,28 @@ impl TokenService for JsonWebTokenService {
         Ok(token)
     }
 
-    fn verify(&self, token_kind: TokenKind, token: &str) -> AppResult<Claims> {
-        let TokenConfig { secret, .. } = self.get_token_config(token_kind.clone());
+    pub fn verify(&self, token_kind: TokenKind, token: &str) -> AppResult<Claims> {
+        let TokenConfig { secret, .. } = self.get_token_config(token_kind);
 
         let token_data = jsonwebtoken::decode::<Claims>(
             token,
             &jsonwebtoken::DecodingKey::from_secret(secret.as_ref()),
             &jsonwebtoken::Validation::default(),
         )
-        .map_err(|e| AuthError::from(e))?;
+        .map_err(AuthError::from)?;
 
         Ok(token_data.claims)
     }
 
-    fn get_token_config(&self, token_kind: TokenKind) -> TokenConfig {
-        let auth_config =
-            self.config.inner().get::<AuthConfig>().unwrap_or_default();
-
+    pub fn get_token_config(&self, token_kind: TokenKind) -> TokenConfig {
         match token_kind {
             TokenKind::Access => TokenConfig {
-                secret: auth_config.access_jwt_secret,
-                expiration: auth_config.access_exp_ms,
+                secret: self.config.access_jwt_secret.clone(),
+                expiration: self.config.access_exp_ms,
             },
             TokenKind::Refresh => TokenConfig {
-                secret: auth_config.refresh_jwt_secret,
-                expiration: auth_config.refresh_exp_ms,
+                secret: self.config.refresh_jwt_secret.clone(),
+                expiration: self.config.refresh_exp_ms,
             },
         }
     }

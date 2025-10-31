@@ -15,18 +15,17 @@ required-features = ["seeder"]
 [dependencies]
 tokio = { version = "1.46.1", features = ["full"] }
 
-axum = "0.8.4"
 oauth2 = "5.0.0"
 reqwest = { version = "0.12", features = ["json"] }
-sword = { version = "0.1.8", features = [
+sword = { git = "https://github.com/MrRevillod/sword.git", branch = "main", features = [
     "multipart",
-    "shaku-di",
     "cookies",
     "helmet",
+    "validator",
 ] }
 
+filterstruct = { git = "https://github.com/MrRevillod/filterstruct.git", branch = "master" }
 chrono = { version = "0.4.41", features = ["serde"] }
-chrono-tz = "0.10.4"
 
 tera = "1.20.0"
 uuid = { version = "1.17.0", features = ["serde", "v4"] }
@@ -36,7 +35,6 @@ serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.140"
 
 redis = { version = "0.32.5", features = ["tokio-comp"] }
-sea-query = { version = "1.0.0-rc.1", features = ["derive"] }
 sqlx = { version = "0.8.6", default-features = false, features = [
     "runtime-tokio",
     "postgres",
@@ -47,21 +45,9 @@ sqlx = { version = "0.8.6", default-features = false, features = [
     "macros",
 ] }
 
-sea-query-sqlx = { version = "0.8.0-rc.9", default-features = false, features = [
-    "sqlx-postgres",
-    "with-chrono",
-    "with-uuid",
-    "runtime-tokio",
-    "postgres-array",
-    "postgres-vector",
-] }
-
-tower-http = { version = "0.6.6", features = ["trace", "cors"] }
+tower-http = { version = "0.6.6", features = ["trace"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
-
-shaku = { version = "0.6.2", features = ["thread_safe"] }
-async-trait = "0.1.88"
 
 validator = { version = "0.20.0", features = ["derive"] }
 regex = "1.11.1"

@@ -1,10 +1,7 @@
-use std::str::FromStr;
 use sword::prelude::*;
 use uuid::Uuid;
 
 use crate::users::{Role, User};
-
-pub struct MinimumRequiredRole;
 
 #[derive(Debug, Clone)]
 pub struct OwnershipValidation {
@@ -13,19 +10,21 @@ pub struct OwnershipValidation {
     pub user_role: Role,
 }
 
-impl MiddlewareWithConfig<&str> for MinimumRequiredRole {
-    async fn handle(role: &str, mut ctx: Context, next: Next) -> MiddlewareResult {
-        let minimum_required_role =
-            Role::from_str(role).map_err(|_| HttpResponse::BadRequest())?;
+#[middleware]
+pub struct MinimumRequiredRole {}
 
-        let Some(user) = ctx.extensions.get::<User>() else {
+impl OnRequestWithConfig<Role> for MinimumRequiredRole {
+    async fn on_request_with_config(
+        &self,
+        role: Role,
+        mut req: Request,
+    ) -> MiddlewareResult {
+        let Some(user) = req.extensions.get::<User>() else {
             return Err(HttpResponse::Unauthorized());
         };
 
         let user_role_priority = user.role.priority();
-
-        let has_required_role =
-            user_role_priority >= minimum_required_role.priority();
+        let has_required_role = user_role_priority >= role.priority();
 
         if !has_required_role {
             return Err(HttpResponse::Forbidden().message("Insufficient role"));
@@ -40,8 +39,8 @@ impl MiddlewareWithConfig<&str> for MinimumRequiredRole {
             user_role: user.role.clone(),
         };
 
-        ctx.extensions.insert(ownership_validation);
+        req.extensions.insert(ownership_validation);
 
-        next!(ctx, next)
+        req.next().await
     }
 }

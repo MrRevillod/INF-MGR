@@ -72,7 +72,7 @@ pub fn info_1164(teachers: &[User]) -> Course {
         code: "INFO1164".to_string(),
         year: 2025,
         teacher_id: teachers.first().unwrap().id,
-        evaluations: evaluation_schema.clone(),
+        evaluations: evaluation_schema,
         course_status: CourseStatus::Active,
     }
 }

@@ -1,30 +1,19 @@
-use async_trait::async_trait;
 use redis::AsyncCommands;
-use shaku::{Component, Interface};
 use std::sync::Arc;
+use sword::core::injectable;
 
 use crate::{
     auth::Session,
-    shared::{AppError, AppResult, CacheDbConnection},
+    shared::{AppError, AppResult, RedisDatabase},
 };
 
-#[derive(Component)]
-#[shaku(interface = SessionRepository)]
-pub struct RedisSessionRepository {
-    #[shaku(inject)]
-    redis_db: Arc<dyn CacheDbConnection>,
+#[injectable]
+pub struct SessionRepository {
+    redis_db: Arc<RedisDatabase>,
 }
 
-#[async_trait]
-pub trait SessionRepository: Interface {
-    async fn get(&self, key: &str) -> AppResult<Option<Session>>;
-    async fn save(&self, session: Session, ttl: u64) -> AppResult<()>;
-    async fn delete(&self, session_id: &str) -> AppResult<()>;
-}
-
-#[async_trait]
-impl SessionRepository for RedisSessionRepository {
-    async fn get(&self, session_id: &str) -> AppResult<Option<Session>> {
+impl SessionRepository {
+    pub async fn get(&self, session_id: &str) -> AppResult<Option<Session>> {
         let mut client = self.redis_db.get_connection();
         let key = format!("session:{session_id}");
 
@@ -40,7 +29,7 @@ impl SessionRepository for RedisSessionRepository {
         }
     }
 
-    async fn save(&self, session: Session, ttl: u64) -> AppResult<()> {
+    pub async fn save(&self, session: Session, ttl: u64) -> AppResult<()> {
         let mut client = self.redis_db.get_connection();
         let data = serde_json::to_string(&session)
             .map_err(|e| AppError::InternalServerError(e.into()))?;
@@ -52,10 +41,11 @@ impl SessionRepository for RedisSessionRepository {
         Ok(())
     }
 
-    async fn delete(&self, session_id: &str) -> AppResult<()> {
+    pub async fn delete(&self, session_id: &str) -> AppResult<()> {
         let mut client = self.redis_db.get_connection();
         let key = format!("session:{session_id}");
         let _: () = client.del(key).await?;
+
         Ok(())
     }
 }

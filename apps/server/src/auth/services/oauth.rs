@@ -1,8 +1,7 @@
-use async_trait::async_trait;
 use oauth2::{AuthorizationCode, CsrfToken, RefreshToken, Scope, TokenResponse};
 
-use shaku::{Component, Interface};
 use std::sync::Arc;
+use sword::core::injectable;
 
 use crate::{
     auth::*,
@@ -10,37 +9,15 @@ use crate::{
     users::*,
 };
 
-#[derive(Component)]
-#[shaku(interface = OAuthService)]
-pub struct GoogleOAuthService {
-    #[shaku(inject)]
-    oauth_client: Arc<dyn OAuthClient>,
-
-    #[shaku(inject)]
-    auth_repository: Arc<dyn AuthRepository>,
-
-    #[shaku(inject)]
-    user_repository: Arc<dyn UserRepository>,
+#[injectable]
+pub struct OAuthService {
+    oauth_client: Arc<OAuthClient>,
+    auth_repository: Arc<OAuthRepository>,
+    user_repository: Arc<UserRepository>,
 }
 
-#[async_trait]
-pub trait OAuthService: Interface {
-    async fn oauth_login(&self) -> AppResult<String>;
-    async fn validate_callback(
-        &self,
-        params: CallBackParams,
-    ) -> AppResult<(User, OAuthTokenType)>;
-
-    async fn get_user_info(&self, access_token: &str) -> AppResult<GoogleUserInfo>;
-    async fn refresh_oauth_token(
-        &self,
-        refresh_token: &str,
-    ) -> AppResult<OAuthTokenType>;
-}
-
-#[async_trait]
-impl OAuthService for GoogleOAuthService {
-    async fn oauth_login(&self) -> AppResult<String> {
+impl OAuthService {
+    pub async fn oauth_login(&self) -> AppResult<String> {
         let client = self.oauth_client.get_client();
 
         let (auth_url, csrf_token) = client
@@ -57,7 +34,10 @@ impl OAuthService for GoogleOAuthService {
         Ok(auth_url.to_string())
     }
 
-    async fn get_user_info(&self, access_token: &str) -> AppResult<GoogleUserInfo> {
+    pub async fn get_user_info(
+        &self,
+        access_token: &str,
+    ) -> AppResult<GoogleUserInfo> {
         let http_client = self.oauth_client.get_http_client();
 
         let user_info_response = http_client
@@ -81,7 +61,7 @@ impl OAuthService for GoogleOAuthService {
         Ok(user_info)
     }
 
-    async fn validate_callback(
+    pub async fn validate_callback(
         &self,
         params: CallBackParams,
     ) -> AppResult<(User, OAuthTokenType)> {
@@ -132,7 +112,7 @@ impl OAuthService for GoogleOAuthService {
         Ok((user, token_response))
     }
 
-    async fn refresh_oauth_token(
+    pub async fn refresh_oauth_token(
         &self,
         refresh_token: &str,
     ) -> AppResult<OAuthTokenType> {

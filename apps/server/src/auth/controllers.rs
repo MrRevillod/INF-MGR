@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use serde_json::json;
 use sword::prelude::*;
 
@@ -7,69 +9,67 @@ use crate::{
         services::{CookieBuilder as Cookie, SessionService},
     },
     config::{AuthConfig, ServerConfig},
-    shared::{di::AppModule, infrastructure::http::ContextExt},
+    shared::http::ContextExt,
 };
 
 #[controller("/auth")]
-pub struct AuthController;
+pub struct AuthController {
+    auth_config: AuthConfig,
+    server_config: ServerConfig,
+    oauth_service: Arc<OAuthService>,
+    session_service: Arc<SessionService>,
+}
 
 #[routes]
 impl AuthController {
     #[post("/login")]
-    async fn login(ctx: Context) -> HttpResult<HttpResponse> {
-        let service = ctx.di::<AppModule, dyn OAuthService>()?;
-        let login_data = service.oauth_login().await?;
-
+    async fn login(&self) -> HttpResult {
+        let login_data = self.oauth_service.oauth_login().await?;
         Ok(HttpResponse::Ok().data(login_data))
     }
 
     #[get("/callback")]
-    async fn auth_callback(ctx: Context) -> HttpResult<HttpResponse> {
-        let callback_params = ctx.query::<CallBackParams>()?.ok_or(
+    async fn auth_callback(&self, req: Request) -> HttpResult {
+        let callback_params = req.query::<CallBackParams>()?.ok_or_else(|| {
             HttpResponse::BadRequest()
-                .message("Faltan parámetros de callback de Google OAuth"),
-        )?;
+                .message("Faltan parámetros de callback de Google OAuth")
+        })?;
 
-        let (user, oauth_token) = ctx
-            .di::<AppModule, dyn OAuthService>()?
+        let (user, oauth_token) = self
+            .oauth_service
             .validate_callback(callback_params)
             .await?;
 
-        let auth_config = ctx.config::<AuthConfig>()?;
-
-        let session = ctx
-            .di::<AppModule, dyn SessionService>()?
-            .create_session(&user, oauth_token, auth_config.session_ttl_seconds)
+        let session = self
+            .session_service
+            .create_session(&user, oauth_token, self.auth_config.session_ttl_seconds)
             .await?;
 
-        let cookie_exp = ctx.config::<AuthConfig>()?.access_exp_ms;
-        let client_app_url = ctx.config::<ServerConfig>()?.client_app_url;
+        let access_cookie = Cookie::new("ACCESS", session.access_token)
+            .max_age(self.auth_config.access_exp_ms)
+            .build();
 
-        ctx.cookies()?.add(
-            Cookie::new("ACCESS", session.access_token)
-                .max_age(cookie_exp)
-                .build(),
-        );
+        let refresh_cookie = Cookie::new("REFRESH", session.refresh_token)
+            .max_age(self.auth_config.access_exp_ms)
+            .build();
 
-        ctx.cookies()?.add(
-            Cookie::new("REFRESH", session.refresh_token)
-                .max_age(cookie_exp)
-                .build(),
-        );
+        let client_app_url = self.server_config.clone().client_app_url;
 
-        Ok(HttpResponse::TemporaryRedirect()
-            .add_header("Location", &format!("{client_app_url}/auth/callback")))
+        req.cookies()?.add(access_cookie);
+        req.cookies()?.add(refresh_cookie);
+
+        Ok(HttpResponse::TemporaryRedirect(&format!(
+            "{client_app_url}/auth/callback"
+        )))
     }
 
     #[post("/refresh")]
-    async fn refresh_token(ctx: Context) -> HttpResult<HttpResponse> {
-        let auth_config = ctx.config::<AuthConfig>()?;
+    async fn refresh_token(&self, req: Request) -> HttpResult {
+        let (_, refresh_token) = req.get_bearer_tokens()?;
 
-        let (_, refresh_token) = ctx.get_bearer_tokens()?;
-
-        let session = ctx
-            .di::<AppModule, dyn SessionService>()?
-            .refresh_session(refresh_token, auth_config.session_ttl_seconds)
+        let session = self
+            .session_service
+            .refresh_session(refresh_token, self.auth_config.session_ttl_seconds)
             .await?;
 
         Ok(HttpResponse::Ok().data(json!({
@@ -80,20 +80,18 @@ impl AuthController {
     }
 
     #[post("/logout")]
-    #[middleware(Authentication)]
-    async fn logout(ctx: Context) -> HttpResult<HttpResponse> {
-        let (access_token, _) = ctx.get_bearer_tokens()?;
+    #[uses(Authentication)]
+    async fn logout(&self, req: Request) -> HttpResult {
+        let (access_token, _) = req.get_bearer_tokens()?;
 
-        ctx.di::<AppModule, dyn SessionService>()?
-            .close_session(&access_token)
-            .await?;
+        self.session_service.close_session(&access_token).await?;
 
         Ok(HttpResponse::Ok().message("Session closed successfully"))
     }
 
     #[get("/me")]
-    #[middleware(Authentication)]
-    async fn me(ctx: Context) -> HttpResult<HttpResponse> {
-        Ok(HttpResponse::Ok().data(ctx.get_current_user()?))
+    #[uses(Authentication)]
+    async fn me(&self, req: Request) -> HttpResult {
+        Ok(HttpResponse::Ok().data(req.get_current_user()?))
     }
 }

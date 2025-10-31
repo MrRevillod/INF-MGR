@@ -3,10 +3,10 @@ use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
 pub async fn create_users(pool: &Pool<Postgres>, users: Vec<User>) {
-    let query = r#"
+    let query = r"
             INSERT INTO users (id, rut, name, email, role, google_id, created_at, deleted_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        "#;
+        ";
 
     for user in users {
         sqlx::query(query)
@@ -25,10 +25,10 @@ pub async fn create_users(pool: &Pool<Postgres>, users: Vec<User>) {
 }
 
 pub async fn create_course(pool: &Pool<Postgres>, course: Course) {
-    let query = r#"
+    let query = r"
         INSERT INTO courses (id, name, code, year, teacher_id, evaluations, course_status)
         VALUES ($1, $2, $3, $4, $5, $6::course_evaluation[], $7::course_status)
-    "#;
+    ";
 
     sqlx::query(query)
         .bind(course.id)
@@ -48,10 +48,10 @@ pub async fn create_enrollments(
     students: Vec<User>,
     course: Course,
 ) {
-    let query = r#"
+    let query = r"
         INSERT INTO enrollments (id, student_id, course_id, practice_id, student_scores)
         VALUES ($1, $2, $3, NULL, ARRAY[]::student_score[])
-    "#;
+    ";
 
     for student in students {
         sqlx::query(query)

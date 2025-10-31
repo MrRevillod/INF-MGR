@@ -1,21 +1,14 @@
-use async_trait::async_trait;
-use sea_query::{Expr, ExprTrait, Order, PostgresQueryBuilder, Query};
-use sea_query_sqlx::SqlxBinder;
-use shaku::{Component, Interface};
-use sqlx::{Postgres, query_as_with as sqlx_query};
-use std::sync::Arc;
-use uuid::Uuid;
+use sword::core::injectable;
 
 use crate::{
-    courses::{Course, Courses},
-    shared::{AppResult, DatabaseConnection},
+    courses::Course,
+    shared::{AppResult, PostgresDatabase},
+    types::*,
 };
 
-#[derive(Component)]
-#[shaku(interface = CourseRepository)]
-pub struct PostgresCourseRepository {
-    #[shaku(inject)]
-    db_connection: Arc<dyn DatabaseConnection>,
+#[injectable]
+pub struct CourseRepository {
+    db_connection: Arc<PostgresDatabase>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -26,61 +19,45 @@ pub struct CourseFilter {
     pub year: Option<i32>,
 }
 
-#[async_trait]
-pub trait CourseRepository: Interface {
-    async fn find_many(&self, filter: CourseFilter) -> AppResult<Vec<Course>>;
-    async fn find_by_id(&self, id: &Uuid) -> AppResult<Option<Course>>;
-    async fn save(&self, course: Course) -> AppResult<Course>;
-    async fn delete(&self, id: &Uuid) -> AppResult<()>;
-}
-
-#[async_trait]
-impl CourseRepository for PostgresCourseRepository {
-    async fn find_many(&self, filter: CourseFilter) -> AppResult<Vec<Course>> {
-        let mut query = Query::select()
-            .expr(Expr::cust("*"))
-            .from(Courses::Table)
-            .to_owned();
+impl CourseRepository {
+    pub async fn find_many(&self, filter: CourseFilter) -> AppResult<Vec<Course>> {
+        let mut query = QueryBuilder::new("SELECT * FROM courses WHERE 1=1");
 
         if let Some(code) = filter.code {
-            query.and_where(Expr::col(Courses::Code).eq(code));
+            query.push(" AND code = $1").push_bind(code);
         }
 
         if let Some(ref name) = filter.name {
-            query.and_where(Expr::col(Courses::Name).like(name));
+            query.push(" AND name ILIKE $2");
+            query.push_bind(format!("%{}%", name));
         }
 
         if let Some(teacher_id) = filter.teacher_id {
-            query.and_where(Expr::col(Courses::TeacherId).eq(teacher_id));
+            query.push(" AND teacher_id = $3").push_bind(teacher_id);
         }
 
-        query.order_by(Courses::Year, Order::Desc);
+        query.push(" ORDER BY year DESC");
 
-        let (sql, values) = query.build_sqlx(PostgresQueryBuilder);
-
-        let result = sqlx::query_as_with::<Postgres, Course, _>(&sql, values)
+        let result = query
+            .build_query_as::<Course>()
             .fetch_all(self.db_connection.get_pool())
             .await?;
 
         Ok(result)
     }
 
-    async fn find_by_id(&self, id: &Uuid) -> AppResult<Option<Course>> {
-        let (sql, values) = Query::select()
-            .expr(Expr::cust("*"))
-            .from(Courses::Table)
-            .and_where(Expr::col(Courses::Id).eq(*id))
-            .build_sqlx(PostgresQueryBuilder);
-
-        let model = sqlx_query::<Postgres, Course, _>(&sql, values)
-            .fetch_optional(self.db_connection.get_pool())
-            .await?;
+    pub async fn find_by_id(&self, id: &Uuid) -> AppResult<Option<Course>> {
+        let model =
+            sqlx::query_as::<_, Course>("SELECT * FROM courses WHERE id = $1")
+                .bind(id)
+                .fetch_optional(self.db_connection.get_pool())
+                .await?;
 
         Ok(model)
     }
 
-    async fn save(&self, course: Course) -> AppResult<Course> {
-        let query = r#"
+    pub async fn save(&self, course: Course) -> AppResult<Course> {
+        let query = r"
             INSERT INTO courses (id, year, code, name, course_status, teacher_id, evaluations)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             ON CONFLICT (id) DO UPDATE SET
@@ -88,7 +65,7 @@ impl CourseRepository for PostgresCourseRepository {
                 course_status = EXCLUDED.course_status,
                 evaluations = EXCLUDED.evaluations
             RETURNING *
-        "#;
+        ";
 
         let result = sqlx::query_as::<_, Course>(query)
             .bind(course.id)
@@ -104,13 +81,9 @@ impl CourseRepository for PostgresCourseRepository {
         Ok(result)
     }
 
-    async fn delete(&self, id: &Uuid) -> AppResult<()> {
-        let (sql, values) = Query::delete()
-            .from_table(Courses::Table)
-            .and_where(Expr::col(Courses::Id).eq(*id))
-            .build_sqlx(PostgresQueryBuilder);
-
-        sqlx::query_with(&sql, values)
+    pub async fn delete(&self, id: &Uuid) -> AppResult<()> {
+        sqlx::query("DELETE FROM courses WHERE id = $1")
+            .bind(id)
             .execute(self.db_connection.get_pool())
             .await?;
 

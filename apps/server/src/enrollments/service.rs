@@ -1,7 +1,6 @@
-use async_trait::async_trait;
 use chrono::{Duration, Utc};
-use shaku::{Component, Interface};
 use std::sync::Arc;
+use sword::core::injectable;
 use uuid::Uuid;
 
 use crate::{
@@ -10,62 +9,22 @@ use crate::{
     practices::*,
     shared::{
         AppResult, NotFoundError, ValidationError,
-        services::{Event, EventQueue},
+        event_handler::{Event, EventQueue},
     },
     users::*,
 };
 
-#[derive(Component)]
-#[shaku(interface = EnrollmentService)]
-pub struct EnrollmentServiceImpl {
-    #[shaku(inject)]
-    enrollments: Arc<dyn EnrollmentRepository>,
-
-    #[shaku(inject)]
-    users: Arc<dyn UserRepository>,
-
-    #[shaku(inject)]
-    courses: Arc<dyn CourseRepository>,
-
-    #[shaku(inject)]
-    practices: Arc<dyn PracticeRepository>,
-
-    #[shaku(inject)]
-    event_queue: Arc<dyn EventQueue>,
+#[injectable]
+pub struct EnrollmentService {
+    enrollments: Arc<EnrollmentRepository>,
+    users: Arc<UserRepository>,
+    courses: Arc<CourseRepository>,
+    practices: Arc<PracticeRepository>,
+    event_queue: Arc<EventQueue>,
 }
 
-#[async_trait]
-pub trait EnrollmentService: Interface {
-    async fn get_all(
-        &self,
-        filter: EnrollmentFilter,
-    ) -> AppResult<Vec<EnrollmentWithStudentAndPractice>>;
-
-    async fn get_by_id(
-        &self,
-        id: &Uuid,
-    ) -> AppResult<EnrollmentWithStudentAndPractice>;
-
-    async fn create(&self, input: CreateEnrollmentDto) -> AppResult<Enrollment>;
-
-    async fn update(
-        &self,
-        id: &Uuid,
-        input: UpdateEnrollmentDto,
-    ) -> AppResult<Enrollment>;
-
-    async fn upload_final_report(
-        &self,
-        id: &Uuid,
-        doc_bytes: Vec<u8>,
-    ) -> AppResult<()>;
-
-    async fn remove(&self, id: &Uuid) -> AppResult<()>;
-}
-
-#[async_trait]
-impl EnrollmentService for EnrollmentServiceImpl {
-    async fn get_all(
+impl EnrollmentService {
+    pub async fn get_all(
         &self,
         filter: EnrollmentFilter,
     ) -> AppResult<Vec<EnrollmentWithStudentAndPractice>> {
@@ -102,7 +61,7 @@ impl EnrollmentService for EnrollmentServiceImpl {
         Ok(result)
     }
 
-    async fn get_by_id(
+    pub async fn get_by_id(
         &self,
         id: &Uuid,
     ) -> AppResult<EnrollmentWithStudentAndPractice> {
@@ -126,7 +85,7 @@ impl EnrollmentService for EnrollmentServiceImpl {
         Ok((enrollment, student, practice))
     }
 
-    async fn create(&self, input: CreateEnrollmentDto) -> AppResult<Enrollment> {
+    pub async fn create(&self, input: CreateEnrollmentDto) -> AppResult<Enrollment> {
         let enrollment = Enrollment::from(input);
 
         let filter = enrollment_filter! {
@@ -165,7 +124,7 @@ impl EnrollmentService for EnrollmentServiceImpl {
         self.enrollments.save(enrollment).await
     }
 
-    async fn upload_final_report(
+    pub async fn upload_final_report(
         &self,
         id: &Uuid,
         doc_bytes: Vec<u8>,
@@ -203,7 +162,7 @@ impl EnrollmentService for EnrollmentServiceImpl {
         Ok(())
     }
 
-    async fn update(
+    pub async fn update(
         &self,
         id: &Uuid,
         input: UpdateEnrollmentDto,
@@ -224,7 +183,7 @@ impl EnrollmentService for EnrollmentServiceImpl {
         self.enrollments.save(enrollment).await
     }
 
-    async fn remove(&self, id: &Uuid) -> AppResult<()> {
+    pub async fn remove(&self, id: &Uuid) -> AppResult<()> {
         if self.enrollments.find_by_id(id).await?.is_none() {
             return Err(NotFoundError::enrollment(*id))?;
         };

@@ -1,78 +1,31 @@
-use async_trait::async_trait;
-use shaku::{Component, Interface};
 use std::sync::Arc;
+use sword::core::injectable;
 use uuid::Uuid;
 
 use crate::{
     courses::CourseService,
     enrollments::*,
     practices::*,
-    shared::{AppResult, NotFoundError, services::*},
+    shared::{
+        AppResult, NotFoundError,
+        event_handler::{Event, EventQueue},
+    },
 };
 
-#[derive(Component)]
-#[shaku(interface = PracticeService)]
-pub struct PracticeServiceImpl {
-    #[shaku(inject)]
-    practices: Arc<dyn PracticeRepository>,
-
-    #[shaku(inject)]
-    enrollments: Arc<dyn EnrollmentService>,
-
-    #[shaku(inject)]
-    courses: Arc<dyn CourseService>,
-
-    #[shaku(inject)]
-    event_queue: Arc<dyn EventQueue>,
+#[injectable]
+pub struct PracticeService {
+    practices: Arc<PracticeRepository>,
+    enrollments: Arc<EnrollmentService>,
+    courses: Arc<CourseService>,
+    event_queue: Arc<EventQueue>,
 }
 
-#[async_trait]
-pub trait PracticeService: Interface {
-    async fn get_by_id(&self, id: &Uuid) -> AppResult<Option<Practice>>;
-
-    async fn update(
-        &self,
-        id: &Uuid,
-        input: UpdatePracticeDto,
-    ) -> AppResult<Practice>;
-
-    async fn create(
-        &self,
-        enrollment_id: &Uuid,
-        input: CreatePracticeDto,
-    ) -> AppResult<Practice>;
-
-    async fn authorize(
-        &self,
-        enrollment_id: &Uuid,
-        document: Vec<u8>,
-    ) -> AppResult<()>;
-
-    async fn update_status(
-        &self,
-        enrollment_id: &Uuid,
-        practice_id: &Uuid,
-        status: PracticeStatus,
-    ) -> AppResult<Practice>;
-
-    async fn evaluate(
-        &self,
-        enrollment_id: &Uuid,
-        practice_id: &Uuid,
-        evaluation_id: &Uuid,
-        input: EvaluatePracticeDto,
-    ) -> AppResult<Practice>;
-
-    async fn remove(&self, id: &Uuid) -> AppResult<()>;
-}
-
-#[async_trait]
-impl PracticeService for PracticeServiceImpl {
-    async fn get_by_id(&self, id: &Uuid) -> AppResult<Option<Practice>> {
+impl PracticeService {
+    pub async fn get_by_id(&self, id: &Uuid) -> AppResult<Option<Practice>> {
         self.practices.find_by_id(id).await
     }
 
-    async fn create(
+    pub async fn create(
         &self,
         enrollment_id: &Uuid,
         input: CreatePracticeDto,
@@ -104,7 +57,7 @@ impl PracticeService for PracticeServiceImpl {
         Ok(practice)
     }
 
-    async fn update_status(
+    pub async fn update_status(
         &self,
         enrollment_id: &Uuid,
         practice_id: &Uuid,
@@ -145,7 +98,7 @@ impl PracticeService for PracticeServiceImpl {
         self.practices.save(practice).await
     }
 
-    async fn authorize(
+    pub async fn authorize(
         &self,
         enrollment_id: &Uuid,
         document: Vec<u8>,
@@ -166,7 +119,7 @@ impl PracticeService for PracticeServiceImpl {
         Ok(())
     }
 
-    async fn update(
+    pub async fn update(
         &self,
         id: &Uuid,
         input: UpdatePracticeDto,
@@ -208,7 +161,7 @@ impl PracticeService for PracticeServiceImpl {
         self.practices.save(practice).await
     }
 
-    async fn evaluate(
+    pub async fn evaluate(
         &self,
         enrollment_id: &Uuid,
         practice_id: &Uuid,
@@ -254,7 +207,7 @@ impl PracticeService for PracticeServiceImpl {
         Ok(practice)
     }
 
-    async fn remove(&self, id: &Uuid) -> AppResult<()> {
+    pub async fn remove(&self, id: &Uuid) -> AppResult<()> {
         let practice = self
             .practices
             .find_by_id(id)

@@ -45,6 +45,8 @@
 		"**/.svelte-kit": true,
 		".husky": true,
 		"**/config/config": true,
+		".commitlint*": true,
+		".prettierignore": true
 	},
 	"explorer.fileNesting.enabled": true,
 	"explorer.fileNesting.expand": false,

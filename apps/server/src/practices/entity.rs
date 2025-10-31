@@ -1,5 +1,4 @@
 use chrono::{DateTime, Utc};
-use sea_query::Iden;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -30,36 +29,4 @@ pub enum PracticeStatus {
     Pending,
     Approved,
     Declined,
-}
-
-pub enum Practices {
-    Table,
-    Id,
-    EnterpriseName,
-    Location,
-    Description,
-    SupervisorName,
-    SupervisorEmail,
-    SupervisorPhone,
-    StartDate,
-    EndDate,
-    PracticeStatus,
-}
-
-impl Iden for Practices {
-    fn unquoted(&self) -> &str {
-        match self {
-            Practices::Table => "practices",
-            Practices::Id => "id",
-            Practices::EnterpriseName => "enterprise_name",
-            Practices::Location => "location",
-            Practices::Description => "description",
-            Practices::SupervisorName => "supervisor_name",
-            Practices::SupervisorEmail => "supervisor_email",
-            Practices::SupervisorPhone => "supervisor_phone",
-            Practices::StartDate => "start_date",
-            Practices::EndDate => "end_date",
-            Practices::PracticeStatus => "practice_status",
-        }
-    }
 }

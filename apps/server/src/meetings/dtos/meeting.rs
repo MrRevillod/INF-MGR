@@ -1,8 +1,4 @@
-use crate::{
-    meetings::MeetingFilter,
-    shared::{validate_rfc3339, validate_uuid},
-    types::*,
-};
+use crate::{meetings::MeetingFilter, shared::validate_uuid, types::*};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Validate)]
 pub struct ScheduleMeetingDto {
@@ -23,5 +19,15 @@ impl From<GetMeetingsQueryDto> for MeetingFilter {
         MeetingFilter {
             attendee_id: dto.attendee_id.map(|id| Uuid::parse_str(&id).unwrap()),
         }
+    }
+}
+
+pub fn validate_rfc3339(date_str: &str) -> Result<(), validator::ValidationError> {
+    match DateTime::parse_from_rfc3339(date_str) {
+        Ok(dt) => {
+            let _utc: DateTime<Utc> = dt.with_timezone(&Utc);
+            Ok(())
+        }
+        Err(_) => Err(validator::ValidationError::new("invalid_datetime")),
     }
 }

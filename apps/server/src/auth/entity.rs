@@ -33,12 +33,10 @@ pub struct SessionBuilder {
 
 impl SessionBuilder {
     pub fn new() -> Self {
-        Self {
-            ..Default::default()
-        }
+        Self::default()
     }
 
-    pub fn session_id(mut self, id: Uuid) -> Self {
+    pub const fn session_id(mut self, id: Uuid) -> Self {
         self.id = Some(id);
         self
     }
