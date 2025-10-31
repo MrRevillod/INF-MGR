@@ -143,13 +143,13 @@ impl SubscriberHandler {
         let approval_link = format!(
             "/enrollments/{}/practice/{}/approve",
             enrollment.id,
-            enrollment.practice_id.unwrap_or_else(|| Uuid::new_v4())
+            enrollment.practice_id.unwrap_or_else(Uuid::new_v4)
         );
 
         let rejection_link = format!(
             "/enrollments/{}/practice/{}/reject",
             enrollment.id,
-            enrollment.practice_id.unwrap_or_else(|| Uuid::new_v4())
+            enrollment.practice_id.unwrap_or_else(Uuid::new_v4)
         );
 
         let email_context = template_ctx! {
