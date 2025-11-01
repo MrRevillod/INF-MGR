@@ -8,7 +8,7 @@
 
 	import PageTitle from "$lib/shared/components/ui/PageTitle.svelte"
 	// import CourseCard from "$lib/features/courses/components/Card.svelte"
-	import UpdateUserForm from "$lib/features/users/components/UpdateUserForm.svelte"
+	// import UpdateUserForm from "$lib/features/users/components/UpdateUserForm.svelte"
 
 	const { data: page }: PageProps = $props()
 
@@ -26,7 +26,7 @@
 				<h2 class="text-text-primary text-lg font-semibold">Información</h2>
 			</div>
 
-			<UpdateUserForm user={page.user} />
+			<!-- <UpdateUserForm user={page.user} /> -->
 		</section>
 
 		<section class="flex w-1/2 flex-col gap-4">

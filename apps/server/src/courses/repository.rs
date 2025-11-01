@@ -24,16 +24,18 @@ impl CourseRepository {
         let mut query = QueryBuilder::new("SELECT * FROM courses WHERE 1=1");
 
         if let Some(code) = filter.code {
-            query.push(" AND code = $1").push_bind(code);
+            query.push(" AND code = ");
+            query.push_bind(code);
         }
 
         if let Some(ref name) = filter.name {
-            query.push(" AND name ILIKE $2");
-            query.push_bind(format!("%{}%", name));
+            query.push(" AND name ILIKE ");
+            query.push_bind(format!("%{name}%"));
         }
 
         if let Some(teacher_id) = filter.teacher_id {
-            query.push(" AND teacher_id = $3").push_bind(teacher_id);
+            query.push(" AND teacher_id = ");
+            query.push_bind(teacher_id);
         }
 
         query.push(" ORDER BY year DESC");

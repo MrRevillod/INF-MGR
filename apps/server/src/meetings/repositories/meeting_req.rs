@@ -20,15 +20,16 @@ impl MeetingRequestsRepository {
             QueryBuilder::new("SELECT * FROM meeting_requests WHERE 1=1");
 
         if let Some(student_id) = f.student_id {
-            query.push(" AND $1 = ANY(attendees)");
+            query.push(" AND ");
             query.push_bind(student_id);
+            query.push(" = ANY(attendees)");
         }
 
         if let Some(teacher_id) = f.teacher_id {
-            query.push(" AND $1 = ANY(attendees)");
+            query.push(" AND ");
             query.push_bind(teacher_id);
+            query.push(" = ANY(attendees)");
         }
-
         let meeting_reqs = query
             .build_query_as::<MeetingRequest>()
             .fetch_all(self.db_connection.get_pool())
@@ -52,23 +53,29 @@ impl MeetingRequestsRepository {
         &self,
         meeting_req: MeetingRequest,
     ) -> AppResult<MeetingRequest> {
-        let mut query = QueryBuilder::new(
-            "INSERT INTO meeting_requests (id, status, attendees, course_id, created_at, updated_at) ",
-        );
+        let meeting_req = sqlx::query_as::<_, MeetingRequest>(
+            r"
+            INSERT INTO meeting_requests (
+                id, 
+                status, 
+                attendees, 
+                course_id, 
+                created_at, 
+                updated_at
+            )
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING *
+        ",
+        )
+        .bind(meeting_req.id)
+        .bind(meeting_req.status.to_string())
+        .bind(meeting_req.attendees)
+        .bind(meeting_req.course_id)
+        .bind(meeting_req.created_at)
+        .bind(meeting_req.updated_at)
+        .fetch_one(self.db_connection.get_pool())
+        .await?;
 
-        query.push("VALUES ($1, $2, $3, $4, $5, $6) RETURNING *");
-        query.push_bind(meeting_req.id);
-        query.push_bind(meeting_req.status.to_string());
-        query.push_bind(meeting_req.attendees);
-        query.push_bind(meeting_req.course_id);
-        query.push_bind(meeting_req.created_at);
-        query.push_bind(meeting_req.updated_at);
-
-        let created_meeting_req = query
-            .build_query_as::<MeetingRequest>()
-            .fetch_one(self.db_connection.get_pool())
-            .await?;
-
-        Ok(created_meeting_req)
+        Ok(meeting_req)
     }
 }

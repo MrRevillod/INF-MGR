@@ -151,11 +151,11 @@ impl PracticeService {
         }
 
         if let Some(start_date) = input.start_date {
-            practice.start_date = start_date;
+            practice.start_date = Some(start_date);
         }
 
         if let Some(end_date) = input.end_date {
-            practice.end_date = end_date;
+            practice.end_date = Some(end_date);
         }
 
         self.practices.save(practice).await

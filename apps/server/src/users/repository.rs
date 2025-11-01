@@ -73,15 +73,18 @@ impl UserRepository {
         let mut query = QueryBuilder::new("SELECT * FROM users WHERE 1=1");
 
         if let Some(id) = filter.id {
-            query.push(" AND id = ").push_bind(id);
+            query.push(" AND id = ");
+            query.push_bind(id);
         }
 
         if let Some(rut) = filter.rut {
-            query.push(" AND rut = ").push_bind(rut);
+            query.push(" AND rut = ");
+            query.push_bind(rut);
         }
 
         if let Some(email) = filter.email {
-            query.push(" AND email = ").push_bind(email);
+            query.push(" AND email = ");
+            query.push_bind(email);
         }
 
         let user = query

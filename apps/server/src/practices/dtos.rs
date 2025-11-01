@@ -68,8 +68,8 @@ impl From<CreatePracticeDto> for Practice {
             supervisor_name: dto.supervisor_name,
             supervisor_email: dto.supervisor_email,
             supervisor_phone: dto.supervisor_phone,
-            start_date: dto.start_date,
-            end_date: dto.end_date,
+            start_date: Some(dto.start_date),
+            end_date: Some(dto.end_date),
             practice_status: PracticeStatus::Pending,
         }
     }
