@@ -16,8 +16,9 @@ impl MeetingRepository {
         let mut query = QueryBuilder::new("SELECT * FROM meetings WHERE 1=1");
 
         if let Some(attendee_id) = filter.attendee_id {
-            query.push(" AND $1 = ANY(attendees)");
+            query.push(" AND ");
             query.push_bind(attendee_id);
+            query.push(" = ANY(attendees)");
         }
 
         let meetings = query

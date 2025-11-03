@@ -1,0 +1,21 @@
+[package]
+name = "services"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "fs"] }
+regex-lite = "0.1.8"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+sword = { git = "https://github.com/MrRevillod/sword.git", branch = "main", features = [
+    "multipart",
+    "cookies",
+    "helmet",
+    "validator",
+] }
+
+thiserror = "2.0.17"
+tera = "1.20.0"
+uuid = { version = "1.17.0", features = ["serde", "v4"] }

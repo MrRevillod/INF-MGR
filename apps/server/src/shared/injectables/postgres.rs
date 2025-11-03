@@ -39,6 +39,8 @@ impl PostgresDatabase {
             tracing::error!("Error running migrations: {e}");
         }
 
+        tracing::info!("Database migrations applied successfully.");
+
         Ok(())
     }
 
