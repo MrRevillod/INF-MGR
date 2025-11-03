@@ -1,0 +1,310 @@
+{
+  "sections": [
+    {
+      "title": "Resumen",
+      "content": "Este informe detalla las características de la práctica inicial/profesional universitaria realizada por el autor, incluyendo la empresa donde se llevó a cabo, las funciones desempeñadas y las actividades desarrolladas durante el período de práctica. La ecuación fundamental de la relatividad es , donde  es la energía,  la masa y  la velocidad de la luz.  Palabra clave 1, Palabra clave 2, Palabra clave 3, Palabra clave 4.",
+      "subsections": [],
+      "tables": [],
+      "images": [],
+      "lists": [],
+      "equations": [
+        {
+          "content": "E = mc^2"
+        },
+        {
+          "content": "E"
+        },
+        {
+          "content": "m"
+        },
+        {
+          "content": "c"
+        }
+      ]
+    },
+    {
+      "title": "Introducción",
+      "content": "Redactar el contexto general de la práctica, los objetivos generales y la estructura del informe. [h]",
+      "subsections": [],
+      "tables": [],
+      "images": [
+        {
+          "path": "images/diagram.png",
+          "caption": "Diagrama de flujo del proceso de práctica."
+        }
+      ],
+      "lists": [],
+      "equations": []
+    },
+    {
+      "title": "Objetivos y expectativas",
+      "content": "En esta sección deberás redactar un resumen de los objetivos y expectativas esperados al finalizar el proceso de práctica. Ejemplo como contribuirá este proceso en tu desarrollo social, humano y profesional. (Conocimientos técnicos, habilidades sociales, etc). La fórmula para calcular la varianza es:\n[\n^2 = {n}\n]",
+      "subsections": [],
+      "tables": [],
+      "images": [],
+      "lists": [],
+      "equations": []
+    },
+    {
+      "title": "Descripción de la empresa",
+      "content": "Describir la organización, su ámbito de trabajo y relevancia en el contexto donde opera.",
+      "subsections": [
+        {
+          "title": "Misión",
+          "content": "Describir el propósito fundamental y la razón de ser de la organización.",
+          "subsections": [],
+          "tables": [],
+          "images": [],
+          "lists": [],
+          "equations": []
+        },
+        {
+          "title": "Visión",
+          "content": "Describir la proyección a futuro y los objetivos estratégicos de la organización.",
+          "subsections": [],
+          "tables": [],
+          "images": [],
+          "lists": [],
+          "equations": []
+        },
+        {
+          "title": "Funciones",
+          "content": "Con respecto a las funciones que se desarrollan en la empresa/organización, se establece que se realizan las siguientes funciones generales:",
+          "subsections": [],
+          "tables": [],
+          "images": [],
+          "lists": [],
+          "equations": []
+        }
+      ],
+      "tables": [],
+      "images": [],
+      "lists": [
+        {
+          "items": [
+            "Primera función principal",
+            "Segunda función principal",
+            "Tercera función principal",
+            "Continuar según corresponda"
+          ]
+        }
+      ],
+      "equations": []
+    },
+    {
+      "title": "Organigrama de la empresa",
+      "content": "Describir la estructura de la empresa/departamento/dirección donde se realiza la práctica. Incluir un diagrama visual del organigrama si es posible.",
+      "subsections": [
+        {
+          "title": "Departamento o área específica",
+          "content": "Describir el departamento o área donde se realizó la práctica, sus funciones y cómo se relaciona con el resto de la organización. [h]",
+          "subsections": [],
+          "tables": [],
+          "images": [],
+          "lists": [],
+          "equations": []
+        }
+      ],
+      "tables": [
+        {
+          "rows": [
+            [
+              "Tecnología",
+              "Lenguaje",
+              "Base de Datos",
+              "Framework"
+            ],
+            [
+              "Frontend",
+              "JavaScript",
+              "No aplica",
+              "React"
+            ],
+            [
+              "Backend",
+              "Rust",
+              "PostgreSQL",
+              "Actix"
+            ],
+            [
+              "{*}{DevOps}",
+              "{*}{Bash}",
+              "{*}{No aplica}",
+              "Docker"
+            ],
+            [
+              "",
+              "",
+              "",
+              "Kubernetes"
+            ]
+          ]
+        }
+      ],
+      "images": [],
+      "lists": [],
+      "equations": []
+    },
+    {
+      "title": "Actividades encomendadas",
+      "content": "Describir detalladamente las principales actividades realizadas durante la práctica. Explicar el problema a resolver, la solución implementada y los resultados obtenidos. Incluir capturas de pantalla, diagramas o ejemplos cuando sea relevante.",
+      "subsections": [
+        {
+          "title": "Actividad 1: Título descriptivo",
+          "content": "Describir la primera actividad principal desarrollada durante la práctica.",
+          "subsections": [],
+          "tables": [],
+          "images": [],
+          "lists": [],
+          "equations": []
+        },
+        {
+          "title": "Actividad 2: Título descriptivo",
+          "content": "Describir la segunda actividad principal. Continuar agregando sub secciones según la cantidad de actividades relevantes.",
+          "subsections": [],
+          "tables": [],
+          "images": [],
+          "lists": [],
+          "equations": []
+        }
+      ],
+      "tables": [],
+      "images": [],
+      "lists": [],
+      "equations": []
+    },
+    {
+      "title": "Tecnologías aplicadas",
+      "content": "Un stack tecnológico es el conjunto de tecnologías que se utilizan para construir y ejecutar aplicaciones. Está compuesto por diferentes herramientas que interactúan entre sí para hacer que una aplicación funcione de manera eficiente. Puede declarar secciones categorizando por ejemplo: Lenguaje de programación, Base de datos, Frameworks y librerías, entre otros.",
+      "subsections": [],
+      "tables": [],
+      "images": [],
+      "lists": [
+        {
+          "items": [
+            "Lenguaje de programación: Rust, TypeScript.",
+            "Base de datos: PostgreSQL, Redis.",
+            "Frameworks: Actix, Svelte."
+          ]
+        }
+      ],
+      "equations": []
+    },
+    {
+      "title": "Experiencia en el proceso de práctica",
+      "content": "Reflexionar sobre los aprendizajes técnicos adquiridos, el desarrollo de habilidades blandas (comunicación, trabajo en equipo, presentación de avances), los desafíos enfrentados y los aspectos positivos de la experiencia.",
+      "subsections": [],
+      "tables": [],
+      "images": [],
+      "lists": [],
+      "equations": []
+    },
+    {
+      "title": "Reflexiones",
+      "content": "Realizar una reflexión crítica sobre la experiencia completa de práctica. Evaluar el impacto del trabajo realizado, plantear perspectivas futuras para el proyecto o la organización, y agradecer a las personas que apoyaron el proceso. \n[title={Referencias}]",
+      "subsections": [],
+      "tables": [],
+      "images": [],
+      "lists": [],
+      "equations": []
+    },
+    {
+      "title": "Anexos",
+      "content": "{section}{Anexos}",
+      "subsections": [
+        {
+          "title": "Anexo A: Bitácoras de práctica",
+          "content": "Incluir las bitácoras del proceso de práctica. La cantidad e intervalo de días de las bitácoras dependerá del tipo de práctica (inicial o profesional). Ejemplo de tabla para bitácoras.   Continuar con el formato de semanas y tabla según corresponda.",
+          "subsections": [],
+          "tables": [],
+          "images": [],
+          "lists": [],
+          "equations": []
+        },
+        {
+          "title": "Anexo B: Material complementario (si aplica)",
+          "content": "Incluir diagramas adicionales o documentos complementarios que apoyen el informe. Importante, para el desarrollo de los diagramas a elección se exige el uso de la plataforma {{Mermaid Live Editor}}. De no contar con el diagrama requerido comunicarlo con el profesor a cargo o encontrar un equivalente. Los archivos relacionados a diagramas mermaid (imágenes y ficheros .mmd) deben ser incluidos en la carpeta \"diagrams\"",
+          "subsections": [],
+          "tables": [],
+          "images": [],
+          "lists": [],
+          "equations": []
+        },
+        {
+          "title": "Anexo C: Repositorio de trabajo (si aplica)",
+          "content": "Adjuntar el enlace del repositorio de trabajo si es de carácter publico, de lo contrario no incluir esta sección.",
+          "subsections": [],
+          "tables": [],
+          "images": [],
+          "lists": [],
+          "equations": []
+        }
+      ],
+      "tables": [
+        {
+          "rows": [
+            [
+              "",
+              ""
+            ],
+            [
+              "% sombreado para la fila de encabezado de día"
+            ],
+            [
+              "07/01/2025",
+              "Reunión introductoria"
+            ],
+            [
+              ""
+            ],
+            [
+              "{|X|}{Presentación del equipo, revisión del cronograma general y explicación de objetivos del proyecto.}"
+            ],
+            [
+              ""
+            ],
+            [
+              "08/01/2025",
+              "Inicio de actividades"
+            ],
+            [
+              ""
+            ],
+            [
+              "{|X|}{Configuración de entornos de desarrollo, creación de repositorios en GitHub y definición de flujo de trabajo con Git.}"
+            ],
+            [
+              ""
+            ],
+            [
+              "09/01/2025",
+              "Optimización SQL"
+            ],
+            [
+              ""
+            ],
+            [
+              "{|X|}{Revisión de consultas lentas, aplicación de índices y pruebas de rendimiento en la base de datos.}"
+            ],
+            [
+              ""
+            ],
+            [
+              "10/01/2025",
+              "Capacitación interna"
+            ],
+            [
+              ""
+            ],
+            [
+              "{|X|}{Sesión de formación sobre metodologías ágiles (Scrum) y asignación de roles en el equipo.}"
+            ]
+          ]
+        }
+      ],
+      "images": [],
+      "lists": [],
+      "equations": []
+    }
+  ]
+}

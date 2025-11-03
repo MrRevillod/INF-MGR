@@ -13,7 +13,7 @@
 	import { appStore } from "$lib/shared/stores/app.store.svelte"
 	import { useLogoutMutation } from "$lib/auth/queries"
 	import { afterNavigate, goto } from "$app/navigation"
-	import { authStore } from "$lib/shared/stores/auth.store.svelte"
+	import { auth } from "$lib/auth/store.svelte"
 
 	const routes = [
 		{ title: "Inicio", path: "/admin", icon: HomeIcon },
@@ -31,8 +31,7 @@
 		logoutMutation.mutate(undefined, {})
 
 		appStore.clear()
-		authStore.reset()
-		goto("/auth/login")
+		auth.logout()
 	}
 
 	afterNavigate(navigate => {

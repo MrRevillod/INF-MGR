@@ -8,13 +8,10 @@ export interface Course {
 	name: string
 	code: string
 	evaluations: Evaluation[]
-	status: CourseStatus
+	courseStatus: CourseStatus
 
 	teacherId: string
-	coordinatorId: string
-
 	teacher: User
-	coordinator: User
 }
 
 export const EvaluationSchema = v.object({

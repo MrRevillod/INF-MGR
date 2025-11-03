@@ -98,8 +98,6 @@
 		</div>
 	</section>
 
-	<!--  Fallbacks for loading and error states -->
-
 	{#if isLoading}
 		<div class="px-6 py-12 text-center">
 			<div class="inline-flex items-center gap-3">

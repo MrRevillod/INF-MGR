@@ -4,7 +4,7 @@ La carrera de Ingeniería Civil en Informática requiere una plataforma web para
 
 ---
 
-## Sistema actual
+## Problema actual
 Actualmente el proceso depende de **correo electrónico** y de un **coordinador de prácticas** que:
 1. Inscribe al estudiante en el curso.
 2. Asigna un profesor responsable.
@@ -22,46 +22,17 @@ Actualmente el proceso depende de **correo electrónico** y de un **coordinador 
 
 ---
 
-## Mejora planteada
+## Mejora planteada - Requerimientos de la plataforma
 Se propone una **plataforma web con perfiles de acceso**: estudiante, profesor, secretaría y administración.
 
-### Nuevo flujo
-1. **Creación de perfiles:** Secretaría carga CSV con usuarios inscritos; el sistema genera los usuarios.
-2. **Profesor integrado:** Acceso directo a informes y documentos.  
-3. **Bitácoras eliminadas por correo:** Solo se anexan al informe final.  
-4. **Registro de empresa automatizado:** Notificación y autorización online.  
-5. **Entrega de informe final:** Subida en PDF con opción de enlace online.  
-6. **Cálculo automático y cierre:** Promedios y estados gestionados por el sistema.  
-7. **Historial permanente:** Informes y evaluaciones quedan almacenados indefinidamente.
+### Funcionalidades clave
 
-### Ventajas
-- Automatización de tareas.  
-- Comunicación eficiente sin cadenas de correos.  
-- Trazabilidad y auditoría.  
-- Seguridad en el acceso por roles.  
-- Historial disponible siempre.  
-- Diseño modular y escalable.  
-- Interfaz clara y adaptada a cada perfil.  
+La web se encontrará desarrollada utilizando sveltekit + svelte5 (runas). con tanstack svelte query (https://tanstack.com/query/v5/docs/framework/svelte/overview) para la gestión de datos asincrónicos. Valibot para la validación de formularios (https://valibot.dev/), Formisch para el manejo de formularios (https://formisch.dev/) y Tailwind CSS para el diseño visual (https://tailwindcss.com/).
 
----
+-  **Profesores**: Pueden tener múltiples cursos asignados, gestionar estudiantes del curso, visualizar información relevante, inscribir prácticas a estudiantes.
 
-## Apartado técnico
+- **Estudiantes**: Acceden a su información, documentos y estado de prácticas, subir su informe de prácticas. Visualizar sus cursos.
 
-### Arquitectura
-- **Cliente-servidor.**  
-- **PostgreSQL** (persistencia).  
-- **Redis** (sesiones y caché).  
-- Separación de capas (persistencia, negocio, red).
+- **Secretaría**: Gestiona cursos, asigna profesores, supervisa estado de prácticas, genera reportes.
 
-### Tecnologías
-- **Cliente:** SvelteKit (rápido y ligero).  
-- **Servidor:** Rust (seguro y sin garbage collector).  
-- **IA/LLM:** Evaluaciones automáticas basadas en rúbricas vía protocolo MCP.  
-- **Base de datos vectorial:** Detección de similitudes y plagio en informes.
-
----
-
-## Conclusión
-El sistema actual funciona, pero es lento y burocrático.  
-La nueva plataforma reduce la dependencia del correo, automatiza procesos y ofrece un flujo más claro y rápido. Con **SvelteKit + Rust**, el sistema será eficiente y estable, incorporando además IA y almacenamiento vectorial para mantener la integridad académica.  
-El resultado esperado: **menos carga para administrativos y profesores, más claridad para estudiantes.**
+- **Administración**: Gestiona usuarios, roles y permisos, supervisa la plataforma, crear cursos.

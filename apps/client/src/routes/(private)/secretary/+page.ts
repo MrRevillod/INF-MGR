@@ -5,6 +5,6 @@ export const ssr = false
 
 export const load: PageLoad = async ({ parent }) => {
 	const { user } = await parent()
-	requireRole("student")
+	requireRole("secretary")
 	return { user }
 }

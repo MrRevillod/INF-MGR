@@ -1,0 +1,257 @@
+{
+  "sections": [
+    {
+      "title": "Resumen",
+      "content": "Este informe detalla las características de la práctica inicial/profesional universitaria realizada por el autor, incluyendo la empresa donde se llevó a cabo, las funciones desempeñadas y las actividades desarrolladas durante el período de práctica.  Palabra clave 1, Palabra clave 2, Palabra clave 3, Palabra clave 4.",
+      "subsections": [],
+      "tables": [],
+      "images": [],
+      "lists": [],
+      "equations": []
+    },
+    {
+      "title": "Introducción",
+      "content": "Redactar el contexto general de la práctica, los objetivos generales y la estructura del informe.",
+      "subsections": [],
+      "tables": [],
+      "images": [],
+      "lists": [],
+      "equations": []
+    },
+    {
+      "title": "Objetivos y expectativas",
+      "content": "En esta sección deberás redactar un resumen de los objetivos y expectativas esperados al finalizar el proceso de práctica. Ejemplo como contribuirá este proceso en tu desarrollo social, humano y profesional. (Conocimientos técnicos, habilidades sociales, etc).",
+      "subsections": [],
+      "tables": [],
+      "images": [],
+      "lists": [],
+      "equations": []
+    },
+    {
+      "title": "Descripción de la empresa",
+      "content": "Describir la organización, su ámbito de trabajo y relevancia en el contexto donde opera.",
+      "subsections": [
+        {
+          "title": "Misión",
+          "content": "Describir el propósito fundamental y la razón de ser de la organización.",
+          "subsections": [],
+          "tables": [],
+          "images": [],
+          "lists": [],
+          "equations": []
+        },
+        {
+          "title": "Visión",
+          "content": "Describir la proyección a futuro y los objetivos estratégicos de la organización.",
+          "subsections": [],
+          "tables": [],
+          "images": [],
+          "lists": [],
+          "equations": []
+        },
+        {
+          "title": "Funciones",
+          "content": "Con respecto a las funciones que se desarrollan en la empresa/organización, se establece que se realizan las siguientes funciones generales:",
+          "subsections": [],
+          "tables": [],
+          "images": [],
+          "lists": [],
+          "equations": []
+        }
+      ],
+      "tables": [],
+      "images": [],
+      "lists": [
+        {
+          "items": [
+            "Primera función principal",
+            "Segunda función principal",
+            "Tercera función principal",
+            "Continuar según corresponda"
+          ]
+        }
+      ],
+      "equations": []
+    },
+    {
+      "title": "Organigrama de la empresa",
+      "content": "Describir la estructura de la empresa/departamento/dirección donde se realiza la práctica. Incluir un diagrama visual del organigrama si es posible.",
+      "subsections": [
+        {
+          "title": "Departamento o área específica",
+          "content": "Describir el departamento o área donde se realizó la práctica, sus funciones y cómo se relaciona con el resto de la organización. [h]",
+          "subsections": [],
+          "tables": [],
+          "images": [],
+          "lists": [],
+          "equations": []
+        }
+      ],
+      "tables": [
+        {
+          "rows": [
+            [
+              "",
+              "",
+              ""
+            ],
+            [
+              "Procesador",
+              "1",
+              "250.00"
+            ],
+            [
+              "Memoria RAM",
+              "2",
+              "80.50"
+            ],
+            [
+              "Disco Duro",
+              "1",
+              "120.75"
+            ],
+            [
+              "{*}{Tarjeta Gráfica}",
+              "1",
+              "300.00"
+            ],
+            [
+              "",
+              "(Upgrade)",
+              "50.00"
+            ],
+            [
+              "{|c|}{Total Estimado}",
+              "781.25"
+            ]
+          ]
+        }
+      ],
+      "images": [],
+      "lists": [],
+      "equations": []
+    },
+    {
+      "title": "Actividades encomendadas",
+      "content": "Describir detalladamente las principales actividades realizadas durante la práctica. Explicar el problema a resolver, la solución implementada y los resultados obtenidos. Incluir capturas de pantalla, diagramas o ejemplos cuando sea relevante.",
+      "subsections": [
+        {
+          "title": "Actividad 1: Título descriptivo",
+          "content": "Desarrollo de un sistema de gestión de inventarios.",
+          "subsections": [],
+          "tables": [],
+          "images": [],
+          "lists": [],
+          "equations": []
+        },
+        {
+          "title": "Actividad 2: Título descriptivo",
+          "content": "Implementación de API REST para integración con aplicaciones móviles.",
+          "subsections": [],
+          "tables": [],
+          "images": [],
+          "lists": [],
+          "equations": []
+        }
+      ],
+      "tables": [],
+      "images": [],
+      "lists": [],
+      "equations": []
+    },
+    {
+      "title": "Tecnologías aplicadas",
+      "content": "Un stack tecnológico es el conjunto de tecnologías que se utilizan para construir y ejecutar aplicaciones. Está compuesto por diferentes herramientas que interactúan entre sí para hacer que una aplicación funcione de manera eficiente. Puede declarar secciones categorizando por ejemplo: Lenguaje de programación, Base de datos, Frameworks y librerías, entre otros.",
+      "subsections": [],
+      "tables": [],
+      "images": [],
+      "lists": [
+        {
+          "items": [
+            "Lenguaje: Rust, Python, JavaScript.",
+            "Base de datos: PostgreSQL, MongoDB.",
+            "Frameworks: Actix, Django, React."
+          ]
+        }
+      ],
+      "equations": []
+    },
+    {
+      "title": "Experiencia en el proceso de práctica",
+      "content": "Reflexionar sobre los aprendizajes técnicos adquiridos, el desarrollo de habilidades blandas (comunicación, trabajo en equipo, presentación de avances), los desafíos enfrentados y los aspectos positivos de la experiencia.",
+      "subsections": [],
+      "tables": [],
+      "images": [],
+      "lists": [],
+      "equations": []
+    },
+    {
+      "title": "Reflexiones",
+      "content": "Realizar una reflexión crítica sobre la experiencia completa de práctica. Evaluar el impacto del trabajo realizado, plantear perspectivas futuras para el proyecto o la organización, y agradecer a las personas que apoyaron el proceso. \n[title={Referencias}]",
+      "subsections": [],
+      "tables": [],
+      "images": [],
+      "lists": [],
+      "equations": []
+    },
+    {
+      "title": "Anexos",
+      "content": "{section}{Anexos}",
+      "subsections": [
+        {
+          "title": "Anexo A: Bitácoras de práctica",
+          "content": "Incluir las bitácoras del proceso de práctica.",
+          "subsections": [],
+          "tables": [],
+          "images": [],
+          "lists": [],
+          "equations": []
+        },
+        {
+          "title": "Anexo B: Material complementario",
+          "content": "Diagramas y documentación adicional.",
+          "subsections": [],
+          "tables": [],
+          "images": [],
+          "lists": [],
+          "equations": []
+        },
+        {
+          "title": "Anexo C: Repositorio",
+          "content": "Enlace al repositorio: https://github.com/example/repo",
+          "subsections": [],
+          "tables": [],
+          "images": [],
+          "lists": [],
+          "equations": []
+        }
+      ],
+      "tables": [
+        {
+          "rows": [
+            [
+              "",
+              ""
+            ],
+            [
+              ""
+            ],
+            [
+              "07/01/2025",
+              "Inicio del proyecto"
+            ],
+            [
+              ""
+            ],
+            [
+              "{|X|}{Configuración inicial del entorno y revisión de requisitos.}"
+            ]
+          ]
+        }
+      ],
+      "images": [],
+      "lists": [],
+      "equations": []
+    }
+  ]
+}
