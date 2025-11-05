@@ -13,3 +13,19 @@ export const getTeacherCoursesQuery = (teacherId: string) => {
 		enabled: !!teacherId,
 	}))
 }
+
+export const getAllCoursesQuery = () => {
+	return createQuery<ApiResponse<Course[]>, ApiResponse>(() => ({
+		queryKey: ["courses", "all"],
+		queryFn: () => TryFn(() => protectedApi.get<Course[]>(`/courses`)),
+	}))
+}
+
+// NUEVO: Query para obtener un curso por ID
+export const getCourseQuery = (courseId: string) => {
+	return createQuery<ApiResponse<Course>, ApiResponse>(() => ({
+		queryKey: ["course", courseId],
+		queryFn: () => TryFn(() => protectedApi.get<Course>(`/courses/${courseId}`)),
+		enabled: !!courseId,
+	}))
+}

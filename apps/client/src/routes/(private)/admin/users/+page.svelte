@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from "$app/navigation"
 	import { tableColumns } from "$users/utils"
-	import { getUsersQuery } from "$lib/users/querys"
+	import { getUsersQuery } from "$lib/users/queries"
 	import { useEncodeData } from "$lib/shared/hooks/useUrlData"
 
 	import Table from "$lib/shared/components/Table.svelte"

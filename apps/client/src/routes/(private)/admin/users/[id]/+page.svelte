@@ -6,7 +6,7 @@
 	import UpdateUserForm from "$lib/users/components/UpdateUserForm.svelte"
 	import Button from "$lib/shared/components/ui/Button.svelte"
 	import { spanishRoles } from "$users/utils"
-	import { getStudentEnrollmentsQuery } from "$lib/enrollments/querys"
+	import { getStudentEnrollmentsQuery } from "$lib/enrollments/queries"
 	import { getTeacherCoursesQuery } from "$lib/courses/queries"
 
 	const { data: page }: PageProps = $props()
@@ -132,11 +132,6 @@
 									<h3 class="font-semibold text-gray-900">
 										{enrollment.course.name}
 									</h3>
-									{#if enrollment.course.description}
-										<p class="mt-1 text-sm text-gray-600">
-											{enrollment.course.description}
-										</p>
-									{/if}
 									<div class="mt-2 text-xs text-gray-500">
 										Código: {enrollment.course.code}
 									</div>
@@ -187,9 +182,6 @@
 									}}
 								>
 									<h3 class="font-semibold text-gray-900">{course.name}</h3>
-									{#if course.description}
-										<p class="mt-1 text-sm text-gray-600">{course.description}</p>
-									{/if}
 									<div class="mt-2 text-xs text-gray-500">
 										Código: {course.code}
 									</div>

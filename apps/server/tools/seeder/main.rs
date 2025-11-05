@@ -35,11 +35,24 @@ async fn main() -> Result<(), sqlx::Error> {
     create_users(&pool, administrators()).await;
 
     let info_1164_course = info_1164(&teachers);
-
     create_course(&pool, info_1164_course.clone()).await;
-    create_enrollments(&pool, students, info_1164_course).await;
+    create_enrollments(&pool, students.clone(), info_1164_course).await;
+
+    // Crear cursos adicionales
+    let extra_courses = additional_courses(&teachers);
+    for course in extra_courses.iter() {
+        create_course(&pool, course.clone()).await;
+        // Inscribir algunos estudiantes en cada curso
+        let students_for_course: Vec<_> = students.iter().take(6).cloned().collect();
+        create_enrollments(&pool, students_for_course, course.clone()).await;
+    }
 
     println!("Database seeded successfully!");
+    println!("✅ Creados:");
+    println!("   - {} profesores", teachers.len());
+    println!("   - {} estudiantes", students.len());
+    println!("   - {} administradores", administrators().len());
+    println!("   - {} cursos", extra_courses.len() + 1);
 
     Ok(())
 }

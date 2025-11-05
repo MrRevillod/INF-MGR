@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getCourseQuery } from "$lib/enrollments/querys"
+	import { getCourseQuery } from "$lib/courses/queries"
 
 	interface Props {
 		courseId: string
@@ -22,12 +22,24 @@
 		onclick={() => onclick(courseId)}
 		class="w-full rounded-lg border border-gray-200 bg-white p-4 text-left transition-all hover:border-blue-300 hover:shadow-md"
 	>
+		<div class="mb-1 flex items-center gap-2">
+			<span
+				class="rounded bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-800"
+			>
+				{courseRes.data.code}
+			</span>
+			<span class="text-xs text-gray-500">{courseRes.data.year}</span>
+		</div>
 		<h3 class="font-semibold text-gray-900">{courseRes.data.name}</h3>
-		{#if courseRes.data.description}
-			<p class="mt-1 text-sm text-gray-600">{courseRes.data.description}</p>
-		{/if}
-		<div class="mt-2 text-xs text-gray-500">
-			Código: {courseRes.data.code}
+		<div class="mt-2 flex items-center gap-2">
+			<span
+				class="inline-flex rounded-full px-2 text-xs font-semibold leading-5 {courseRes
+					.data.courseStatus === 'active'
+					? 'bg-green-100 text-green-800'
+					: 'bg-gray-100 text-gray-800'}"
+			>
+				{courseRes.data.courseStatus === "active" ? "Activo" : "Completado"}
+			</span>
 		</div>
 	</button>
 {:else}
