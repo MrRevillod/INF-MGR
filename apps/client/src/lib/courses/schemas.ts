@@ -7,6 +7,7 @@ export interface Course {
 	year: number
 	name: string
 	code: string
+	description?: string
 	evaluations: Evaluation[]
 	courseStatus: CourseStatus
 

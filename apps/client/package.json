@@ -36,7 +36,7 @@
 		"vite": "^7.0.4"
 	},
 	"dependencies": {
-		"@formisch/svelte": "^0.2.0",
+		"@formisch/svelte": "0.4.1",
 		"@formkit/auto-animate": "^0.9.0",
 		"@fvilers/heroicons-svelte": "^2.1.5-fix.3",
 		"@tanstack/svelte-query": "6.0.0",

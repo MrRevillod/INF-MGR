@@ -17,6 +17,7 @@ pub struct CourseFilter {
     pub name: Option<String>,
     pub teacher_id: Option<Uuid>,
     pub year: Option<i32>,
+    pub ids: Option<Vec<Uuid>>,
 }
 
 impl CourseRepository {
@@ -36,6 +37,17 @@ impl CourseRepository {
         if let Some(teacher_id) = filter.teacher_id {
             query.push(" AND teacher_id = ");
             query.push_bind(teacher_id);
+        }
+
+        if let Some(year) = filter.year {
+            query.push(" AND year = ");
+            query.push_bind(year);
+        }
+
+        if let Some(ids) = filter.ids {
+            query.push(" AND id = ANY(");
+            query.push_bind(ids);
+            query.push(")");
         }
 
         query.push(" ORDER BY year DESC");

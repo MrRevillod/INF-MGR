@@ -3,7 +3,8 @@ use uuid::Uuid;
 use validator::Validate;
 
 use crate::{
-    enrollments::*, practices::Practice, shared::validate_uuid, users::User,
+    courses::Course, enrollments::*, practices::Practice, shared::validate_uuid,
+    users::User,
 };
 
 // ============================================================================
@@ -114,15 +115,18 @@ pub struct EnrollmentResponse {
     pub student_scores: Vec<StudentScore>,
     pub practice_id: Option<String>,
 
+    pub course: Course,
+
     pub student: User,
     pub practice: Option<Practice>,
 }
 
-pub type EnrollmentWithStudentAndPractice = (Enrollment, User, Option<Practice>);
+pub type EnrollmentWithStudentAndPracticeAndCourse =
+    (Enrollment, User, Option<Practice>, Course);
 
-impl From<EnrollmentWithStudentAndPractice> for EnrollmentResponse {
+impl From<EnrollmentWithStudentAndPracticeAndCourse> for EnrollmentResponse {
     fn from(
-        (enrollment, student, practice): EnrollmentWithStudentAndPractice,
+        (enrollment, student, practice, course): EnrollmentWithStudentAndPracticeAndCourse,
     ) -> Self {
         EnrollmentResponse {
             id: enrollment.id.to_string(),
@@ -132,6 +136,7 @@ impl From<EnrollmentWithStudentAndPractice> for EnrollmentResponse {
             practice_id: enrollment.practice_id.map(|id| id.to_string()),
             student,
             practice,
+            course,
         }
     }
 }

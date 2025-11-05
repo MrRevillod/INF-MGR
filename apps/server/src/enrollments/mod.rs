@@ -7,8 +7,9 @@ mod service;
 pub use crate::enrollment_filter;
 pub use controllers::EnrollmentsController;
 pub use dtos::{
-    CreateEnrollmentDto, EnrollmentResponse, EnrollmentWithStudentAndPractice,
-    GetEnrollmentsDto, StudentScoreDto, UpdateEnrollmentDto,
+    CreateEnrollmentDto, EnrollmentResponse,
+    EnrollmentWithStudentAndPracticeAndCourse, GetEnrollmentsDto, StudentScoreDto,
+    UpdateEnrollmentDto,
 };
 
 pub use entity::{Enrollment, StudentScore};

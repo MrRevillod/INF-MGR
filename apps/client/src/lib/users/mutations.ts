@@ -1,22 +1,42 @@
 import type { User } from "./schemas"
 import type { ApiResponse } from "$api/utils"
 
-import { api } from "$api/client"
+import { protectedApi } from "$api/client"
 import { TryFn } from "$api/utils"
 import { createMutation, useQueryClient } from "@tanstack/svelte-query"
 
-export const updateUserMutation = (id: string, data: Record<string, unknown>) => {
-	const request = (data?: Record<string, unknown>) => {
-		return api.patch<User>(`users/${id}`, data)
-	}
+export const createUserMutation = () => {
+	const queryClient = useQueryClient()
 
-	return createMutation<ApiResponse<User>, ApiResponse, unknown>(() => ({
-		mutationKey: ["update-user", id],
-		mutationFn: () => TryFn<User>(request, data),
-		onSuccess: () => {
-			useQueryClient().invalidateQueries({
-				queryKey: ["user", id],
-			})
-		},
-	}))
+	return createMutation<ApiResponse<User>, ApiResponse, Record<string, unknown>>(
+		() => ({
+			mutationKey: ["create-user"],
+			mutationFn: data => TryFn<User>(() => protectedApi.post<User>(`users`, data)),
+			onSuccess: () => {
+				queryClient.invalidateQueries({
+					queryKey: ["users"],
+				})
+			},
+		})
+	)
+}
+
+export const updateUserMutation = (id: string) => {
+	const queryClient = useQueryClient()
+
+	return createMutation<ApiResponse<User>, ApiResponse, Record<string, unknown>>(
+		() => ({
+			mutationKey: ["update-user", id],
+			mutationFn: data =>
+				TryFn<User>(() => protectedApi.patch<User>(`users/${id}`, data)),
+			onSuccess: () => {
+				queryClient.invalidateQueries({
+					queryKey: ["user", id],
+				})
+				queryClient.invalidateQueries({
+					queryKey: ["users"],
+				})
+			},
+		})
+	)
 }

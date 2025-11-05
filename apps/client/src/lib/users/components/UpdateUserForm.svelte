@@ -1,52 +1,148 @@
 <script lang="ts">
-	import type { User } from "$users/schemas"
+	import { createForm, Form, Field, validate } from "@formisch/svelte"
+	import { UpdateUserSchema, type User } from "$users/schemas"
+	import { updateUserMutation } from "$users/mutations"
+	import { toast } from "svelte-sonner"
+	import { RutFormatter } from "$users/utils"
 
-	import { useMutation } from "$lib/shared/hooks/useTanstack"
-	import { RutFormatter } from "../utils"
-	import { updateUserMutation } from "../mutations"
+	interface Props {
+		user: User | null
+		onSuccess?: () => void
+	}
 
-	import Field from "$lib/shared/components/ui/Field.svelte"
+	let { user, onSuccess }: Props = $props()
 
-	const { user }: { user: User | null } = $props()
+	const mutation = updateUserMutation(user?.id ?? "")
 
-	const defaultData = $derived({
-		email: user?.email,
-		roles: user?.role,
-		password: "",
-		confirmPassword: "",
+	const form = createForm({
+		schema: UpdateUserSchema,
+		initialInput: {
+			email: user?.email,
+			role: user?.role,
+		},
 	})
 
-	const { mutate } = useMutation<User>(() =>
-		updateUserMutation(user?.id ?? "", defaultData)
-	)
+	async function onSubmit() {
+		const result = await validate(form)
 
-	const onSubmit = (data: Record<string, unknown>) => {
-		console.log("Updated data:", data)
-		mutate(data, {
-			onSuccess: () => {
-				console.log("User updated successfully")
-			},
-			onError: error => {
-				console.error("Error updating user:", error)
-			},
-		})
+		if (!result.success) {
+			toast.error("Por favor corrige los errores del formulario")
+			return
+		}
+
+		try {
+			const apiResult = await mutation.mutateAsync(result.output)
+
+			if (apiResult.success) {
+				toast.success("Usuario actualizado exitosamente")
+				onSuccess?.()
+			} else {
+				toast.error(
+					typeof apiResult.error === "string"
+						? apiResult.error
+						: "Error al actualizar el usuario"
+				)
+			}
+		} catch (error) {
+			toast.error("Error al actualizar el usuario")
+		}
 	}
 </script>
 
-<div class="text-text-muted flex w-5/6 flex-col gap-6 text-base">
-	<Field label="ID" value={user?.id ?? ""} />
-	<Field label="RUT" value={RutFormatter(user?.rut ?? "")} />
-	<Field label="Nombre" value={user?.name ?? ""} />
+<div class="flex w-full flex-col gap-6">
+	<!-- Campos de solo lectura -->
+	<div>
+		<label for="user-id" class="block text-sm font-medium text-gray-700">ID</label>
+		<input
+			id="user-id"
+			type="text"
+			value={user?.id ?? ""}
+			disabled
+			class="mt-1 block w-full rounded-md border border-gray-300 bg-gray-100 px-3 py-2 text-gray-500"
+		/>
+	</div>
 
-	<Field label="Correo electrónico" value={user?.email ?? ""} />
-	<Field label="Rol" value={user?.role ?? "Sin rol"} />
+	<div>
+		<label for="user-rut" class="block text-sm font-medium text-gray-700">RUT</label>
+		<input
+			id="user-rut"
+			type="text"
+			value={RutFormatter(user?.rut ?? "")}
+			disabled
+			class="mt-1 block w-full rounded-md border border-gray-300 bg-gray-100 px-3 py-2 text-gray-500"
+		/>
+	</div>
 
-	<Field label="Contraseña" value="********" />
+	<div>
+		<label for="user-name" class="block text-sm font-medium text-gray-700"
+			>Nombre</label
+		>
+		<input
+			id="user-name"
+			type="text"
+			value={user?.name ?? ""}
+			disabled
+			class="mt-1 block w-full rounded-md border border-gray-300 bg-gray-100 px-3 py-2 text-gray-500"
+		/>
+	</div>
 
-	<button
-		class="bg-primary hover:bg-primary-dark rounded px-4 py-2 text-white"
-		onclick={() => onSubmit({})}
-	>
-		Actualizar Usuario
-	</button>
+	<!-- Formulario editable -->
+	<Form of={form} onsubmit={onSubmit}>
+		<div class="space-y-4">
+			<Field of={form} path={["email"]}>
+				{#snippet children(field)}
+					<div>
+						<label for="email" class="block text-sm font-medium text-gray-700"
+							>Correo electrónico</label
+						>
+						<input
+							id="email"
+							type="email"
+							value={field.input ?? ""}
+							{...field.props}
+							placeholder="correo@ejemplo.com"
+							class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+						/>
+						{#if field.errors}
+							<p class="mt-1 text-sm text-red-600">{field.errors[0]}</p>
+						{/if}
+					</div>
+				{/snippet}
+			</Field>
+
+			<Field of={form} path={["role"]}>
+				{#snippet children(field)}
+					<div>
+						<label for="role" class="block text-sm font-medium text-gray-700"
+							>Rol</label
+						>
+						<select
+							id="role"
+							value={field.input ?? "student"}
+							{...field.props}
+							class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+						>
+							<option value="student">Estudiante</option>
+							<option value="teacher">Profesor(a)</option>
+							<option value="secretary">Secretario(a)</option>
+							<option value="administrator">Administrador(a)</option>
+						</select>
+						{#if field.errors}
+							<p class="mt-1 text-sm text-red-600">{field.errors[0]}</p>
+						{/if}
+					</div>
+				{/snippet}
+			</Field>
+
+			<div class="flex justify-end gap-2 pt-4">
+				<button
+					type="submit"
+					disabled={form.isSubmitting}
+					class="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
+				>
+					{form.isSubmitting ? "Actualizando..." : "Actualizar Usuario"}
+				</button>
+			</div>
+		</div>
+	</Form>
 </div>

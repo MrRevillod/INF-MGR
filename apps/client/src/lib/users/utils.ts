@@ -13,7 +13,11 @@ export const tableColumns: TableColumn<User>[] = [
 	{ key: "rut", label: "RUT" },
 	{ key: "name", label: "Nombre" },
 	{ key: "email", label: "Correo electrónico" },
-	{ key: "role", label: "Rol" },
+	{
+		key: "role",
+		label: "Rol",
+		formatter: (user: User) => spanishRoles[user.role] || user.role,
+	},
 ]
 
 export const RutFormatter = (rut: string): string => {

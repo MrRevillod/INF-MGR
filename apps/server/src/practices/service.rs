@@ -32,7 +32,7 @@ impl PracticeService {
     ) -> AppResult<Practice> {
         let practice = Practice::from(input);
 
-        let (enrollment, student, _) =
+        let (enrollment, student, _, _) =
             self.enrollments.get_by_id(enrollment_id).await?;
 
         let (course, _) = self.courses.get_by_id(&enrollment.course_id).await?;
@@ -63,7 +63,7 @@ impl PracticeService {
         practice_id: &Uuid,
         status: PracticeStatus,
     ) -> AppResult<Practice> {
-        let (enrollment, student, practice) =
+        let (enrollment, student, practice, _) =
             self.enrollments.get_by_id(enrollment_id).await?;
 
         let mut practice = practice.ok_or(NotFoundError::practice(*practice_id))?;
@@ -103,7 +103,7 @@ impl PracticeService {
         enrollment_id: &Uuid,
         document: Vec<u8>,
     ) -> AppResult<()> {
-        let (enrollment, student, practice) =
+        let (enrollment, student, practice, _) =
             self.enrollments.get_by_id(enrollment_id).await?;
 
         let practice = practice.ok_or(NotFoundError::practice(*enrollment_id))?;
@@ -168,7 +168,7 @@ impl PracticeService {
         evaluation_id: &Uuid,
         input: EvaluatePracticeDto,
     ) -> AppResult<Practice> {
-        let (mut enrollment, student, practice) =
+        let (mut enrollment, student, practice, _) =
             self.enrollments.get_by_id(enrollment_id).await?;
 
         let (course, teacher) =

@@ -4,7 +4,7 @@ use sword::core::injectable;
 use uuid::Uuid;
 
 use crate::{
-    courses::CourseRepository,
+    courses::*,
     enrollments::*,
     practices::*,
     shared::{
@@ -27,7 +27,7 @@ impl EnrollmentService {
     pub async fn get_all(
         &self,
         filter: EnrollmentFilter,
-    ) -> AppResult<Vec<EnrollmentWithStudentAndPractice>> {
+    ) -> AppResult<Vec<EnrollmentWithStudentAndPracticeAndCourse>> {
         let mut result = Vec::new();
         let enrollments = self.enrollments.find_many(filter).await?;
 
@@ -39,6 +39,11 @@ impl EnrollmentService {
             ids: enrollments.iter().filter_map(|e| e.practice_id).collect::<Vec<_>>()
         };
 
+        let course_filter = course_filter! {
+            ids: enrollments.iter().map(|e| e.course_id).collect::<Vec<_>>()
+        };
+
+        let course = self.courses.find_many(course_filter).await?;
         let students = self.users.find_many(student_filter).await?;
         let practices = self.practices.find_many(practice_filter).await?;
 
@@ -55,7 +60,13 @@ impl EnrollmentService {
                 None
             };
 
-            result.push((enrollment, student, practice));
+            let course = course
+                .iter()
+                .find(|c| c.id == enrollment.course_id)
+                .cloned()
+                .ok_or(NotFoundError::course(enrollment.course_id))?;
+
+            result.push((enrollment, student, practice, course));
         }
 
         Ok(result)
@@ -64,7 +75,7 @@ impl EnrollmentService {
     pub async fn get_by_id(
         &self,
         id: &Uuid,
-    ) -> AppResult<EnrollmentWithStudentAndPractice> {
+    ) -> AppResult<EnrollmentWithStudentAndPracticeAndCourse> {
         let enrollment = self
             .enrollments
             .find_by_id(id)
@@ -82,7 +93,13 @@ impl EnrollmentService {
             None => None,
         };
 
-        Ok((enrollment, student, practice))
+        let course = self
+            .courses
+            .find_by_id(&enrollment.course_id)
+            .await?
+            .ok_or(NotFoundError::course(enrollment.course_id))?;
+
+        Ok((enrollment, student, practice, course))
     }
 
     pub async fn create(&self, input: CreateEnrollmentDto) -> AppResult<Enrollment> {
@@ -129,7 +146,7 @@ impl EnrollmentService {
         id: &Uuid,
         doc_bytes: Vec<u8>,
     ) -> AppResult<()> {
-        let (enrollment, student, practice) = self.get_by_id(id).await?;
+        let (enrollment, student, practice, _) = self.get_by_id(id).await?;
 
         let Some(practice) = practice else {
             return Err(ValidationError::NoPracticeAssociated)?;

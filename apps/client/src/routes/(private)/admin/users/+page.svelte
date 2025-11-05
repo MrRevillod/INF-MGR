@@ -8,9 +8,12 @@
 	import Button from "$lib/shared/components/ui/Button.svelte"
 	import SearchBar from "$lib/shared/components/SearchBar.svelte"
 	import PageTitle from "$lib/shared/components/ui/PageTitle.svelte"
+	import Modal from "$lib/shared/components/Modal.svelte"
+	import CreateUserForm from "$lib/users/components/CreateUserForm.svelte"
 
 	let search = $state("")
 	let currentPage = $state(1)
+	let isModalOpen = $state(false)
 
 	const query = getUsersQuery(() => ({ search, page: currentPage }))
 
@@ -24,6 +27,15 @@
 		hasPrevious: res?.data?.hasPrevious ?? false,
 		onPageChange: (page: number) => (currentPage = page),
 	})
+
+	function handleCloseModal() {
+		isModalOpen = false
+	}
+
+	function handleSuccess() {
+		isModalOpen = false
+		refetch()
+	}
 
 	$effect(() => {
 		if (search.length > 0) currentPage = 1
@@ -48,7 +60,11 @@
 				text={isLoading ? "Cargando..." : "Actualizar"}
 			/>
 
-			<Button onclick={() => {}} variant="primary" text="Nuevo usuario" />
+			<Button
+				onclick={() => (isModalOpen = true)}
+				variant="primary"
+				text="Nuevo usuario"
+			/>
 		</div>
 	</div>
 
@@ -57,8 +73,16 @@
 		columns={tableColumns}
 		pagination={paginationProps}
 		onDetailsClick={item =>
-			goto(`/users/${item.id}?${useEncodeData({ user: item })}`)}
+			goto(`/admin/users/${item.id}?${useEncodeData({ user: item })}`)}
 		{isError}
 		{isLoading}
 	/>
 </div>
+
+<Modal
+	bind:isOpen={isModalOpen}
+	onClose={handleCloseModal}
+	title="Crear Nuevo Usuario"
+>
+	<CreateUserForm onSuccess={handleSuccess} />
+</Modal>
