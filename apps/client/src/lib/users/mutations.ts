@@ -40,3 +40,20 @@ export const updateUserMutation = (id: string) => {
 		})
 	)
 }
+
+export const deleteUserMutation = (id: string) => {
+	const queryClient = useQueryClient()
+
+	return createMutation<ApiResponse<void>, ApiResponse, void>(() => ({
+		mutationKey: ["delete-user", id],
+		mutationFn: () => TryFn<void>(() => protectedApi.delete(`users/${id}`)),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: ["users"],
+			})
+			queryClient.invalidateQueries({
+				queryKey: ["user", id],
+			})
+		},
+	}))
+}

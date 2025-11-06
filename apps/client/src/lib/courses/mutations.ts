@@ -110,3 +110,39 @@ export const deleteEnrollmentMutation = (enrollmentId: string) => {
 		},
 	}))
 }
+
+export const updateEnrollmentMutation = (enrollmentId: string) => {
+	const queryClient = useQueryClient()
+
+	return createMutation<
+		ApiResponse<Enrollment>,
+		ApiResponse,
+		Record<string, unknown>
+	>(() => ({
+		mutationKey: ["update-enrollment", enrollmentId],
+		mutationFn: data =>
+			TryFn<Enrollment>(() =>
+				protectedApi.patch<Enrollment>(`/courses/enrollments/${enrollmentId}`, data)
+			),
+		onSuccess: data => {
+			queryClient.invalidateQueries({
+				queryKey: ["enrollments"],
+			})
+			queryClient.invalidateQueries({
+				queryKey: ["enrollment", enrollmentId],
+			})
+			queryClient.invalidateQueries({
+				queryKey: ["courses"],
+			})
+			// Invalidar el curso específico si tenemos el courseId
+			if (data.data?.courseId) {
+				queryClient.invalidateQueries({
+					queryKey: ["course", data.data.courseId],
+				})
+				queryClient.invalidateQueries({
+					queryKey: ["enrollments", "course", data.data.courseId],
+				})
+			}
+		},
+	}))
+}

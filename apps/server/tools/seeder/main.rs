@@ -34,9 +34,9 @@ async fn main() -> Result<(), sqlx::Error> {
     create_users(&pool, students.clone()).await;
     create_users(&pool, administrators()).await;
 
-    let info_1164_course = info_1164(&teachers);
-    create_course(&pool, info_1164_course.clone()).await;
-    create_enrollments(&pool, students.clone(), info_1164_course).await;
+    //let info_1164_course = info_1164(&teachers);
+    //create_course(&pool, info_1164_course.clone()).await;
+    //create_enrollments(&pool, students.clone(), info_1164_course).await;
 
     // Crear cursos adicionales
     let extra_courses = additional_courses(&teachers);
@@ -52,7 +52,7 @@ async fn main() -> Result<(), sqlx::Error> {
     println!("   - {} profesores", teachers.len());
     println!("   - {} estudiantes", students.len());
     println!("   - {} administradores", administrators().len());
-    println!("   - {} cursos", extra_courses.len() + 1);
+    println!("   - {} cursos", extra_courses.len());
 
     Ok(())
 }

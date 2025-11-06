@@ -8,6 +8,7 @@
 	import EnrollStudentForm from "$lib/courses/components/EnrollStudentForm.svelte"
 	import DeleteCourseButton from "$lib/courses/components/DeleteCourseButton.svelte"
 	import DeleteEnrollmentButton from "$lib/courses/components/DeleteEnrollmentButton.svelte"
+	import UpdateEnrollmentButton from "$lib/courses/components/UpdateEnrollmentButton.svelte"
 	import { getCourseQuery } from "$lib/courses/queries"
 	import { getCourseEnrollmentsQuery } from "$lib/enrollments/queries"
 	import { getUsersQuery } from "$lib/users/queries"
@@ -68,6 +69,39 @@
 
 	function handleEnrollSuccess() {
 		showEnrollModal = false
+	}
+
+	function calculateWeightedAverage(
+		scores: Array<{ evaluationId: string; score: number }>,
+		evaluations: Array<{ id: string; weight: number }>
+	): number | null {
+		if (!scores || scores.length === 0 || !evaluations || evaluations.length === 0) {
+			return null
+		}
+
+		let weightedSum = 0
+		let totalWeight = 0
+		let hasScores = false
+
+		for (const evaluation of evaluations) {
+			const score = scores.find(s => s.evaluationId === evaluation.id)
+			if (score && score.score > 0) {
+				// Multiplicar la nota por el peso de la evaluación
+				weightedSum += score.score * evaluation.weight
+				totalWeight += evaluation.weight
+				hasScores = true
+			}
+		}
+
+		if (!hasScores) {
+			return null
+		}
+
+		if (totalWeight === 0) {
+			return null
+		}
+
+		return weightedSum / totalWeight
 	}
 </script>
 
@@ -182,7 +216,7 @@
 					</p>
 				</div>
 			{:else}
-				<div class="overflow-hidden">
+				<div class="overflow-x-auto">
 					<table class="min-w-full divide-y divide-gray-200">
 						<thead class="bg-gray-50">
 							<tr>
@@ -201,6 +235,28 @@
 								>
 									Email
 								</th>
+
+								<!-- Columnas dinámicas de evaluaciones -->
+								{#if currentCourse?.evaluations && currentCourse.evaluations.length > 0}
+									{#each currentCourse.evaluations as evaluation}
+										<th
+											class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500"
+											title={`Peso: ${evaluation.weight}%`}
+										>
+											{evaluation.name}
+											<br />
+											<span class="text-[10px] font-normal text-gray-400"
+												>({evaluation.weight}%)</span
+											>
+										</th>
+									{/each}
+									<th
+										class="bg-gray-100 px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-700"
+									>
+										Promedio
+									</th>
+								{/if}
+
 								<th class="relative px-6 py-3">
 									<span class="sr-only">Acciones</span>
 								</th>
@@ -208,6 +264,12 @@
 						</thead>
 						<tbody class="divide-y divide-gray-200 bg-white">
 							{#each enrollmentsRes.data as enrollment (enrollment.id)}
+								{@const scores = enrollment.studentScores || []}
+								{@const average = calculateWeightedAverage(
+									scores,
+									currentCourse?.evaluations || []
+								)}
+
 								<tr class="hover:bg-gray-50">
 									<td
 										class="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900"
@@ -225,13 +287,61 @@
 									<td class="px-6 py-4 text-sm text-gray-500">
 										{enrollment.student.email}
 									</td>
+
+									<!-- Mostrar calificaciones -->
+									{#if currentCourse?.evaluations && currentCourse.evaluations.length > 0}
+										{#each currentCourse.evaluations as evaluation}
+											{@const score = scores.find(
+												s => s.evaluationId === evaluation.id
+											)}
+											<td class="px-4 py-4 text-center text-sm">
+												{#if score && score.score > 0}
+													<span
+														class="inline-flex rounded-full px-2 py-1 text-xs font-semibold {score.score >=
+														4.0
+															? 'bg-green-100 text-green-800'
+															: 'bg-red-100 text-red-800'}"
+													>
+														{score.score.toFixed(1)}
+													</span>
+												{:else}
+													<span class="text-xs text-gray-400">-</span>
+												{/if}
+											</td>
+										{/each}
+
+										<!-- Promedio ponderado -->
+										<td class="bg-gray-50 px-4 py-4 text-center text-sm font-bold">
+											{#if average !== null}
+												<span
+													class="inline-flex rounded-full px-3 py-1 text-sm font-bold {average >=
+													4.0
+														? 'bg-green-200 text-green-900'
+														: 'bg-red-200 text-red-900'}"
+												>
+													{average.toFixed(1)}
+												</span>
+											{:else}
+												<span class="text-xs text-gray-400">Sin calificar</span>
+											{/if}
+										</td>
+									{/if}
+
 									<td
 										class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium"
 									>
-										<DeleteEnrollmentButton
-											enrollmentId={enrollment.id}
-											studentName={enrollment.student.name}
-										/>
+										<div class="flex justify-end gap-2">
+											{#if currentCourse?.evaluations && currentCourse.evaluations.length > 0}
+												<UpdateEnrollmentButton
+													{enrollment}
+													evaluations={currentCourse.evaluations}
+												/>
+											{/if}
+											<DeleteEnrollmentButton
+												enrollmentId={enrollment.id}
+												studentName={enrollment.student.name}
+											/>
+										</div>
 									</td>
 								</tr>
 							{/each}

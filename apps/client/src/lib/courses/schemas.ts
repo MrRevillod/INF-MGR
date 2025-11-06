@@ -55,3 +55,14 @@ export const EnrollStudentSchema = v.object({
 	studentId: v.pipe(v.string(), v.minLength(1, "Debe seleccionar un estudiante")),
 	courseId: v.string(),
 })
+
+// Schema para actualizar inscripción (scores)
+export const UpdateEnrollmentSchema = v.object({
+	studentScores: v.optional(
+		v.pipe(
+			v.array(StudentScoreSchema),
+			v.minLength(1, "Debe haber al menos un score")
+		)
+	),
+	practiceId: v.optional(v.string()),
+})

@@ -4,6 +4,7 @@
 	import { goto } from "$app/navigation"
 	import PageTitle from "$lib/shared/components/ui/PageTitle.svelte"
 	import UpdateUserForm from "$lib/users/components/UpdateUserForm.svelte"
+	import DeleteUserButton from "$lib/users/components/DeleteUserButton.svelte"
 	import Button from "$lib/shared/components/ui/Button.svelte"
 	import { spanishRoles } from "$users/utils"
 	import { getStudentEnrollmentsQuery } from "$lib/enrollments/queries"
@@ -37,6 +38,39 @@
 	function handleCourseClick(courseId: string) {
 		goto(`/admin/courses/${courseId}`)
 	}
+
+	function calculateWeightedAverage(
+		scores: Array<{ evaluationId: string; score: number }> | undefined,
+		evaluations: Array<{ id: string; weight: number }> | undefined
+	): number | null {
+		if (!scores || scores.length === 0 || !evaluations || evaluations.length === 0) {
+			return null
+		}
+
+		let weightedSum = 0
+		let totalWeight = 0
+		let hasScores = false
+
+		for (const evaluation of evaluations) {
+			const score = scores.find(s => s.evaluationId === evaluation.id)
+			if (score && score.score > 0) {
+				// Multiplicar la nota por el peso de la evaluación
+				weightedSum += score.score * evaluation.weight
+				totalWeight += evaluation.weight
+				hasScores = true
+			}
+		}
+
+		if (!hasScores) {
+			return null
+		}
+
+		if (totalWeight === 0) {
+			return null
+		}
+
+		return weightedSum / totalWeight
+	}
 </script>
 
 <section class="space-y-6">
@@ -60,6 +94,9 @@
 			<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
 				<UpdateUserForm user={page.user} onSuccess={handleUpdateSuccess} />
 			</div>
+			{#if page.user?.role !== "administrator"}
+				<DeleteUserButton user={page.user} />
+			{/if}
 		</section>
 
 		<!-- Columna derecha: Cursos -->
@@ -116,25 +153,116 @@
 							</p>
 						</div>
 					{:else}
-						<div class="space-y-3">
+						<div class="space-y-4">
 							{#each enrollmentsData.data.data as enrollment (enrollment.id)}
+								{@const course = enrollment.course}
+								{@const scores = enrollment.studentScores || []}
+								{@const average = calculateWeightedAverage(
+									scores,
+									course?.evaluations
+								)}
+
 								<div
-									class="cursor-pointer rounded-lg border border-gray-200 bg-white p-4 transition-all hover:border-blue-300 hover:shadow-md"
-									onclick={() => handleCourseClick(enrollment.course.id)}
-									role="button"
-									tabindex="0"
-									onkeydown={e => {
-										if (e.key === "Enter" || e.key === " ") {
-											handleCourseClick(enrollment.course.id)
-										}
-									}}
+									class="rounded-lg border border-gray-200 bg-white p-4 transition-all hover:border-blue-300 hover:shadow-md"
 								>
-									<h3 class="font-semibold text-gray-900">
-										{enrollment.course.name}
-									</h3>
-									<div class="mt-2 text-xs text-gray-500">
-										Código: {enrollment.course.code}
+									<!-- Header del curso con promedio -->
+									<div
+										class="flex cursor-pointer items-start justify-between"
+										onclick={() => handleCourseClick(course.id)}
+										role="button"
+										tabindex="0"
+										onkeydown={e => {
+											if (e.key === "Enter" || e.key === " ") {
+												handleCourseClick(course.id)
+											}
+										}}
+									>
+										<div class="flex-1">
+											<h3 class="font-semibold text-gray-900">{course.name}</h3>
+											<div
+												class="mt-1 flex items-center gap-3 text-xs text-gray-500"
+											>
+												<span>Código: {course.code}</span>
+												<span>•</span>
+												<span>Año: {course.year}</span>
+												{#if course.teacher}
+													<span>•</span>
+													<span>Prof: {course.teacher.name}</span>
+												{/if}
+											</div>
+										</div>
+										<div class="ml-4">
+											{#if average !== null}
+												<span
+													class="inline-flex items-center rounded-full px-3 py-1.5 text-sm font-bold {average >=
+													4.0
+														? 'bg-green-100 text-green-800'
+														: 'bg-red-100 text-red-800'}"
+												>
+													{average.toFixed(1)}
+												</span>
+											{:else}
+												<span
+													class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1.5 text-xs text-gray-600"
+												>
+													Sin calificar
+												</span>
+											{/if}
+										</div>
 									</div>
+
+									<!-- Evaluaciones y calificaciones -->
+									{#if course.evaluations && course.evaluations.length > 0}
+										<div class="mt-4 space-y-2 border-t border-gray-100 pt-3">
+											{#each course.evaluations as evaluation}
+												{@const score = scores.find(
+													s => s.evaluationId === evaluation.id
+												)}
+												<div
+													class="flex items-center justify-between border-l-2 border-blue-200 py-1.5 pl-3"
+												>
+													<div class="flex items-center gap-2">
+														<div class="h-1.5 w-1.5 rounded-full bg-blue-500"></div>
+														<span class="text-sm text-gray-700">
+															{evaluation.name}
+														</span>
+														<span class="text-xs text-gray-500">
+															({evaluation.weight}%)
+														</span>
+													</div>
+													<div>
+														{#if score && score.score > 0}
+															<span
+																class="inline-flex rounded px-2 py-0.5 text-sm font-semibold {score.score >=
+																4.0
+																	? 'bg-green-50 text-green-700'
+																	: 'bg-red-50 text-red-700'}"
+															>
+																{score.score.toFixed(1)}
+															</span>
+														{:else}
+															<span class="text-xs text-gray-400">
+																No calificado
+															</span>
+														{/if}
+													</div>
+												</div>
+											{/each}
+										</div>
+									{/if}
+
+									<!-- Información de práctica si existe -->
+									{#if enrollment.practice}
+										<div
+											class="mt-3 rounded-lg border border-blue-100 bg-blue-50 p-3"
+										>
+											<div class="flex items-center gap-2">
+												<span class="text-sm font-medium text-blue-900">
+													📋 Práctica Profesional Asignada
+												</span>
+											</div>
+										</div>
+									{/if}
 								</div>
 							{/each}
 						</div>
@@ -184,6 +312,9 @@
 									<h3 class="font-semibold text-gray-900">{course.name}</h3>
 									<div class="mt-2 text-xs text-gray-500">
 										Código: {course.code}
+									</div>
+									<div class="mt-2 text-xs text-gray-400">
+										Año: {course.year}
 									</div>
 								</div>
 							{/each}
