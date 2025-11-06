@@ -48,14 +48,22 @@ allow_credentials = false
 allow_methods = ["GET", "POST", "PUT", "PATCH", "DELETE"]
 allow_headers = ["Content-Type", "Authorization"]
 
-[mailer]
+[services-config]
+
+[services-config.mailer]
 smtp_host = "${SMTP_HOST:localhost}"
 smtp_port = "${SMTP_PORT}"
 smtp_username = "${SMTP_USERNAME}"
 smtp_password = "${SMTP_PASSWORD}"
 
-[template-context]
+[services-config.templates]
 public_url = "${PUBLIC_URL:http://localhost:8000}"
 career_name = "${CAREER_NAME:Ingeniería en Informática}"
 career_manager = "${CAREER_MANAGER:Director de Carrera}"
 secretary_email = "${SECRETARY_EMAIL}"
+
+[services-config.printer]
+documents_dir = "${DOCUMENTS_DIR:./documents}"
+
+[services-config.zipper]
+extract_base_dir = "${DOCUMENTS_DIR:./documents}"

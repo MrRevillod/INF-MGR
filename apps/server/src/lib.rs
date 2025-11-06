@@ -21,3 +21,5 @@ pub mod types {
     pub use uuid::Uuid;
     pub use validator::Validate;
 }
+
+pub use services::*;

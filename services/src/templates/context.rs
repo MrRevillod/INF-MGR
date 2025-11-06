@@ -1,21 +1,6 @@
-use serde::{Deserialize, Serialize};
-use std::sync::Arc;
-use sword::core::config;
-use tera::{Context, Tera};
-
-use crate::shared::event_handler::ServiceError;
-
-#[derive(Deserialize, Serialize, Debug, Clone)]
-#[config(key = "template-context")]
-pub struct TemplateConfig {
-    pub public_url: String,
-    pub career_name: String,
-    pub career_manager: String,
-    pub secretary_email: String,
-}
-
-pub type RawContext = Vec<(&'static str, String)>;
-pub type Templates = Vec<(&'static str, &'static str)>;
+use crate::config::TemplateConfig;
+use crate::errors::ServiceError;
+use crate::types::*;
 
 #[derive(Debug, Clone)]
 pub struct TemplateContext {

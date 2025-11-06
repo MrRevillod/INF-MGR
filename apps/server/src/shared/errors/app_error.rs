@@ -1,15 +1,8 @@
 use super::{AuthError, NotFoundError, ValidationError};
-use crate::shared::event_handler::ServiceError;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum AppError {
-    #[error("Service error: {source}")]
-    Service {
-        #[from]
-        source: ServiceError,
-    },
-
     #[error("Database error: {source}")]
     PostgresDatabase {
         #[from]

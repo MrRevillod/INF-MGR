@@ -17,15 +17,18 @@ pub static ALLOWED_SECTIONS: LazyLock<HashSet<&'static str>> = LazyLock::new(|| 
     set
 });
 
-pub fn validate_tex_structure(content: &str) -> Result<(), String> {
-    for cap in SECTION_RE.captures_iter(content) {
-        let title = &cap[1];
-        if !ALLOWED_SECTIONS.contains(title) {
-            return Err(format!(
-                "Sección no permitida encontrada: '{}'. Solo se permiten las secciones base de la plantilla.",
-                title
-            ));
+impl PracticeReportParser {
+    pub fn validate_tex_structure(&self, content: &str) -> Result<(), String> {
+        for cap in SECTION_RE.captures_iter(content) {
+            let title = &cap[1];
+            if !ALLOWED_SECTIONS.contains(title) {
+                return Err(format!(
+                    "Sección no permitida encontrada: '{}'. Solo se permiten las secciones base de la plantilla.",
+                    title
+                ));
+            }
         }
+
+        Ok(())
     }
-    Ok(())
 }

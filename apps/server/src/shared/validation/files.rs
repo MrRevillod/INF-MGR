@@ -6,6 +6,7 @@ use sword::prelude::*;
 pub struct FileValidationService;
 
 type ValidationFunction = fn(&[u8]) -> bool;
+pub type RequestFiles = HashMap<&'static str, Vec<u8>>;
 
 static VALIDATION_FUNCTIONS: LazyLock<HashMap<&'static str, ValidationFunction>> =
     LazyLock::new(|| {
@@ -30,6 +31,10 @@ impl OnRequestWithConfig<FileValidationConfig> for FileValidationService {
 
         let mut multipart = req.multipart().await?;
 
+        if req.extensions.get::<RequestFiles>().is_none() {
+            req.extensions.insert::<RequestFiles>(HashMap::new());
+        }
+
         while let Some(field) = multipart.next_field().await.map_err(|e| {
             eprintln!("Error reading multipart field: {e}");
             HttpResponse::InternalServerError()
@@ -52,7 +57,13 @@ impl OnRequestWithConfig<FileValidationConfig> for FileValidationService {
                     ));
                 }
 
-                req.extensions.insert(data);
+                let req_files = req
+                    .extensions
+                    .get_mut::<RequestFiles>()
+                    .expect("RequestFiles should be initialized");
+
+                req_files.insert(name, data.to_vec());
+
                 break;
             }
         }

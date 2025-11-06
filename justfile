@@ -3,6 +3,9 @@ PROJECT_NAME := "INF_MGR"
 run DOCKERARGS="":
 	docker compose up {{DOCKERARGS}}
 
+db:
+	pgcli postgres://user:password@localhost:5433/inf_mgr_db
+
 lint:
 	cargo clippy --all-features -- -D warnings && \
 	cd apps/client && npm run lint && cd ../.. 

@@ -1,52 +1,51 @@
-mod config;
-pub use config::{MailTo, MailerConfig};
+use crate::errors::{MailerError, ServiceError};
+use crate::templates::{MAILER_TEMPLATES, TemplateContext};
+use crate::types::*;
+use crate::{ServiceResult, config::*};
 
-use lettre::{
-    AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor,
-    message::{Mailbox, header::ContentType},
-    transport::smtp::authentication::Credentials,
-};
-
-use crate::shared::event_handler::{
-    MAILER_TEMPLATES, MailerError, ServiceError, TemplateConfig, TemplateContext,
-};
+#[derive(Debug, Clone)]
+pub struct MailTo {
+    pub subject: String,
+    pub email: String,
+    pub template: &'static str,
+    pub context: Vec<(&'static str, String)>,
+}
 
 #[derive(Clone)]
 pub struct Mailer {
-    transport: AsyncSmtpTransport<Tokio1Executor>,
+    transport: SmtpTransport,
     config: MailerConfig,
     template_ctx: TemplateContext,
 }
 
 impl Mailer {
-    pub fn new(
-        config: &MailerConfig,
-        template_config: &TemplateConfig,
-    ) -> Result<Self, ServiceError> {
-        let creds = Credentials::new(
-            config.smtp_username.clone(),
-            config.smtp_password.clone(),
+    pub fn new(config: &ServicesConfig) -> Result<Self, ServiceError> {
+        let mailer_config = &config.mailer;
+        let template_config = &config.templates;
+
+        let credentials = Credentials::new(
+            mailer_config.smtp_username.clone(),
+            mailer_config.smtp_password.clone(),
         );
 
-        let transporter =
-            AsyncSmtpTransport::<Tokio1Executor>::relay(&config.smtp_host)
-                .map_err(|source| MailerError::SmtpTransport { source })?
-                .credentials(creds)
-                .build();
+        let transporter = SmtpTransport::relay(&mailer_config.smtp_host)
+            .map_err(|source| MailerError::SmtpTransport { source })?
+            .credentials(credentials)
+            .build();
 
         let templates =
             TemplateContext::new(MAILER_TEMPLATES.clone(), template_config.clone())?;
 
-        Ok(Mailer {
+        Ok(Self {
             transport: transporter,
-            config: config.clone(),
+            config: mailer_config.clone(),
             template_ctx: templates,
         })
     }
 
-    pub async fn send(&self, mail_to: MailTo) -> Result<(), ServiceError> {
-        let email_from = self.config.smtp_username.clone();
-        let email_from_fmt = format!("Prácticas y Tesis <{email_from}>");
+    pub async fn send(&self, mail_to: MailTo) -> ServiceResult<()> {
+        let email_from_fmt =
+            format!("Prácticas y Tesis <{}>", self.config.smtp_username);
 
         let template_name = format!("{}.html", mail_to.template);
         let template = self.template_ctx.render(&template_name, mail_to.context)?;
@@ -76,8 +75,7 @@ impl Mailer {
         Ok(())
     }
 
-    pub async fn send_many(&self, mails: Vec<MailTo>) -> Result<(), ServiceError> {
-        use futures::future::join_all;
+    pub async fn send_many(&self, mails: Vec<MailTo>) -> ServiceResult<()> {
         let results = join_all(mails.into_iter().map(|mail| self.send(mail))).await;
 
         for result in results {

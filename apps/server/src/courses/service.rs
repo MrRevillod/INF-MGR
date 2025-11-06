@@ -8,7 +8,7 @@ use crate::{
     shared::{
         AppResult, NotFoundError, ValidationError,
         errors::{AppError, AuthError},
-        event_handler::{Event, EventQueue},
+        event_queue::{Event, EventQueue},
     },
     users::*,
 };

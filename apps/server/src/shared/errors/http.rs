@@ -23,11 +23,6 @@ impl From<AppError> for HttpResponse {
                 tracing::error!("Redis error: {}", source);
                 HttpResponse::InternalServerError()
             }
-
-            AppError::Service { source } => {
-                tracing::error!("Internal Service error: {}", source);
-                HttpResponse::InternalServerError()
-            }
         }
     }
 }

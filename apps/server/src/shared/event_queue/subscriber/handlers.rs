@@ -1,14 +1,8 @@
-use crate::{
-    imports::ImportedStudent,
-    shared::{AppResult, event_handler::RawContext},
-    template_ctx,
-};
-use uuid::Uuid;
-
 use super::events::*;
-use crate::shared::event_handler::{
-    {MailTo, Mailer}, {PrintOptions, Printer},
-};
+use crate::{imports::ImportedStudent, template_ctx};
+
+use services::{ServiceResult, mailer::*, printer::*, types::RawContext};
+use uuid::Uuid;
 
 #[derive(Clone)]
 pub struct SubscriberHandler {
@@ -20,7 +14,7 @@ impl SubscriberHandler {
     pub async fn practice_approved(
         &self,
         event: PracticeApprovedEvent,
-    ) -> AppResult<()> {
+    ) -> ServiceResult<()> {
         let (student, enrollment, practice, course, teacher) = event;
         let mut template_ctx = template_ctx! {
             "student_rut" => student.rut,
@@ -184,11 +178,10 @@ impl SubscriberHandler {
         );
     }
 
-    pub async fn user_created(
-        &self,
-        (name, email): UserCreatedEvent,
-    ) -> AppResult<()> {
-        let context: RawContext = template_ctx! {
+    pub async fn user_created(&self, event: UserCreatedEvent) -> ServiceResult<()> {
+        let (name, email) = event;
+
+        let context = template_ctx! {
             "name" => name,
         };
 
@@ -207,7 +200,7 @@ impl SubscriberHandler {
     pub async fn imported_students(
         &self,
         data: Vec<ImportedStudent>,
-    ) -> AppResult<()> {
+    ) -> ServiceResult<()> {
         for user in data {
             self.user_created((user.name, user.email)).await?;
         }
@@ -218,7 +211,7 @@ impl SubscriberHandler {
     pub async fn course_created(
         &self,
         (course, teacher): CourseCreatedEvent,
-    ) -> AppResult<()> {
+    ) -> ServiceResult<()> {
         let context = template_ctx! {
             "course_name" => course.name,
             "course_code" => course.code,
@@ -239,7 +232,7 @@ impl SubscriberHandler {
     pub async fn practice_authorized(
         &self,
         event: PracticeAuthorizedEvent,
-    ) -> AppResult<()> {
+    ) -> ServiceResult<()> {
         let (student, course, teacher, practice, doc_bytes) = event;
         let practice_static_dir =
             format!("practices/{}/authorization.pdf", practice.id);
@@ -300,7 +293,7 @@ impl SubscriberHandler {
     pub async fn final_report_uploaded(
         &self,
         event: FinalReportUploadedEvent,
-    ) -> AppResult<()> {
+    ) -> ServiceResult<()> {
         let (enrollment, course, teacher, student, doc_bytes) = event;
 
         let report_static_path = format!(
@@ -339,7 +332,7 @@ impl SubscriberHandler {
     pub async fn meeting_request_created(
         &self,
         event: MeetingRequestCreatedEvent,
-    ) -> AppResult<()> {
+    ) -> ServiceResult<()> {
         let (teacher, course, students) = event;
 
         let student_names: Vec<String> =

@@ -1,5 +1,9 @@
-use crate::{config::EventQueueConfig, shared::event_handler::*};
+use crate::{
+    config::EventQueueConfig,
+    shared::event_queue::{Event, EventSubscriber, SubscriberHandler},
+};
 
+use services::{config::ServicesConfig, mailer::Mailer, printer::Printer};
 use std::sync::Arc;
 use sword::core::Config;
 use tokio::sync::{Mutex, mpsc::Receiver};
@@ -31,28 +35,23 @@ impl EventSubscriberBuilder {
     pub fn build(self) -> EventSubscriber {
         let rx = self.receiver.expect("Receiver is required");
         let config = self.config.expect("Config is required");
-        let mailer_config = config
-            .get::<MailerConfig>()
-            .expect("Failed to load mailer config");
 
-        let template_config = config
-            .get::<TemplateConfig>()
-            .expect("Failed to load template config");
+        let event_queue_config = config
+            .get::<EventQueueConfig>()
+            .expect("Failed to load event queue config");
 
+        let services_config = config
+            .get::<ServicesConfig>()
+            .expect("Failed to load services config");
+
+        let mailer = Mailer::new(&services_config).expect("Failed to create mailer");
         let printer =
-            Printer::new(&template_config).expect("Failed to create printer");
-
-        let mailer = Mailer::new(&mailer_config, &template_config)
-            .expect("Failed to create mailer");
-
-        let handler = Arc::new(SubscriberHandler { printer, mailer });
+            Printer::new(&services_config).expect("Failed to create printer");
 
         EventSubscriber {
-            config: config
-                .get::<EventQueueConfig>()
-                .expect("Failed to load event queue config"),
+            config: event_queue_config,
             receiver: Arc::new(Mutex::new(rx)),
-            handler,
+            handler: Arc::new(SubscriberHandler { printer, mailer }),
         }
     }
 }

@@ -1,9 +1,11 @@
 use server::{
     courses::{Course, CourseEvaluation, CourseStatus},
+    practices::{Practice, PracticeStatus},
     users::{Role, User},
 };
 
 use chrono::Utc;
+use fake::{Fake, Faker};
 use uuid::Uuid;
 
 pub fn students() -> Vec<User> {
@@ -75,4 +77,24 @@ pub fn info_1164(teachers: &[User]) -> Course {
         evaluations: evaluation_schema,
         course_status: CourseStatus::Active,
     }
+}
+
+pub fn practices(count: usize) -> Vec<Practice> {
+    (0..count)
+        .map(|_| Practice {
+            id: Uuid::new_v4(),
+            enterprise_name: Faker.fake(),
+            location: Faker.fake(),
+            description: Faker.fake(),
+            supervisor_name: Faker.fake(),
+            supervisor_email: Faker.fake(),
+            supervisor_phone: Faker.fake(),
+            start_date: Some(Utc::now()),
+            end_date: Some(
+                Utc::now()
+                    + chrono::Duration::days((Faker.fake::<u32>() % 365) as i64),
+            ),
+            practice_status: PracticeStatus::Pending,
+        })
+        .collect()
 }
