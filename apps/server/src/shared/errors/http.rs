@@ -24,8 +24,8 @@ impl From<AppError> for HttpResponse {
                 HttpResponse::InternalServerError()
             }
 
-            AppError::Service { source } => {
-                tracing::error!("Internal Service error: {}", source);
+            AppError::ServiceError(source) => {
+                tracing::error!("Service error: {}", source);
                 HttpResponse::InternalServerError()
             }
         }
@@ -120,6 +120,11 @@ fn handle_validation_error(error: ValidationError) -> HttpResponse {
         ValidationError::InvalidDatetime(value) => (
             "startDate",
             format!("Fecha y hora inválida: '{value}'. Use el formato ISO 8601."),
+        ),
+
+        ValidationError::InvalidTexStructure { message } => (
+            "finalReport",
+            format!("Estructura del informe inválida: {message}"),
         ),
     };
 

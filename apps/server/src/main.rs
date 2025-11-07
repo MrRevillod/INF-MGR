@@ -10,7 +10,7 @@ use server::{
     logger::LoggerLayer,
     meetings::MeetingsModule,
     practices::PracticesModule,
-    shared::{SharedModule, event_handler::*},
+    shared::{SharedModule, event_queue::*},
     users::UsersModule,
 };
 

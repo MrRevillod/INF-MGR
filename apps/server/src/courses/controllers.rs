@@ -135,7 +135,7 @@ impl CoursesController {
         let owner_validation = req.get_ownership_validation()?;
 
         if owner_validation.required {
-            let (enrollment, _, _) =
+            let (enrollment, _, _, _) =
                 self.enrollments.get_by_id(&enrollment_id).await?;
 
             let (_, teacher) = self.courses.get_by_id(&enrollment.course_id).await?;

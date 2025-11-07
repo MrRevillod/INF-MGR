@@ -9,7 +9,7 @@ use crate::{
 
 use crate::shared::{
     errors::*,
-    event_handler::{Event, EventQueue},
+    event_queue::{Event, EventQueue},
 };
 
 #[injectable]

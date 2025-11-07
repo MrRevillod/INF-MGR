@@ -1,5 +1,3 @@
-use bcrypt::BcryptError;
-
 use lettre::{
     address::AddressError, error::Error as LettreError,
     transport::smtp::Error as SmtpError,
@@ -8,14 +6,12 @@ use lettre::{
 use tera::Error as TeraError;
 use thiserror::Error;
 
+use crate::file_manager::FileManagerError;
+
+pub type ServiceResult<T> = Result<T, ServiceError>;
+
 #[derive(Debug, Error)]
 pub enum ServiceError {
-    #[error("Hasher error: {source}")]
-    Hasher {
-        #[from]
-        source: HasherError,
-    },
-
     #[error("Mailer error: {source}")]
     Mailer {
         #[from]
@@ -33,32 +29,12 @@ pub enum ServiceError {
         #[from]
         source: TeraError,
     },
-}
 
-#[derive(Debug, Error)]
-pub enum HasherError {
-    #[error("Hash error: {source}")]
-    Hash { source: BcryptError },
-
-    #[error("Verify error: {source}")]
-    Verify { source: BcryptError },
-
-    #[error("Password generation error: {message}")]
-    PasswordGeneration { message: String },
-}
-
-impl HasherError {
-    pub const fn hash(source: BcryptError) -> Self {
-        Self::Hash { source }
-    }
-
-    pub const fn verify(source: BcryptError) -> Self {
-        Self::Verify { source }
-    }
-
-    pub const fn password_generation(message: String) -> Self {
-        Self::PasswordGeneration { message }
-    }
+    #[error("File manager error: {source}")]
+    FileManager {
+        #[from]
+        source: FileManagerError,
+    },
 }
 
 #[derive(Debug, Error)]

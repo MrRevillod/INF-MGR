@@ -1,15 +1,9 @@
 use super::{AuthError, NotFoundError, ValidationError};
-use crate::shared::event_handler::ServiceError;
+use services::ServiceError;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum AppError {
-    #[error("Service error: {source}")]
-    Service {
-        #[from]
-        source: ServiceError,
-    },
-
     #[error("Database error: {source}")]
     PostgresDatabase {
         #[from]
@@ -42,4 +36,7 @@ pub enum AppError {
 
     #[error("Internal server error: {0}")]
     InternalServerError(Box<dyn std::error::Error + Send + Sync>),
+
+    #[error("Interal service error: {0}")]
+    ServiceError(#[from] ServiceError),
 }

@@ -1,17 +1,18 @@
-use crate::shared::{
-    AppResult,
-    event_handler::{PrinterError, ServiceError, templates::*},
+use crate::ServiceResult;
+use crate::config::*;
+use crate::types::*;
+
+use std::env::var;
+
+use crate::{
+    errors::{PrinterError, ServiceError},
+    templates::{PRINTER_TEMPLATES, TemplateContext},
 };
-use std::{
-    env::{self, var},
-    path::Path,
-    process::Command,
-};
-use tokio::fs;
 
 #[derive(Clone)]
 pub struct Printer {
     template_ctx: TemplateContext,
+    config: ServicesConfig,
 }
 
 pub struct PrintOptions {
@@ -21,20 +22,20 @@ pub struct PrintOptions {
 }
 
 impl Printer {
-    pub fn new(template_config: &TemplateConfig) -> Result<Self, ServiceError> {
+    pub fn new(config: &ServicesConfig) -> ServiceResult<Self> {
         Ok(Self {
             template_ctx: TemplateContext::new(
                 PRINTER_TEMPLATES.clone(),
-                template_config.clone(),
+                config.templates.clone(),
             )?,
+            config: config.clone(),
         })
     }
 
-    pub async fn print(&self, opts: PrintOptions) -> Result<String, ServiceError> {
+    pub async fn print(&self, opts: PrintOptions) -> ServiceResult<String> {
         let template = self.template_ctx.render(opts.template, opts.context)?;
-
-        let template_dir = Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("src/shared/services/printer/templates");
+        let template_dir =
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("src/printer/templates");
 
         let temp_file = template_dir.join(format!("{}.typ", opts.template));
 
@@ -44,11 +45,9 @@ impl Printer {
             }
         })?;
 
-        let out_file = format!(
-            "{}/{}",
-            var("DOCUMENTS_DIR").unwrap_or_else(|_| ".".to_string()),
-            opts.static_path
-        );
+        let documents_dir = &var("DOCUMENTS_DIR").unwrap_or(".".to_owned());
+
+        let out_file = format!("{documents_dir}/{}", opts.static_path);
 
         let out_path = Path::new(&out_file);
 
@@ -72,6 +71,7 @@ impl Printer {
         let output = Command::new("typst")
             .args(["compile", temp_file, &out_file])
             .output()
+            .await
             .map_err(|source| ServiceError::Printer {
                 source: source.into(),
             })?;
@@ -87,27 +87,26 @@ impl Printer {
         Ok(out_file)
     }
 
-    pub async fn archive(&self, path: String, file: Vec<u8>) -> AppResult<()> {
-        let documents_dir = env::var("DOCUMENTS_DIR").unwrap_or_else(|_| ".".into());
-
+    pub async fn archive(&self, path: String, file: Vec<u8>) -> ServiceResult<()> {
+        let documents_dir = &self.config.printer.documents_dir;
         let outh_path_str = format!("{documents_dir}/{path}");
         let out_path = Path::new(&outh_path_str);
 
         if let Some(parent) = out_path.parent()
             && !parent.exists()
         {
-            tokio::fs::create_dir_all(parent).await.map_err(|source| {
+            fs::create_dir_all(parent).await.map_err(|source| {
                 ServiceError::Printer {
                     source: source.into(),
                 }
             })?;
         }
 
-        tokio::fs::write(out_path, file).await.map_err(|source| {
-            ServiceError::Printer {
+        fs::write(out_path, file)
+            .await
+            .map_err(|source| ServiceError::Printer {
                 source: source.into(),
-            }
-        })?;
+            })?;
 
         Ok(())
     }

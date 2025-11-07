@@ -1,3 +1,4 @@
+use services::ServiceResult;
 use std::sync::Arc;
 use tokio::{
     sync::{Mutex, mpsc::Receiver},
@@ -12,7 +13,7 @@ pub use builder::*;
 pub use events::*;
 pub use handlers::*;
 
-use crate::{config::EventQueueConfig, shared::AppResult};
+use crate::config::EventQueueConfig;
 
 pub struct EventSubscriber {
     receiver: Arc<Mutex<Receiver<Event>>>,
@@ -65,7 +66,10 @@ impl EventSubscriber {
         Ok(())
     }
 
-    async fn handle(handler: Arc<SubscriberHandler>, event: Event) -> AppResult<()> {
+    async fn handle(
+        handler: Arc<SubscriberHandler>,
+        event: Event,
+    ) -> ServiceResult<()> {
         match event {
             Event::CourseCreated(event) => handler.course_created(event).await?,
             Event::UserCreated(event) => handler.user_created(event).await?,

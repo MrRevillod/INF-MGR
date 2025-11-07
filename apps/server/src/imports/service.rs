@@ -1,15 +1,14 @@
-use reqwest::Client as HttpClient;
 use std::sync::Arc;
 use sword::core::injectable;
 use uuid::Uuid;
 
 use crate::{
-    courses::{Course, CourseRepository},
+    courses::CourseRepository,
     enrollments::{Enrollment, EnrollmentRepository},
     imports::ImportedStudent,
     shared::{
-        AppError, NotFoundError,
-        event_handler::{Event, EventQueue},
+        AppError,
+        event_queue::{Event, EventQueue},
     },
     users::*,
 };
@@ -26,15 +25,8 @@ impl ImportService {
     pub async fn import_course_students(
         &self,
         course_id: &Uuid,
+        students: Vec<ImportedStudent>,
     ) -> Result<(), AppError> {
-        let course = self
-            .courses
-            .find_by_id(course_id)
-            .await?
-            .ok_or(NotFoundError::course(*course_id))?;
-
-        let students = self.get_students(&course).await?;
-
         let (imported_students, existing_students) =
             self.classify_imported_students(students).await?;
 
@@ -103,40 +95,5 @@ impl ImportService {
             .collect::<Vec<_>>();
 
         Ok((imported_students, existing_students))
-    }
-
-    pub async fn get_students(
-        &self,
-        course: &Course,
-    ) -> Result<Vec<ImportedStudent>, AppError> {
-        let Course { year, code, .. } = course;
-
-        let response = HttpClient::new()
-            .get(format!("url/courses/{year}/{code}/students"))
-            .header("x-api-key", "sample")
-            .send()
-            .await
-            .map_err(|e| {
-                tracing::error!("Students API request error: {:?}", e);
-                AppError::InternalServerError(e.into())
-            })?;
-
-        if !response.status().is_success() {
-            tracing::error!(
-                "Students API returned error status: {}",
-                response.status()
-            );
-
-            return Err(AppError::InternalServerError(
-                "Failed to fetch students from Students API".into(),
-            ));
-        }
-
-        let students: Vec<ImportedStudent> = response.json().await.map_err(|e| {
-            tracing::error!("Failed to parse Students API response: {:?}", e);
-            AppError::InternalServerError(e.into())
-        })?;
-
-        Ok(students)
     }
 }

@@ -13,24 +13,24 @@ RUN wget https://github.com/typst/typst/releases/download/v0.13.1/typst-x86_64-u
 
 COPY Cargo.toml Cargo.lock ./
 COPY apps/server/Cargo.toml apps/server/Cargo.lock ./apps/server/
-COPY packages/services/Cargo.toml packages/services/Cargo.lock ./packages/services/
+COPY services/Cargo.toml services/Cargo.lock ./services/
 
 RUN mkdir -p ./apps/server/src && echo 'fn main() { println!("Caching dependencies"); }' > ./apps/server/src/main.rs
-RUN mkdir -p ./packages/services/src && echo 'pub fn placeholder() {}' > ./packages/services/src/lib.rs
+RUN mkdir -p ./services/src && echo 'pub fn placeholder() {}' > ./services/src/lib.rs
 
 RUN cd apps/server && cargo build --release
-RUN cd packages/services && cargo build --release
+RUN cd services && cargo build --release
 RUN rm -rf ./tests/src ./apps/server/src ./apps/server/target/release/deps/server*
-RUN rm -rf ./packages/services/src ./packages/services/target/release/deps/services*
+RUN rm -rf ./services/src ./services/target/release/deps/services*
 
 COPY apps/server/src ./apps/server/src
 COPY apps/server/tools ./apps/server/tools
 COPY apps/server/config ./apps/server/config
 
-COPY packages/services/src ./packages/services/src
+COPY services/src ./services/src
 
 RUN cd apps/server && cargo build --release
-RUN cd packages/services && cargo build --release
+RUN cd services && cargo build --release
 
 # -----------------------------------------------------------------------
 # DEVELOPMENT STAGE -----------------------------------------------------
@@ -49,14 +49,14 @@ WORKDIR /app
 
 COPY Cargo.toml Cargo.lock ./
 
-COPY packages/services ./packages/services
+COPY services ./services
 COPY apps/server ./apps/server
 
 ENV CARGO_TARGET_DIR /app/target
 
 EXPOSE 8000
 
-CMD sh -c "cd apps/server && cargo watch -x 'run --bin server' -w src -w config -w tools"
+CMD sh -c "cd apps/server && cargo watch -x 'run --bin server' -w src -w config -w tools -w ../../services/src"
 
 # -----------------------------------------------------------------------
 # PRODUCTION STAGE ------------------------------------------------------

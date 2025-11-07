@@ -37,7 +37,11 @@ async fn main() -> Result<(), sqlx::Error> {
     let info_1164_course = info_1164(&teachers);
 
     create_course(&pool, info_1164_course.clone()).await;
-    create_enrollments(&pool, students, info_1164_course).await;
+
+    let practices = practices(students.len());
+    create_practices(&pool, practices.clone()).await;
+
+    create_enrollments(&pool, students, info_1164_course, practices).await;
 
     println!("Database seeded successfully!");
 
