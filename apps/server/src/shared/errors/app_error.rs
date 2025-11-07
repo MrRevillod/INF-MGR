@@ -1,4 +1,5 @@
 use super::{AuthError, NotFoundError, ValidationError};
+use services::ServiceError;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -35,4 +36,7 @@ pub enum AppError {
 
     #[error("Internal server error: {0}")]
     InternalServerError(Box<dyn std::error::Error + Send + Sync>),
+
+    #[error("Interal service error: {0}")]
+    ServiceError(#[from] ServiceError),
 }

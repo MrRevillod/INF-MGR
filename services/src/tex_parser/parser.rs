@@ -1,28 +1,15 @@
 use crate::tex_parser::*;
-use std::env::var;
 
-pub struct PracticeReportParser {
-    documents_dir: String,
-}
+pub struct PracticeReportParser;
 
 impl PracticeReportParser {
-    pub fn new() -> Self {
-        PracticeReportParser {
-            documents_dir: var("DOCUMENTS_DIR").expect("DOCUMENTS_DIR must be set"),
-        }
-    }
-
-    /// Parse TeX content string into `ParsedTex` structure.
-    /// Returns parsed structure or error if parsing fails.
-    pub async fn parse_content(
-        &self,
-        content: &str,
-    ) -> Result<ParsedTex, Box<dyn std::error::Error>> {
+    pub fn parse_content(content: &str) -> ParsedTex {
+        let cleaned_content = Self::strip_comments(content);
         let mut sections = Vec::new();
 
-        let parts: Vec<&str> = SECTION_RE.split(content).collect();
+        let parts: Vec<&str> = SECTION_RE.split(&cleaned_content).collect();
         let titles: Vec<String> = SECTION_RE
-            .captures_iter(content)
+            .captures_iter(&cleaned_content)
             .map(|cap| cap[1].to_string())
             .collect();
 
@@ -31,7 +18,7 @@ impl PracticeReportParser {
             let section_content = parts[i];
 
             let (content, subsections, tables, images, lists, equations) =
-                self.parse_subsections(section_content);
+                Self::parse_subsections(section_content);
 
             sections.push(Section {
                 title,
@@ -44,11 +31,10 @@ impl PracticeReportParser {
             });
         }
 
-        Ok(ParsedTex { sections })
+        ParsedTex { sections }
     }
 
     fn parse_subsections(
-        &self,
         content: &str,
     ) -> (
         String,
@@ -58,10 +44,10 @@ impl PracticeReportParser {
         Vec<List>,
         Vec<Equation>,
     ) {
-        let (content, tables) = self.extract_tables(content);
-        let (content, images) = self.extract_images(&content);
-        let (content, lists) = self.extract_lists(&content);
-        let (content, equations) = self.extract_equations(&content);
+        let (content, tables) = Self::extract_tables(content);
+        let (content, images) = Self::extract_images(&content);
+        let (content, lists) = Self::extract_lists(&content);
+        let (content, equations) = Self::extract_equations(&content);
 
         let mut subsections = Vec::new();
         let sub_parts: Vec<&str> = SUBSECTION_RE.split(&content).collect();
@@ -70,7 +56,7 @@ impl PracticeReportParser {
             .map(|cap| cap[1].to_string())
             .collect();
 
-        let pre_content = self.clean_content(sub_parts[0]);
+        let pre_content = Self::clean_content(sub_parts[0]);
 
         for j in 1..sub_parts.len() {
             let sub_title = sub_titles[j - 1].clone();
@@ -83,7 +69,7 @@ impl PracticeReportParser {
                 sub_images,
                 sub_lists,
                 sub_equations,
-            ) = self.parse_subsections(sub_content);
+            ) = Self::parse_subsections(sub_content);
 
             subsections.push(Section {
                 title: sub_title,
@@ -99,7 +85,7 @@ impl PracticeReportParser {
         (pre_content, subsections, tables, images, lists, equations)
     }
 
-    fn extract_tables(&self, text: &str) -> (String, Vec<Table>) {
+    fn extract_tables(text: &str) -> (String, Vec<Table>) {
         let mut tables = Vec::new();
         let mut cleaned = text.to_string();
 
@@ -115,7 +101,7 @@ impl PracticeReportParser {
                 })
                 .map(|line| {
                     line.split('&')
-                        .map(|cell| self.clean_content(cell))
+                        .map(|cell| Self::clean_content(cell))
                         .collect()
                 })
                 .collect();
@@ -127,7 +113,7 @@ impl PracticeReportParser {
         (cleaned, tables)
     }
 
-    fn extract_images(&self, text: &str) -> (String, Vec<Image>) {
+    fn extract_images(text: &str) -> (String, Vec<Image>) {
         let mut images = Vec::new();
         let mut cleaned = text.to_string();
 
@@ -142,7 +128,7 @@ impl PracticeReportParser {
         (cleaned, images)
     }
 
-    fn extract_lists(&self, text: &str) -> (String, Vec<List>) {
+    fn extract_lists(text: &str) -> (String, Vec<List>) {
         let mut lists = Vec::new();
         let mut cleaned = text.to_string();
 
@@ -151,7 +137,7 @@ impl PracticeReportParser {
             let items: Vec<String> = list_text
                 .split("\\item")
                 .skip(1)
-                .map(|item| self.clean_content(item.trim()))
+                .map(|item| Self::clean_content(item.trim()))
                 .collect();
 
             lists.push(List { items });
@@ -161,7 +147,7 @@ impl PracticeReportParser {
         (cleaned, lists)
     }
 
-    fn extract_equations(&self, text: &str) -> (String, Vec<Equation>) {
+    fn extract_equations(text: &str) -> (String, Vec<Equation>) {
         let mut equations = Vec::new();
         let mut cleaned = text.to_string();
 
@@ -179,7 +165,7 @@ impl PracticeReportParser {
                 .to_string();
 
             equations.push(Equation {
-                content: self.clean_content(&content),
+                content: Self::clean_content(&content),
             });
 
             cleaned = cleaned.replace(&eq_text, "");
@@ -188,7 +174,34 @@ impl PracticeReportParser {
         (cleaned, equations)
     }
 
-    fn clean_content(&self, text: &str) -> String {
+    fn strip_comments(content: &str) -> String {
+        let mut cleaned = String::new();
+        let mut in_comment_block = false;
+        for line in content.lines() {
+            let trimmed = line.trim();
+            if in_comment_block {
+                if trimmed.starts_with("\\end{comment}") {
+                    in_comment_block = false;
+                }
+                continue;
+            }
+            if trimmed.starts_with("\\begin{comment}") {
+                in_comment_block = true;
+                continue;
+            }
+            // Remove after %
+            if let Some(pos) = line.find('%') {
+                cleaned.push_str(&line[..pos]);
+            } else {
+                cleaned.push_str(line);
+            }
+            cleaned.push('\n');
+        }
+
+        cleaned
+    }
+
+    fn clean_content(text: &str) -> String {
         let cleaned = CLEAN_RE.replace_all(text, "");
         cleaned
             .replace("\\", "")

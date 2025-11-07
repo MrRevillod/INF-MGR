@@ -1,5 +1,4 @@
 use chrono::{Duration, Utc};
-use services::{tex_parser::PracticeReportParser, zipper::extract_zip};
 use std::sync::Arc;
 use sword::core::injectable;
 use uuid::Uuid;
@@ -22,6 +21,7 @@ pub struct EnrollmentService {
     courses: Arc<CourseRepository>,
     practices: Arc<PracticeRepository>,
     event_queue: Arc<EventQueue>,
+    report_service: Arc<PracticeReportService>,
 }
 
 impl EnrollmentService {
@@ -150,23 +150,13 @@ impl EnrollmentService {
         let (doc_bytes, tex_project_zip_bytes) = files;
         let (enrollment, student, practice, _) = self.get_by_id(id).await?;
 
-        let main_tex = extract_zip(id, tex_project_zip_bytes)
-            .await
-            .inspect_err(|e| {
-                println!("Error extracting ZIP file for enrollment {}: {}", id, e);
-            })
-            .unwrap();
-
-        PracticeReportParser::new()
-            .validate_tex_structure(&main_tex)
-            .inspect_err(|e| {
-                println!("Invalid TeX structure in enrollment {}: {}", id, e);
-            })
-            .unwrap();
-
         let Some(practice) = practice else {
             return Err(ValidationError::NoPracticeAssociated)?;
         };
+
+        self.report_service
+            .save_zipped_project(&practice.id, tex_project_zip_bytes)
+            .await?;
 
         let course = self
             .courses

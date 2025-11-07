@@ -3,9 +3,10 @@ use lettre::{
     transport::smtp::Error as SmtpError,
 };
 
+use tera::Error as TeraError;
 use thiserror::Error;
 
-use tera::Error as TeraError;
+use crate::file_manager::FileManagerError;
 
 pub type ServiceResult<T> = Result<T, ServiceError>;
 
@@ -29,8 +30,11 @@ pub enum ServiceError {
         source: TeraError,
     },
 
-    #[error("Zipper error: {0}")]
-    Zipper(String),
+    #[error("File manager error: {source}")]
+    FileManager {
+        #[from]
+        source: FileManagerError,
+    },
 }
 
 #[derive(Debug, Error)]

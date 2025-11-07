@@ -56,7 +56,7 @@ ENV CARGO_TARGET_DIR /app/target
 
 EXPOSE 8000
 
-CMD sh -c "cd apps/server && cargo watch -x 'run --bin server' -w src -w config -w tools"
+CMD sh -c "cd apps/server && cargo watch -x 'run --bin server' -w src -w config -w tools -w ../../services/src"
 
 # -----------------------------------------------------------------------
 # PRODUCTION STAGE ------------------------------------------------------

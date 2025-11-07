@@ -2,6 +2,10 @@ use std::sync::Arc;
 use sword::core::injectable;
 use uuid::Uuid;
 
+mod report;
+
+pub use report::PracticeReportService;
+
 use crate::{
     courses::CourseService,
     enrollments::*,
@@ -107,6 +111,7 @@ impl PracticeService {
             self.enrollments.get_by_id(enrollment_id).await?;
 
         let practice = practice.ok_or(NotFoundError::practice(*enrollment_id))?;
+
         let (course, teacher) =
             self.courses.get_by_id(&enrollment.course_id).await?;
 

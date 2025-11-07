@@ -6,7 +6,7 @@ pub struct ServicesConfig {
     pub mailer: MailerConfig,
     pub templates: TemplateConfig,
     pub printer: PrinterConfig,
-    pub zipper: ZipperConfig,
+    pub file_manager: FileManagerConfig,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -31,6 +31,6 @@ pub struct PrinterConfig {
 }
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct ZipperConfig {
-    pub extract_base_dir: String,
+pub struct FileManagerConfig {
+    pub documents_dir: String,
 }

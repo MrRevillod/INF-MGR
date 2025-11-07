@@ -147,7 +147,7 @@ impl EnrollmentsController {
         Ok(HttpResponse::Ok())
     }
 
-    #[post("/{id}/practice-report/upload")]
+    #[post("/{id}/practice/{practice_id}/report/upload")]
     #[uses(FileValidationService, config = FileValidationConfig { kind: "zip", name: "project" })]
     #[uses(FileValidationService, config = FileValidationConfig { kind: "pdf", name: "document" })]
     async fn upload_practice_report(&self, req: Request) -> HttpResult {

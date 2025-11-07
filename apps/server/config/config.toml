@@ -3,7 +3,6 @@ port = 8000
 host = "0.0.0.0"
 body_limit = "5MB"
 request_timeout_seconds = 15
-graceful_shutdown = false
 
 client_app_url = "${PUBLIC_URL:http://localhost:3000}"
 documents_dir = "${DOCUMENTS_DIR:./documents}"
@@ -65,5 +64,5 @@ secretary_email = "${SECRETARY_EMAIL}"
 [services-config.printer]
 documents_dir = "${DOCUMENTS_DIR:./documents}"
 
-[services-config.zipper]
-extract_base_dir = "${DOCUMENTS_DIR:./documents}"
+[services-config.file_manager]
+documents_dir = "${DOCUMENTS_DIR:./documents}"

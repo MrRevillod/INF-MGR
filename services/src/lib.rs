@@ -1,7 +1,7 @@
 pub mod config;
+pub mod file_manager;
 pub mod mailer;
 pub mod tex_parser;
-pub mod zipper;
 
 mod errors;
 
