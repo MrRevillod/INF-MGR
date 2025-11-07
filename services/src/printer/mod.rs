@@ -2,8 +2,6 @@ use crate::ServiceResult;
 use crate::config::*;
 use crate::types::*;
 
-use std::env::var;
-
 use crate::{
     errors::{PrinterError, ServiceError},
     templates::{PRINTER_TEMPLATES, TemplateContext},
@@ -45,8 +43,7 @@ impl Printer {
             }
         })?;
 
-        let documents_dir = &var("DOCUMENTS_DIR").unwrap_or(".".to_owned());
-
+        let documents_dir = self.config.printer.documents_dir.clone();
         let out_file = format!("{documents_dir}/{}", opts.static_path);
 
         let out_path = Path::new(&out_file);

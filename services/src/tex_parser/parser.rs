@@ -99,11 +99,7 @@ impl PracticeReportParser {
                         && !line.contains("\\end")
                         && !line.contains("\\begin")
                 })
-                .map(|line| {
-                    line.split('&')
-                        .map(|cell| Self::clean_content(cell))
-                        .collect()
-                })
+                .map(|line| line.split('&').map(Self::clean_content).collect())
                 .collect();
 
             tables.push(Table { rows });
@@ -204,7 +200,7 @@ impl PracticeReportParser {
     fn clean_content(text: &str) -> String {
         let cleaned = CLEAN_RE.replace_all(text, "");
         cleaned
-            .replace("\\", "")
+            .replace('\\', "")
             .replace("\n\n", " ")
             .trim()
             .to_string()

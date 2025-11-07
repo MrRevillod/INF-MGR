@@ -36,7 +36,7 @@ impl FileManager {
         let outdir = Path::new(documents_dir).join(outdir);
 
         if !outdir.exists() {
-            fs::create_dir_all(&outdir).await?
+            fs::create_dir_all(&outdir).await?;
         }
 
         task::spawn_blocking(move || {

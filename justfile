@@ -22,6 +22,9 @@ check:
 	cargo check --all-features
 	cd apps/client && npm run check && cd ../..
 
+nurse:
+	cargo clippy --all-features -- -D warnings -W clippy::pedantic -W clippy::nursery
+
 db-seed:
 	docker exec inf_mgr_server_dev cargo run -p server --bin seeder --features seeder
 
