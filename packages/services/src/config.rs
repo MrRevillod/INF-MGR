@@ -7,6 +7,7 @@ pub struct ServicesConfig {
     pub templates: TemplateConfig,
     pub printer: PrinterConfig,
     pub file_manager: FileManagerConfig,
+    pub embedding_service: EmbeddingServiceConfig,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -33,4 +34,10 @@ pub struct PrinterConfig {
 #[derive(Debug, Clone, Deserialize)]
 pub struct FileManagerConfig {
     pub documents_dir: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct EmbeddingServiceConfig {
+    pub qdrant_url: String,
+    pub collection_name: String,
 }

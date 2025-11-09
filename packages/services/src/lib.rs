@@ -1,7 +1,7 @@
 pub mod config;
+pub mod embeddings;
 pub mod file_manager;
 pub mod mailer;
-pub mod tex_parser;
 
 mod errors;
 
@@ -36,8 +36,8 @@ pub mod types {
     pub type SmtpTransport = AsyncSmtpTransport<Tokio1Executor>;
 
     pub use lettre::{
-        AsyncTransport, Message,
-        message::{Mailbox, header::ContentType},
+        message::{header::ContentType, Mailbox},
         transport::smtp::authentication::Credentials,
+        AsyncTransport, Message,
     };
 }

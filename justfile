@@ -1,7 +1,7 @@
 PROJECT_NAME := "INF_MGR"
 
 run DOCKERARGS="":
-	docker compose up {{DOCKERARGS}}
+	docker compose -f docker-compose.yml -f healthchecks.yml up {{DOCKERARGS}}
 
 db:
 	pgcli postgres://user:password@localhost:5433/inf_mgr_db

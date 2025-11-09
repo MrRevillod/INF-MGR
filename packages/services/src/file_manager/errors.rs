@@ -2,9 +2,8 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum FileManagerError {
-    #[error("zip error: {0}")]
-    Zip(#[from] zip::result::ZipError),
-
+    // #[error("zip error: {0}")]
+    // Zip(#[from] zip::result::ZipError),
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
 
@@ -14,6 +13,6 @@ pub enum FileManagerError {
     #[error("file not found: {0}")]
     FileNotFound(String),
 
-    #[error("task join error: {0}")]
-    TaskJoin(#[from] tokio::task::JoinError),
+    #[error("zip error: {0}")]
+    Zip(String),
 }
