@@ -4,7 +4,7 @@ use uuid::Uuid;
 use rig::Embed;
 
 #[derive(Debug, Embed, Serialize, Deserialize)]
-pub struct EmbeddingSection {
+pub struct EmbeddingChunk {
     pub id: Uuid,
     pub section_type: String,
 

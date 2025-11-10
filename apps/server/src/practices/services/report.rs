@@ -5,13 +5,17 @@ use sword::core::injectable;
 use tex_parser::{LaTexParser, ParsedTex};
 
 use crate::{
-    shared::{AppResult, ValidationError},
+    shared::{
+        AppResult, ValidationError,
+        event_queue::{Event, EventQueue},
+    },
     types::*,
 };
 
 #[injectable]
 pub struct PracticeReportService {
     file_manager: Arc<FileManager>,
+    event_queue: Arc<EventQueue>,
 }
 
 impl PracticeReportService {
@@ -38,7 +42,11 @@ impl PracticeReportService {
 
         self.validate_tex_structure(&parsed)?;
 
-        dbg!(&parsed);
+        let event_data = (practice_id.clone(), parsed);
+
+        self.event_queue
+            .publish(Event::InitializePlagiarismCheck(event_data))
+            .await;
 
         Ok(())
     }

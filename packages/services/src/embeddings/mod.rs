@@ -1,5 +1,4 @@
 use rig_fastembed::{Client, EmbeddingModel, FastembedModel};
-use sword::core::injectable;
 
 mod models;
 pub use models::*;
@@ -11,7 +10,7 @@ use qdrant_client::{
 
 use crate::{EmbeddingServiceError, config::EmbeddingServiceConfig};
 
-#[injectable(provider)]
+#[derive(Clone)]
 pub struct EmbeddingService {
     model: EmbeddingModel,
     qdrant_client: Qdrant,

@@ -17,7 +17,7 @@ pub struct TextChunk {
 ///
 /// Elimina la complejidad jerárquica y facilita la transformación directa
 /// a embeddings para detección de plagios.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ParsedTex {
     pub chunks: Vec<TextChunk>,
 }

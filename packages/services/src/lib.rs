@@ -26,6 +26,7 @@ pub mod types {
     pub use std::sync::LazyLock;
     pub use sword::core::config;
     pub use tera::{Context, Tera};
+    pub use uuid::Uuid;
 
     pub type RawContext = Vec<(&'static str, String)>;
     pub type Templates = Vec<(&'static str, &'static str)>;
@@ -36,8 +37,8 @@ pub mod types {
     pub type SmtpTransport = AsyncSmtpTransport<Tokio1Executor>;
 
     pub use lettre::{
-        message::{header::ContentType, Mailbox},
-        transport::smtp::authentication::Credentials,
         AsyncTransport, Message,
+        message::{Mailbox, header::ContentType},
+        transport::smtp::authentication::Credentials,
     };
 }

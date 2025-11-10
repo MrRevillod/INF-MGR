@@ -1,3 +1,6 @@
+use tex_parser::ParsedTex;
+use uuid::Uuid;
+
 use crate::{
     courses::Course,
     enrollments::Enrollment,
@@ -17,6 +20,7 @@ pub enum Event {
     ImportedStudents(Vec<ImportedStudent>),
     CourseCreated(CourseCreatedEvent),
     FinalReportUploaded(FinalReportUploadedEvent),
+    InitializePlagiarismCheck(InitializePlagiarismCheckEvent),
     MeetingRequestCreated(MeetingRequestCreatedEvent),
 }
 
@@ -29,3 +33,5 @@ pub type UserCreatedEvent = (String, String);
 pub type CourseCreatedEvent = (Course, User);
 pub type FinalReportUploadedEvent = (Enrollment, Course, User, User, Vec<u8>);
 pub type MeetingRequestCreatedEvent = (Teacher, Course, Vec<Student>);
+
+pub type InitializePlagiarismCheckEvent = (Uuid, ParsedTex);

@@ -4,6 +4,7 @@ target
 .svelte-kit
 /build
 
+apps/server/.fastembed_cache
 .venv/
 __pycache__/
 *.pyc

@@ -3,7 +3,10 @@ use crate::{
     shared::event_queue::{Event, EventSubscriber, SubscriberHandler},
 };
 
-use services::{config::ServicesConfig, mailer::Mailer, printer::Printer};
+use services::{
+    config::ServicesConfig, embeddings::EmbeddingService, mailer::Mailer,
+    printer::Printer,
+};
 use std::sync::Arc;
 use sword::core::Config;
 use tokio::sync::{Mutex, mpsc::Receiver};
@@ -32,7 +35,7 @@ impl EventSubscriberBuilder {
         self
     }
 
-    pub fn build(self) -> EventSubscriber {
+    pub async fn build(self) -> EventSubscriber {
         let rx = self.receiver.expect("Receiver is required");
         let config = self.config.expect("Config is required");
 
@@ -48,10 +51,19 @@ impl EventSubscriberBuilder {
         let printer =
             Printer::new(&services_config).expect("Failed to create printer");
 
+        let qdrant_service =
+            EmbeddingService::new(services_config.embedding_service)
+                .await
+                .expect("Failed to create embedding service");
+
         EventSubscriber {
             config: event_queue_config,
             receiver: Arc::new(Mutex::new(rx)),
-            handler: Arc::new(SubscriberHandler { printer, mailer }),
+            handler: Arc::new(SubscriberHandler {
+                printer,
+                mailer,
+                embedding_service: qdrant_service,
+            }),
         }
     }
 }
