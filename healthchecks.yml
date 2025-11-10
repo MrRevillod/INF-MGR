@@ -1,0 +1,29 @@
+x-healthcheck-postgres: &healthcheck-postgres
+  test: ["CMD-SHELL", "sh -c 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB_NAME}'"]
+  interval: 5s
+  timeout: 5s
+  retries: 5
+  start_period: 10s
+
+x-healthcheck-redis: &healthcheck-redis
+  test: ["CMD", "redis-cli", "ping"]
+  interval: 5s
+  timeout: 3s
+  retries: 5
+
+x-healthcheck-qdrant: &healthcheck-qdrant
+  test: ["CMD-SHELL", "timeout 1 bash -c '</dev/tcp/localhost/6333' || exit 1"]
+  interval: 10s
+  timeout: 5s
+  retries: 3
+  start_period: 10s
+
+services:
+  inf_mgr_postgres:
+    healthcheck: *healthcheck-postgres
+    
+  inf_mgr_redis:
+    healthcheck: *healthcheck-redis
+    
+  inf_mgr_qdrant:
+    healthcheck: *healthcheck-qdrant

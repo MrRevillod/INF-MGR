@@ -1,7 +1,10 @@
 PROJECT_NAME := "INF_MGR"
 
 run DOCKERARGS="":
-	docker compose up {{DOCKERARGS}}
+	docker compose -f docker-compose.yml -f healthchecks.yml up {{DOCKERARGS}}
+
+db:
+	pgcli postgres://user:password@localhost:5433/inf_mgr_db
 
 lint:
 	cargo clippy --all-features -- -D warnings && \
@@ -18,6 +21,9 @@ fmt-check:
 check:
 	cargo check --all-features
 	cd apps/client && npm run check && cd ../..
+
+nurse:
+	cargo clippy --all-features -- -D warnings -W clippy::pedantic -W clippy::nursery
 
 db-seed:
 	docker exec inf_mgr_server_dev cargo run -p server --bin seeder --features seeder

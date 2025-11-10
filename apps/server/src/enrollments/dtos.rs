@@ -116,7 +116,6 @@ pub struct EnrollmentResponse {
     pub practice_id: Option<String>,
 
     pub course: Course,
-
     pub student: User,
     pub practice: Option<Practice>,
 }

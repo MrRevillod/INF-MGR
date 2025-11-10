@@ -1,6 +1,6 @@
 pub mod errors;
 pub use errors::*;
-pub mod event_handler;
+pub mod event_queue;
 pub mod http;
 pub mod macros;
 

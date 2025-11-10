@@ -10,7 +10,7 @@ use server::{
     logger::LoggerLayer,
     meetings::MeetingsModule,
     practices::PracticesModule,
-    shared::{SharedModule, event_handler::*},
+    shared::{SharedModule, event_queue::*},
     users::UsersModule,
 };
 
@@ -28,7 +28,8 @@ async fn main() {
     let event_subscriber = EventSubscriber::builder()
         .with_receiver(rx)
         .with_config(app.get_config().clone())
-        .build();
+        .build()
+        .await;
 
     event_subscriber.run();
 

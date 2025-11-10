@@ -1,13 +1,13 @@
 mod dtos;
 mod entity;
 mod repository;
-mod service;
+mod services;
 
 pub use crate::practice_filter;
 pub use dtos::{CreatePracticeDto, EvaluatePracticeDto, UpdatePracticeDto};
 pub use entity::{Practice, PracticeStatus};
 pub use repository::{PracticeFilter, PracticeRepository};
-pub use service::PracticeService;
+pub use services::{PracticeReportService, PracticeService};
 
 use sword::prelude::*;
 
@@ -19,5 +19,6 @@ impl Module for PracticesModule {
     fn register_components(container: &mut DependencyContainer) {
         container.register_component::<PracticeService>();
         container.register_component::<PracticeRepository>();
+        container.register_component::<PracticeReportService>();
     }
 }

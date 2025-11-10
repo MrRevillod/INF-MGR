@@ -9,7 +9,7 @@ use crate::{
     practices::*,
     shared::{
         AppResult, NotFoundError, ValidationError,
-        event_handler::{Event, EventQueue},
+        event_queue::{Event, EventQueue},
     },
     users::*,
 };
@@ -21,6 +21,7 @@ pub struct EnrollmentService {
     courses: Arc<CourseRepository>,
     practices: Arc<PracticeRepository>,
     event_queue: Arc<EventQueue>,
+    report_service: Arc<PracticeReportService>,
 }
 
 impl EnrollmentService {
@@ -144,13 +145,18 @@ impl EnrollmentService {
     pub async fn upload_final_report(
         &self,
         id: &Uuid,
-        doc_bytes: Vec<u8>,
+        files: (Vec<u8>, Vec<u8>),
     ) -> AppResult<()> {
+        let (doc_bytes, tex_project_zip_bytes) = files;
         let (enrollment, student, practice, _) = self.get_by_id(id).await?;
 
         let Some(practice) = practice else {
             return Err(ValidationError::NoPracticeAssociated)?;
         };
+
+        self.report_service
+            .save_zipped_project(&practice.id, tex_project_zip_bytes)
+            .await?;
 
         let course = self
             .courses

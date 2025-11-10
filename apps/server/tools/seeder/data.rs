@@ -240,34 +240,34 @@ pub fn administrators() -> Vec<User> {
     ]
 }
 
-pub fn evaluation_schemas() -> Vec<CourseEvaluation> {
-    vec![
-        CourseEvaluation {
-            id: Uuid::new_v4(),
-            name: "Informe de práctica".to_string(),
-            weight: 60,
-        },
-        CourseEvaluation {
-            id: Uuid::new_v4(),
-            name: "Nota del supervisor de práctica".to_string(),
-            weight: 40,
-        },
-    ]
-}
+// pub fn evaluation_schemas() -> Vec<CourseEvaluation> {
+//     vec![
+//         CourseEvaluation {
+//             id: Uuid::new_v4(),
+//             name: "Informe de práctica".to_string(),
+//             weight: 60,
+//         },
+//         CourseEvaluation {
+//             id: Uuid::new_v4(),
+//             name: "Nota del supervisor de práctica".to_string(),
+//             weight: 40,
+//         },
+//     ]
+// }
 
-pub fn info_1164(teachers: &[User]) -> Course {
-    let evaluation_schema = evaluation_schemas();
+// pub fn info_1164(teachers: &[User]) -> Course {
+//     let evaluation_schema = evaluation_schemas();
 
-    Course {
-        id: Uuid::new_v4(),
-        name: "Práctica Inicial".to_string(),
-        code: "INFO1164".to_string(),
-        year: 2025,
-        teacher_id: teachers.first().unwrap().id,
-        evaluations: evaluation_schema,
-        course_status: CourseStatus::Active,
-    }
-}
+//     Course {
+//         id: Uuid::new_v4(),
+//         name: "Práctica Inicial".to_string(),
+//         code: "INFO1164".to_string(),
+//         year: 2025,
+//         teacher_id: teachers.first().unwrap().id,
+//         evaluations: evaluation_schema,
+//         course_status: CourseStatus::Active,
+//     }
+// }
 
 // Nuevos cursos adicionales
 pub fn additional_courses(teachers: &[User]) -> Vec<Course> {

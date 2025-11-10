@@ -3,7 +3,7 @@ mod dtos;
 mod service;
 
 pub use controllers::ImportsController;
-pub use dtos::ImportedStudent;
+pub use dtos::*;
 pub use service::ImportService;
 
 use sword::prelude::*;

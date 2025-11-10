@@ -62,6 +62,9 @@ pub enum ValidationError {
 
     #[error("Invalid teacher ID: {teacher_id}")]
     InvalidTeacherId { teacher_id: Uuid },
+
+    #[error("Invalid Tex structure in uploaded final report: {message}")]
+    InvalidTexStructure { message: String },
 }
 
 impl ValidationError {
@@ -123,5 +126,11 @@ impl ValidationError {
 
     pub fn invalid_datetime(value: impl Into<String>) -> Self {
         Self::InvalidDatetime(value.into())
+    }
+
+    pub fn invalid_tex_structure(message: impl Into<String>) -> Self {
+        Self::InvalidTexStructure {
+            message: message.into(),
+        }
     }
 }

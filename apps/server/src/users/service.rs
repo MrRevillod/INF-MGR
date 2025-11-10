@@ -6,7 +6,7 @@ use crate::{
     shared::{
         DEFAULT_PAGE_SIZE, Pagination,
         errors::{AppError, NotFoundError, ValidationError},
-        event_handler::{Event, EventQueue},
+        event_queue::{Event, EventQueue},
     },
     users::*,
 };

@@ -52,3 +52,12 @@ macro_rules! template_ctx {
         }
     };
 }
+
+#[macro_export]
+macro_rules! send_emails {
+    ($mailer:expr, $($mailto:expr),+) => {{
+        if let Err(e) = $mailer.send_many(vec![$($mailto),+]).await {
+            eprintln!("Failed to send emails: {}", e);
+        }
+    }};
+}

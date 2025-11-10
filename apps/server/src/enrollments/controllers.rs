@@ -12,7 +12,9 @@ use crate::{
     courses::CourseService,
     enrollments::EnrollmentService,
     practices::*,
-    shared::{FileValidationConfig, FileValidationService, http::ContextExt},
+    shared::{
+        FileValidationConfig, FileValidationService, RequestFiles, http::ContextExt,
+    },
     users::Role,
 };
 
@@ -145,19 +147,28 @@ impl EnrollmentsController {
         Ok(HttpResponse::Ok())
     }
 
-    #[post("/{id}/practice-report/upload")]
-    #[uses(Authentication)]
-    #[uses(MinimumRequiredRole, config = Role::Student)]
-    #[uses(FileValidationService, config = FileValidationConfig { kind: "zip", name: "report" })]
+    #[post("/{id}/practice/{practice_id}/report/upload")]
+    #[uses(FileValidationService, config = FileValidationConfig { kind: "zip", name: "project" })]
+    #[uses(FileValidationService, config = FileValidationConfig { kind: "pdf", name: "document" })]
     async fn upload_practice_report(&self, req: Request) -> HttpResult {
         let enrollment_id = req.param::<Uuid>("id")?;
 
-        let report = req.extensions.get::<Bytes>().ok_or(
-            HttpResponse::BadRequest().message("Missing required document"),
+        let files = req.extensions.get::<RequestFiles>().ok_or(
+            HttpResponse::BadRequest().message("Missing required report files"),
         )?;
 
+        let report = files.get("document").ok_or(
+            HttpResponse::BadRequest().message("Missing required PDF document"),
+        )?;
+
+        let zipped_project = files.get("project").ok_or(
+            HttpResponse::BadRequest().message("Missing required ZIP project"),
+        )?;
+
+        let files_vec = (report.to_vec(), zipped_project.to_vec());
+
         self.enrollments
-            .upload_final_report(&enrollment_id, report.to_vec())
+            .upload_final_report(&enrollment_id, files_vec)
             .await?;
 
         Ok(HttpResponse::Ok())
