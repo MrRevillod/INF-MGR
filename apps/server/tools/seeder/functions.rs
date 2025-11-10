@@ -1,4 +1,4 @@
-use server::{courses::Course, practices::Practice, users::User};
+use server::{courses::Course, users::User};
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
@@ -43,47 +43,21 @@ pub async fn create_course(pool: &Pool<Postgres>, course: Course) {
         .unwrap();
 }
 
-pub async fn create_practices(pool: &Pool<Postgres>, practices: Vec<Practice>) {
-    let query = r"
-        INSERT INTO practices (id, enterprise_name, location, description, supervisor_name, supervisor_email, supervisor_phone, start_date, end_date, practice_status)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::practice_status)
-    ";
-
-    for practice in practices {
-        sqlx::query(query)
-            .bind(practice.id)
-            .bind(&practice.enterprise_name)
-            .bind(&practice.location)
-            .bind(&practice.description)
-            .bind(&practice.supervisor_name)
-            .bind(&practice.supervisor_email)
-            .bind(&practice.supervisor_phone)
-            .bind(practice.start_date)
-            .bind(practice.end_date)
-            .bind(practice.practice_status)
-            .execute(pool)
-            .await
-            .unwrap();
-    }
-}
-
 pub async fn create_enrollments(
     pool: &Pool<Postgres>,
     students: Vec<User>,
     course: Course,
-    practices: Vec<Practice>,
 ) {
     let query = r"
         INSERT INTO enrollments (id, student_id, course_id, practice_id, student_scores)
-        VALUES ($1, $2, $3, $4, ARRAY[]::student_score[])
+        VALUES ($1, $2, $3, NULL, ARRAY[]::student_score[])
     ";
 
-    for (student, practice) in students.into_iter().zip(practices) {
+    for student in students {
         sqlx::query(query)
             .bind(Uuid::new_v4())
             .bind(student.id)
             .bind(course.id)
-            .bind(practice.id)
             .execute(pool)
             .await
             .unwrap();

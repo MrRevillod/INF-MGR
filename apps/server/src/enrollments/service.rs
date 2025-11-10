@@ -41,10 +41,10 @@ impl EnrollmentService {
         };
 
         let course_filter = course_filter! {
-            ids: enrollments.iter().map(|e| e.course_id).collect::<Vec<Uuid>>()
+            ids: enrollments.iter().map(|e| e.course_id).collect::<Vec<_>>()
         };
 
-        let courses = self.courses.find_many(course_filter).await?;
+        let course = self.courses.find_many(course_filter).await?;
         let students = self.users.find_many(student_filter).await?;
         let practices = self.practices.find_many(practice_filter).await?;
 
@@ -61,7 +61,7 @@ impl EnrollmentService {
                 None
             };
 
-            let course = courses
+            let course = course
                 .iter()
                 .find(|c| c.id == enrollment.course_id)
                 .cloned()

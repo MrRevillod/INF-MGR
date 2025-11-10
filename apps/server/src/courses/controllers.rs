@@ -36,6 +36,18 @@ impl CoursesController {
         Ok(HttpResponse::Ok().data(courses))
     }
 
+    #[get("/{id}")]
+    #[uses(MinimumRequiredRole, config = Role::Student)]
+    #[doc = "Obtener un curso por su ID"]
+    async fn get_course(&self, req: Request) -> HttpResult {
+        let course_id = req.param::<Uuid>("id")?;
+
+        let (course, teacher) = self.courses.get_by_id(&course_id).await?;
+        let response = CourseResponse::from((course, teacher));
+
+        Ok(HttpResponse::Ok().data(response))
+    }
+
     #[get("/teacher/{teacher_id}")]
     #[uses(MinimumRequiredRole, config = Role::Teacher)]
     #[doc = "Obtener todos los cursos de un profesor específico\n"]
@@ -58,6 +70,31 @@ impl CoursesController {
             .collect::<Vec<_>>();
 
         Ok(HttpResponse::Ok().data(courses))
+    }
+
+    #[get("/student/{student_id}")]
+    #[uses(MinimumRequiredRole, config = Role::Teacher)]
+    #[doc = "Obtener cursos de un estudiante con toda la información\n"]
+    async fn get_student_courses(&self, req: Request) -> HttpResult {
+        let student_id = req.param::<Uuid>("student_id")?;
+        let owner_validation = req.get_ownership_validation()?;
+
+        if owner_validation.required {
+            self.courses
+                .check_is_teacher_course(&student_id, &owner_validation.user_id)
+                .await?;
+        }
+
+        // get_all() ya devuelve la información completa
+        let enrollments = self
+            .enrollments
+            .get_all(enrollment_filter! { student_id })
+            .await?
+            .into_iter()
+            .map(EnrollmentResponse::from)
+            .collect::<Vec<_>>();
+
+        Ok(HttpResponse::Ok().data(enrollments))
     }
 
     #[get("/{id}/students")]

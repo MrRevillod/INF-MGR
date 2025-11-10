@@ -23,38 +23,46 @@ export const EvaluationSchema = v.object({
 export type Evaluation = v.InferInput<typeof EvaluationSchema>
 
 export const CourseStatusSchema = v.union([
-	v.literal("inprogress"),
-	v.literal("ended"),
+	v.literal("active"),
+	v.literal("completed"),
 ])
 
 export type CourseStatus = v.InferInput<typeof CourseStatusSchema>
 
-// -------------------------------------
-
-export interface Inscription {
-	id: string
-	userId: string
-	asignatureId: string
-	practiceId: string | null
-	studentScores: StudentScore[]
-	course: Course
-}
-
 export const StudentScoreSchema = v.object({
-	id: v.string(),
+	evaluationId: v.string(),
 	score: v.number(),
 })
 
 export type StudentScore = v.InferInput<typeof StudentScoreSchema>
 
-// -------------------------------------------------
+export const CreateCourseSchema = v.object({
+	code: v.pipe(v.string(), v.minLength(1, "El código es requerido")),
+	name: v.pipe(v.string(), v.minLength(1, "El nombre es requerido")),
+	teacherId: v.pipe(v.string(), v.minLength(1, "El profesor es requerido")),
+	year: v.pipe(v.number(), v.minValue(2000, "Año inválido")),
+	evaluations: v.pipe(
+		v.array(EvaluationSchema),
+		v.minLength(1, "Debe haber al menos una evaluación")
+	),
+})
 
-export interface Report {
-	id: string
-	inscriptionId: string
-	userId: string
-	title: string
-	content: string
-	createdAt: string
-	updatedAt: string
-}
+// Schema para actualizar curso
+export const UpdateCourseSchema = CreateCourseSchema
+
+// Schema para inscribir estudiante
+export const EnrollStudentSchema = v.object({
+	studentId: v.pipe(v.string(), v.minLength(1, "Debe seleccionar un estudiante")),
+	courseId: v.string(),
+})
+
+// Schema para actualizar inscripción (scores)
+export const UpdateEnrollmentSchema = v.object({
+	studentScores: v.optional(
+		v.pipe(
+			v.array(StudentScoreSchema),
+			v.minLength(1, "Debe haber al menos un score")
+		)
+	),
+	practiceId: v.optional(v.string()),
+})

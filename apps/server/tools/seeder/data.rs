@@ -1,6 +1,5 @@
 use server::{
     courses::{Course, CourseEvaluation, CourseStatus},
-    practices::{Practice, PracticeStatus},
     users::{Role, User},
 };
 
@@ -9,7 +8,7 @@ use uuid::Uuid;
 
 pub fn students() -> Vec<User> {
     vec![
-        // Usuario original con variable de entorno para testing
+        // Usuario de prueba desde variable de entorno
         User {
             id: Uuid::new_v4(),
             rut: "56315776-3".to_string(),
@@ -21,11 +20,12 @@ pub fn students() -> Vec<User> {
             deleted_at: None,
             google_id: None,
         },
+        // Estudiantes adicionales para pruebas
         User {
             id: Uuid::new_v4(),
-            rut: "20123456-7".to_string(),
-            name: "María José González".to_string(),
-            email: "maria.gonzalez@estudiante.uach.cl".to_string(),
+            rut: "16111111-1".to_string(),
+            name: "Juan Pérez".to_string(),
+            email: "juan.perez@estudiante.cl".to_string(),
             role: Role::Student,
             created_at: Utc::now(),
             deleted_at: None,
@@ -33,9 +33,9 @@ pub fn students() -> Vec<User> {
         },
         User {
             id: Uuid::new_v4(),
-            rut: "19876543-2".to_string(),
-            name: "Carlos Eduardo Ramírez".to_string(),
-            email: "carlos.ramirez@estudiante.uach.cl".to_string(),
+            rut: "17222222-2".to_string(),
+            name: "María Silva".to_string(),
+            email: "maria.silva@estudiante.cl".to_string(),
             role: Role::Student,
             created_at: Utc::now(),
             deleted_at: None,
@@ -43,9 +43,9 @@ pub fn students() -> Vec<User> {
         },
         User {
             id: Uuid::new_v4(),
-            rut: "21345678-9".to_string(),
-            name: "Ana Sofía Mendoza".to_string(),
-            email: "ana.mendoza@estudiante.uach.cl".to_string(),
+            rut: "18333333-3".to_string(),
+            name: "Pedro González".to_string(),
+            email: "pedro.gonzalez@estudiante.cl".to_string(),
             role: Role::Student,
             created_at: Utc::now(),
             deleted_at: None,
@@ -53,9 +53,9 @@ pub fn students() -> Vec<User> {
         },
         User {
             id: Uuid::new_v4(),
-            rut: "20567890-1".to_string(),
-            name: "Diego Alejandro Torres".to_string(),
-            email: "diego.torres@estudiante.uach.cl".to_string(),
+            rut: "19444444-4".to_string(),
+            name: "Lucía Morales".to_string(),
+            email: "lucia.morales@estudiante.cl".to_string(),
             role: Role::Student,
             created_at: Utc::now(),
             deleted_at: None,
@@ -63,9 +63,9 @@ pub fn students() -> Vec<User> {
         },
         User {
             id: Uuid::new_v4(),
-            rut: "19234567-8".to_string(),
-            name: "Valentina Isabel Morales".to_string(),
-            email: "valentina.morales@estudiante.uach.cl".to_string(),
+            rut: "20555555-5".to_string(),
+            name: "Diego Castro".to_string(),
+            email: "diego.castro@estudiante.cl".to_string(),
             role: Role::Student,
             created_at: Utc::now(),
             deleted_at: None,
@@ -73,9 +73,9 @@ pub fn students() -> Vec<User> {
         },
         User {
             id: Uuid::new_v4(),
-            rut: "21678901-3".to_string(),
-            name: "Sebastián Andrés López".to_string(),
-            email: "sebastian.lopez@estudiante.uach.cl".to_string(),
+            rut: "21666666-6".to_string(),
+            name: "Sofía Ramírez".to_string(),
+            email: "sofia.ramirez@estudiante.cl".to_string(),
             role: Role::Student,
             created_at: Utc::now(),
             deleted_at: None,
@@ -83,9 +83,9 @@ pub fn students() -> Vec<User> {
         },
         User {
             id: Uuid::new_v4(),
-            rut: "20890123-4".to_string(),
-            name: "Francisca Nicole Rivera".to_string(),
-            email: "francisca.rivera@estudiante.uach.cl".to_string(),
+            rut: "22777777-7".to_string(),
+            name: "Andrés Torres".to_string(),
+            email: "andres.torres@estudiante.cl".to_string(),
             role: Role::Student,
             created_at: Utc::now(),
             deleted_at: None,
@@ -93,9 +93,9 @@ pub fn students() -> Vec<User> {
         },
         User {
             id: Uuid::new_v4(),
-            rut: "19456789-0".to_string(),
-            name: "Matías Ignacio Hernández".to_string(),
-            email: "matias.hernandez@estudiante.uach.cl".to_string(),
+            rut: "23888888-8".to_string(),
+            name: "Camila Vargas".to_string(),
+            email: "camila.vargas@estudiante.cl".to_string(),
             role: Role::Student,
             created_at: Utc::now(),
             deleted_at: None,
@@ -103,9 +103,9 @@ pub fn students() -> Vec<User> {
         },
         User {
             id: Uuid::new_v4(),
-            rut: "21012345-6".to_string(),
-            name: "Camila Fernanda Silva".to_string(),
-            email: "camila.silva@estudiante.uach.cl".to_string(),
+            rut: "24999999-9".to_string(),
+            name: "Felipe Muñoz".to_string(),
+            email: "felipe.munoz@estudiante.cl".to_string(),
             role: Role::Student,
             created_at: Utc::now(),
             deleted_at: None,
@@ -113,9 +113,29 @@ pub fn students() -> Vec<User> {
         },
         User {
             id: Uuid::new_v4(),
-            rut: "20234567-K".to_string(),
-            name: "Benjamín Esteban Castillo".to_string(),
-            email: "benjamin.castillo@estudiante.uach.cl".to_string(),
+            rut: "25000000-0".to_string(),
+            name: "Valentina Rojas".to_string(),
+            email: "valentina.rojas@estudiante.cl".to_string(),
+            role: Role::Student,
+            created_at: Utc::now(),
+            deleted_at: None,
+            google_id: None,
+        },
+        User {
+            id: Uuid::new_v4(),
+            rut: "26111111-1".to_string(),
+            name: "Nicolás Herrera".to_string(),
+            email: "nicolas.herrera@estudiante.cl".to_string(),
+            role: Role::Student,
+            created_at: Utc::now(),
+            deleted_at: None,
+            google_id: None,
+        },
+        User {
+            id: Uuid::new_v4(),
+            rut: "27222222-2".to_string(),
+            name: "Francisca Ponce".to_string(),
+            email: "francisca.ponce@estudiante.cl".to_string(),
             role: Role::Student,
             created_at: Utc::now(),
             deleted_at: None,
@@ -125,166 +145,210 @@ pub fn students() -> Vec<User> {
 }
 
 pub fn teachers() -> Vec<User> {
-    vec![User {
-        id: Uuid::new_v4(),
-        rut: "21940032-2".to_string(),
-        name: "Teacher USER".to_string(),
-        email: std::env::var("TEST_TEACHER_EMAIL")
-            .expect("TEST_TEACHER_EMAIL must be set in .env"),
-        role: Role::Teacher,
-        created_at: Utc::now(),
-        deleted_at: None,
-        google_id: None,
-    }]
-}
-
-pub fn administrators() -> Vec<User> {
-    vec![User {
-        id: Uuid::new_v4(),
-        rut: "11111111-1".to_string(),
-        name: "Admin USER".to_string(),
-        email: std::env::var("TEST_ADMIN_EMAIL")
-            .expect("TEST_ADMIN_EMAIL must be set in .env"),
-        role: Role::Administrator,
-        created_at: Utc::now(),
-        deleted_at: None,
-        google_id: None,
-    }]
-}
-
-pub fn evaluation_schemas() -> Vec<CourseEvaluation> {
     vec![
-        CourseEvaluation {
+        // Usuario de prueba desde variable de entorno
+        User {
             id: Uuid::new_v4(),
-            name: "Informe de práctica".to_string(),
-            weight: 60,
+            rut: "21940032-2".to_string(),
+            name: "Teacher USER".to_string(),
+            email: std::env::var("TEST_TEACHER_EMAIL")
+                .expect("TEST_TEACHER_EMAIL must be set in .env"),
+            role: Role::Teacher,
+            created_at: Utc::now(),
+            deleted_at: None,
+            google_id: None,
         },
-        CourseEvaluation {
+        // Profesores adicionales para pruebas
+        User {
             id: Uuid::new_v4(),
-            name: "Nota del supervisor de práctica".to_string(),
-            weight: 40,
+            rut: "11222222-1".to_string(),
+            name: "Dr. Carlos García".to_string(),
+            email: "prof.garcia@universidad.cl".to_string(),
+            role: Role::Teacher,
+            created_at: Utc::now(),
+            deleted_at: None,
+            google_id: None,
+        },
+        User {
+            id: Uuid::new_v4(),
+            rut: "11222222-2".to_string(),
+            name: "Dra. Ana López".to_string(),
+            email: "prof.lopez@universidad.cl".to_string(),
+            role: Role::Teacher,
+            created_at: Utc::now(),
+            deleted_at: None,
+            google_id: None,
+        },
+        User {
+            id: Uuid::new_v4(),
+            rut: "12333333-3".to_string(),
+            name: "Dr. Pedro Martínez".to_string(),
+            email: "prof.martinez@universidad.cl".to_string(),
+            role: Role::Teacher,
+            created_at: Utc::now(),
+            deleted_at: None,
+            google_id: None,
+        },
+        User {
+            id: Uuid::new_v4(),
+            rut: "13444444-4".to_string(),
+            name: "Dra. Laura Rodríguez".to_string(),
+            email: "prof.rodriguez@universidad.cl".to_string(),
+            role: Role::Teacher,
+            created_at: Utc::now(),
+            deleted_at: None,
+            google_id: None,
         },
     ]
 }
 
-pub fn info_1164(teachers: &[User]) -> Course {
-    let evaluation_schema = evaluation_schemas();
-
-    Course {
-        id: Uuid::new_v4(),
-        name: "Práctica Inicial".to_string(),
-        code: "INFO1164".to_string(),
-        year: 2025,
-        teacher_id: teachers.first().unwrap().id,
-        evaluations: evaluation_schema,
-        course_status: CourseStatus::Active,
-    }
+pub fn administrators() -> Vec<User> {
+    vec![
+        // Usuario de prueba desde variable de entorno
+        User {
+            id: Uuid::new_v4(),
+            rut: "11111111-1".to_string(),
+            name: "Admin USER".to_string(),
+            email: std::env::var("TEST_ADMIN_EMAIL")
+                .expect("TEST_ADMIN_EMAIL must be set in .env"),
+            role: Role::Administrator,
+            created_at: Utc::now(),
+            deleted_at: None,
+            google_id: None,
+        },
+        // Administradores adicionales para pruebas
+        User {
+            id: Uuid::new_v4(),
+            rut: "12345678-9".to_string(),
+            name: "Admin Principal".to_string(),
+            email: "admin@universidad.cl".to_string(),
+            role: Role::Administrator,
+            created_at: Utc::now(),
+            deleted_at: None,
+            google_id: None,
+        },
+        User {
+            id: Uuid::new_v4(),
+            rut: "12345678-9".to_string(),
+            name: "María González".to_string(),
+            email: "admin2@universidad.cl".to_string(),
+            role: Role::Administrator,
+            created_at: Utc::now(),
+            deleted_at: None,
+            google_id: None,
+        },
+    ]
 }
 
-pub fn practices(count: usize) -> Vec<Practice> {
-    let practice_data = vec![
-        (
-            "Banco de Chile",
-            "Santiago, Región Metropolitana",
-            "Desarrollo de aplicaciones móviles bancarias utilizando tecnologías modernas como React Native y APIs REST para mejorar la experiencia del usuario en servicios financieros digitales.",
-            "Patricia Sánchez",
-            "patricia.sanchez@bancochile.cl",
-            "+56 2 2653 1000",
-        ),
-        (
-            "Falabella.com",
-            "Las Condes, Santiago",
-            "Implementación de soluciones e-commerce y desarrollo de microservicios para la plataforma de ventas online, trabajando con tecnologías cloud y metodologías ágiles.",
-            "Roberto Martínez",
-            "roberto.martinez@falabella.com",
-            "+56 2 2379 9000",
-        ),
-        (
-            "SONDA S.A.",
-            "Providencia, Santiago",
-            "Desarrollo de sistemas de gestión empresarial (ERP) y consultoría en transformación digital para clientes del sector público y privado.",
-            "Andrea Jiménez",
-            "andrea.jimenez@sonda.com",
-            "+56 2 2657 5000",
-        ),
-        (
-            "Everis Chile",
-            "Vitacura, Santiago",
-            "Desarrollo de aplicaciones web con Angular y Spring Boot, participación en proyectos de digitalización para empresas del sector financiero y retail.",
-            "Fernando Rojas",
-            "fernando.rojas@everis.com",
-            "+56 2 2424 3500",
-        ),
-        (
-            "Telefónica Chile",
-            "Las Condes, Santiago",
-            "Desarrollo de soluciones de telecomunicaciones y sistemas de gestión de redes, trabajando con tecnologías 5G y IoT para mejorar la conectividad nacional.",
-            "Claudia Vega",
-            "claudia.vega@telefonica.cl",
-            "+56 2 2691 9000",
-        ),
-        (
-            "Nisum Technologies",
-            "Providencia, Santiago",
-            "Desarrollo de software para clientes internacionales, especialización en arquitecturas de microservicios y desarrollo full-stack con tecnologías JavaScript modernas.",
-            "Miguel Contreras",
-            "miguel.contreras@nisum.com",
-            "+56 2 2233 4400",
-        ),
-        (
-            "Banco Santander Chile",
-            "Santiago Centro",
-            "Desarrollo de plataforma de banca digital y sistemas de análisis de datos para la toma de decisiones financieras, utilizando Python y tecnologías de Big Data.",
-            "Lorena Moreno",
-            "lorena.moreno@santander.cl",
-            "+56 2 2320 8000",
-        ),
-        (
-            "Walmart Chile",
-            "Quilicura, Santiago",
-            "Desarrollo de sistemas de gestión de inventario y logística, implementación de soluciones de automatización para cadena de suministro.",
-            "Carlos Herrera",
-            "carlos.herrera@walmart.cl",
-            "+56 2 2587 7000",
-        ),
-        (
-            "Cornershop by Uber",
-            "Las Condes, Santiago",
-            "Desarrollo de aplicaciones móviles para delivery y gestión de pedidos, trabajando con APIs de geolocalización y sistemas de notificaciones push.",
-            "Sofía Paredes",
-            "sofia.paredes@cornershopapp.com",
-            "+56 2 2897 4500",
-        ),
-        (
-            "Transbank S.A.",
-            "Las Condes, Santiago",
-            "Desarrollo de sistemas de pagos electrónicos y procesamiento de transacciones financieras, implementación de protocolos de seguridad y encriptación.",
-            "Gonzalo Fuentes",
-            "gonzalo.fuentes@transbank.cl",
-            "+56 2 2661 8000",
-        ),
-    ];
+// pub fn evaluation_schemas() -> Vec<CourseEvaluation> {
+//     vec![
+//         CourseEvaluation {
+//             id: Uuid::new_v4(),
+//             name: "Informe de práctica".to_string(),
+//             weight: 60,
+//         },
+//         CourseEvaluation {
+//             id: Uuid::new_v4(),
+//             name: "Nota del supervisor de práctica".to_string(),
+//             weight: 40,
+//         },
+//     ]
+// }
 
-    (0..count)
-        .map(|i| {
-            let data = &practice_data[i % practice_data.len()];
-            let start_days = (i as i64) * 30 + 30; // Prácticas escalonadas cada 30 días
-            let duration_days = 180; // 6 meses de duración
+// pub fn info_1164(teachers: &[User]) -> Course {
+//     let evaluation_schema = evaluation_schemas();
 
-            Practice {
+//     Course {
+//         id: Uuid::new_v4(),
+//         name: "Práctica Inicial".to_string(),
+//         code: "INFO1164".to_string(),
+//         year: 2025,
+//         teacher_id: teachers.first().unwrap().id,
+//         evaluations: evaluation_schema,
+//         course_status: CourseStatus::Active,
+//     }
+// }
+
+// Nuevos cursos adicionales
+pub fn additional_courses(teachers: &[User]) -> Vec<Course> {
+    vec![
+        Course {
+            id: Uuid::new_v4(),
+            name: "Introducción a la Programación".to_string(),
+            code: "INF-101".to_string(),
+            year: 2024,
+            teacher_id: teachers.get(0).unwrap().id,
+            evaluations: vec![
+                CourseEvaluation {
+                    id: Uuid::new_v4(),
+                    name: "Prueba 1".to_string(),
+                    weight: 30,
+                },
+                CourseEvaluation {
+                    id: Uuid::new_v4(),
+                    name: "Prueba 2".to_string(),
+                    weight: 30,
+                },
+                CourseEvaluation {
+                    id: Uuid::new_v4(),
+                    name: "Proyecto Final".to_string(),
+                    weight: 40,
+                },
+            ],
+            course_status: CourseStatus::Active,
+        },
+        Course {
+            id: Uuid::new_v4(),
+            name: "Estructuras de Datos".to_string(),
+            code: "INF-201".to_string(),
+            year: 2024,
+            teacher_id: teachers.get(1).unwrap().id,
+            evaluations: vec![
+                CourseEvaluation {
+                    id: Uuid::new_v4(),
+                    name: "Tareas".to_string(),
+                    weight: 40,
+                },
+                CourseEvaluation {
+                    id: Uuid::new_v4(),
+                    name: "Examen Final".to_string(),
+                    weight: 60,
+                },
+            ],
+            course_status: CourseStatus::Active,
+        },
+        Course {
+            id: Uuid::new_v4(),
+            name: "Bases de Datos".to_string(),
+            code: "INF-202".to_string(),
+            year: 2024,
+            teacher_id: teachers.get(2).unwrap().id,
+            evaluations: vec![
+                CourseEvaluation {
+                    id: Uuid::new_v4(),
+                    name: "Proyecto".to_string(),
+                    weight: 50,
+                },
+                CourseEvaluation {
+                    id: Uuid::new_v4(),
+                    name: "Evaluaciones".to_string(),
+                    weight: 50,
+                },
+            ],
+            course_status: CourseStatus::Active,
+        },
+        Course {
+            id: Uuid::new_v4(),
+            name: "Programación Orientada a Objetos".to_string(),
+            code: "INF-203".to_string(),
+            year: 2023,
+            teacher_id: teachers.get(3).unwrap().id,
+            evaluations: vec![CourseEvaluation {
                 id: Uuid::new_v4(),
-                enterprise_name: data.0.to_string(),
-                location: data.1.to_string(),
-                description: data.2.to_string(),
-                supervisor_name: data.3.to_string(),
-                supervisor_email: data.4.to_string(),
-                supervisor_phone: data.5.to_string(),
-                start_date: Some(Utc::now() + chrono::Duration::days(start_days)),
-                end_date: Some(
-                    Utc::now() + chrono::Duration::days(start_days + duration_days),
-                ),
-                practice_status: PracticeStatus::Pending,
-            }
-        })
-        .collect()
+                name: "Examen".to_string(),
+                weight: 100,
+            }],
+            course_status: CourseStatus::Completed,
+        },
+    ]
 }
