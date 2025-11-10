@@ -28,7 +28,8 @@ async fn main() {
     let event_subscriber = EventSubscriber::builder()
         .with_receiver(rx)
         .with_config(app.get_config().clone())
-        .build();
+        .build()
+        .await;
 
     event_subscriber.run();
 

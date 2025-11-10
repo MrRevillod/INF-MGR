@@ -93,6 +93,9 @@ impl EventSubscriber {
             Event::MeetingRequestCreated(event) => {
                 handler.meeting_request_created(event).await?;
             }
+            Event::InitializePlagiarismCheck(event) => {
+                handler.initialize_plagiarism_check(event).await?;
+            }
         }
 
         Ok(())

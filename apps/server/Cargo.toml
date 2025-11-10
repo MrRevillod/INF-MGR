@@ -24,7 +24,8 @@ sword = { git = "https://github.com/MrRevillod/sword.git", branch = "main", feat
     "validator",
 ] }
 
-services = { path = "../../services" }
+services = { path = "../../packages/services" }
+tex_parser = { path = "../../packages/tex_parser" }
 
 filterstruct = "0.1.0"
 chrono = { version = "0.4.41", features = ["serde"] }

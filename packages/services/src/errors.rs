@@ -3,6 +3,7 @@ use lettre::{
     transport::smtp::Error as SmtpError,
 };
 
+use qdrant_client::QdrantError;
 use tera::Error as TeraError;
 use thiserror::Error;
 
@@ -34,6 +35,12 @@ pub enum ServiceError {
     FileManager {
         #[from]
         source: FileManagerError,
+    },
+
+    #[error("Embedding service error: {source}")]
+    EmbeddingService {
+        #[from]
+        source: EmbeddingServiceError,
     },
 }
 
@@ -71,4 +78,13 @@ pub enum PrinterError {
 
     #[error("PDF generation error: {0}")]
     PdfGenerationError(String),
+}
+
+#[derive(Debug, Error)]
+pub enum EmbeddingServiceError {
+    #[error("Qdrant client error: {source}")]
+    QdrantClientError {
+        #[from]
+        source: QdrantError,
+    },
 }
