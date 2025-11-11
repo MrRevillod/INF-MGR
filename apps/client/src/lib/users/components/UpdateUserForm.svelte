@@ -52,17 +52,6 @@
 <div class="flex w-full flex-col gap-6">
 	<!-- Campos de solo lectura -->
 	<div>
-		<label for="user-id" class="block text-sm font-medium text-gray-700">ID</label>
-		<input
-			id="user-id"
-			type="text"
-			value={user?.id ?? ""}
-			disabled
-			class="mt-1 block w-full rounded-md border border-gray-300 bg-gray-100 px-3 py-2 text-gray-500"
-		/>
-	</div>
-
-	<div>
 		<label for="user-rut" class="block text-sm font-medium text-gray-700">RUT</label>
 		<input
 			id="user-rut"

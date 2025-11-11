@@ -37,7 +37,14 @@ export const StudentScoreSchema = v.object({
 export type StudentScore = v.InferInput<typeof StudentScoreSchema>
 
 export const CreateCourseSchema = v.object({
-	code: v.pipe(v.string(), v.minLength(1, "El código es requerido")),
+	code: v.pipe(
+		v.string(),
+		v.minLength(1, "El código es requerido"),
+		v.regex(
+			/^INFO\d{4}$/,
+			"El código debe tener el formato INFO seguido de 4 dígitos (ej: INFO1164)"
+		)
+	),
 	name: v.pipe(v.string(), v.minLength(1, "El nombre es requerido")),
 	teacherId: v.pipe(v.string(), v.minLength(1, "El profesor es requerido")),
 	year: v.pipe(v.number(), v.minValue(2000, "Año inválido")),
