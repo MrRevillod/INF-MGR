@@ -28,7 +28,10 @@ pub struct CreateUserDto {
     #[validate(email(message = "El email debe ser válido."))]
     pub email: String,
 
-    #[validate(custom(function = "role_validator"))]
+    #[validate(custom(
+        function = "role_validator",
+        message = "El rol es inválido."
+    ))]
     pub role: String,
 }
 
@@ -93,6 +96,9 @@ pub struct GetUsersQueryDto {
 
     #[validate(range(min = 1, message = "La página debe ser mayor o igual a 1."))]
     pub page: Option<usize>,
+
+    #[validate(custom(function = "role_validator",))]
+    pub role: Option<String>,
 }
 
 impl From<GetUsersQueryDto> for UserFilter {
@@ -100,6 +106,7 @@ impl From<GetUsersQueryDto> for UserFilter {
         Self {
             search: dto.search,
             page: dto.page.unwrap_or(1) as u64,
+            role: dto.role.and_then(|r| Role::from_str(&r).ok()),
             ..Self::default()
         }
     }

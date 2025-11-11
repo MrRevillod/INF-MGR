@@ -5,7 +5,7 @@ use uuid::Uuid;
 use crate::{
     shared::{AppResult, DEFAULT_PAGE_SIZE, PostgresDatabase},
     types::*,
-    users::User,
+    users::{Role, User},
 };
 
 #[injectable]
@@ -22,6 +22,7 @@ pub struct UserFilter {
     pub email: Option<String>,
     pub ids: Option<Vec<Uuid>>,
     pub ruts: Option<Vec<String>>,
+    pub role: Option<Role>,
 }
 
 impl UserRepository {
@@ -42,6 +43,11 @@ impl UserRepository {
             query.push(" AND rut = ANY(");
             query.push_bind(ruts);
             query.push(")");
+        }
+
+        if let Some(role) = &filter.role {
+            query.push(" AND role = ");
+            query.push_bind(role);
         }
 
         if let Some(search) = filter.search {

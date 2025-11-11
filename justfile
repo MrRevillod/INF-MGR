@@ -26,7 +26,7 @@ nurse:
 	cargo clippy --all-features -- -D warnings -W clippy::pedantic -W clippy::nursery
 
 db-seed:
-	docker exec inf_mgr_server_dev cargo run -p server --bin seeder --features seeder
+	docker exec inf_mgr_server cargo run -p server --bin seeder --features seeder
 
 web-install package="":
 	cd apps/client && npm install {{package}} && cd ../..
