@@ -9,6 +9,8 @@
 	import DeleteCourseButton from "$lib/courses/components/DeleteCourseButton.svelte"
 	import DeleteEnrollmentButton from "$lib/courses/components/DeleteEnrollmentButton.svelte"
 	import UpdateEnrollmentButton from "$lib/courses/components/UpdateEnrollmentButton.svelte"
+	import ViewAuthorizationButton from "$lib/enrollments/components/ViewAuthorizationButton.svelte"
+	import CreatePracticeButton from "$lib/enrollments/components/CreatePracticeButton.svelte"
 	import { getCourseQuery } from "$lib/courses/queries"
 	import { getCourseEnrollmentsQuery } from "$lib/enrollments/queries"
 	import { getUsersQuery } from "$lib/users/queries"
@@ -336,6 +338,11 @@
 													{enrollment}
 													evaluations={currentCourse.evaluations}
 												/>
+											{/if}
+											{#if enrollment.practiceId}
+												<ViewAuthorizationButton {enrollment} />
+											{:else}
+												<CreatePracticeButton {enrollment} />
 											{/if}
 											<DeleteEnrollmentButton
 												enrollmentId={enrollment.id}
