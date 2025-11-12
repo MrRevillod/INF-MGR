@@ -1,40 +1,12 @@
 <script lang="ts">
-	import { page } from "$app/stores"
-	import { onMount } from "svelte"
-	import { api } from "$lib/shared/api/client"
+	import type { PageProps } from "./$types"
 
-	let success = $state<boolean | null>(null)
-	let isLoading = $state(true)
-
-	onMount(async () => {
-		const enrollmentsId = $page.params.enrollmentsId
-		const practiceId = $page.params.practiceId
-
-		try {
-			const response = await api.post(
-				`/enrollments/${enrollmentsId}/practice/${practiceId}/approve`
-			)
-			success = response.data.success
-		} catch (error) {
-			console.error("Error al aprobar práctica:", error)
-			success = false
-		} finally {
-			isLoading = false
-		}
-	})
+	let { data }: PageProps = $props()
 </script>
 
 <div class="flex min-h-screen items-center justify-center bg-gray-50 px-4">
 	<div class="w-full max-w-md rounded-lg bg-white p-8 shadow-lg">
-		{#if isLoading}
-			<div class="text-center">
-				<div
-					class="mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-4 border-gray-200 border-t-indigo-600"
-				></div>
-				<h1 class="mb-2 text-2xl font-bold text-gray-900">Procesando...</h1>
-				<p class="text-gray-600">Aprobando la práctica, por favor espere.</p>
-			</div>
-		{:else if success}
+		{#if data.success}
 			<div class="text-center">
 				<div
 					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100"
