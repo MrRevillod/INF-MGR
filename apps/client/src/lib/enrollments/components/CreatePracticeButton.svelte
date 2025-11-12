@@ -91,7 +91,9 @@
 
 			if (response.data.success) {
 				toast.success("Práctica inscrita exitosamente")
+				// Invalidar queries de enrollments y courses para refrescar los datos
 				queryClient.invalidateQueries({ queryKey: ["enrollments"] })
+				queryClient.invalidateQueries({ queryKey: ["courses"] })
 				closeModal()
 			} else {
 				toast.error("Error al inscribir la práctica")

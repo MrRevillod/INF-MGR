@@ -14,9 +14,13 @@
 	import { getCourseQuery } from "$lib/courses/queries"
 	import { getCourseEnrollmentsQuery } from "$lib/enrollments/queries"
 	import { getUsersQuery } from "$lib/users/queries"
+	import { useQueryClient } from "@tanstack/svelte-query"
 
 	// Obtener el ID del curso desde la URL
 	const courseId = $derived($page.params.id ?? "")
+
+	// Query client para refrescar datos
+	const queryClient = useQueryClient()
 
 	// Cargar datos del curso
 	const courseQuery = $derived(getCourseQuery(courseId))
@@ -106,6 +110,12 @@
 
 		return weightedSum / totalWeight
 	}
+
+	// Función para refrescar los datos del curso y enrollments
+	function handleRefresh() {
+		queryClient.invalidateQueries({ queryKey: ["courses", courseId] })
+		queryClient.invalidateQueries({ queryKey: ["enrollments", "courses", courseId] })
+	}
 </script>
 
 <section class="space-y-6">
@@ -130,6 +140,7 @@
 
 			<div class="flex gap-2">
 				<Button onclick={handleBack} variant="secondary" text="← Volver" />
+				<Button onclick={handleRefresh} variant="secondary" text="🔄 Actualizar" />
 				<Button
 					onclick={() => (showEditModal = true)}
 					variant="primary"
@@ -339,11 +350,41 @@
 													evaluations={currentCourse.evaluations}
 												/>
 											{/if}
-											{#if enrollment.practiceId}
-												<ViewAuthorizationButton {enrollment} />
+
+											{#if enrollment.practiceId && enrollment.practice}
+												{#if enrollment.practice.practiceStatus === "approved"}
+													<!-- Práctica aprobada: Mostrar botón para ver autorización -->
+													<ViewAuthorizationButton {enrollment} />
+												{:else if enrollment.practice.practiceStatus === "pending"}
+													<!-- Práctica pendiente: Mostrar estado -->
+													<span
+														class="inline-flex items-center gap-1.5 rounded-md bg-yellow-50 px-3 py-1.5 text-sm font-medium text-yellow-700"
+													>
+														<svg
+															xmlns="http://www.w3.org/2000/svg"
+															class="h-4 w-4"
+															fill="none"
+															viewBox="0 0 24 24"
+															stroke="currentColor"
+														>
+															<path
+																stroke-linecap="round"
+																stroke-linejoin="round"
+																stroke-width="2"
+																d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+															/>
+														</svg>
+														Pendiente
+													</span>
+												{:else if enrollment.practice.practiceStatus === "declined"}
+													<!-- Práctica rechazada: Volver a mostrar botón de inscribir -->
+													<CreatePracticeButton {enrollment} />
+												{/if}
 											{:else}
+												<!-- No tiene práctica: Mostrar botón de inscribir -->
 												<CreatePracticeButton {enrollment} />
 											{/if}
+
 											<DeleteEnrollmentButton
 												enrollmentId={enrollment.id}
 												studentName={enrollment.student.name}

@@ -4,6 +4,10 @@
 	let { data }: PageProps = $props()
 </script>
 
+<svelte:head>
+	<title>Aprobación de Práctica</title>
+</svelte:head>
+
 <div class="flex min-h-screen items-center justify-center bg-gray-50 px-4">
 	<div class="w-full max-w-md rounded-lg bg-white p-8 shadow-lg">
 		{#if data.success}
@@ -30,6 +34,9 @@
 				<p class="text-gray-600">
 					La práctica ha sido aprobada exitosamente. El estudiante recibirá una
 					notificación por correo electrónico con los próximos pasos.
+				</p>
+				<p class="mt-4 text-sm text-gray-500">
+					Puede cerrar esta ventana de forma segura.
 				</p>
 			</div>
 		{:else}
