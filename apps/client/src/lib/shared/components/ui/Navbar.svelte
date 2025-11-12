@@ -15,11 +15,39 @@
 	import { afterNavigate, goto } from "$app/navigation"
 	import { auth } from "$lib/auth/store.svelte"
 
-	const routes = [
-		{ title: "Inicio", path: "/admin", icon: HomeIcon },
-		{ title: "Usuarios", path: "/admin/users", icon: UserGroupIcon },
-		{ title: "Cursos", path: "/admin/courses", icon: ComputerDesktopIcon },
-	]
+	// Determinar el prefijo de ruta según el rol del usuario
+	const userRole = $derived(auth.user?.role ?? "student")
+
+	// Admin y Secretary tienen acceso completo al dashboard
+	const isAdminOrSecretary = $derived(
+		userRole === "administrator" || userRole === "secretary"
+	)
+
+	const rolePrefix = $derived(
+		userRole === "administrator"
+			? "/admin"
+			: userRole === "secretary"
+				? "/secretary"
+				: ""
+	)
+
+	// Rutas según el rol
+	const routes = $derived(
+		isAdminOrSecretary
+			? [
+					{ title: "Inicio", path: rolePrefix, icon: HomeIcon },
+					{ title: "Usuarios", path: `${rolePrefix}/users`, icon: UserGroupIcon },
+					{
+						title: "Cursos",
+						path: `${rolePrefix}/courses`,
+						icon: ComputerDesktopIcon,
+					},
+				]
+			: [
+					// Estudiantes y profesores verán otras rutas (por implementar)
+					{ title: "Inicio", path: "/", icon: HomeIcon },
+				]
+	)
 
 	const bottomActions = [
 		{ title: "Mi perfil", path: "/profile", icon: UserCircleIcon },
@@ -37,9 +65,16 @@
 	afterNavigate(navigate => {
 		const route = navigate.to?.url.pathname ?? ""
 
+		// Normalizar rutas para comparación (quitar trailing slash)
+		const normalizedRoute =
+			route.endsWith("/") && route.length > 1 ? route.slice(0, -1) : route
+
 		routes.forEach(({ path, title }) => {
-			if (path === route) {
-				appStore.setRoute(path)
+			const normalizedPath =
+				path.endsWith("/") && path.length > 1 ? path.slice(0, -1) : path
+
+			if (normalizedPath === normalizedRoute) {
+				appStore.setRoute(normalizedPath)
 				appStore.setTitle(title)
 			}
 		})

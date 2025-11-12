@@ -240,6 +240,44 @@ pub fn administrators() -> Vec<User> {
     ]
 }
 
+pub fn secretaries() -> Vec<User> {
+    vec![
+        // Usuario de prueba desde variable de entorno
+        User {
+            id: Uuid::new_v4(),
+            rut: "10000000-0".to_string(),
+            name: "Secretary USER".to_string(),
+            email: std::env::var("TEST_SECRETARY_EMAIL")
+                .expect("TEST_SECRETARY_EMAIL must be set in .env"),
+            role: Role::Secretary,
+            created_at: Utc::now(),
+            deleted_at: None,
+            google_id: None,
+        },
+        // Secretarias adicionales para pruebas
+        User {
+            id: Uuid::new_v4(),
+            rut: "10111111-1".to_string(),
+            name: "Carolina Fuentes".to_string(),
+            email: "secretary.fuentes@universidad.cl".to_string(),
+            role: Role::Secretary,
+            created_at: Utc::now(),
+            deleted_at: None,
+            google_id: None,
+        },
+        User {
+            id: Uuid::new_v4(),
+            rut: "10222222-2".to_string(),
+            name: "Patricia Soto".to_string(),
+            email: "secretary.soto@universidad.cl".to_string(),
+            role: Role::Secretary,
+            created_at: Utc::now(),
+            deleted_at: None,
+            google_id: None,
+        },
+    ]
+}
+
 // pub fn evaluation_schemas() -> Vec<CourseEvaluation> {
 //     vec![
 //         CourseEvaluation {
