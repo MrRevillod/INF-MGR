@@ -91,9 +91,7 @@ fn handle_validation_error(error: ValidationError) -> HttpResponse {
         ValidationError::DuplicateEmail { .. } => {
             ("email", "El email ya está en uso".into())
         }
-        ValidationError::DuplicateRut { .. } => {
-            ("rut", "El RUT ya está en uso".into())
-        }
+        ValidationError::DuplicateRut { .. } => ("rut", "El RUT ya está en uso".into()),
         ValidationError::DuplicateEnrollment { .. } => (
             "enrollment",
             "El estudiante ya está inscrito en el curso".into(),

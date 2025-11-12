@@ -44,9 +44,8 @@ impl MeetingsController {
             .await?
             && required
         {
-            return Err(HttpResponse::Unauthorized().message(
-                "You do not have permission to schedule this meeting request",
-            ));
+            return Err(HttpResponse::Unauthorized()
+                .message("You do not have permission to schedule this meeting request"));
         }
 
         let meeting = self.meetings.schedule(&meeting_id, input).await?;

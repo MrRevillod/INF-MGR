@@ -16,8 +16,7 @@ impl MeetingRequestsRepository {
         &self,
         f: MeetingRequestFilter,
     ) -> AppResult<Vec<MeetingRequest>> {
-        let mut query =
-            QueryBuilder::new("SELECT * FROM meeting_requests WHERE 1=1");
+        let mut query = QueryBuilder::new("SELECT * FROM meeting_requests WHERE 1=1");
 
         if let Some(student_id) = f.student_id {
             query.push(" AND ");
@@ -49,33 +48,13 @@ impl MeetingRequestsRepository {
         Ok(meeting_req)
     }
 
-    pub async fn create(
-        &self,
-        meeting_req: MeetingRequest,
-    ) -> AppResult<MeetingRequest> {
-        let meeting_req = sqlx::query_as::<_, MeetingRequest>(
-            r"
-            INSERT INTO meeting_requests (
-                id, 
-                status, 
-                attendees, 
-                course_id, 
-                created_at, 
-                updated_at
-            )
-            VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING *
-        ",
-        )
-        .bind(meeting_req.id)
-        .bind(meeting_req.status.to_string())
-        .bind(meeting_req.attendees)
-        .bind(meeting_req.course_id)
-        .bind(meeting_req.created_at)
-        .bind(meeting_req.updated_at)
-        .fetch_one(self.db_connection.get_pool())
-        .await?;
+    pub async fn save(&self, meeting_req: MeetingRequest) -> AppResult<MeetingRequest> {
+        let result =
+            sqlx::query_as::<_, MeetingRequest>("SELECT * FROM save_meeting_request($1)")
+                .bind(meeting_req.to_json()?)
+                .fetch_one(self.db_connection.get_pool())
+                .await?;
 
-        Ok(meeting_req)
+        Ok(result)
     }
 }

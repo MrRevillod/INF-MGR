@@ -28,11 +28,11 @@ pub struct CreateUserDto {
     #[validate(email(message = "El email debe ser válido."))]
     pub email: String,
 
-    #[validate(custom(
-        function = "role_validator",
-        message = "El rol es inválido."
-    ))]
+    #[validate(custom(function = "role_validator", message = "El rol es inválido."))]
     pub role: String,
+
+    #[validate(custom(function = "validate_register_number"))]
+    pub register: Option<String>,
 }
 
 impl TryFrom<CreateUserDto> for User {
@@ -48,6 +48,7 @@ impl TryFrom<CreateUserDto> for User {
             email: dto.email,
             google_id: None,
             role,
+            register: dto.register,
             deleted_at: None,
             created_at: Utc::now(),
         })
@@ -123,6 +124,7 @@ pub struct UserResponse {
     pub name: String,
     pub email: String,
     pub role: Role,
+    pub register: Option<String>,
     pub created_at: String,
 }
 
@@ -134,6 +136,7 @@ impl From<User> for UserResponse {
             name: user_model.name,
             email: user_model.email,
             role: user_model.role,
+            register: user_model.register,
             created_at: user_model.created_at.to_rfc3339(),
         }
     }
@@ -193,5 +196,15 @@ pub fn role_validator(role: &str) -> Result<(), ValidationError> {
         return Err(ValidationError::new("Rol inválido"));
     }
 
+    Ok(())
+}
+
+/// Valida que el número de registro sea un número válido (usize)
+pub fn validate_register_number(register: &String) -> Result<(), ValidationError> {
+    if register.parse::<usize>().is_err() {
+        return Err(ValidationError::new(
+            "El número de registro debe ser un número válido.",
+        ));
+    }
     Ok(())
 }

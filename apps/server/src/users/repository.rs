@@ -1,6 +1,4 @@
-use std::sync::Arc;
 use sword::core::injectable;
-use uuid::Uuid;
 
 use crate::{
     shared::{AppResult, DEFAULT_PAGE_SIZE, PostgresDatabase},
@@ -111,29 +109,8 @@ impl UserRepository {
     }
 
     pub async fn save(&self, user: User) -> AppResult<User> {
-        let upsert_query = r"
-            INSERT INTO users (id, rut, name, email, google_id, role, created_at, deleted_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            ON CONFLICT (id) 
-            DO UPDATE SET 
-                rut = EXCLUDED.rut,
-                name = EXCLUDED.name,
-                email = EXCLUDED.email,
-                google_id = EXCLUDED.google_id,
-                role = EXCLUDED.role
-            WHERE users.deleted_at IS NULL
-            RETURNING *
-        ";
-
-        let saved_user = sqlx::query_as::<_, User>(upsert_query)
-            .bind(user.id)
-            .bind(user.rut)
-            .bind(user.name)
-            .bind(user.email)
-            .bind(user.google_id)
-            .bind(user.role)
-            .bind(user.created_at)
-            .bind(user.deleted_at)
+        let saved_user = sqlx::query_as::<_, User>("SELECT * FROM save_user($1)")
+            .bind(user.to_json()?)
             .fetch_one(self.database_connection.get_pool())
             .await?;
 
@@ -145,50 +122,13 @@ impl UserRepository {
             return Ok(vec![]);
         }
 
-        let mut query_values = Vec::new();
-        let mut arg_index = 1;
+        let users_json = users
+            .iter()
+            .map(|u| u.to_json())
+            .collect::<Result<Vec<Value>, _>>()?;
 
-        for _ in &users {
-            query_values.push(format!(
-                "(${}, ${}, ${}, ${}, ${}, ${}, ${}, ${})",
-                arg_index,     // id
-                arg_index + 1, // rut
-                arg_index + 2, // name
-                arg_index + 3, // email
-                arg_index + 4, // google_id
-                arg_index + 5, // role
-                arg_index + 6, // created_at
-                arg_index + 7, // deleted_at
-            ));
-
-            arg_index += 8;
-        }
-
-        let query = format!(
-            r" 
-                INSERT INTO users (id, rut, name, email, google_id, role, created_at, deleted_at)
-                VALUES {}
-                ON CONFLICT (id) DO NOTHING
-                RETURNING *
-            ",
-            query_values.join(", ")
-        );
-
-        let mut sqlx_query = sqlx::query_as::<_, User>(&query);
-
-        for user in &users {
-            sqlx_query = sqlx_query
-                .bind(user.id)
-                .bind(&user.rut)
-                .bind(&user.name)
-                .bind(&user.email)
-                .bind(&user.google_id)
-                .bind(&user.role)
-                .bind(user.created_at)
-                .bind(user.deleted_at);
-        }
-
-        let results = sqlx_query
+        let results = sqlx::query_as::<_, User>("SELECT * FROM create_users($1)")
+            .bind(&users_json)
             .fetch_all(self.database_connection.get_pool())
             .await?;
 

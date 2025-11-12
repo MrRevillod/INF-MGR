@@ -39,6 +39,7 @@ impl ImportService {
                 email: student.email.clone(),
                 rut: student.rut.clone(),
                 role: Role::Student,
+                register: Some(student.register.clone()),
                 ..Default::default()
             };
 
@@ -75,8 +76,7 @@ impl ImportService {
         &self,
         students: Vec<ImportedStudent>,
     ) -> Result<(Vec<ImportedStudent>, Vec<User>), AppError> {
-        let imported_ruts =
-            students.iter().map(|s| s.rut.clone()).collect::<Vec<_>>();
+        let imported_ruts = students.iter().map(|s| s.rut.clone()).collect::<Vec<_>>();
 
         let existing_students = self
             .users

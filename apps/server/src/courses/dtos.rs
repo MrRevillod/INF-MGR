@@ -214,6 +214,10 @@ fn validate_weights(weights: &[i32]) -> Result<(), ValidationError> {
 fn validate_evaluation_weights(
     evaluations: &[CourseEvaluationDto],
 ) -> Result<(), ValidationError> {
+    if evaluations.is_empty() {
+        return Err(ValidationError::new("Debe haber al menos una evaluación."));
+    }
+
     let weights: Vec<i32> = evaluations.iter().map(|e| e.weight).collect();
     validate_weights(&weights)
 }

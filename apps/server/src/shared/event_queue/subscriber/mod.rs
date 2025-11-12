@@ -37,8 +37,7 @@ impl EventSubscriber {
     pub async fn subscribe(&self) -> Result<(), Box<dyn std::error::Error>> {
         while let Some(event) = self.receiver.lock().await.recv().await {
             let num_of_event_retry = self.config.num_of_event_retry;
-            let delay_between_event_retry_ms =
-                self.config.delay_between_event_retry_ms;
+            let delay_between_event_retry_ms = self.config.delay_between_event_retry_ms;
 
             let handler = Arc::clone(&self.handler);
 
@@ -66,10 +65,7 @@ impl EventSubscriber {
         Ok(())
     }
 
-    async fn handle(
-        handler: Arc<SubscriberHandler>,
-        event: Event,
-    ) -> ServiceResult<()> {
+    async fn handle(handler: Arc<SubscriberHandler>, event: Event) -> ServiceResult<()> {
         match event {
             Event::CourseCreated(event) => handler.course_created(event).await?,
             Event::UserCreated(event) => handler.user_created(event).await?,

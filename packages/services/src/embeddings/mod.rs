@@ -30,9 +30,7 @@ impl EmbeddingService {
             .await?
         {
             let collection = CreateCollectionBuilder::new(&config.collection_name)
-                .vectors_config(
-                    VectorParamsBuilder::new(384, Distance::Cosine).build(),
-                )
+                .vectors_config(VectorParamsBuilder::new(384, Distance::Cosine).build())
                 .build();
 
             qdrant_client.create_collection(collection).await?;

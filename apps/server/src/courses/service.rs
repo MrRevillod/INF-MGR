@@ -23,10 +23,7 @@ pub struct CourseService {
 }
 
 impl CourseService {
-    pub async fn get_all(
-        &self,
-        filter: CourseFilter,
-    ) -> AppResult<Vec<CourseWithStaff>> {
+    pub async fn get_all(&self, filter: CourseFilter) -> AppResult<Vec<CourseWithStaff>> {
         let courses = self.courses.find_many(filter).await?;
         let teacher_ids = courses.iter().map(|c| c.teacher_id).collect::<Vec<_>>();
 
@@ -97,11 +94,7 @@ impl CourseService {
         self.courses.save(course).await
     }
 
-    pub async fn update(
-        &self,
-        id: &Uuid,
-        input: UpdateCourseDto,
-    ) -> AppResult<Course> {
+    pub async fn update(&self, id: &Uuid, input: UpdateCourseDto) -> AppResult<Course> {
         let Some(mut course) = self.courses.find_by_id(id).await? else {
             return Err(NotFoundError::course(*id))?;
         };

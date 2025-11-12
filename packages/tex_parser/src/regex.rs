@@ -17,7 +17,10 @@ pub static TABLE_RE: LazyLock<Regex> = LazyLock::new(|| {
 });
 
 pub static IMAGE_RE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"(?s)\\begin\{figure\}.*?\\end\{figure\}|\\includegraphics(\[.*?\])?\{[^}]+\}").unwrap()
+    Regex::new(
+        r"(?s)\\begin\{figure\}.*?\\end\{figure\}|\\includegraphics(\[.*?\])?\{[^}]+\}",
+    )
+    .unwrap()
 });
 
 pub static CODE_RE: LazyLock<Regex> = LazyLock::new(|| {
@@ -59,9 +62,8 @@ pub static LIST_RE: LazyLock<Regex> = LazyLock::new(|| {
         .unwrap()
 });
 
-pub static ITEMIZE_RE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"(?s)\\begin\{itemize\}(.*?)\\end\{itemize\}").unwrap()
-});
+pub static ITEMIZE_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?s)\\begin\{itemize\}(.*?)\\end\{itemize\}").unwrap());
 
 pub static ENUMERATE_RE: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"(?s)\\begin\{enumerate\}(.*?)\\end\{enumerate\}").unwrap()

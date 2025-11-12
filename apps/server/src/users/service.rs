@@ -64,11 +64,7 @@ impl UserService {
         Ok(user)
     }
 
-    pub async fn update(
-        &self,
-        id: Uuid,
-        input: UpdateUserDto,
-    ) -> Result<User, AppError> {
+    pub async fn update(&self, id: Uuid, input: UpdateUserDto) -> Result<User, AppError> {
         let Some(mut user) = self.users.find_by_id(&id).await? else {
             return Err(NotFoundError::user(id))?;
         };

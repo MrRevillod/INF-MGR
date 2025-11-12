@@ -21,6 +21,7 @@ impl SubscriberHandler {
         let mut template_ctx = template_ctx! {
             "student_rut" => student.rut,
             "student_name" => student.name,
+            "student_register" => student.register.unwrap_or_else(|| "".to_string()),
             "course_name" => course.name,
             "course_code" => course.code,
             "enterprise_name" => practice.enterprise_name,
@@ -238,8 +239,7 @@ impl SubscriberHandler {
         event: PracticeAuthorizedEvent,
     ) -> ServiceResult<()> {
         let (student, course, teacher, practice, doc_bytes) = event;
-        let practice_static_dir =
-            format!("practices/{}/authorization.pdf", practice.id);
+        let practice_static_dir = format!("practices/{}/authorization.pdf", practice.id);
 
         let context = template_ctx! {
             "student_name" => student.name.clone(),

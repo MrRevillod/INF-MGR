@@ -15,10 +15,7 @@ pub struct SharedModule;
 impl Module for SharedModule {
     type Controller = NonControllerModule;
 
-    async fn register_providers(
-        config: &Config,
-        container: &mut DependencyContainer,
-    ) {
+    async fn register_providers(config: &Config, container: &mut DependencyContainer) {
         let auth_config = config.get::<AuthConfig>().unwrap();
         let redis_config = config.get::<RedisConfig>().unwrap();
         let postgres_config = config.get::<PostgresDbConfig>().unwrap();
