@@ -96,6 +96,9 @@ export const CreateCourseFormSchema = v.object({
 // Schema para actualizar curso
 export const UpdateCourseSchema = CreateCourseSchema
 
+// Schema parcial para el formulario de actualización (sin evaluations, que se manejan localmente)
+export const UpdateCourseFormSchema = CreateCourseFormSchema
+
 // Schema para inscribir estudiante
 export const EnrollStudentSchema = v.object({
 	studentId: v.pipe(v.string(), v.minLength(1, "Debe seleccionar un estudiante")),

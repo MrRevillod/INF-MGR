@@ -1,8 +1,9 @@
 <script lang="ts">
 	import type { Enrollment } from "$lib/enrollments/schemas"
-	import { protectedApi } from "$api/client"
+	import { CreatePracticeSchema } from "$lib/enrollments/schemas"
+	import { createPracticeMutation } from "$lib/enrollments/mutations"
+	import { createForm, Field, validate } from "@formisch/svelte"
 	import { toast } from "svelte-sonner"
-	import { useQueryClient } from "@tanstack/svelte-query"
 	import Button from "$lib/shared/components/ui/Button.svelte"
 
 	interface Props {
@@ -12,18 +13,22 @@
 	let { enrollment }: Props = $props()
 
 	let isOpen = $state(false)
-	let isSubmitting = $state(false)
-	const queryClient = useQueryClient()
 
-	// Campos del formulario
-	let enterpriseName = $state("")
-	let description = $state("")
-	let location = $state("")
-	let supervisorName = $state("")
-	let supervisorEmail = $state("")
-	let supervisorPhone = $state("")
-	let startDate = $state("")
-	let endDate = $state("")
+	const mutation = createPracticeMutation(enrollment.id)
+
+	const form = createForm({
+		schema: CreatePracticeSchema,
+		initialInput: {
+			enterpriseName: "",
+			description: "",
+			location: "",
+			supervisorName: "",
+			supervisorEmail: "",
+			supervisorPhone: "",
+			startDate: "",
+			endDate: "",
+		},
+	})
 
 	const openModal = (e: MouseEvent) => {
 		e.preventDefault()
@@ -33,78 +38,45 @@
 
 	const closeModal = () => {
 		isOpen = false
-		resetForm()
 	}
 
-	const resetForm = () => {
-		enterpriseName = ""
-		description = ""
-		location = ""
-		supervisorName = ""
-		supervisorEmail = ""
-		supervisorPhone = ""
-		startDate = ""
-		endDate = ""
-	}
+	async function onSubmit() {
+		const result = await validate(form)
 
-	const handleSubmit = async (e: Event) => {
-		e.preventDefault()
-
-		// Validaciones
-		if (
-			!enterpriseName ||
-			!description ||
-			!location ||
-			!supervisorName ||
-			!supervisorEmail ||
-			!supervisorPhone ||
-			!startDate ||
-			!endDate
-		) {
-			toast.error("Todos los campos son obligatorios")
+		if (!result.success) {
+			toast.error("Por favor corrige los errores del formulario")
 			return
 		}
 
-		if (new Date(endDate) <= new Date(startDate)) {
+		// Validar fechas
+		if (new Date(result.output.endDate) <= new Date(result.output.startDate)) {
 			toast.error("La fecha de fin debe ser posterior a la fecha de inicio")
 			return
 		}
 
-		isSubmitting = true
-
 		try {
-			const practiceData = {
-				enterpriseName,
-				description,
-				location,
-				supervisorName,
-				supervisorEmail,
-				supervisorPhone,
-				startDate: new Date(startDate).toISOString(),
-				endDate: new Date(endDate).toISOString(),
-			}
+			const apiResult = await mutation.mutateAsync(result.output)
 
-			const response = await protectedApi.post(
-				`/enrollments/${enrollment.id}/practice`,
-				practiceData
-			)
-
-			if (response.data.success) {
+			if (apiResult.success) {
 				toast.success("Práctica inscrita exitosamente")
-				// Invalidar queries de enrollments y courses para refrescar los datos
-				queryClient.invalidateQueries({ queryKey: ["enrollments"] })
-				queryClient.invalidateQueries({ queryKey: ["courses"] })
 				closeModal()
 			} else {
-				toast.error("Error al inscribir la práctica")
+				toast.error(
+					typeof apiResult.error === "string"
+						? apiResult.error
+						: "Error al inscribir la práctica"
+				)
 			}
 		} catch (error: any) {
 			const errorMessage =
 				error?.response?.data?.message || "Error al inscribir la práctica"
 			toast.error(errorMessage)
-		} finally {
-			isSubmitting = false
 		}
+	}
+
+	function handleFormSubmit(e: SubmitEvent) {
+		e.preventDefault()
+		onSubmit()
 	}
 </script>
 
@@ -169,151 +141,207 @@
 				</button>
 			</div>
 
-			<form onsubmit={handleSubmit} class="space-y-3">
+			<form onsubmit={handleFormSubmit} class="space-y-3">
 				<div class="grid grid-cols-2 gap-3">
-					<div class="col-span-2">
-						<label
-							for="enterpriseName"
-							class="mb-1 block text-sm font-medium text-gray-700"
-						>
-							Empresa
-						</label>
-						<input
-							type="text"
-							id="enterpriseName"
-							bind:value={enterpriseName}
-							class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-							placeholder="Nombre de la empresa"
-							required
-						/>
-					</div>
+					<Field of={form} path={["enterpriseName"]}>
+						{#snippet children(field)}
+							<div class="col-span-2">
+								<label
+									for="enterpriseName"
+									class="mb-1 block text-sm font-medium text-gray-700"
+								>
+									Empresa *
+								</label>
+								<input
+									type="text"
+									id="enterpriseName"
+									value={field.input ?? ""}
+									{...field.props}
+									class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+									placeholder="Nombre de la empresa"
+								/>
+								{#if field.errors}
+									<p class="mt-1 text-xs text-red-600">{field.errors[0]}</p>
+								{/if}
+							</div>
+						{/snippet}
+					</Field>
 
-					<div class="col-span-2">
-						<label
-							for="description"
-							class="mb-1 block text-sm font-medium text-gray-700"
-						>
-							Descripción
-						</label>
-						<textarea
-							id="description"
-							bind:value={description}
-							rows="2"
-							class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-							placeholder="Descripción de la práctica"
-							required
-						></textarea>
-					</div>
+					<Field of={form} path={["description"]}>
+						{#snippet children(field)}
+							<div class="col-span-2">
+								<label
+									for="description"
+									class="mb-1 block text-sm font-medium text-gray-700"
+								>
+									Descripción *
+								</label>
+								<textarea
+									id="description"
+									value={field.input ?? ""}
+									{...field.props}
+									rows="2"
+									class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+									placeholder="Descripción de la práctica"
+								></textarea>
+								{#if field.errors}
+									<p class="mt-1 text-xs text-red-600">{field.errors[0]}</p>
+								{/if}
+							</div>
+						{/snippet}
+					</Field>
 
-					<div class="col-span-2">
-						<label
-							for="location"
-							class="mb-1 block text-sm font-medium text-gray-700"
-						>
-							Ubicación
-						</label>
-						<input
-							type="text"
-							id="location"
-							bind:value={location}
-							class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-							placeholder="Santiago, Chile"
-							required
-						/>
-					</div>
+					<Field of={form} path={["location"]}>
+						{#snippet children(field)}
+							<div class="col-span-2">
+								<label
+									for="location"
+									class="mb-1 block text-sm font-medium text-gray-700"
+								>
+									Ubicación *
+								</label>
+								<input
+									type="text"
+									id="location"
+									value={field.input ?? ""}
+									{...field.props}
+									class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+									placeholder="Santiago, Chile"
+								/>
+								{#if field.errors}
+									<p class="mt-1 text-xs text-red-600">{field.errors[0]}</p>
+								{/if}
+							</div>
+						{/snippet}
+					</Field>
 
-					<div class="col-span-2">
-						<label
-							for="supervisorName"
-							class="mb-1 block text-sm font-medium text-gray-700"
-						>
-							Nombre Supervisor
-						</label>
-						<input
-							type="text"
-							id="supervisorName"
-							bind:value={supervisorName}
-							class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-							placeholder="Juan Pérez"
-							required
-						/>
-					</div>
+					<Field of={form} path={["supervisorName"]}>
+						{#snippet children(field)}
+							<div class="col-span-2">
+								<label
+									for="supervisorName"
+									class="mb-1 block text-sm font-medium text-gray-700"
+								>
+									Nombre Supervisor *
+								</label>
+								<input
+									type="text"
+									id="supervisorName"
+									value={field.input ?? ""}
+									{...field.props}
+									class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+									placeholder="Juan Pérez"
+								/>
+								{#if field.errors}
+									<p class="mt-1 text-xs text-red-600">{field.errors[0]}</p>
+								{/if}
+							</div>
+						{/snippet}
+					</Field>
 
-					<div class="col-span-2">
-						<label
-							for="supervisorEmail"
-							class="mb-1 block text-sm font-medium text-gray-700"
-						>
-							Email Supervisor
-						</label>
-						<input
-							type="email"
-							id="supervisorEmail"
-							bind:value={supervisorEmail}
-							class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-							placeholder="supervisor@empresa.com"
-							required
-						/>
-					</div>
+					<Field of={form} path={["supervisorEmail"]}>
+						{#snippet children(field)}
+							<div class="col-span-2">
+								<label
+									for="supervisorEmail"
+									class="mb-1 block text-sm font-medium text-gray-700"
+								>
+									Email Supervisor *
+								</label>
+								<input
+									type="email"
+									id="supervisorEmail"
+									value={field.input ?? ""}
+									{...field.props}
+									class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+									placeholder="supervisor@empresa.com"
+								/>
+								{#if field.errors}
+									<p class="mt-1 text-xs text-red-600">{field.errors[0]}</p>
+								{/if}
+							</div>
+						{/snippet}
+					</Field>
 
-					<div class="col-span-2">
-						<label
-							for="supervisorPhone"
-							class="mb-1 block text-sm font-medium text-gray-700"
-						>
-							Teléfono Supervisor
-						</label>
-						<input
-							type="tel"
-							id="supervisorPhone"
-							bind:value={supervisorPhone}
-							class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-							placeholder="+56912345678"
-							required
-						/>
-					</div>
+					<Field of={form} path={["supervisorPhone"]}>
+						{#snippet children(field)}
+							<div class="col-span-2">
+								<label
+									for="supervisorPhone"
+									class="mb-1 block text-sm font-medium text-gray-700"
+								>
+									Teléfono Supervisor *
+								</label>
+								<input
+									type="tel"
+									id="supervisorPhone"
+									value={field.input ?? ""}
+									{...field.props}
+									class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+									placeholder="+56912345678"
+								/>
+								{#if field.errors}
+									<p class="mt-1 text-xs text-red-600">{field.errors[0]}</p>
+								{/if}
+							</div>
+						{/snippet}
+					</Field>
 
-					<div>
-						<label
-							for="startDate"
-							class="mb-1 block text-sm font-medium text-gray-700"
-						>
-							Fecha Inicio
-						</label>
-						<input
-							type="date"
-							id="startDate"
-							bind:value={startDate}
-							class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-							required
-						/>
-					</div>
+					<Field of={form} path={["startDate"]}>
+						{#snippet children(field)}
+							<div>
+								<label
+									for="startDate"
+									class="mb-1 block text-sm font-medium text-gray-700"
+								>
+									Fecha Inicio *
+								</label>
+								<input
+									type="date"
+									id="startDate"
+									value={field.input ?? ""}
+									{...field.props}
+									class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+								/>
+								{#if field.errors}
+									<p class="mt-1 text-xs text-red-600">{field.errors[0]}</p>
+								{/if}
+							</div>
+						{/snippet}
+					</Field>
 
-					<div>
-						<label
-							for="endDate"
-							class="mb-1 block text-sm font-medium text-gray-700"
-						>
-							Fecha Fin
-						</label>
-						<input
-							type="date"
-							id="endDate"
-							bind:value={endDate}
-							class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-							required
-						/>
-					</div>
+					<Field of={form} path={["endDate"]}>
+						{#snippet children(field)}
+							<div>
+								<label
+									for="endDate"
+									class="mb-1 block text-sm font-medium text-gray-700"
+								>
+									Fecha Fin *
+								</label>
+								<input
+									type="date"
+									id="endDate"
+									value={field.input ?? ""}
+									{...field.props}
+									class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+								/>
+								{#if field.errors}
+									<p class="mt-1 text-xs text-red-600">{field.errors[0]}</p>
+								{/if}
+							</div>
+						{/snippet}
+					</Field>
 				</div>
 
 				<div class="flex justify-end gap-2 pt-2">
 					<Button variant="secondary" onclick={closeModal} text="Cancelar" />
 					<button
 						type="submit"
-						disabled={isSubmitting}
+						disabled={form.isSubmitting}
 						class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
 					>
-						{isSubmitting ? "Inscribiendo..." : "Inscribir"}
+						{form.isSubmitting ? "Inscribiendo..." : "Inscribir"}
 					</button>
 				</div>
 			</form>
