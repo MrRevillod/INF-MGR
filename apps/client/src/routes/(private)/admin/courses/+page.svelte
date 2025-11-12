@@ -10,7 +10,7 @@
 	const coursesQuery = getAllCoursesQuery()
 	const { data: coursesRes, isLoading } = $derived(coursesQuery)
 
-	const usersQuery = getUsersQuery(() => ({ page: 1 }))
+	const usersQuery = getUsersQuery(() => ({ page: 1, role: "teacher" }))
 	const { data: usersRes } = $derived(usersQuery)
 
 	// Estado para controlar el modal de crear curso
@@ -22,7 +22,6 @@
 			?.filter(user => user.role === "teacher")
 			.map(user => ({ id: user.id, name: user.name })) ?? []
 	)
-
 	function handleCourseClick(courseId: string) {
 		goto(`/admin/courses/${courseId}`)
 	}

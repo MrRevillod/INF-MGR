@@ -301,7 +301,7 @@ pub fn additional_courses(teachers: &[User]) -> Vec<Course> {
             id: Uuid::new_v4(),
             name: "Práctica Profesional".to_string(),
             code: "INFO1264".to_string(),
-            year: 2024,
+            year: 2025,
             teacher_id: teachers.get(1).unwrap().id,
             evaluations: vec![
                 CourseEvaluation {

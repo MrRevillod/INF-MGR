@@ -25,9 +25,13 @@
 	const { data: enrollmentsRes, isLoading: isLoadingEnrollments } =
 		$derived(enrollmentsQuery)
 
-	// Cargar todos los usuarios para obtener profesores y estudiantes
-	const usersQuery = getUsersQuery(() => ({ page: 1 }))
-	const { data: usersRes } = $derived(usersQuery)
+	// Cargar profesores (para el formulario de edición)
+	const teachersQuery = getUsersQuery(() => ({ page: 1, role: "teacher" }))
+	const { data: teachersRes } = $derived(teachersQuery)
+
+	// Cargar estudiantes (para el formulario de inscripción)
+	const studentsQuery = getUsersQuery(() => ({ page: 1, role: "student" }))
+	const { data: studentsRes } = $derived(studentsQuery)
 
 	// Estados para controlar los modales
 	let showEditModal = $state(false)
@@ -36,22 +40,19 @@
 	// Curso actual (para evitar problemas de undefined en el modal)
 	const currentCourse = $derived(courseRes?.data)
 
-	// Filtrar profesores y estudiantes
+	// Obtener profesores directamente de la consulta filtrada
 	const teachers = $derived(
-		usersRes?.data?.users
-			?.filter(user => user.role === "teacher")
-			.map(user => ({ id: user.id, name: user.name })) ?? []
+		teachersRes?.data?.users?.map(user => ({ id: user.id, name: user.name })) ?? []
 	)
 
 	const enrolledStudentIds = $derived(
 		enrollmentsRes?.data?.map(enrollment => enrollment.student.id) ?? []
 	)
 
+	// Obtener estudiantes no inscritos
 	const availableStudents = $derived(
-		usersRes?.data?.users
-			?.filter(
-				user => user.role === "student" && !enrolledStudentIds.includes(user.id)
-			)
+		studentsRes?.data?.users
+			?.filter(student => !enrolledStudentIds.includes(student.id))
 			.map(user => ({ id: user.id, name: user.name, rut: user.rut })) ?? []
 	)
 
@@ -235,7 +236,6 @@
 								>
 									Email
 								</th>
-
 								<!-- Columnas dinámicas de evaluaciones -->
 								{#if currentCourse?.evaluations && currentCourse.evaluations.length > 0}
 									{#each currentCourse.evaluations as evaluation}
