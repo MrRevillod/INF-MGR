@@ -115,3 +115,40 @@ export const UpdateEnrollmentSchema = v.object({
 	),
 	practiceId: v.optional(v.string()),
 })
+
+// Schema para importar estudiantes desde CSV
+export const ImportedStudentSchema = v.object({
+	rut: v.pipe(
+		v.string(),
+		v.minLength(1, "El RUT es requerido"),
+		v.regex(
+			/^\d{7,8}-[\dkK]$/,
+			"Formato de RUT inválido (debe ser sin puntos, ej: 12345678-9)"
+		)
+	),
+	name: v.pipe(
+		v.string(),
+		v.minLength(5, "El nombre debe tener al menos 5 caracteres"),
+		v.maxLength(100, "El nombre no puede exceder 100 caracteres")
+	),
+	email: v.pipe(
+		v.string(),
+		v.minLength(1, "El email es requerido"),
+		v.email("El email debe ser válido")
+	),
+	register: v.pipe(
+		v.string(),
+		v.minLength(1, "El número de matrícula es requerido"),
+		v.maxLength(100, "El número de matrícula no puede exceder 100 caracteres")
+	),
+})
+
+export const ImportStudentsSchema = v.object({
+	students: v.pipe(
+		v.array(ImportedStudentSchema),
+		v.minLength(1, "Debe haber al menos un estudiante para importar")
+	),
+})
+
+export type ImportedStudent = v.InferInput<typeof ImportedStudentSchema>
+export type ImportStudents = v.InferInput<typeof ImportStudentsSchema>

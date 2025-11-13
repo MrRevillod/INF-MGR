@@ -11,6 +11,7 @@
 	import UpdateEnrollmentButton from "$lib/courses/components/UpdateEnrollmentButton.svelte"
 	import ViewAuthorizationButton from "$lib/enrollments/components/ViewAuthorizationButton.svelte"
 	import CreatePracticeButton from "$lib/enrollments/components/CreatePracticeButton.svelte"
+	import ImportStudentsButton from "$lib/courses/components/ImportStudentsButton.svelte"
 	import { getCourseQuery } from "$lib/courses/queries"
 	import { getCourseEnrollmentsQuery } from "$lib/enrollments/queries"
 	import { getUsersQuery } from "$lib/users/queries"
@@ -208,11 +209,14 @@
 						{enrollmentsRes?.data?.length ?? 0} estudiante(s) inscrito(s)
 					</p>
 				</div>
-				<Button
-					onclick={() => (showEnrollModal = true)}
-					variant="primary"
-					text="+ Inscribir Estudiante"
-				/>
+				<div class="flex gap-2">
+					<ImportStudentsButton courseId={courseRes.data.id} />
+					<Button
+						onclick={() => (showEnrollModal = true)}
+						variant="primary"
+						text="+ Inscribir Estudiante"
+					/>
+				</div>
 			</div>
 
 			{#if isLoadingEnrollments}

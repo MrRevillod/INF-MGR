@@ -7,6 +7,7 @@ use server::{
     config::*,
     courses::CoursesModule,
     enrollments::EnrollmentsModule,
+    imports::ImportsModule,
     logger::LoggerLayer,
     meetings::MeetingsModule,
     practices::PracticesModule,
@@ -39,6 +40,7 @@ async fn main() {
         .with_module::<UsersModule>()
         .with_module::<CoursesModule>()
         .with_module::<EnrollmentsModule>()
+        .with_module::<ImportsModule>()
         .with_module::<AuthModule>()
         .with_module::<MeetingsModule>()
         .with_module::<PracticesModule>();
