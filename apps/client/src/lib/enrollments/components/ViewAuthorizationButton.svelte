@@ -15,7 +15,7 @@
 		e.preventDefault()
 		e.stopPropagation()
 
-		if (!enrollment.practiceId) {
+		if (!enrollment.practice?.id) {
 			toast.error("Este estudiante no tiene una práctica asignada")
 			return
 		}
@@ -25,7 +25,7 @@
 		try {
 			// Obtener el PDF del servidor
 			const response = await protectedApi.get(
-				`/enrollments/practice/${enrollment.practiceId}/docs`,
+				`/enrollments/practice/${enrollment.practice.id}/docs`,
 				{
 					responseType: "blob",
 				}
@@ -51,7 +51,7 @@
 
 <button
 	onclick={handleViewAuthorization}
-	disabled={isLoading || !enrollment.practiceId}
+	disabled={isLoading || !enrollment.practice?.id}
 	type="button"
 	class="inline-flex items-center gap-1.5 rounded-md bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
 >

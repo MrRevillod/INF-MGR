@@ -35,9 +35,19 @@ export const StudentSchema = v.object({
 
 export const PracticeSchema = v.object({
 	id: v.string(),
-	practiceStatus: v.optional(
-		v.union([v.literal("pending"), v.literal("approved"), v.literal("declined")])
-	),
+	enterpriseName: v.string(),
+	location: v.string(),
+	description: v.string(),
+	supervisorName: v.string(),
+	supervisorEmail: v.string(),
+	supervisorPhone: v.string(),
+	startDate: v.nullable(v.string()),
+	endDate: v.nullable(v.string()),
+	practiceStatus: v.union([
+		v.literal("pending"),
+		v.literal("approved"),
+		v.literal("declined"),
+	]),
 })
 
 export const EnrollmentSchema = v.object({
