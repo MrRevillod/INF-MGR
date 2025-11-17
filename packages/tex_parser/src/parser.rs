@@ -193,8 +193,7 @@ impl LaTexParser {
         let main_content = sub_parts[0].to_string();
 
         // Determinar si se debe crear chunk principal
-        let should_create_chunk =
-            Self::should_create_main_chunk(level, &main_content);
+        let should_create_chunk = Self::should_create_main_chunk(level, &main_content);
 
         if should_create_chunk {
             let processed_content = if main_content.trim().is_empty() {
@@ -213,8 +212,7 @@ impl LaTexParser {
         }
 
         // Procesar sub-secciones recursivamente
-        let max_subsections =
-            sub_parts.len().saturating_sub(1).min(sub_titles.len());
+        let max_subsections = sub_parts.len().saturating_sub(1).min(sub_titles.len());
 
         for j in 1..=max_subsections {
             let sub_title = &sub_titles[j - 1];
@@ -407,8 +405,7 @@ impl LaTexParser {
             let abs_start = start + cmd_start;
             let after_cmd = abs_start + pattern.len();
 
-            if let Some(title) = Self::extract_balanced_braces(&content[after_cmd..])
-            {
+            if let Some(title) = Self::extract_balanced_braces(&content[after_cmd..]) {
                 let title_len = title.len();
                 titles.push((abs_start, title));
                 start = after_cmd + title_len + 2; // +2 para las llaves {}

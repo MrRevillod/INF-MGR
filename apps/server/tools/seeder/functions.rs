@@ -1,4 +1,4 @@
-use server::{courses::Course, users::User};
+use server::{courses::Course, practices::Practice, users::User};
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
@@ -62,4 +62,66 @@ pub async fn create_enrollments(
             .await
             .unwrap();
     }
+}
+
+pub async fn create_practice(pool: &Pool<Postgres>, practice: Practice) -> Uuid {
+    let query = r"
+        INSERT INTO practices (id, enterprise_name, location, description, supervisor_name, supervisor_email, supervisor_phone, start_date, end_date, practice_status)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::practice_status)
+        RETURNING id
+    ";
+
+    let practice_id = sqlx::query_scalar::<_, Uuid>(query)
+        .bind(practice.id)
+        .bind(&practice.enterprise_name)
+        .bind(&practice.location)
+        .bind(&practice.description)
+        .bind(&practice.supervisor_name)
+        .bind(&practice.supervisor_email)
+        .bind(&practice.supervisor_phone)
+        .bind(practice.start_date)
+        .bind(practice.end_date)
+        .bind(practice.practice_status)
+        .fetch_one(pool)
+        .await
+        .unwrap();
+
+    practice_id
+}
+
+pub async fn update_enrollment_with_practice(
+    pool: &Pool<Postgres>,
+    enrollment_id: Uuid,
+    practice_id: Uuid,
+) {
+    let query = r"
+        UPDATE enrollments 
+        SET practice_id = $1 
+        WHERE id = $2
+    ";
+
+    sqlx::query(query)
+        .bind(practice_id)
+        .bind(enrollment_id)
+        .execute(pool)
+        .await
+        .unwrap();
+}
+
+pub async fn get_enrollment_id(
+    pool: &Pool<Postgres>,
+    student_id: Uuid,
+    course_id: Uuid,
+) -> Option<Uuid> {
+    let query = r"
+        SELECT id FROM enrollments 
+        WHERE student_id = $1 AND course_id = $2
+    ";
+
+    sqlx::query_scalar::<_, Uuid>(query)
+        .bind(student_id)
+        .bind(course_id)
+        .fetch_optional(pool)
+        .await
+        .unwrap()
 }

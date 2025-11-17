@@ -47,10 +47,7 @@ pub struct MeetingsModule;
 impl Module for MeetingsModule {
     type Controller = MeetingsController;
 
-    async fn register_providers(
-        config: &Config,
-        container: &mut DependencyContainer,
-    ) {
+    async fn register_providers(config: &Config, container: &mut DependencyContainer) {
         let gc_config = config.get::<GoogleCalendarConfig>().unwrap();
         let calendar_service = CalendarService::new(&gc_config).await;
 

@@ -57,6 +57,8 @@
 
 Autorizamos a: {{ student_name }}, alumno(a) regular de la carrera {{ career_name }} de la Universidad Católica de Temuco, para que efectúe su *{{ course_name }}* en nuestra empresa o institución:
 
+Número de registro: {{ student_register }}
+
 #v(1em)
 
 #let tab1 = {

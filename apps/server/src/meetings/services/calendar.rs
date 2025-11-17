@@ -21,10 +21,9 @@ pub struct CalendarService {
 
 impl CalendarService {
     pub async fn new(config: &GoogleCalendarConfig) -> Self {
-        let secret =
-            read_service_account_key(Path::new(&config.service_account_path))
-                .await
-                .unwrap();
+        let secret = read_service_account_key(Path::new(&config.service_account_path))
+            .await
+            .unwrap();
 
         let auth = ServiceAccountAuthenticator::builder(secret)
             .build()

@@ -2,14 +2,18 @@ use super::events::*;
 use crate::{imports::ImportedStudent, send_emails, template_ctx};
 
 use services::{
-    ServiceResult, embeddings::EmbeddingService, mailer::*, printer::*, types::*,
+    ServiceResult,
+    embeddings::{EmbeddingChunk, EmbeddingService},
+    mailer::*,
+    printer::*,
+    types::*,
 };
 
 #[derive(Clone)]
 pub struct SubscriberHandler {
     pub printer: Printer,
     pub mailer: Mailer,
-    pub embedding_service: EmbeddingService,
+    // pub embedding_service: EmbeddingService,
 }
 
 impl SubscriberHandler {
@@ -21,6 +25,7 @@ impl SubscriberHandler {
         let mut template_ctx = template_ctx! {
             "student_rut" => student.rut,
             "student_name" => student.name,
+            "student_register" => student.register.unwrap_or_else(|| "".to_string()),
             "course_name" => course.name,
             "course_code" => course.code,
             "enterprise_name" => practice.enterprise_name,
@@ -238,8 +243,7 @@ impl SubscriberHandler {
         event: PracticeAuthorizedEvent,
     ) -> ServiceResult<()> {
         let (student, course, teacher, practice, doc_bytes) = event;
-        let practice_static_dir =
-            format!("practices/{}/authorization.pdf", practice.id);
+        let practice_static_dir = format!("practices/{}/authorization.pdf", practice.id);
 
         let context = template_ctx! {
             "student_name" => student.name.clone(),
@@ -376,10 +380,24 @@ impl SubscriberHandler {
         &self,
         event: InitializePlagiarismCheckEvent,
     ) -> ServiceResult<()> {
-        let (_practice_id, _parsed_tex) = event;
+        let (practice_id, parsed_tex) = event;
 
-        // Aquí iría la lógica para inicializar la verificación de plagio
-        // usando el practice_id y el parsed_tex.
+        let skipped_sections = vec![
+            "Resumen",
+            "Descripción de la empresa",
+            "Organigrama de la empresa",
+        ];
+
+        let chunks_to_embed = parsed_tex
+            .chunks
+            .iter()
+            .filter(|chunk| !skipped_sections.contains(&chunk.title.as_str()))
+            .map(|chunk| EmbeddingChunk::from((&practice_id, chunk.clone())))
+            .collect::<Vec<EmbeddingChunk>>();
+
+        // for chunk in chunks_to_embed {
+        //     self.embedding_service.save_chunk(chunk).await?;
+        // }
 
         Ok(())
     }

@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
     email TEXT NOT NULL UNIQUE,
     google_id TEXT UNIQUE,
     role user_role NOT NULL,
+    register TEXT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     deleted_at TIMESTAMP WITH TIME ZONE NULL
 );
@@ -17,9 +18,9 @@ CREATE TABLE IF NOT EXISTS courses (
     year INTEGER NOT NULL,
     code TEXT NOT NULL,
     name TEXT NOT NULL,
+    course_status course_status NOT NULL DEFAULT 'active',
     evaluations course_evaluation[] NOT NULL,
-    teacher_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
-    course_status course_status NOT NULL DEFAULT 'active'
+    teacher_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT
 );
 
 CREATE INDEX IF NOT EXISTS courses_teacher_id_idx ON courses(teacher_id);

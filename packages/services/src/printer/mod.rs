@@ -51,11 +51,11 @@ impl Printer {
         if let Some(parent) = out_path.parent()
             && !parent.exists()
         {
-            fs::create_dir_all(parent).await.map_err(|source| {
-                ServiceError::Printer {
+            fs::create_dir_all(parent)
+                .await
+                .map_err(|source| ServiceError::Printer {
                     source: source.into(),
-                }
-            })?;
+                })?;
         }
 
         let Some(temp_file) = temp_file.to_str() else {
@@ -92,11 +92,11 @@ impl Printer {
         if let Some(parent) = out_path.parent()
             && !parent.exists()
         {
-            fs::create_dir_all(parent).await.map_err(|source| {
-                ServiceError::Printer {
+            fs::create_dir_all(parent)
+                .await
+                .map_err(|source| ServiceError::Printer {
                     source: source.into(),
-                }
-            })?;
+                })?;
         }
 
         fs::write(out_path, file)

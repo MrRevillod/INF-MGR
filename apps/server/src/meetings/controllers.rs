@@ -32,9 +32,8 @@ impl MeetingsController {
     #[get("/schedule/{meeting_id}")]
     #[uses(MinimumRequiredRole, config = Role::Teacher)]
     async fn schedule_meeting(&self, req: Request) -> HttpResult {
-        let meeting_id = req.param::<Uuid>("meeting_id")?;
-        let input = req.body_validator::<ScheduleMeetingDto>()?;
         let user = req.get_current_user()?;
+        let meeting_id = req.param::<Uuid>("meeting_id")?;
 
         let OwnershipValidation { required, .. } = req.get_ownership_validation()?;
 
@@ -44,11 +43,11 @@ impl MeetingsController {
             .await?
             && required
         {
-            return Err(HttpResponse::Unauthorized().message(
-                "You do not have permission to schedule this meeting request",
-            ));
+            return Err(HttpResponse::Unauthorized()
+                .message("No tienes permiso para programar esta reunión."));
         }
 
+        let input = req.body_validator::<ScheduleMeetingDto>()?;
         let meeting = self.meetings.schedule(&meeting_id, input).await?;
 
         Ok(HttpResponse::Created().data(meeting))

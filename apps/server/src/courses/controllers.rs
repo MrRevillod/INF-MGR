@@ -183,8 +183,7 @@ impl CoursesController {
             }
         }
 
-        let updated_enrollment =
-            self.enrollments.update(&enrollment_id, input).await?;
+        let updated_enrollment = self.enrollments.update(&enrollment_id, input).await?;
 
         Ok(HttpResponse::Ok().data(updated_enrollment))
     }

@@ -57,12 +57,11 @@ impl MeetingRequestService {
             return Err(ValidationError::NotEnoughAttendees)?;
         }
 
-        let Some(course) = self.courses.find_by_id(&meeting_req.course_id).await?
-        else {
+        let Some(course) = self.courses.find_by_id(&meeting_req.course_id).await? else {
             return Err(NotFoundError::course(meeting_req.course_id))?;
         };
 
-        let meeting_req = self.meeting_reqs.create(meeting_req).await?;
+        let meeting_req = self.meeting_reqs.save(meeting_req).await?;
 
         let event_data = (teacher.unwrap(), course, students);
 

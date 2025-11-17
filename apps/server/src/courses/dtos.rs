@@ -1,3 +1,4 @@
+use chrono::{Datelike, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
@@ -16,11 +17,7 @@ use crate::{
 #[derive(Serialize, Deserialize, Debug, Clone, Validate)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateCourseDto {
-    #[validate(range(
-        min = 2000,
-        max = 2100,
-        message = "El año debe tener 4 dígitos."
-    ))]
+    #[validate(custom(function = validate_course_year))]
     pub year: i32,
 
     #[validate(
@@ -217,6 +214,10 @@ fn validate_weights(weights: &[i32]) -> Result<(), ValidationError> {
 fn validate_evaluation_weights(
     evaluations: &[CourseEvaluationDto],
 ) -> Result<(), ValidationError> {
+    if evaluations.is_empty() {
+        return Err(ValidationError::new("Debe haber al menos una evaluación."));
+    }
+
     let weights: Vec<i32> = evaluations.iter().map(|e| e.weight).collect();
     validate_weights(&weights)
 }
@@ -233,6 +234,18 @@ fn validate_course_status(status: &String) -> Result<(), ValidationError> {
     if status != "active" && status != "completed" {
         return Err(ValidationError::new(
             "El estado de la asignatura debe ser 'active' o 'completed'.",
+        ));
+    }
+
+    Ok(())
+}
+
+fn validate_course_year(year: i32) -> Result<(), ValidationError> {
+    let current_year = Utc::now().year();
+
+    if year < current_year || year > current_year + 1 {
+        return Err(ValidationError::new(
+            "El año de la asignatura debe ser el año actual o el siguiente.",
         ));
     }
 

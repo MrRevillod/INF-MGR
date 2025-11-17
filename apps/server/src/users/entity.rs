@@ -19,6 +19,7 @@ pub struct User {
     pub email: String,
     pub google_id: Option<String>,
     pub role: Role,
+    pub register: Option<String>,
     pub deleted_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
 }
@@ -87,6 +88,7 @@ impl Default for User {
             email: String::default(),
             google_id: None,
             role: Role::default(),
+            register: None,
             deleted_at: None,
             created_at: Utc::now(),
         }

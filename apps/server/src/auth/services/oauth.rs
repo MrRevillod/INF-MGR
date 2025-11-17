@@ -34,10 +34,7 @@ impl OAuthService {
         Ok(auth_url.to_string())
     }
 
-    pub async fn get_user_info(
-        &self,
-        access_token: &str,
-    ) -> AppResult<GoogleUserInfo> {
+    pub async fn get_user_info(&self, access_token: &str) -> AppResult<GoogleUserInfo> {
         let http_client = self.oauth_client.get_http_client();
 
         let user_info_response = http_client

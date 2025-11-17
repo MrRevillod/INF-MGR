@@ -1,7 +1,10 @@
 PROJECT_NAME := "INF_MGR"
 
 run DOCKERARGS="":
-	docker compose -f docker-compose.yml -f healthchecks.yml up {{DOCKERARGS}}
+	docker compose --profile dev -f docker-compose.yml -f healthchecks.yml up {{DOCKERARGS}}
+
+down DOCKERARGS="":
+	docker compose --profile dev -f docker-compose.yml -f healthchecks.yml down {{DOCKERARGS}}
 
 db:
 	pgcli postgres://user:password@localhost:5433/inf_mgr_db
@@ -26,7 +29,7 @@ nurse:
 	cargo clippy --all-features -- -D warnings -W clippy::pedantic -W clippy::nursery
 
 db-seed:
-	docker exec inf_mgr_server_dev cargo run -p server --bin seeder --features seeder
+	docker exec inf_mgr_server cargo run -p server --bin seeder --features seeder
 
 web-install package="":
 	cd apps/client && npm install {{package}} && cd ../..

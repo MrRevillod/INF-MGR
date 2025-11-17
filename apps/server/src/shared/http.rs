@@ -1,12 +1,14 @@
 use sword::web::{HttpResponse, Request};
 
 use crate::auth::OwnershipValidation;
+use crate::shared::RequestFiles;
 use crate::users::User;
 
 pub trait ContextExt {
     fn get_ownership_validation(&self) -> Result<OwnershipValidation, HttpResponse>;
     fn get_current_user(&self) -> Result<User, HttpResponse>;
     fn get_bearer_tokens(&self) -> Result<(String, String), HttpResponse>;
+    fn files(&self) -> Option<&RequestFiles>;
 }
 
 impl ContextExt for Request {
@@ -14,8 +16,7 @@ impl ContextExt for Request {
         let ownership_validation = self.extensions.get::<OwnershipValidation>();
 
         let Some(value) = ownership_validation else {
-            return Err(HttpResponse::InternalServerError()
-                .message("OwnershipValidation not found in context"));
+            return Err(HttpResponse::BadRequest().message("Missing required files"));
         };
 
         Ok(value.clone())
@@ -25,8 +26,9 @@ impl ContextExt for Request {
         let user = self.extensions.get::<User>();
 
         let Some(user) = user else {
-            return Err(HttpResponse::InternalServerError()
-                .message("User not found in context"));
+            return Err(
+                HttpResponse::InternalServerError().message("User not found in context")
+            );
         };
 
         Ok(user.clone())
@@ -60,5 +62,9 @@ impl ContextExt for Request {
         }
 
         Ok((access_token, refresh_token))
+    }
+
+    fn files(&self) -> Option<&RequestFiles> {
+        self.extensions.get::<RequestFiles>()
     }
 }

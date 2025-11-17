@@ -4,6 +4,7 @@ use lettre::{
 };
 
 use qdrant_client::QdrantError;
+use rig::embeddings::EmbeddingError;
 use tera::Error as TeraError;
 use thiserror::Error;
 
@@ -86,5 +87,17 @@ pub enum EmbeddingServiceError {
     QdrantClientError {
         #[from]
         source: QdrantError,
+    },
+
+    #[error("Embedding error: {source}")]
+    EmbeddingError {
+        #[from]
+        source: EmbeddingError,
+    },
+
+    #[error("Serialization error: {source}")]
+    SerializationError {
+        #[from]
+        source: serde_json::Error,
     },
 }

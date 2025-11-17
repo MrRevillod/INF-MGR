@@ -24,9 +24,8 @@ impl OAuthClient {
             AuthUrl::new("https://accounts.google.com/o/oauth2/v2/auth".to_string())
                 .expect("Invalid authorization endpoint URL");
 
-        let token_url =
-            TokenUrl::new("https://oauth2.googleapis.com/token".to_string())
-                .expect("Invalid token endpoint URL");
+        let token_url = TokenUrl::new("https://oauth2.googleapis.com/token".to_string())
+            .expect("Invalid token endpoint URL");
 
         let redirect_url = RedirectUrl::new(config.google_redirect_url.clone())
             .expect("Invalid redirect URL");

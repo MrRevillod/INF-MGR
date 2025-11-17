@@ -6,10 +6,10 @@ use serde::{Deserialize, Serialize};
 /// independiente optimizada para vectorización.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TextChunk {
-    pub id: String,      // "introduccion", "objetivos_principales"
-    pub title: String,   // "Introducción", "Objetivos principales"
-    pub content: String, // Texto limpio listo para embedding
-    pub level: u8,       // 1=section, 2=subsection, 3=subsubsection
+    pub id: String,                // "introduccion", "objetivos_principales"
+    pub title: String,             // "Introducción", "Objetivos principales"
+    pub content: String,           // Texto limpio listo para embedding
+    pub level: u8,                 // 1=section, 2=subsection, 3=subsubsection
     pub parent_id: Option<String>, // ID del padre si es subsección
 }
 

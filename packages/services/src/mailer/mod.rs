@@ -44,8 +44,7 @@ impl Mailer {
     }
 
     pub async fn send(&self, mail_to: MailTo) -> ServiceResult<()> {
-        let email_from_fmt =
-            format!("Prácticas y Tesis <{}>", self.config.smtp_username);
+        let email_from_fmt = format!("Prácticas y Tesis <{}>", self.config.smtp_username);
 
         let template_name = format!("{}.html", mail_to.template);
         let template = self.template_ctx.render(&template_name, mail_to.context)?;

@@ -262,14 +262,14 @@ mod tests {
         let content = &parsed.chunks[0].content;
 
         // El contenido académico debe preservarse completamente
-        assert!(content.contains(
-            "La metodología cualitativa permite una comprensión profunda"
-        ));
+        assert!(
+            content
+                .contains("La metodología cualitativa permite una comprensión profunda")
+        );
         assert!(content.contains("A través de entrevistas semiestructuradas"));
         assert!(
-            content.contains(
-                "los métodos cuantitativos no pueden capturar completamente"
-            )
+            content
+                .contains("los métodos cuantitativos no pueden capturar completamente")
         );
     }
 

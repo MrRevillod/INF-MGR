@@ -1,6 +1,6 @@
 use crate::config::PostgresDbConfig;
 
-use sqlx::{PgPool, postgres::PgPoolOptions};
+use sqlx::{PgPool, Postgres, Transaction, postgres::PgPoolOptions};
 use std::time::Duration;
 use sword::core::injectable;
 
@@ -46,5 +46,9 @@ impl PostgresDatabase {
 
     pub const fn get_pool(&self) -> &PgPool {
         &self.pool
+    }
+
+    pub async fn tx_begin(&self) -> Result<Transaction<'static, Postgres>, sqlx::Error> {
+        self.pool.begin().await
     }
 }

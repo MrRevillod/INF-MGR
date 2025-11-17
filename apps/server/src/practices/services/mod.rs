@@ -76,8 +76,7 @@ impl PracticeService {
             return Err(NotFoundError::practice(*practice_id))?;
         }
 
-        let (course, teacher) =
-            self.courses.get_by_id(&enrollment.course_id).await?;
+        let (course, teacher) = self.courses.get_by_id(&enrollment.course_id).await?;
 
         let event_data = (student, enrollment, practice.clone(), course, teacher);
 
@@ -112,8 +111,7 @@ impl PracticeService {
 
         let practice = practice.ok_or(NotFoundError::practice(*enrollment_id))?;
 
-        let (course, teacher) =
-            self.courses.get_by_id(&enrollment.course_id).await?;
+        let (course, teacher) = self.courses.get_by_id(&enrollment.course_id).await?;
 
         let event_data = (student, course, teacher, practice, document);
 
@@ -176,8 +174,7 @@ impl PracticeService {
         let (mut enrollment, student, practice, _) =
             self.enrollments.get_by_id(enrollment_id).await?;
 
-        let (course, teacher) =
-            self.courses.get_by_id(&enrollment.course_id).await?;
+        let (course, teacher) = self.courses.get_by_id(&enrollment.course_id).await?;
 
         let updated_evaluation = enrollment
             .student_scores

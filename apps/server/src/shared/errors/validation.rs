@@ -3,9 +3,7 @@ use uuid::Uuid;
 
 #[derive(Debug, Error)]
 pub enum ValidationError {
-    #[error(
-        "Invalid role: '{value}' (expected: student, teacher, secretary, admin)"
-    )]
+    #[error("Invalid role: '{value}' (expected: student, teacher, secretary, admin)")]
     InvalidRole { value: String },
 
     #[error("Invalid course status: '{value}' (expected: active, completed)")]

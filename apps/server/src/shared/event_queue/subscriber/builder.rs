@@ -48,13 +48,11 @@ impl EventSubscriberBuilder {
             .expect("Failed to load services config");
 
         let mailer = Mailer::new(&services_config).expect("Failed to create mailer");
-        let printer =
-            Printer::new(&services_config).expect("Failed to create printer");
+        let printer = Printer::new(&services_config).expect("Failed to create printer");
 
-        let qdrant_service =
-            EmbeddingService::new(services_config.embedding_service)
-                .await
-                .expect("Failed to create embedding service");
+        // let qdrant_service = EmbeddingService::new(services_config.embedding_service)
+        //     .await
+        //     .expect("Failed to create embedding service");
 
         EventSubscriber {
             config: event_queue_config,
@@ -62,7 +60,7 @@ impl EventSubscriberBuilder {
             handler: Arc::new(SubscriberHandler {
                 printer,
                 mailer,
-                embedding_service: qdrant_service,
+                // embedding_service: qdrant_service,
             }),
         }
     }

@@ -8,6 +8,8 @@ tokio = { version = "1", features = ["rt-multi-thread", "macros", "fs"] }
 serde = { version = "1.0", features = ["derive"] }
 lettre = { version = "0.11.17", features = ["tokio1-native-tls"] }
 
+tex_parser = { path = "../tex_parser" }
+
 sword = { git = "https://github.com/MrRevillod/sword.git", branch = "main", features = [
     "multipart",
     "cookies",
@@ -24,3 +26,6 @@ rig-core = { version = "0.23.1", features = ["derive"] }
 rig-qdrant = "0.1.29"
 rig-fastembed = "0.2.15"
 qdrant-client = { version = "1.15.0", features = ["serde"] }
+reqwest = "0.12.24"
+chrono = "0.4.42"
+serde_json = "1.0.145"

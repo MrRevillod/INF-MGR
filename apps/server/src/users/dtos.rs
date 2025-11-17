@@ -28,8 +28,11 @@ pub struct CreateUserDto {
     #[validate(email(message = "El email debe ser válido."))]
     pub email: String,
 
-    #[validate(custom(function = "role_validator"))]
+    #[validate(custom(function = "role_validator", message = "El rol es inválido."))]
     pub role: String,
+
+    #[validate(custom(function = "validate_register_number"))]
+    pub register: Option<String>,
 }
 
 impl TryFrom<CreateUserDto> for User {
@@ -45,6 +48,7 @@ impl TryFrom<CreateUserDto> for User {
             email: dto.email,
             google_id: None,
             role,
+            register: dto.register,
             deleted_at: None,
             created_at: Utc::now(),
         })
@@ -93,6 +97,9 @@ pub struct GetUsersQueryDto {
 
     #[validate(range(min = 1, message = "La página debe ser mayor o igual a 1."))]
     pub page: Option<usize>,
+
+    #[validate(custom(function = "role_validator",))]
+    pub role: Option<String>,
 }
 
 impl From<GetUsersQueryDto> for UserFilter {
@@ -100,6 +107,7 @@ impl From<GetUsersQueryDto> for UserFilter {
         Self {
             search: dto.search,
             page: dto.page.unwrap_or(1) as u64,
+            role: dto.role.and_then(|r| Role::from_str(&r).ok()),
             ..Self::default()
         }
     }
@@ -116,6 +124,7 @@ pub struct UserResponse {
     pub name: String,
     pub email: String,
     pub role: Role,
+    pub register: Option<String>,
     pub created_at: String,
 }
 
@@ -127,6 +136,7 @@ impl From<User> for UserResponse {
             name: user_model.name,
             email: user_model.email,
             role: user_model.role,
+            register: user_model.register,
             created_at: user_model.created_at.to_rfc3339(),
         }
     }
@@ -186,5 +196,15 @@ pub fn role_validator(role: &str) -> Result<(), ValidationError> {
         return Err(ValidationError::new("Rol inválido"));
     }
 
+    Ok(())
+}
+
+/// Valida que el número de registro sea un número válido (usize)
+pub fn validate_register_number(register: &String) -> Result<(), ValidationError> {
+    if register.parse::<usize>().is_err() {
+        return Err(ValidationError::new(
+            "El número de registro debe ser un número válido.",
+        ));
+    }
     Ok(())
 }
