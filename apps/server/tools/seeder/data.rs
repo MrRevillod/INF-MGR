@@ -1,5 +1,6 @@
 use server::{
     courses::{Course, CourseEvaluation, CourseStatus},
+    practices::{Practice, PracticeStatus},
     users::{Role, User},
 };
 
@@ -370,6 +371,88 @@ pub fn additional_courses(teachers: &[User]) -> Vec<Course> {
                 weight: 100,
             }],
             course_status: CourseStatus::Completed,
+        },
+    ]
+}
+
+// Prácticas de ejemplo
+pub fn sample_practices() -> Vec<Practice> {
+    use chrono::Duration;
+    let now = Utc::now();
+
+    vec![
+        Practice {
+            id: Uuid::new_v4(),
+            enterprise_name: "TechSolutions Chile".to_string(),
+            location: "Santiago, Chile".to_string(),
+            description: "Desarrollo de aplicaciones web con React y Node.js".to_string(),
+            supervisor_name: "Roberto Sánchez".to_string(),
+            supervisor_email: "r.sanchez@techsolutions.cl".to_string(),
+            supervisor_phone: "+56912345678".to_string(),
+            start_date: Some(now - Duration::days(30)),
+            end_date: Some(now + Duration::days(60)),
+            practice_status: PracticeStatus::Approved,
+        },
+        Practice {
+            id: Uuid::new_v4(),
+            enterprise_name: "DataCorp".to_string(),
+            location: "Valparaíso, Chile".to_string(),
+            description: "Análisis de datos y desarrollo de modelos de machine learning"
+                .to_string(),
+            supervisor_name: "Carmen López".to_string(),
+            supervisor_email: "carmen.lopez@datacorp.cl".to_string(),
+            supervisor_phone: "+56987654321".to_string(),
+            start_date: Some(now - Duration::days(15)),
+            end_date: Some(now + Duration::days(75)),
+            practice_status: PracticeStatus::Approved,
+        },
+        Practice {
+            id: Uuid::new_v4(),
+            enterprise_name: "InnovaSoft".to_string(),
+            location: "Concepción, Chile".to_string(),
+            description: "Desarrollo de aplicaciones móviles con Flutter".to_string(),
+            supervisor_name: "Jorge Morales".to_string(),
+            supervisor_email: "j.morales@innovasoft.cl".to_string(),
+            supervisor_phone: "+56923456789".to_string(),
+            start_date: Some(now - Duration::days(45)),
+            end_date: Some(now + Duration::days(45)),
+            practice_status: PracticeStatus::Approved,
+        },
+        Practice {
+            id: Uuid::new_v4(),
+            enterprise_name: "CloudServices SpA".to_string(),
+            location: "Santiago, Chile".to_string(),
+            description: "Administración de infraestructura cloud en AWS".to_string(),
+            supervisor_name: "Patricia Díaz".to_string(),
+            supervisor_email: "p.diaz@cloudservices.cl".to_string(),
+            supervisor_phone: "+56934567890".to_string(),
+            start_date: Some(now - Duration::days(10)),
+            end_date: Some(now + Duration::days(80)),
+            practice_status: PracticeStatus::Approved,
+        },
+        Practice {
+            id: Uuid::new_v4(),
+            enterprise_name: "CyberSec Chile".to_string(),
+            location: "Viña del Mar, Chile".to_string(),
+            description: "Análisis de seguridad informática y pentesting".to_string(),
+            supervisor_name: "Miguel Fernández".to_string(),
+            supervisor_email: "m.fernandez@cybersec.cl".to_string(),
+            supervisor_phone: "+56945678901".to_string(),
+            start_date: None,
+            end_date: None,
+            practice_status: PracticeStatus::Pending,
+        },
+        Practice {
+            id: Uuid::new_v4(),
+            enterprise_name: "GameDev Studios".to_string(),
+            location: "Santiago, Chile".to_string(),
+            description: "Desarrollo de videojuegos con Unity".to_string(),
+            supervisor_name: "Andrea Ruiz".to_string(),
+            supervisor_email: "a.ruiz@gamedev.cl".to_string(),
+            supervisor_phone: "+56956789012".to_string(),
+            start_date: Some(now - Duration::days(20)),
+            end_date: Some(now + Duration::days(70)),
+            practice_status: PracticeStatus::Approved,
         },
     ]
 }

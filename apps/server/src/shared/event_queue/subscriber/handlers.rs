@@ -2,14 +2,18 @@ use super::events::*;
 use crate::{imports::ImportedStudent, send_emails, template_ctx};
 
 use services::{
-    ServiceResult, embeddings::EmbeddingService, mailer::*, printer::*, types::*,
+    ServiceResult,
+    embeddings::{EmbeddingChunk, EmbeddingService},
+    mailer::*,
+    printer::*,
+    types::*,
 };
 
 #[derive(Clone)]
 pub struct SubscriberHandler {
     pub printer: Printer,
     pub mailer: Mailer,
-    pub embedding_service: EmbeddingService,
+    // pub embedding_service: EmbeddingService,
 }
 
 impl SubscriberHandler {
@@ -376,10 +380,24 @@ impl SubscriberHandler {
         &self,
         event: InitializePlagiarismCheckEvent,
     ) -> ServiceResult<()> {
-        let (_practice_id, _parsed_tex) = event;
+        let (practice_id, parsed_tex) = event;
 
-        // Aquí iría la lógica para inicializar la verificación de plagio
-        // usando el practice_id y el parsed_tex.
+        let skipped_sections = vec![
+            "Resumen",
+            "Descripción de la empresa",
+            "Organigrama de la empresa",
+        ];
+
+        let chunks_to_embed = parsed_tex
+            .chunks
+            .iter()
+            .filter(|chunk| !skipped_sections.contains(&chunk.title.as_str()))
+            .map(|chunk| EmbeddingChunk::from((&practice_id, chunk.clone())))
+            .collect::<Vec<EmbeddingChunk>>();
+
+        // for chunk in chunks_to_embed {
+        //     self.embedding_service.save_chunk(chunk).await?;
+        // }
 
         Ok(())
     }

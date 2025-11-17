@@ -36,13 +36,136 @@ async fn main() -> Result<(), sqlx::Error> {
 
     let extra_courses = additional_courses(&teachers);
 
+    // Crear cursos y enrollments
     for course in extra_courses.iter() {
         create_course(&pool, course.clone()).await;
         let students_for_course: Vec<_> = students.iter().take(6).cloned().collect();
         create_enrollments(&pool, students_for_course, course.clone()).await;
     }
 
-    println!("Database seeded successfully!");
+    // Crear prácticas y asociarlas a algunos enrollments
+    let practices = sample_practices();
+
+    // Asociar prácticas a diferentes estudiantes en diferentes cursos
+    // Estudiante 0 - Curso 0 (INF-101)
+    if let Some(student) = students.get(0) {
+        if let Some(course) = extra_courses.get(0) {
+            if let Some(practice) = practices.get(0) {
+                let practice_id = create_practice(&pool, practice.clone()).await;
+                if let Some(enrollment_id) =
+                    get_enrollment_id(&pool, student.id, course.id).await
+                {
+                    update_enrollment_with_practice(&pool, enrollment_id, practice_id)
+                        .await;
+                    println!(
+                        "✓ Práctica asignada a {} en curso {}",
+                        student.name, course.name
+                    );
+                }
+            }
+        }
+    }
+
+    // Estudiante 1 - Curso 1 (INF-201)
+    if let Some(student) = students.get(1) {
+        if let Some(course) = extra_courses.get(1) {
+            if let Some(practice) = practices.get(1) {
+                let practice_id = create_practice(&pool, practice.clone()).await;
+                if let Some(enrollment_id) =
+                    get_enrollment_id(&pool, student.id, course.id).await
+                {
+                    update_enrollment_with_practice(&pool, enrollment_id, practice_id)
+                        .await;
+                    println!(
+                        "✓ Práctica asignada a {} en curso {}",
+                        student.name, course.name
+                    );
+                }
+            }
+        }
+    }
+
+    // Estudiante 2 - Curso 2 (INF-202)
+    if let Some(student) = students.get(2) {
+        if let Some(course) = extra_courses.get(2) {
+            if let Some(practice) = practices.get(2) {
+                let practice_id = create_practice(&pool, practice.clone()).await;
+                if let Some(enrollment_id) =
+                    get_enrollment_id(&pool, student.id, course.id).await
+                {
+                    update_enrollment_with_practice(&pool, enrollment_id, practice_id)
+                        .await;
+                    println!(
+                        "✓ Práctica asignada a {} en curso {}",
+                        student.name, course.name
+                    );
+                }
+            }
+        }
+    }
+
+    // Estudiante 3 - Curso 0 (INF-101)
+    if let Some(student) = students.get(3) {
+        if let Some(course) = extra_courses.get(0) {
+            if let Some(practice) = practices.get(3) {
+                let practice_id = create_practice(&pool, practice.clone()).await;
+                if let Some(enrollment_id) =
+                    get_enrollment_id(&pool, student.id, course.id).await
+                {
+                    update_enrollment_with_practice(&pool, enrollment_id, practice_id)
+                        .await;
+                    println!(
+                        "✓ Práctica asignada a {} en curso {}",
+                        student.name, course.name
+                    );
+                }
+            }
+        }
+    }
+
+    // Estudiante 4 - Curso 1 (INF-201) - Práctica Pendiente
+    if let Some(student) = students.get(4) {
+        if let Some(course) = extra_courses.get(1) {
+            if let Some(practice) = practices.get(4) {
+                let practice_id = create_practice(&pool, practice.clone()).await;
+                if let Some(enrollment_id) =
+                    get_enrollment_id(&pool, student.id, course.id).await
+                {
+                    update_enrollment_with_practice(&pool, enrollment_id, practice_id)
+                        .await;
+                    println!(
+                        "✓ Práctica asignada a {} en curso {}",
+                        student.name, course.name
+                    );
+                }
+            }
+        }
+    }
+
+    // Estudiante 5 - Curso 2 (INF-202)
+    if let Some(student) = students.get(5) {
+        if let Some(course) = extra_courses.get(2) {
+            if let Some(practice) = practices.get(5) {
+                let practice_id = create_practice(&pool, practice.clone()).await;
+                if let Some(enrollment_id) =
+                    get_enrollment_id(&pool, student.id, course.id).await
+                {
+                    update_enrollment_with_practice(&pool, enrollment_id, practice_id)
+                        .await;
+                    println!(
+                        "✓ Práctica asignada a {} en curso {}",
+                        student.name, course.name
+                    );
+                }
+            }
+        }
+    }
+
+    println!("\n🎉 Database seeded successfully!");
+    println!("   - {} estudiantes creados", students.len());
+    println!("   - {} profesores creados", teachers.len());
+    println!("   - {} cursos creados", extra_courses.len());
+    println!("   - 6 prácticas creadas y asignadas");
 
     Ok(())
 }

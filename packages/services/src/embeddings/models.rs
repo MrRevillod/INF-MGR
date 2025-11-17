@@ -1,13 +1,54 @@
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use tex_parser::TextChunk;
 use uuid::Uuid;
 
-use rig::Embed;
-
-#[derive(Debug, Embed, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EmbeddingChunk {
     pub id: Uuid,
-    pub section_type: String,
-
-    #[embed]
+    pub practice_id: Uuid,
+    pub root_section: String,
+    pub chunk_id: String,
+    pub title: String,
+    pub level: u8,
     pub content: String,
+    pub created_at: usize,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChunkPayload {
+    pub practice_id: Uuid,
+    pub root_section: String,
+    pub chunk_id: String,
+    pub title: String,
+    pub level: u8,
+    pub created_at: usize,
+}
+
+impl From<EmbeddingChunk> for ChunkPayload {
+    fn from(chunk: EmbeddingChunk) -> Self {
+        ChunkPayload {
+            practice_id: chunk.practice_id,
+            root_section: chunk.root_section,
+            chunk_id: chunk.chunk_id,
+            title: chunk.title,
+            level: chunk.level,
+            created_at: chunk.created_at,
+        }
+    }
+}
+
+impl From<(&Uuid, TextChunk)> for EmbeddingChunk {
+    fn from((practice_id, chunk): (&Uuid, TextChunk)) -> Self {
+        EmbeddingChunk {
+            id: Uuid::new_v4(),
+            practice_id: *practice_id,
+            root_section: chunk.parent_id.clone().unwrap_or_default(),
+            chunk_id: chunk.id,
+            title: chunk.title,
+            level: chunk.level,
+            content: chunk.content,
+            created_at: Utc::now().timestamp() as usize,
+        }
+    }
 }

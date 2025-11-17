@@ -3725,9 +3725,9 @@ dependencies = [
 
 [[package]]
 name = "reqwest"
-version = "0.12.23"
+version = "0.12.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d429f34c8092b2d42c7c93cec323bb4adeb7c67698f70839adec842ec10c7ceb"
+checksum = "9d0946410b9f7b082a427e4ef5c8ff541a88b357bc6c637c40db3a68ac70a36f"
 dependencies = [
  "base64 0.22.1",
  "bytes",
@@ -4295,15 +4295,19 @@ dependencies = [
 name = "services"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "futures",
  "lettre",
  "qdrant-client",
+ "reqwest",
  "rig-core",
  "rig-fastembed",
  "rig-qdrant",
  "serde",
+ "serde_json",
  "sword",
  "tera",
+ "tex_parser",
  "thiserror 2.0.17",
  "tokio",
  "uuid",
