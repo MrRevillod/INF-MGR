@@ -146,3 +146,38 @@ export const updateEnrollmentMutation = (enrollmentId: string) => {
 		},
 	}))
 }
+
+export const importStudentsMutation = (courseId: string) => {
+	const queryClient = useQueryClient()
+
+	return createMutation<
+		ApiResponse<void>,
+		ApiResponse,
+		{
+			students: Array<{ rut: string; name: string; email: string; register: string }>
+		}
+	>(() => ({
+		mutationKey: ["import-students", courseId],
+		mutationFn: data =>
+			TryFn<void>(() =>
+				protectedApi.post(`/imports/course/${courseId}/students`, data)
+			),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: ["enrollments"],
+			})
+			queryClient.invalidateQueries({
+				queryKey: ["courses"],
+			})
+			queryClient.invalidateQueries({
+				queryKey: ["course", courseId],
+			})
+			queryClient.invalidateQueries({
+				queryKey: ["enrollments", "course", courseId],
+			})
+			queryClient.invalidateQueries({
+				queryKey: ["users"],
+			})
+		},
+	}))
+}

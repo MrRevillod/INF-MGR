@@ -22,6 +22,22 @@ export const EvaluationSchema = v.object({
 
 export type Evaluation = v.InferInput<typeof EvaluationSchema>
 
+// Schema para crear evaluaciones (sin ID)
+export const CreateEvaluationSchema = v.object({
+	name: v.pipe(
+		v.string(),
+		v.minLength(1, "El nombre de la evaluación es requerido"),
+		v.maxLength(100, "El nombre no puede exceder 100 caracteres")
+	),
+	weight: v.pipe(
+		v.number(),
+		v.minValue(1, "El porcentaje debe ser mayor a 0"),
+		v.maxValue(100, "El porcentaje no puede exceder 100")
+	),
+})
+
+export type CreateEvaluation = v.InferInput<typeof CreateEvaluationSchema>
+
 export const CourseStatusSchema = v.union([
 	v.literal("active"),
 	v.literal("completed"),
@@ -37,18 +53,51 @@ export const StudentScoreSchema = v.object({
 export type StudentScore = v.InferInput<typeof StudentScoreSchema>
 
 export const CreateCourseSchema = v.object({
-	code: v.pipe(v.string(), v.minLength(1, "El código es requerido")),
+	code: v.pipe(
+		v.string(),
+		v.minLength(1, "El código es requerido"),
+		v.regex(
+			/^INFO\d{4}$/,
+			"El código debe tener el formato INFO seguido de 4 dígitos (ej: INFO1164)"
+		)
+	),
 	name: v.pipe(v.string(), v.minLength(1, "El nombre es requerido")),
 	teacherId: v.pipe(v.string(), v.minLength(1, "El profesor es requerido")),
 	year: v.pipe(v.number(), v.minValue(2000, "Año inválido")),
 	evaluations: v.pipe(
-		v.array(EvaluationSchema),
-		v.minLength(1, "Debe haber al menos una evaluación")
+		v.array(CreateEvaluationSchema),
+		v.minLength(1, "Debe haber al menos una evaluación"),
+		v.check(evaluations => {
+			const totalWeight = evaluations.reduce((sum, ev) => sum + ev.weight, 0)
+			return totalWeight === 100
+		}, "La suma de los porcentajes debe ser exactamente 100%")
 	),
+})
+
+// Schema parcial para el formulario (sin evaluations, que se manejan localmente)
+export const CreateCourseFormSchema = v.object({
+	code: v.pipe(
+		v.string(),
+		v.minLength(1, "El código es requerido"),
+		v.regex(
+			/^INFO\d{4}$/,
+			"El código debe tener el formato INFO seguido de 4 dígitos (ej: INFO1164)"
+		)
+	),
+	name: v.pipe(
+		v.string(),
+		v.minLength(1, "El nombre es requerido"),
+		v.maxLength(100, "El nombre no puede exceder 100 caracteres")
+	),
+	teacherId: v.pipe(v.string(), v.minLength(1, "Debe seleccionar un profesor")),
+	year: v.pipe(v.number(), v.integer(), v.minValue(2000, "Año inválido")),
 })
 
 // Schema para actualizar curso
 export const UpdateCourseSchema = CreateCourseSchema
+
+// Schema parcial para el formulario de actualización (sin evaluations, que se manejan localmente)
+export const UpdateCourseFormSchema = CreateCourseFormSchema
 
 // Schema para inscribir estudiante
 export const EnrollStudentSchema = v.object({
@@ -66,3 +115,40 @@ export const UpdateEnrollmentSchema = v.object({
 	),
 	practiceId: v.optional(v.string()),
 })
+
+// Schema para importar estudiantes desde CSV
+export const ImportedStudentSchema = v.object({
+	rut: v.pipe(
+		v.string(),
+		v.minLength(1, "El RUT es requerido"),
+		v.regex(
+			/^\d{7,8}-[\dkK]$/,
+			"Formato de RUT inválido (debe ser sin puntos, ej: 12345678-9)"
+		)
+	),
+	name: v.pipe(
+		v.string(),
+		v.minLength(5, "El nombre debe tener al menos 5 caracteres"),
+		v.maxLength(100, "El nombre no puede exceder 100 caracteres")
+	),
+	email: v.pipe(
+		v.string(),
+		v.minLength(1, "El email es requerido"),
+		v.email("El email debe ser válido")
+	),
+	register: v.pipe(
+		v.string(),
+		v.minLength(1, "El número de matrícula es requerido"),
+		v.maxLength(100, "El número de matrícula no puede exceder 100 caracteres")
+	),
+})
+
+export const ImportStudentsSchema = v.object({
+	students: v.pipe(
+		v.array(ImportedStudentSchema),
+		v.minLength(1, "Debe haber al menos un estudiante para importar")
+	),
+})
+
+export type ImportedStudent = v.InferInput<typeof ImportedStudentSchema>
+export type ImportStudents = v.InferInput<typeof ImportStudentsSchema>

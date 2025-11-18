@@ -1,24 +1,22 @@
 <script lang="ts">
-	import { page } from "$app/stores"
+	import type { PageData } from "./$types"
 	import { goto } from "$app/navigation"
 	import PageTitle from "$lib/shared/components/ui/PageTitle.svelte"
 	import Button from "$lib/shared/components/ui/Button.svelte"
 	import Modal from "$lib/shared/components/Modal.svelte"
 	import UpdateCourseForm from "$lib/courses/components/UpdateCourseForm.svelte"
-	import EnrollStudentForm from "$lib/courses/components/EnrollStudentForm.svelte"
-	import DeleteCourseButton from "$lib/courses/components/DeleteCourseButton.svelte"
-	import DeleteEnrollmentButton from "$lib/courses/components/DeleteEnrollmentButton.svelte"
 	import UpdateEnrollmentButton from "$lib/courses/components/UpdateEnrollmentButton.svelte"
 	import ViewAuthorizationButton from "$lib/enrollments/components/ViewAuthorizationButton.svelte"
 	import CreatePracticeButton from "$lib/enrollments/components/CreatePracticeButton.svelte"
-	import ImportStudentsButton from "$lib/courses/components/ImportStudentsButton.svelte"
 	import { getCourseQuery } from "$lib/courses/queries"
-	import { getCourseEnrollmentsQuery } from "$lib/enrollments/queries"
+	import { getEnrollmentsByCourseQuery } from "$lib/enrollments/queries"
 	import { getUsersQuery } from "$lib/users/queries"
 	import { useQueryClient } from "@tanstack/svelte-query"
 
+	let { data }: { data: PageData } = $props()
+
 	// Obtener el ID del curso desde la URL
-	const courseId = $derived($page.params.id ?? "")
+	const courseId = $derived(data.courseId)
 
 	// Query client para refrescar datos
 	const queryClient = useQueryClient()
@@ -28,7 +26,7 @@
 	const { data: courseRes, isLoading } = $derived(courseQuery)
 
 	// Cargar estudiantes inscritos
-	const enrollmentsQuery = $derived(getCourseEnrollmentsQuery(courseId))
+	const enrollmentsQuery = $derived(getEnrollmentsByCourseQuery(courseId))
 	const { data: enrollmentsRes, isLoading: isLoadingEnrollments } =
 		$derived(enrollmentsQuery)
 
@@ -36,13 +34,8 @@
 	const teachersQuery = getUsersQuery(() => ({ page: 1, role: "teacher" }))
 	const { data: teachersRes } = $derived(teachersQuery)
 
-	// Cargar estudiantes (para el formulario de inscripción)
-	const studentsQuery = getUsersQuery(() => ({ page: 1, role: "student" }))
-	const { data: studentsRes } = $derived(studentsQuery)
-
 	// Estados para controlar los modales
 	let showEditModal = $state(false)
-	let showEnrollModal = $state(false)
 
 	// Curso actual (para evitar problemas de undefined en el modal)
 	const currentCourse = $derived(courseRes?.data)
@@ -52,31 +45,15 @@
 		teachersRes?.data?.users?.map(user => ({ id: user.id, name: user.name })) ?? []
 	)
 
-	const enrolledStudentIds = $derived(
-		enrollmentsRes?.data?.map(enrollment => enrollment.student.id) ?? []
-	)
-
-	// Obtener estudiantes no inscritos
-	const availableStudents = $derived(
-		studentsRes?.data?.users
-			?.filter(student => !enrolledStudentIds.includes(student.id))
-			.map(user => ({ id: user.id, name: user.name, rut: user.rut })) ?? []
-	)
+	// Obtener enrollments
+	const enrollments = $derived(enrollmentsRes?.data ?? [])
 
 	function handleBack() {
-		goto("/admin/courses")
-	}
-
-	function handleStudentClick(studentId: string) {
-		goto(`/admin/users/${studentId}`)
+		goto("/teacher/courses")
 	}
 
 	function handleEditSuccess() {
 		showEditModal = false
-	}
-
-	function handleEnrollSuccess() {
-		showEnrollModal = false
 	}
 
 	function calculateWeightedAverage(
@@ -147,10 +124,6 @@
 					variant="primary"
 					text="Editar Curso"
 				/>
-				<DeleteCourseButton
-					courseId={courseRes.data.id}
-					courseName={courseRes.data.name}
-				/>
 			</div>
 		</div>
 
@@ -206,16 +179,8 @@
 				<div>
 					<h2 class="text-lg font-semibold text-gray-900">Estudiantes Inscritos</h2>
 					<p class="text-sm text-gray-500">
-						{enrollmentsRes?.data?.length ?? 0} estudiante(s) inscrito(s)
+						{enrollments.length} estudiante(s) inscrito(s)
 					</p>
-				</div>
-				<div class="flex gap-2">
-					<ImportStudentsButton courseId={courseRes.data.id} />
-					<Button
-						onclick={() => (showEnrollModal = true)}
-						variant="primary"
-						text="+ Inscribir Estudiante"
-					/>
 				</div>
 			</div>
 
@@ -226,12 +191,9 @@
 					></div>
 					<p class="ml-3 text-sm text-gray-500">Cargando estudiantes...</p>
 				</div>
-			{:else if !enrollmentsRes?.data || enrollmentsRes.data.length === 0}
+			{:else if enrollments.length === 0}
 				<div class="py-12 text-center text-gray-500">
-					<p class="font-medium">No hay estudiantes inscritos</p>
-					<p class="mt-1 text-sm">
-						Haz clic en "Inscribir Estudiante" para agregar estudiantes
-					</p>
+					<p class="font-medium">No hay estudiantes inscritos en este curso</p>
 				</div>
 			{:else}
 				<div class="overflow-x-auto">
@@ -280,7 +242,7 @@
 							</tr>
 						</thead>
 						<tbody class="divide-y divide-gray-200 bg-white">
-							{#each enrollmentsRes.data as enrollment (enrollment.id)}
+							{#each enrollments as enrollment (enrollment.id)}
 								{@const scores = enrollment.studentScores || []}
 								{@const average = calculateWeightedAverage(
 									scores,
@@ -294,14 +256,9 @@
 										{enrollment.student.rut}
 									</td>
 									<td class="px-6 py-4 text-sm text-gray-900">
-										<button
-											onclick={() => handleStudentClick(enrollment.student.id)}
-											class="text-blue-600 hover:text-blue-900 hover:underline"
-										>
-											{enrollment.student.name}
-										</button>
+										{enrollment.student.name}
 									</td>
-									<td class="px-6 py-4 text-sm text-gray-500">
+									<td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
 										{enrollment.student.email}
 									</td>
 
@@ -348,12 +305,11 @@
 										class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium"
 									>
 										<div class="flex justify-end gap-2">
-											{#if currentCourse?.evaluations && currentCourse.evaluations.length > 0}
-												<UpdateEnrollmentButton
-													{enrollment}
-													evaluations={currentCourse.evaluations}
-												/>
-											{/if}
+											<!-- Botón para actualizar calificaciones -->
+											<UpdateEnrollmentButton
+												{enrollment}
+												evaluations={currentCourse?.evaluations || []}
+											/>
 
 											{#if enrollment.practiceId && enrollment.practice}
 												{#if enrollment.practice.practiceStatus === "approved"}
@@ -388,11 +344,6 @@
 												<!-- No tiene práctica: Mostrar botón de inscribir -->
 												<CreatePracticeButton {enrollment} />
 											{/if}
-
-											<DeleteEnrollmentButton
-												enrollmentId={enrollment.id}
-												studentName={enrollment.student.name}
-											/>
 										</div>
 									</td>
 								</tr>
@@ -417,23 +368,6 @@
 				course={currentCourse}
 				{teachers}
 				onSuccess={handleEditSuccess}
-			/>
-		{/snippet}
-	</Modal>
-{/if}
-
-<!-- Modal para inscribir estudiante -->
-{#if showEnrollModal}
-	<Modal
-		bind:isOpen={showEnrollModal}
-		onClose={() => (showEnrollModal = false)}
-		title="Inscribir Estudiante"
-	>
-		{#snippet children()}
-			<EnrollStudentForm
-				{courseId}
-				students={availableStudents}
-				onSuccess={handleEnrollSuccess}
 			/>
 		{/snippet}
 	</Modal>

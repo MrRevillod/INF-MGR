@@ -31,3 +31,12 @@ export const getStudentCoursesQuery = (studentId: string) => {
 		enabled: !!studentId,
 	}))
 }
+
+export const getEnrollmentsByCourseQuery = (courseId: string) => {
+	return createQuery<ApiResponse<Enrollment[]>, ApiResponse>(() => ({
+		queryKey: ["enrollments", "course", courseId],
+		queryFn: () =>
+			TryFn(() => protectedApi.get<Enrollment[]>(`/courses/${courseId}/students`)),
+		enabled: !!courseId,
+	}))
+}

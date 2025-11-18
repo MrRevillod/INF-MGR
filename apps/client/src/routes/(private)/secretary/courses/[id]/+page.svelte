@@ -6,7 +6,6 @@
 	import Modal from "$lib/shared/components/Modal.svelte"
 	import UpdateCourseForm from "$lib/courses/components/UpdateCourseForm.svelte"
 	import EnrollStudentForm from "$lib/courses/components/EnrollStudentForm.svelte"
-	import DeleteCourseButton from "$lib/courses/components/DeleteCourseButton.svelte"
 	import DeleteEnrollmentButton from "$lib/courses/components/DeleteEnrollmentButton.svelte"
 	import UpdateEnrollmentButton from "$lib/courses/components/UpdateEnrollmentButton.svelte"
 	import ViewAuthorizationButton from "$lib/enrollments/components/ViewAuthorizationButton.svelte"
@@ -64,11 +63,11 @@
 	)
 
 	function handleBack() {
-		goto("/admin/courses")
+		goto("/secretary/courses")
 	}
 
 	function handleStudentClick(studentId: string) {
-		goto(`/admin/users/${studentId}`)
+		goto(`/secretary/users/${studentId}`)
 	}
 
 	function handleEditSuccess() {
@@ -147,11 +146,17 @@
 					variant="primary"
 					text="Editar Curso"
 				/>
-				<DeleteCourseButton
-					courseId={courseRes.data.id}
-					courseName={courseRes.data.name}
-				/>
+
+				<!-- Secretary NO puede eliminar cursos -->
 			</div>
+		</div>
+
+		<!-- Nota informativa para secretary -->
+		<div class="rounded-lg border border-blue-200 bg-blue-50 p-4">
+			<p class="text-sm text-blue-800">
+				<strong>Nota:</strong> Solo los administradores pueden eliminar cursos. Puedes
+				editar la información del curso y gestionar las inscripciones.
+			</p>
 		</div>
 
 		<!-- Información del curso -->
@@ -389,6 +394,7 @@
 												<CreatePracticeButton {enrollment} />
 											{/if}
 
+											<!-- Secretary SÍ puede eliminar enrollments -->
 											<DeleteEnrollmentButton
 												enrollmentId={enrollment.id}
 												studentName={enrollment.student.name}
@@ -405,36 +411,31 @@
 	{/if}
 </section>
 
-<!-- Modal para editar curso -->
-{#if showEditModal && currentCourse}
-	<Modal
-		bind:isOpen={showEditModal}
-		onClose={() => (showEditModal = false)}
-		title="Editar Curso"
-	>
-		{#snippet children()}
-			<UpdateCourseForm
-				course={currentCourse}
-				{teachers}
-				onSuccess={handleEditSuccess}
-			/>
-		{/snippet}
-	</Modal>
-{/if}
+<!-- Modales -->
+<Modal
+	bind:isOpen={showEditModal}
+	onClose={() => (showEditModal = false)}
+	title="Editar Curso"
+>
+	{#if currentCourse}
+		<UpdateCourseForm
+			course={currentCourse}
+			{teachers}
+			onSuccess={handleEditSuccess}
+		/>
+	{/if}
+</Modal>
 
-<!-- Modal para inscribir estudiante -->
-{#if showEnrollModal}
-	<Modal
-		bind:isOpen={showEnrollModal}
-		onClose={() => (showEnrollModal = false)}
-		title="Inscribir Estudiante"
-	>
-		{#snippet children()}
-			<EnrollStudentForm
-				{courseId}
-				students={availableStudents}
-				onSuccess={handleEnrollSuccess}
-			/>
-		{/snippet}
-	</Modal>
-{/if}
+<Modal
+	bind:isOpen={showEnrollModal}
+	onClose={() => (showEnrollModal = false)}
+	title="Inscribir Estudiante"
+>
+	{#if currentCourse}
+		<EnrollStudentForm
+			courseId={currentCourse.id}
+			students={availableStudents}
+			onSuccess={handleEnrollSuccess}
+		/>
+	{/if}
+</Modal>

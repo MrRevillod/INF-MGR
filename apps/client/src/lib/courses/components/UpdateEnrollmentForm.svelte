@@ -26,7 +26,8 @@
 		)
 		return {
 			evaluationId: evaluation.id,
-			score: existingScore?.score ?? 0,
+			score:
+				existingScore?.score && existingScore.score > 0 ? existingScore.score : 1.0,
 		}
 	})
 

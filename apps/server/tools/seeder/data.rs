@@ -262,6 +262,44 @@ pub fn administrators() -> Vec<User> {
     ]
 }
 
+pub fn secretaries() -> Vec<User> {
+    vec![
+        // Usuario de prueba desde variable de entorno
+        User {
+            id: Uuid::new_v4(),
+            rut: "10000000-0".to_string(),
+            name: "Secretary USER".to_string(),
+            email: std::env::var("TEST_SECRETARY_EMAIL")
+                .expect("TEST_SECRETARY_EMAIL must be set in .env"),
+            role: Role::Secretary,
+            created_at: Utc::now(),
+            deleted_at: None,
+            google_id: None,
+        },
+        // Secretarias adicionales para pruebas
+        User {
+            id: Uuid::new_v4(),
+            rut: "10111111-1".to_string(),
+            name: "Carolina Fuentes".to_string(),
+            email: "secretary.fuentes@universidad.cl".to_string(),
+            role: Role::Secretary,
+            created_at: Utc::now(),
+            deleted_at: None,
+            google_id: None,
+        },
+        User {
+            id: Uuid::new_v4(),
+            rut: "10222222-2".to_string(),
+            name: "Patricia Soto".to_string(),
+            email: "secretary.soto@universidad.cl".to_string(),
+            role: Role::Secretary,
+            created_at: Utc::now(),
+            deleted_at: None,
+            google_id: None,
+        },
+    ]
+}
+
 // pub fn evaluation_schemas() -> Vec<CourseEvaluation> {
 //     vec![
 //         CourseEvaluation {
@@ -291,86 +329,58 @@ pub fn administrators() -> Vec<User> {
 //     }
 // }
 
-// Nuevos cursos adicionales
+// Cursos de prácticas
 pub fn additional_courses(teachers: &[User]) -> Vec<Course> {
     vec![
         Course {
             id: Uuid::new_v4(),
-            name: "Introducción a la Programación".to_string(),
-            code: "INF-101".to_string(),
+            name: "Práctica Inicial".to_string(),
+            code: "INFO1164".to_string(),
             year: 2024,
             teacher_id: teachers.get(0).unwrap().id,
             evaluations: vec![
                 CourseEvaluation {
                     id: Uuid::new_v4(),
-                    name: "Prueba 1".to_string(),
-                    weight: 30,
-                },
-                CourseEvaluation {
-                    id: Uuid::new_v4(),
-                    name: "Prueba 2".to_string(),
-                    weight: 30,
-                },
-                CourseEvaluation {
-                    id: Uuid::new_v4(),
-                    name: "Proyecto Final".to_string(),
+                    name: "Informe de Práctica".to_string(),
                     weight: 40,
+                },
+                CourseEvaluation {
+                    id: Uuid::new_v4(),
+                    name: "Evaluación del Supervisor".to_string(),
+                    weight: 30,
+                },
+                CourseEvaluation {
+                    id: Uuid::new_v4(),
+                    name: "Presentación Final".to_string(),
+                    weight: 30,
                 },
             ],
             course_status: CourseStatus::Active,
         },
         Course {
             id: Uuid::new_v4(),
-            name: "Estructuras de Datos".to_string(),
-            code: "INF-201".to_string(),
-            year: 2024,
+            name: "Práctica Profesional".to_string(),
+            code: "INFO1264".to_string(),
+            year: 2025,
             teacher_id: teachers.get(1).unwrap().id,
             evaluations: vec![
                 CourseEvaluation {
                     id: Uuid::new_v4(),
-                    name: "Tareas".to_string(),
+                    name: "Informe de Práctica".to_string(),
                     weight: 40,
                 },
                 CourseEvaluation {
                     id: Uuid::new_v4(),
-                    name: "Examen Final".to_string(),
-                    weight: 60,
-                },
-            ],
-            course_status: CourseStatus::Active,
-        },
-        Course {
-            id: Uuid::new_v4(),
-            name: "Bases de Datos".to_string(),
-            code: "INF-202".to_string(),
-            year: 2024,
-            teacher_id: teachers.get(2).unwrap().id,
-            evaluations: vec![
-                CourseEvaluation {
-                    id: Uuid::new_v4(),
-                    name: "Proyecto".to_string(),
-                    weight: 50,
+                    name: "Evaluación del Supervisor".to_string(),
+                    weight: 30,
                 },
                 CourseEvaluation {
                     id: Uuid::new_v4(),
-                    name: "Evaluaciones".to_string(),
-                    weight: 50,
+                    name: "Defensa de Práctica".to_string(),
+                    weight: 30,
                 },
             ],
             course_status: CourseStatus::Active,
-        },
-        Course {
-            id: Uuid::new_v4(),
-            name: "Programación Orientada a Objetos".to_string(),
-            code: "INF-203".to_string(),
-            year: 2023,
-            teacher_id: teachers.get(3).unwrap().id,
-            evaluations: vec![CourseEvaluation {
-                id: Uuid::new_v4(),
-                name: "Examen".to_string(),
-                weight: 100,
-            }],
-            course_status: CourseStatus::Completed,
         },
     ]
 }

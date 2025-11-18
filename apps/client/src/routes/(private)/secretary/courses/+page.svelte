@@ -22,8 +22,9 @@
 			?.filter(user => user.role === "teacher")
 			.map(user => ({ id: user.id, name: user.name })) ?? []
 	)
+
 	function handleCourseClick(courseId: string) {
-		goto(`/admin/courses/${courseId}`)
+		goto(`/secretary/courses/${courseId}`)
 	}
 
 	function handleCreateSuccess() {
@@ -102,14 +103,12 @@
 							>
 								Estado
 							</th>
-							<th class="relative px-6 py-3">
-								<span class="sr-only">Acciones</span>
-							</th>
+							<th class="px-6 py-3 text-right"><!-- Acciones --></th>
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-gray-200 bg-white">
 						{#each coursesRes.data as course}
-							<tr class="hover:bg-gray-50">
+							<tr class="transition-colors hover:bg-gray-50">
 								<td
 									class="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900"
 								>
@@ -119,14 +118,14 @@
 									{course.name}
 								</td>
 								<td class="px-6 py-4 text-sm text-gray-500">
-									{course.teacher?.name ?? "Sin profesor"}
+									{course.teacher?.name ?? "Sin asignar"}
 								</td>
 								<td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
 									{course.year}
 								</td>
-								<td class="whitespace-nowrap px-6 py-4 text-sm">
+								<td class="whitespace-nowrap px-6 py-4">
 									<span
-										class="inline-flex rounded-full px-2 text-xs font-semibold leading-5 {course.courseStatus ===
+										class="inline-flex rounded-full px-2 py-1 text-xs font-semibold {course.courseStatus ===
 										'active'
 											? 'bg-green-100 text-green-800'
 											: 'bg-gray-100 text-gray-800'}"
@@ -153,15 +152,10 @@
 	</div>
 </section>
 
-<!-- Modal para crear curso -->
-{#if showCreateModal}
-	<Modal
-		bind:isOpen={showCreateModal}
-		onClose={() => (showCreateModal = false)}
-		title="Crear Nuevo Curso"
-	>
-		{#snippet children()}
-			<CreateCourseForm {teachers} onSuccess={handleCreateSuccess} />
-		{/snippet}
-	</Modal>
-{/if}
+<Modal
+	bind:isOpen={showCreateModal}
+	onClose={() => (showCreateModal = false)}
+	title="Crear Nuevo Curso"
+>
+	<CreateCourseForm {teachers} onSuccess={handleCreateSuccess} />
+</Modal>
