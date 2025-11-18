@@ -275,6 +275,7 @@ pub fn secretaries() -> Vec<User> {
             created_at: Utc::now(),
             deleted_at: None,
             google_id: None,
+            register: None,
         },
         // Secretarias adicionales para pruebas
         User {
@@ -286,6 +287,7 @@ pub fn secretaries() -> Vec<User> {
             created_at: Utc::now(),
             deleted_at: None,
             google_id: None,
+            register: None,
         },
         User {
             id: Uuid::new_v4(),
@@ -296,6 +298,7 @@ pub fn secretaries() -> Vec<User> {
             created_at: Utc::now(),
             deleted_at: None,
             google_id: None,
+            register: None,
         },
     ]
 }
