@@ -41,5 +41,6 @@ tests/files/*
 tests/config
 apps/server/config/*
 !apps/server/config/migrations/
+!apps/server/config/tunnel.sh
 
 service-account.json
