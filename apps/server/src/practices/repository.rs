@@ -46,11 +46,35 @@ impl PracticeRepository {
     }
 
     pub async fn save(&self, practice: Practice) -> AppResult<Practice> {
-        let result = sqlx::query_as::<_, Practice>("SELECT * FROM save_practice($1)")
-            .bind(practice.to_json()?)
+        let query = r"
+            INSERT INTO practices (id, enterprise_name,location, description, supervisor_name, supervisor_email, supervisor_phone, start_date, end_date, practice_status)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            ON CONFLICT (id) DO UPDATE SET 
+                enterprise_name = EXCLUDED.enterprise_name,
+                location = EXCLUDED.location,
+                description = EXCLUDED.description,
+                supervisor_name = EXCLUDED.supervisor_name,
+                supervisor_email = EXCLUDED.supervisor_email,
+                supervisor_phone = EXCLUDED.supervisor_phone,
+                start_date = EXCLUDED.start_date,
+                end_date = EXCLUDED.end_date,
+                practice_status = EXCLUDED.practice_status
+            RETURNING *
+        ";
+
+        let result = sqlx::query_as::<_, Practice>(query)
+            .bind(practice.id)
+            .bind(practice.enterprise_name)
+            .bind(practice.location)
+            .bind(practice.description)
+            .bind(practice.supervisor_name)
+            .bind(practice.supervisor_email)
+            .bind(practice.supervisor_phone)
+            .bind(practice.start_date)
+            .bind(practice.end_date)
+            .bind(practice.practice_status)
             .fetch_one(self.db_connection.get_pool())
             .await?;
-
         Ok(result)
     }
 

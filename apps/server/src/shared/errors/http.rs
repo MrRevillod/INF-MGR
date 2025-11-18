@@ -87,6 +87,11 @@ fn handle_validation_error(error: ValidationError) -> HttpResponse {
             "El período para subir el informe final ha expirado".into(),
         ),
 
+        ValidationError::StudentHasPractice => (
+            "practice",
+            "El estudiante ya tiene una práctica inscrita".into(),
+        ),
+
         // Constraint violations
         ValidationError::DuplicateEmail { .. } => {
             ("email", "El email ya está en uso".into())

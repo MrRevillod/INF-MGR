@@ -11,7 +11,7 @@ use crate::{
     enrollments::*,
     practices::*,
     shared::{
-        AppResult, NotFoundError,
+        AppResult, NotFoundError, ValidationError,
         event_queue::{Event, EventQueue},
     },
 };
@@ -34,11 +34,22 @@ impl PracticeService {
         enrollment_id: &Uuid,
         input: CreatePracticeDto,
     ) -> AppResult<Practice> {
-        let practice = Practice::from(input);
-
         let (enrollment, student, _, _) =
             self.enrollments.get_by_id(enrollment_id).await?;
 
+        if let Some(practice_id) = enrollment.practice_id {
+            let practice = self
+                .practices
+                .find_by_id(&practice_id)
+                .await?
+                .ok_or(NotFoundError::practice(practice_id))?;
+
+            if practice.practice_status != PracticeStatus::Declined {
+                return Err(ValidationError::StudentHasPractice)?;
+            }
+        }
+
+        let practice = Practice::from(input);
         let (course, _) = self.courses.get_by_id(&enrollment.course_id).await?;
 
         let practice = self.practices.save(practice).await?;

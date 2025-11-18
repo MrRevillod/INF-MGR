@@ -5,10 +5,10 @@ import type { PageLoad } from "./$types"
 export const ssr = false
 
 export const load: PageLoad = async ({ params }) => {
-	const { enrollmentsId, practiceId } = params
+	const { enrollmentId, practiceId } = params
 
 	const response = await TryFn(() =>
-		api.post<null>(`/enrollments/${enrollmentsId}/practice/${practiceId}/decline`)
+		api.post<null>(`/enrollments/${enrollmentId}/practice/${practiceId}/decline`)
 	)
 
 	return {

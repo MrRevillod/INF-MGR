@@ -34,6 +34,11 @@ pub enum ValidationError {
     #[error("Cannot create meeting request with less than 2 attendees")]
     NotEnoughAttendees,
 
+    #[error(
+        "Cannot add a practice because the student already has an practice registered"
+    )]
+    StudentHasPractice,
+
     // === Constraint Violations (400, not 409) ===
     #[error("Email '{email}' is already in use")]
     DuplicateEmail { email: String },

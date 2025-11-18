@@ -70,8 +70,24 @@ impl CourseRepository {
     }
 
     pub async fn save(&self, course: Course) -> AppResult<Course> {
-        let result = sqlx::query_as::<_, Course>("SELECT * FROM save_course($1)")
-            .bind(course.to_json()?)
+        let query = r"
+            INSERT INTO courses (id, year, code, name, course_status, teacher_id, evaluations)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            ON CONFLICT (id) DO UPDATE SET
+                teacher_id = EXCLUDED.teacher_id,
+                course_status = EXCLUDED.course_status,
+                evaluations = EXCLUDED.evaluations
+            RETURNING *
+        ";
+
+        let result = sqlx::query_as::<_, Course>(query)
+            .bind(course.id)
+            .bind(course.year)
+            .bind(&course.code)
+            .bind(&course.name)
+            .bind(course.course_status)
+            .bind(course.teacher_id)
+            .bind(&course.evaluations)
             .fetch_one(self.db_connection.get_pool())
             .await?;
 

@@ -109,8 +109,29 @@ impl UserRepository {
     }
 
     pub async fn save(&self, user: User) -> AppResult<User> {
-        let saved_user = sqlx::query_as::<_, User>("SELECT * FROM save_user($1)")
-            .bind(user.to_json()?)
+        let upsert_query = r"
+            INSERT INTO users (id, rut, name, email, google_id, role, created_at, deleted_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            ON CONFLICT (id) 
+            DO UPDATE SET 
+                rut = EXCLUDED.rut,
+                name = EXCLUDED.name,
+                email = EXCLUDED.email,
+                google_id = EXCLUDED.google_id,
+                role = EXCLUDED.role
+            WHERE users.deleted_at IS NULL
+            RETURNING *
+        ";
+
+        let saved_user = sqlx::query_as::<_, User>(upsert_query)
+            .bind(user.id)
+            .bind(user.rut)
+            .bind(user.name)
+            .bind(user.email)
+            .bind(user.google_id)
+            .bind(user.role)
+            .bind(user.created_at)
+            .bind(user.deleted_at)
             .fetch_one(self.database_connection.get_pool())
             .await?;
 

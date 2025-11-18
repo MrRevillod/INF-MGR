@@ -26,6 +26,8 @@ services:
       - ./packages:/app/packages
       - ./Cargo.toml:/app/Cargo.toml
       - ./Cargo.lock:/app/Cargo.lock
+      - ~/.ssh/pillan_tunnel:/app/.ssh/pillan_tunnel:ro
+      - ~/.ssh/known_hosts:/app/.ssh/known_hosts:ro
       - cargo_cache:/usr/local/cargo/registry
       - server_target:/app/target
 

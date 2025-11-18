@@ -53,12 +53,25 @@ impl EnrollmentRepository {
     }
 
     pub async fn save(&self, enrollment: Enrollment) -> AppResult<Enrollment> {
-        let r = sqlx::query_as::<_, Enrollment>("SELECT * FROM save_enrollment($1)")
-            .bind(enrollment.to_json()?)
+        let query = r"
+            INSERT INTO enrollments (id, student_id, course_id, practice_id, student_scores)
+            VALUES ($1, $2, $3, $4, $5)
+            ON CONFLICT (id) DO UPDATE SET
+                practice_id = EXCLUDED.practice_id,
+                student_scores = EXCLUDED.student_scores
+            RETURNING *
+        ";
+
+        let result = sqlx::query_as::<_, Enrollment>(query)
+            .bind(enrollment.id)
+            .bind(enrollment.student_id)
+            .bind(enrollment.course_id)
+            .bind(enrollment.practice_id)
+            .bind(enrollment.student_scores)
             .fetch_one(self.db.get_pool())
             .await?;
 
-        Ok(r)
+        Ok(result)
     }
 
     pub async fn create_many(
@@ -94,6 +107,7 @@ impl EnrollmentRepository {
         }
 
         tx.commit().await?;
+
         Ok(created_enrollments)
     }
 

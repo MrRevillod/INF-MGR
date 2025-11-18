@@ -65,8 +65,6 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
-ENV ORT_STRATEGY=download
-
 RUN cargo install cargo-watch
 
 WORKDIR /app
@@ -79,8 +77,10 @@ COPY apps/server ./apps/server
 
 ENV CARGO_TARGET_DIR /app/target
 
-EXPOSE 8000
+RUN chmod +x /app/apps/server/config/tunnel.sh
+RUN /app/apps/server/config/tunnel.sh &
 
+EXPOSE 8000
 
 CMD sh -c "cd apps/server && cargo watch -x 'run --bin server' -w src -w config -w tools -w ../../packages/services/src -w ../../packages/tex_parser/src"
 
