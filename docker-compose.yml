@@ -7,6 +7,10 @@ services:
       target: dev
     env_file:
       - .env
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    privileged: false
     depends_on:
       inf_mgr_postgres:
         condition: service_healthy
@@ -26,9 +30,8 @@ services:
       - ./packages:/app/packages
       - ./Cargo.toml:/app/Cargo.toml
       - ./Cargo.lock:/app/Cargo.lock
-      - ~/.ssh/pillan_tunnel:/app/.ssh/pillan_tunnel:ro
-      - ~/.ssh/known_hosts:/app/.ssh/known_hosts:ro
       - ./config/logo.png:/app/logo.png:ro
+      - ./apps/server/config:/app/apps/server/config
       - cargo_cache:/usr/local/cargo/registry
       - server_target:/app/target
 

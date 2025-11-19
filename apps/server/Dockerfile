@@ -61,6 +61,11 @@ RUN apt-get update && apt-get install -y \
     unzip \
     build-essential \
     pkg-config \
+    wireguard \
+    iproute2 \
+    wireguard-tools \
+    netcat-traditional \
+    iputils-ping \
     && rm -rf /var/lib/apt/lists/*
 
 RUN cargo install cargo-watch
@@ -75,21 +80,12 @@ COPY apps/server ./apps/server
 
 ENV CARGO_TARGET_DIR /app/target
 
-RUN chmod +x /app/apps/server/config/tunnel.sh
-RUN /app/apps/server/config/tunnel.sh &
+RUN chmod +x /app/apps/server/config/vpn.sh && \
+    chmod +x /app/apps/server/config/entrypoint.sh
 
 EXPOSE 8000
 
-CMD sh -c "cd apps/server && cargo watch -x 'run --bin server' -w src -w config -w tools -w ../../packages/services/src -w ../../packages/tex_parser/src"
-
-# CMD sh -c "cd apps/server && cargo watch \
-#     -x 'run --bin server' \
-#     -w src \
-#     -w config \
-#     -w tools \
-#     -w ../../packages/services/src \
-#     -w ../../packages/tex_parser/src \
-#     --ignore '../../packages/services/src/printer/templates/*'"
+CMD ["/bin/bash", "/app/apps/server/config/entrypoint.sh"]
 
 # -----------------------------------------------------------------------
 # PRODUCTION STAGE ------------------------------------------------------

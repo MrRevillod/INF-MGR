@@ -41,11 +41,11 @@ tests/files/*
 tests/config
 apps/server/config/*
 !apps/server/config/migrations/
-!apps/server/config/tunnel.sh
+!apps/server/config/vpn.sh
+!apps/server/config/entrypoint.sh
 
 packages/services/src/printer/templates
 !packages/services/src/printer/templates/authorization.typ
 !packages/services/src/printer/templates/logo.png
-
 
 service-account.json
