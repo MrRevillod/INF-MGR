@@ -40,5 +40,5 @@ pub struct FileManagerConfig {
 pub struct EmbeddingServiceConfig {
     pub qdrant_url: String,
     pub collection_name: String,
-    pub ollama_url: String,
+    pub embeddings_model_url: String,
 }

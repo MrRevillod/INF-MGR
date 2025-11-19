@@ -36,29 +36,22 @@ impl EventSubscriber {
 
     pub async fn subscribe(&self) -> Result<(), Box<dyn std::error::Error>> {
         while let Some(event) = self.receiver.lock().await.recv().await {
-            let num_of_event_retry = self.config.num_of_event_retry;
             let delay_between_event_retry_ms = self.config.delay_between_event_retry_ms;
 
             let handler = Arc::clone(&self.handler);
 
             tokio::spawn(async move {
-                let mut attempts = 0;
+                let handle = Self::handle(Arc::clone(&handler), event.clone()).await;
 
-                while attempts < num_of_event_retry {
-                    let handle = Self::handle(Arc::clone(&handler), event.clone());
-
-                    match handle.await {
-                        Ok(()) => break,
-                        Err(e) => {
-                            attempts += 1;
-                            tracing::error!(
-                                "Error processing event (attempt {attempts}): {e}"
-                            );
-                        }
-                    }
-
-                    sleep(Duration::from_secs(delay_between_event_retry_ms)).await;
+                if handle.is_err() {
+                    tracing::error!(
+                        "Error handling event {:?}: {:?}",
+                        event,
+                        handle.err().unwrap()
+                    );
                 }
+
+                sleep(Duration::from_secs(delay_between_event_retry_ms)).await;
             });
         }
 

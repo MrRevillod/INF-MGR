@@ -27,7 +27,7 @@ impl OnRequestWithConfig<Role> for MinimumRequiredRole {
         let has_required_role = user_role_priority >= role.priority();
 
         if !has_required_role {
-            return Err(HttpResponse::Forbidden().message("Insufficient role"));
+            return Err(HttpResponse::Unauthorized());
         }
 
         // Determinar si necesita validación de ownership basado en la prioridad

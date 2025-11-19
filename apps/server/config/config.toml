@@ -65,5 +65,5 @@ documents_dir = "${DOCUMENTS_DIR:./documents}"
 
 [services-config.embedding_service]
 qdrant_url = "${QDRANT_DB_URL:http://inf_mgr_qdrant:6333}"
-ollama_url = "${OLLAMA_URL:http://inf_mgr_ollama:11434}"
+embeddings_model_url = "${EMBEDDINGS_MODEL_URL}"
 collection_name = "practice_reports"

@@ -27,7 +27,7 @@
       columns: (1fr, auto),
       align: (left + horizon, right + horizon),
       [*Escuela de Ingeniería en Informática*],
-      image("./logo.png", scaling: "smooth", width: 18em)
+      image("/app/logo.png", scaling: "smooth", width: 18em)
     )
     #hr
     #v(-4em)

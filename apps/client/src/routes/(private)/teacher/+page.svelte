@@ -6,7 +6,7 @@
 	let { data }: { data: PageData } = $props()
 
 	const coursesQuery = getTeacherCoursesQuery(data.user!.id)
-	const courses = $derived(coursesQuery.data?.data || [])
+	const courses = $derived(coursesQuery.data?.data ?? [])
 </script>
 
 <div class="container mx-auto px-4 py-8">

@@ -1,3 +1,5 @@
+use std::env;
+
 use crate::ServiceResult;
 use crate::config::*;
 use crate::types::*;
@@ -32,10 +34,7 @@ impl Printer {
 
     pub async fn print(&self, opts: PrintOptions) -> ServiceResult<String> {
         let template = self.template_ctx.render(opts.template, opts.context)?;
-        let template_dir =
-            Path::new(env!("CARGO_MANIFEST_DIR")).join("src/printer/templates");
-
-        let temp_file = template_dir.join(format!("{}.typ", opts.template));
+        let temp_file = env::temp_dir().join(format!("{}.typ", opts.template));
 
         fs::write(&temp_file, template).await.map_err(|source| {
             ServiceError::Printer {
@@ -66,7 +65,7 @@ impl Printer {
         };
 
         let output = Command::new("typst")
-            .args(["compile", temp_file, &out_file])
+            .args(["compile", "--root", "/", temp_file, &out_file])
             .output()
             .await
             .map_err(|source| ServiceError::Printer {
@@ -74,9 +73,10 @@ impl Printer {
             })?;
 
         if !output.status.success() {
-            return Err(PrinterError::PdfGenerationError(
-                "Failed to generate PDF".to_string(),
-            ))?;
+            return Err(PrinterError::PdfGenerationError(format!(
+                "Failed to generate PDF: {}",
+                String::from_utf8_lossy(&output.stderr)
+            )))?;
         }
 
         let _ = fs::remove_file(&temp_file).await;

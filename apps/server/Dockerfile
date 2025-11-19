@@ -17,8 +17,6 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
-ENV ORT_STRATEGY=download
-
 COPY Cargo.toml Cargo.lock ./
 
 COPY apps/server/Cargo.toml apps/server/Cargo.lock ./apps/server/
@@ -83,6 +81,15 @@ RUN /app/apps/server/config/tunnel.sh &
 EXPOSE 8000
 
 CMD sh -c "cd apps/server && cargo watch -x 'run --bin server' -w src -w config -w tools -w ../../packages/services/src -w ../../packages/tex_parser/src"
+
+# CMD sh -c "cd apps/server && cargo watch \
+#     -x 'run --bin server' \
+#     -w src \
+#     -w config \
+#     -w tools \
+#     -w ../../packages/services/src \
+#     -w ../../packages/tex_parser/src \
+#     --ignore '../../packages/services/src/printer/templates/*'"
 
 # -----------------------------------------------------------------------
 # PRODUCTION STAGE ------------------------------------------------------

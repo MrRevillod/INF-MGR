@@ -10,7 +10,6 @@
 	import CreatePracticeButton from "$lib/enrollments/components/CreatePracticeButton.svelte"
 	import { getCourseQuery } from "$lib/courses/queries"
 	import { getEnrollmentsByCourseQuery } from "$lib/enrollments/queries"
-	import { getUsersQuery } from "$lib/users/queries"
 	import { useQueryClient } from "@tanstack/svelte-query"
 
 	let { data }: { data: PageData } = $props()
@@ -30,20 +29,11 @@
 	const { data: enrollmentsRes, isLoading: isLoadingEnrollments } =
 		$derived(enrollmentsQuery)
 
-	// Cargar profesores (para el formulario de edición)
-	const teachersQuery = getUsersQuery(() => ({ page: 1, role: "teacher" }))
-	const { data: teachersRes } = $derived(teachersQuery)
-
 	// Estados para controlar los modales
 	let showEditModal = $state(false)
 
 	// Curso actual (para evitar problemas de undefined en el modal)
 	const currentCourse = $derived(courseRes?.data)
-
-	// Obtener profesores directamente de la consulta filtrada
-	const teachers = $derived(
-		teachersRes?.data?.users?.map(user => ({ id: user.id, name: user.name })) ?? []
-	)
 
 	// Obtener enrollments
 	const enrollments = $derived(enrollmentsRes?.data ?? [])
@@ -366,7 +356,7 @@
 		{#snippet children()}
 			<UpdateCourseForm
 				course={currentCourse}
-				{teachers}
+				teachers={[]}
 				onSuccess={handleEditSuccess}
 			/>
 		{/snippet}

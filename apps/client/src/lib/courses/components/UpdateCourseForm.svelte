@@ -9,6 +9,7 @@
 	import { updateCourseMutation } from "$lib/courses/mutations"
 	import { toast } from "svelte-sonner"
 	import * as v from "valibot"
+	import { auth } from "$lib/auth/store.svelte"
 
 	interface Props {
 		course: Course
@@ -146,29 +147,31 @@
 			{/snippet}
 		</Field>
 
-		<Field of={form} path={["teacherId"]}>
-			{#snippet children(field)}
-				<div>
-					<label for="teacherId" class="block text-sm font-medium text-gray-700">
-						Profesor *
-					</label>
-					<select
-						id="teacherId"
-						value={field.input ?? ""}
-						{...field.props}
-						class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-					>
-						<option value="">Seleccione un profesor</option>
-						{#each teachers as teacher}
-							<option value={teacher.id}>{teacher.name}</option>
-						{/each}
-					</select>
-					{#if field.errors}
-						<p class="mt-1 text-sm text-red-600">{field.errors[0]}</p>
-					{/if}
-				</div>
-			{/snippet}
-		</Field>
+		{#if auth.user?.role === "administrator" || auth.user?.role === "secretary"}
+			<Field of={form} path={["teacherId"]}>
+				{#snippet children(field)}
+					<div>
+						<label for="teacherId" class="block text-sm font-medium text-gray-700">
+							Profesor *
+						</label>
+						<select
+							id="teacherId"
+							value={field.input ?? ""}
+							{...field.props}
+							class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+						>
+							<option value="">Seleccione un profesor</option>
+							{#each teachers as teacher}
+								<option value={teacher.id}>{teacher.name}</option>
+							{/each}
+						</select>
+						{#if field.errors}
+							<p class="mt-1 text-sm text-red-600">{field.errors[0]}</p>
+						{/if}
+					</div>
+				{/snippet}
+			</Field>
+		{/if}
 
 		<Field of={form} path={["year"]}>
 			{#snippet children(field)}

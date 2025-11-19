@@ -43,4 +43,9 @@ apps/server/config/*
 !apps/server/config/migrations/
 !apps/server/config/tunnel.sh
 
+packages/services/src/printer/templates
+!packages/services/src/printer/templates/authorization.typ
+!packages/services/src/printer/templates/logo.png
+
+
 service-account.json

@@ -28,6 +28,7 @@ services:
       - ./Cargo.lock:/app/Cargo.lock
       - ~/.ssh/pillan_tunnel:/app/.ssh/pillan_tunnel:ro
       - ~/.ssh/known_hosts:/app/.ssh/known_hosts:ro
+      - ./config/logo.png:/app/logo.png:ro
       - cargo_cache:/usr/local/cargo/registry
       - server_target:/app/target
 

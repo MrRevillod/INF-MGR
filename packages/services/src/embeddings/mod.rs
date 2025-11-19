@@ -31,7 +31,9 @@ impl EmbeddingService {
     pub async fn new(
         config: EmbeddingServiceConfig,
     ) -> Result<Self, EmbeddingServiceError> {
-        let client = OllamaClient::builder().base_url(&config.ollama_url).build();
+        let client = OllamaClient::builder()
+            .base_url(&config.embeddings_model_url)
+            .build();
         let model = client.embedding_model(NOMIC_EMBED_TEXT);
 
         let qdrant_client = Qdrant::from_url(&config.qdrant_url).build()?;
