@@ -110,8 +110,8 @@ impl UserRepository {
 
     pub async fn save(&self, user: User) -> AppResult<User> {
         let upsert_query = r"
-            INSERT INTO users (id, rut, name, email, google_id, role, created_at, deleted_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            INSERT INTO users (id, rut, name, email, google_id, role, created_at, deleted_at,  register)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             ON CONFLICT (id) 
             DO UPDATE SET 
                 rut = EXCLUDED.rut,
@@ -132,6 +132,7 @@ impl UserRepository {
             .bind(user.role)
             .bind(user.created_at)
             .bind(user.deleted_at)
+            .bind(user.register)
             .fetch_one(self.database_connection.get_pool())
             .await?;
 

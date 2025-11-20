@@ -1,0 +1,21 @@
+sequenceDiagram
+    participant EH as Event Handler
+    participant ES as EmbeddingService
+    participant EC as EmbeddingClient
+    participant QS as QdrantService
+    participant VLLM as vLLM Server
+    participant Q as Qdrant DB
+
+    Note over EH: Receives ParsedTex with chunks
+    loop For each chunk in ParsedTex
+        EH->>ES: save_chunk(chunk)
+        ES->>EC: embed_chunk(chunk)
+        EC->>VLLM: POST /v1/embeddings (text)
+        VLLM-->>EC: Embedding response
+        EC-->>ES: Embedding
+        ES->>QS: save_chunk(chunk, embedding)
+        QS->>Q: Upsert point (vector + payload)
+        Q-->>QS: Success
+        QS-->>ES: OK
+        ES-->>EH: OK
+    end

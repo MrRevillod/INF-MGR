@@ -4,8 +4,8 @@ use uuid::Uuid;
 
 pub async fn create_users(pool: &Pool<Postgres>, users: Vec<User>) {
     let query = r"
-            INSERT INTO users (id, rut, name, email, role, google_id, created_at, deleted_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            INSERT INTO users (id, rut, name, email, role, google_id, created_at, deleted_at, register)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         ";
 
     for user in users {
@@ -18,6 +18,7 @@ pub async fn create_users(pool: &Pool<Postgres>, users: Vec<User>) {
             .bind(&user.google_id)
             .bind(user.created_at)
             .bind(user.deleted_at)
+            .bind(&user.register)
             .execute(pool)
             .await
             .unwrap();

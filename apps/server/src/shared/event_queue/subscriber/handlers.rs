@@ -13,7 +13,7 @@ use services::{
 pub struct SubscriberHandler {
     pub printer: Printer,
     pub mailer: Mailer,
-    // pub embedding_service: EmbeddingService,
+    pub embedding_service: EmbeddingService,
 }
 
 impl SubscriberHandler {
@@ -22,10 +22,16 @@ impl SubscriberHandler {
         event: PracticeApprovedEvent,
     ) -> ServiceResult<()> {
         let (student, enrollment, practice, course, teacher) = event;
+
+        let student_register = student
+            .register
+            .clone()
+            .unwrap_or_else(|| "Sin registro".to_string());
+
         let mut template_ctx = template_ctx! {
             "student_rut" => student.rut,
             "student_name" => student.name,
-            "student_register" => student.register.unwrap_or_else(|| "".to_string()),
+            "student_register" => student_register,
             "course_name" => course.name,
             "course_code" => course.code,
             "enterprise_name" => practice.enterprise_name,
@@ -395,9 +401,9 @@ impl SubscriberHandler {
             .map(|chunk| EmbeddingChunk::from((&practice_id, chunk.clone())))
             .collect::<Vec<EmbeddingChunk>>();
 
-        // for chunk in chunks_to_embed {
-        //     self.embedding_service.save_chunk(chunk).await?;
-        // }
+        for chunk in chunks_to_embed {
+            self.embedding_service.save_chunk(chunk).await?;
+        }
 
         Ok(())
     }

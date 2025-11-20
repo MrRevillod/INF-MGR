@@ -4,7 +4,6 @@ use lettre::{
 };
 
 use qdrant_client::QdrantError;
-use rig::embeddings::EmbeddingError;
 use tera::Error as TeraError;
 use thiserror::Error;
 
@@ -89,10 +88,10 @@ pub enum EmbeddingServiceError {
         source: QdrantError,
     },
 
-    #[error("Embedding error: {source}")]
-    EmbeddingError {
+    #[error("HTTP request error: {source}")]
+    HttpError {
         #[from]
-        source: EmbeddingError,
+        source: reqwest::Error,
     },
 
     #[error("Serialization error: {source}")]
@@ -100,4 +99,7 @@ pub enum EmbeddingServiceError {
         #[from]
         source: serde_json::Error,
     },
+
+    #[error("No embedding returned from the service")]
+    NoEmbeddingError,
 }

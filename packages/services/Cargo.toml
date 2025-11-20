@@ -22,10 +22,8 @@ tera = "1.20.0"
 uuid = { version = "1.17.0", features = ["serde", "v4"] }
 futures = "0.3.31"
 
-rig-core = { version = "0.23.1", features = ["derive"] }
-rig-qdrant = "0.1.29"
-rig-fastembed = "0.2.15"
 qdrant-client = { version = "1.15.0", features = ["serde"] }
-reqwest = "0.12.24"
+reqwest = { version = "0.12.24", features = ["json"] }
 chrono = "0.4.42"
 serde_json = "1.0.145"
+tracing = "0.1.41"

@@ -57,9 +57,9 @@
 
 Autorizamos a: {{ student_name }}, alumno(a) regular de la carrera {{ career_name }} de la Universidad Católica de Temuco, para que efectúe su *{{ course_name }}* en nuestra empresa o institución:
 
-Número de registro: {{ student_register }}
+Número de registro: *{{ student_register }}*
 
-#v(1em)
+#v(0.2em)
 
 #let tab1 = {
   table(
@@ -103,7 +103,7 @@ La coordinación de esta Práctica en la empresa/institución estará bajo la su
     kind: table,
 ) <tab:tab1>
 
-#v(5em)
+#v(4em)
 
 #grid(
   columns: (1fr, 1fr),

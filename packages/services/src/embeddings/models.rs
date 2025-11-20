@@ -25,6 +25,16 @@ pub struct ChunkPayload {
     pub created_at: usize,
 }
 
+#[derive(Debug, Clone, Deserialize)]
+pub struct Embedding {
+    pub embedding: Vec<f64>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct EmbeddingResponse {
+    pub data: Vec<Embedding>,
+}
+
 impl From<EmbeddingChunk> for ChunkPayload {
     fn from(chunk: EmbeddingChunk) -> Self {
         ChunkPayload {

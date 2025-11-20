@@ -170,15 +170,15 @@ impl EnrollmentService {
             .await?
             .ok_or(NotFoundError::user(course.teacher_id))?;
 
-        let Some(end_date) = practice.end_date else {
-            return Err(ValidationError::FinalReportUploadExpired)?;
-        };
+        // let Some(end_date) = practice.end_date else {
+        //     return Err(ValidationError::FinalReportUploadExpired)?;
+        // };
 
-        let limit_upload_date = end_date + Duration::days(14);
+        // let limit_upload_date = end_date + Duration::days(14);
 
-        if Utc::now() > limit_upload_date {
-            return Err(ValidationError::FinalReportUploadExpired)?;
-        }
+        // if Utc::now() > limit_upload_date {
+        //     return Err(ValidationError::FinalReportUploadExpired)?;
+        // }
 
         let event_data = (enrollment, course, teacher, student, doc_bytes);
 
