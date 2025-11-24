@@ -11,6 +11,7 @@ pub struct TextChunk {
     pub content: String,           // Texto limpio listo para embedding
     pub level: u8,                 // 1=section, 2=subsection, 3=subsubsection
     pub parent_id: Option<String>, // ID del padre si es subsección
+    pub root_section: String,      // ID de la sección principal (nivel 1) - para filtrado de plagio
 }
 
 /// Documento procesado como lista plana de chunks listos para análisis.

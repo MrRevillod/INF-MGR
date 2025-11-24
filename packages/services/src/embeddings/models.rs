@@ -25,6 +25,27 @@ pub struct ChunkPayload {
     pub created_at: usize,
 }
 
+#[derive(Debug, Clone, Deserialize)]
+pub struct Embedding {
+    pub embedding: Vec<f64>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct EmbeddingResponse {
+    pub data: Vec<Embedding>,
+}
+
+#[derive(Debug, Clone)]
+pub struct SimilarChunk {
+    pub chunk: EmbeddingChunk,
+    pub similarity_score: f32,
+}
+
+#[derive(Debug, Clone)]
+pub struct SearchResult {
+    pub similar_chunks: Vec<SimilarChunk>,
+}
+
 impl From<EmbeddingChunk> for ChunkPayload {
     fn from(chunk: EmbeddingChunk) -> Self {
         ChunkPayload {
@@ -43,7 +64,7 @@ impl From<(&Uuid, TextChunk)> for EmbeddingChunk {
         EmbeddingChunk {
             id: Uuid::new_v4(),
             practice_id: *practice_id,
-            root_section: chunk.parent_id.clone().unwrap_or_default(),
+            root_section: chunk.root_section,
             chunk_id: chunk.id,
             title: chunk.title,
             level: chunk.level,

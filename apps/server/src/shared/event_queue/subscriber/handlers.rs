@@ -2,18 +2,16 @@ use super::events::*;
 use crate::{imports::ImportedStudent, send_emails, template_ctx};
 
 use services::{
-    ServiceResult,
-    embeddings::{EmbeddingChunk, EmbeddingService},
-    mailer::*,
-    printer::*,
-    types::*,
+    ServiceResult, embeddings::EmbeddingService, mailer::*,
+    plagiarism_new::PlagiarismDetectionService, printer::*, types::*,
 };
 
 #[derive(Clone)]
 pub struct SubscriberHandler {
     pub printer: Printer,
     pub mailer: Mailer,
-    // pub embedding_service: EmbeddingService,
+    pub embedding_service: EmbeddingService,
+    pub plagiarism_service: PlagiarismDetectionService,
 }
 
 impl SubscriberHandler {
@@ -22,10 +20,16 @@ impl SubscriberHandler {
         event: PracticeApprovedEvent,
     ) -> ServiceResult<()> {
         let (student, enrollment, practice, course, teacher) = event;
+
+        let student_register = student
+            .register
+            .clone()
+            .unwrap_or_else(|| "Sin registro".to_string());
+
         let mut template_ctx = template_ctx! {
             "student_rut" => student.rut,
             "student_name" => student.name,
-            "student_register" => student.register.unwrap_or_else(|| "".to_string()),
+            "student_register" => student_register,
             "course_name" => course.name,
             "course_code" => course.code,
             "enterprise_name" => practice.enterprise_name,
@@ -382,22 +386,77 @@ impl SubscriberHandler {
     ) -> ServiceResult<()> {
         let (practice_id, parsed_tex) = event;
 
-        let skipped_sections = vec![
-            "Resumen",
-            "Descripción de la empresa",
-            "Organigrama de la empresa",
-        ];
+        println!("\n🔍 ===== ANÁLISIS DE PLAGIO =====");
+        println!("Práctica ID: {}", practice_id);
 
-        let chunks_to_embed = parsed_tex
-            .chunks
-            .iter()
-            .filter(|chunk| !skipped_sections.contains(&chunk.title.as_str()))
-            .map(|chunk| EmbeddingChunk::from((&practice_id, chunk.clone())))
-            .collect::<Vec<EmbeddingChunk>>();
+        // Analyze the document for plagiarism using the new service
+        match self
+            .plagiarism_service
+            .analyze_document(practice_id, parsed_tex)
+            .await
+        {
+            Ok(result) => {
+                println!("\n✅ Análisis completado:");
+                println!("   • Chunks analizados: {}", result.total_chunks_analyzed);
+                println!("   • Matches encontrados: {}", result.total_matches_found);
+                println!(
+                    "   • Similitud máxima: {:.1}%",
+                    result.max_similarity_score * 100.0
+                );
+                println!(
+                    "   • Plagio significativo: {}",
+                    if result.has_significant_plagiarism {
+                        "SÍ ⚠️"
+                    } else {
+                        "NO ✓"
+                    }
+                );
 
-        // for chunk in chunks_to_embed {
-        //     self.embedding_service.save_chunk(chunk).await?;
-        // }
+                if !result.practice_summaries.is_empty() {
+                    println!("\n📊 Top 3 prácticas más similares:");
+                    for (i, summary) in
+                        result.practice_summaries.iter().take(3).enumerate()
+                    {
+                        println!(
+                            "   {}. Práctica {}: {} matches, avg={:.1}%, max={:.1}%, cobertura={:.1}%",
+                            i + 1,
+                            summary.practice_id,
+                            summary.match_count,
+                            summary.avg_similarity * 100.0,
+                            summary.max_similarity * 100.0,
+                            summary.coverage_percentage
+                        );
+                    }
+                }
+
+                if result.has_significant_plagiarism && !result.matches.is_empty() {
+                    println!("\n⚠️  Matches de alta similitud:");
+                    let high_similarity_matches: Vec<_> = result
+                        .matches
+                        .iter()
+                        .filter(|m| m.similarity_score >= 0.90)
+                        .take(5)
+                        .collect();
+
+                    for (i, m) in high_similarity_matches.iter().enumerate() {
+                        println!(
+                            "   {}. '{}' vs '{}' - {:.1}% (Práctica: {})",
+                            i + 1,
+                            m.source_section,
+                            m.matched_section,
+                            m.similarity_score * 100.0,
+                            m.matched_practice_id
+                        );
+                    }
+                }
+
+                println!("\n===== FIN ANÁLISIS =====\n");
+            }
+            Err(e) => {
+                println!("❌ Error en análisis de plagio: {}", e);
+                // Don't fail the entire process, just log the error
+            }
+        }
 
         Ok(())
     }

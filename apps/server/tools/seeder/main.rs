@@ -9,10 +9,30 @@ use functions::*;
 use sqlx::postgres::PgPoolOptions;
 use std::time::Duration;
 
+use services::config::EmbeddingServiceConfig;
+use services::embeddings::QdrantService;
+
 #[tokio::main]
 async fn main() -> Result<(), sqlx::Error> {
     let db_uri = std::env::var("POSTGRES_DATABASE_URL")
         .expect("ENV POSTGRES_DATABASE_URL not set");
+
+    let qdrant = QdrantService::new(EmbeddingServiceConfig {
+        qdrant_url: std::env::var("QDRANT_DB_URL")
+            .unwrap_or_else(|_| "http://localhost:6333".to_string()),
+        collection_name: "practice_reports".to_string(),
+        embeddings_model_url: std::env::var("EMBEDDINGS_MODEL_URL")
+            .unwrap_or_else(|_| "http://localhost:8000/embed".to_string()),
+        embeddings_model_name: std::env::var("EMBEDDINGS_MODEL_NAME")
+            .unwrap_or_else(|_| "default-model".to_string()),
+    });
+
+    qdrant
+        .await
+        .expect("Failed to connect to Qdrant service")
+        .clear_collection()
+        .await
+        .expect("Failed to clear Qdrant collection");
 
     let pool = PgPoolOptions::new()
         .min_connections(1)
@@ -21,7 +41,7 @@ async fn main() -> Result<(), sqlx::Error> {
         .connect(&db_uri)
         .await?;
 
-    sqlx::query("TRUNCATE TABLE users, courses, enrollments, practices, meeting_requests, meetings CASCADE")
+    sqlx::query("TRUNCATE TABLE users, courses, enrollments, practices, meeting_requests, meetings, plagiarism_reports, plagiarism_matches CASCADE")
         .execute(&pool)
         .await?;
 

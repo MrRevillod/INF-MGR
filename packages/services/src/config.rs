@@ -41,4 +41,5 @@ pub struct EmbeddingServiceConfig {
     pub qdrant_url: String,
     pub collection_name: String,
     pub embeddings_model_url: String,
+    pub embeddings_model_name: String,
 }

@@ -1,0 +1,16 @@
+flowchart TD
+    A[Input: LaTeX Content] --> B[Strip Comments]
+    B --> C[Extract Sections]
+    C --> D{Sections Found?}
+    D -->|Yes| E[Build Sections from Balanced Titles]
+    D -->|No| F[Extract Sections Fallback with Regex]
+    E --> G[Process Sections]
+    F --> G
+    G --> H[For Each Section]
+    H --> I[Parse Section Recursively to Chunks]
+    I --> J[Clean Content: Remove Tables, Figures, etc.]
+    J --> K[Create TextChunk: id, title, content, level, parent_id]
+    K --> L[Add to Chunks List]
+    L --> M{More Sections?}
+    M -->|Yes| H
+    M -->|No| N[Output: ParsedTex with Chunks]

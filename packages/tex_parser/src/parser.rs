@@ -80,7 +80,15 @@ impl LaTexParser {
 
         for section in sections {
             if Self::is_appendix_section(&section.title) {
-                continue; // Skip this section but continue processing others
+                continue; // Skip appendix sections
+            }
+
+            if Self::contains_bibliography(&section.content) {
+                continue; // Skip bibliography sections
+            }
+
+            if Self::is_excluded_section(&section.title) {
+                continue; // Skip excluded template sections
             }
 
             let section_chunks =
@@ -93,7 +101,7 @@ impl LaTexParser {
 
     /// Parses section and subsections into flat chunk structure.
     fn parse_section_to_chunks(title: &str, content: &str) -> Vec<TextChunk> {
-        Self::parse_section_recursive(title, content, 1, None)
+        Self::parse_section_recursive(title, content, 1, None, None)
     }
 
     /// Creates a leaf chunk (no subsections).
@@ -102,20 +110,40 @@ impl LaTexParser {
         content: &str,
         level: u8,
         parent_id: Option<String>,
+        root_section_id: Option<String>,
     ) -> Vec<TextChunk> {
         let section_id = Self::build_section_id(title, &parent_id);
+        
+        // Determine root_section
+        let current_root_section = if level == 1 {
+            section_id.clone()
+        } else {
+            root_section_id.unwrap_or_else(|| section_id.clone())
+        };
+        
         let integrated_content = Self::parse_integrated_content(content);
 
-        if integrated_content.trim().is_empty() {
+        // Filter out chunks that are too short or have empty titles
+        let cleaned_title = Self::clean_title(title);
+        let trimmed_content = integrated_content.trim();
+        
+        // Stricter validation to prevent corrupt chunks
+        if trimmed_content.is_empty() 
+            || cleaned_title.is_empty() 
+            || cleaned_title.trim().is_empty()
+            || trimmed_content.len() < 100  // Increased minimum for better quality
+            || cleaned_title == "Sección sin título"
+            || cleaned_title.chars().all(|c| !c.is_alphanumeric()) {
             return Vec::new();
         }
 
         vec![TextChunk {
             id: section_id,
-            title: Self::clean_title(title),
+            title: cleaned_title,
             content: integrated_content,
             level,
             parent_id,
+            root_section: current_root_section,
         }]
     }
 
@@ -138,6 +166,7 @@ impl LaTexParser {
         content: &str,
         level: u8,
         parent_id: Option<String>,
+        root_section_id: Option<String>,
     ) -> Vec<TextChunk> {
         let mut chunks = Vec::new();
 
@@ -147,7 +176,7 @@ impl LaTexParser {
             2 => ("\\subsubsection", 3),
             3 => {
                 // Nivel 3: Solo procesar contenido, no buscar más sub-niveles
-                return Self::create_leaf_chunk(title, content, level, parent_id);
+                return Self::create_leaf_chunk(title, content, level, parent_id, root_section_id);
             }
             _ => return chunks, // No procesar más de 3 niveles
         };
@@ -189,6 +218,13 @@ impl LaTexParser {
         // Generar ID para esta sección
         let section_id = Self::build_section_id(title, &parent_id);
 
+        // Determinar root_section: si es nivel 1, este es el root; si no, usar el que viene de arriba
+        let current_root_section = if level == 1 {
+            section_id.clone()
+        } else {
+            root_section_id.clone().unwrap_or_else(|| section_id.clone())
+        };
+
         // Procesar contenido principal de esta sección
         let main_content = sub_parts[0].to_string();
 
@@ -208,6 +244,7 @@ impl LaTexParser {
                 content: processed_content,
                 level,
                 parent_id: parent_id.clone(),
+                root_section: current_root_section.clone(),
             });
         }
 
@@ -224,6 +261,7 @@ impl LaTexParser {
                 sub_content,
                 next_level,
                 Some(section_id.clone()),
+                Some(current_root_section.clone()),
             );
             chunks.extend(sub_chunks);
         }
@@ -274,7 +312,8 @@ impl LaTexParser {
         cleaned = REFERENCE_RE.replace_all(&cleaned, "referencia").to_string();
         cleaned = URL_RE.replace_all(&cleaned, "enlace web").to_string();
         cleaned = TEXT_FORMAT_RE.replace_all(&cleaned, "$2").to_string();
-        cleaned = COMMENT_RE.replace_all(&cleaned, "").to_string();
+        // NOTE: COMMENT_RE removal is now done in strip_comments() at the start of parsing
+        // Doing it here again would incorrectly truncate content at escaped percentages (\%)
 
         cleaned
     }
@@ -321,7 +360,8 @@ impl LaTexParser {
             let replacement = if formatted_items.is_empty() {
                 String::new()
             } else {
-                format!("\n{}\n", formatted_items.join("\n"))
+                // Join with spaces instead of newlines for better consistency
+                format!(" {} ", formatted_items.join(". "))
             };
 
             result = result.replace(full_match, &replacement);
@@ -369,17 +409,26 @@ impl LaTexParser {
             }
 
             // Buscar comentarios, pero evitar % escapado (\%)
+            // Check if line contains % and if it's escaped
+            let mut line_to_add = line;
             if let Some(pos) = line.find('%') {
-                // Verificar si el % está escapado
-                if pos > 0 && line.chars().nth(pos - 1) == Some('\\') {
-                    cleaned.push_str(line);
+                // Check if % is escaped by looking at the byte before
+                let is_escaped = if pos > 0 {
+                    // Get bytes to check for backslash
+                    let bytes = line.as_bytes();
+                    bytes.get(pos.saturating_sub(1)) == Some(&b'\\')
                 } else {
-                    cleaned.push_str(&line[..pos]);
+                    false
+                };
+                
+                if is_escaped {
+                    line_to_add = line;  // Keep full line with \%
+                } else {
+                    line_to_add = &line[..pos];  // Truncate at %
                 }
-            } else {
-                cleaned.push_str(line);
             }
-
+            
+            cleaned.push_str(line_to_add);
             cleaned.push('\n');
         }
 
@@ -388,12 +437,31 @@ impl LaTexParser {
 
     /// Final text cleanup and normalization.
     fn clean_content(text: &str) -> String {
-        let cleaned = CLEAN_RE.replace_all(text, "");
-        cleaned
-            .replace('\\', "")
-            .replace("\n\n", " ")
-            .trim()
-            .to_string()
+        let mut cleaned = CLEAN_RE.replace_all(text, "").to_string();
+
+        // Preserve escaped percentages before removing backslashes
+        cleaned = cleaned.replace("\\%", "PERCENT_PLACEHOLDER");
+        
+        // Remove remaining LaTeX artifacts
+        cleaned = cleaned.replace('\\', "");
+        cleaned = cleaned.replace('{', "");
+        cleaned = cleaned.replace('}', "");
+        
+        // Restore percentages
+        cleaned = cleaned.replace("PERCENT_PLACEHOLDER", "%");
+
+        // Normalize whitespace consistently
+        cleaned = cleaned.replace("\n\n", " ");
+        cleaned = cleaned.replace("\n", " ");
+        cleaned = cleaned.replace("\t", " ");
+
+        // Remove multiple spaces
+        while cleaned.contains("  ") {
+            cleaned = cleaned.replace("  ", " ");
+        }
+
+        // Final cleanup
+        cleaned.trim().to_string()
     }
 
     /// Extracts section titles handling nested LaTeX commands.
@@ -449,6 +517,13 @@ impl LaTexParser {
         None // Llaves no balanceadas
     }
 
+
+
+    /// Checks if section content contains bibliography markers.
+    fn contains_bibliography(content: &str) -> bool {
+        content.contains("\\printbibliography")
+    }
+
     /// Determines if section corresponds to appendices or non-relevant content.
     fn is_appendix_section(title: &str) -> bool {
         let normalized_title = title.trim().to_lowercase();
@@ -478,6 +553,36 @@ impl LaTexParser {
         appendix_keywords.iter().any(|&keyword| {
             normalized_title.contains(keyword) || normalized_title == keyword
         })
+    }
+
+    /// Checks if a section should be excluded from plagiarism analysis
+    /// (mandatory template sections like company description and organizational chart).
+    fn is_excluded_section(title: &str) -> bool {
+        let normalized_title = title
+            .trim()
+            .to_lowercase()
+            .replace("á", "a")
+            .replace("é", "e")
+            .replace("í", "i")
+            .replace("ó", "o")
+            .replace("ú", "u")
+            .replace("ñ", "n");
+
+        // List of excluded section keywords (template sections)
+        let excluded_keywords = [
+            "descripcion de la empresa",
+            "organigrama de la empresa",
+            "organigrama",
+        ];
+
+        // Check for exact match or substring match
+        for &keyword in &excluded_keywords {
+            if normalized_title.contains(keyword) || normalized_title == keyword {
+                return true;
+            }
+        }
+
+        false
     }
 
     /// Cleans LaTeX commands from section titles.
