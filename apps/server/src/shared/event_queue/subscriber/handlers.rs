@@ -3,8 +3,9 @@ use crate::{imports::ImportedStudent, send_emails, template_ctx};
 
 use services::{
     ServiceResult,
-    embeddings::{EmbeddingChunk, EmbeddingService},
+    embeddings::{EmbeddingService},
     mailer::*,
+    plagiarism::{PlagiarismDetectionService},
     printer::*,
     types::*,
 };
@@ -14,6 +15,7 @@ pub struct SubscriberHandler {
     pub printer: Printer,
     pub mailer: Mailer,
     pub embedding_service: EmbeddingService,
+    pub plagiarism_service: PlagiarismDetectionService,
 }
 
 impl SubscriberHandler {
@@ -388,21 +390,35 @@ impl SubscriberHandler {
     ) -> ServiceResult<()> {
         let (practice_id, parsed_tex) = event;
 
-        let skipped_sections = vec![
-            "Resumen",
-            "Descripción de la empresa",
-            "Organigrama de la empresa",
-        ];
+        println!("🔍 Iniciando análisis de plagio para práctica: {}", practice_id);
 
-        let chunks_to_embed = parsed_tex
-            .chunks
-            .iter()
-            .filter(|chunk| !skipped_sections.contains(&chunk.title.as_str()))
-            .map(|chunk| EmbeddingChunk::from((&practice_id, chunk.clone())))
-            .collect::<Vec<EmbeddingChunk>>();
+        // Analyze the document for plagiarism
+        match self.plagiarism_service.analyze_document(practice_id, parsed_tex).await {
+            Ok(report) => {
+                println!("✅ Análisis de plagio completado:");
+                println!("   - Chunks analizados: {}", report.total_chunks_analyzed);
+                println!("   - Coincidencias encontradas: {}", report.total_matches_found);
+                println!("   - Puntuación de similitud: {:.2}%", report.overall_similarity_score * 100.0);
+                println!("   - ¿Hay plagio?: {}", if report.has_plagiarism { "SÍ" } else { "NO" });
 
-        for chunk in chunks_to_embed {
-            self.embedding_service.save_chunk(chunk).await?;
+                if report.has_plagiarism && !report.matches.is_empty() {
+                    println!("⚠️  Coincidencias detectadas:");
+                    for (i, m) in report.matches.iter().take(3).enumerate() {
+                        println!("   {}. Sección '{}' - Similitud: {:.2}% (Práctica: {})", 
+                                i + 1, 
+                                m.source_section, 
+                                m.similarity_score * 100.0,
+                                m.matched_practice_id);
+                    }
+                    if report.matches.len() > 3 {
+                        println!("   ... y {} coincidencias más", report.matches.len() - 3);
+                    }
+                }
+            }
+            Err(e) => {
+                println!("❌ Error en análisis de plagio: {}", e);
+                // Don't fail the entire process, just log the error
+            }
         }
 
         Ok(())

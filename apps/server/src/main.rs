@@ -20,7 +20,8 @@ async fn main() {
     let mut app = Application::builder();
 
     let event_queue_config = app
-        .config::<EventQueueConfig>()
+        .config
+        .get::<EventQueueConfig>()
         .expect("Failed to load EventQueueConfig");
 
     let (tx, rx) = mpsc::channel(event_queue_config.buffer_size);
@@ -28,7 +29,7 @@ async fn main() {
     let event_queue = EventQueue::new(tx);
     let event_subscriber = EventSubscriber::builder()
         .with_receiver(rx)
-        .with_config(app.get_config().clone())
+        .with_config(app.config.clone())
         .build()
         .await;
 

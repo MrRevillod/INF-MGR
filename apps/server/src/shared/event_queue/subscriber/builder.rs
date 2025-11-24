@@ -5,8 +5,10 @@ use crate::{
 
 use services::{
     config::ServicesConfig, embeddings::EmbeddingService, mailer::Mailer,
+    plagiarism::{PlagiarismDetectionService, PlagiarismRepository},
     printer::Printer,
 };
+
 use std::sync::Arc;
 use sword::core::Config;
 use tokio::sync::{Mutex, mpsc::Receiver};
@@ -50,9 +52,27 @@ impl EventSubscriberBuilder {
         let mailer = Mailer::new(&services_config).expect("Failed to create mailer");
         let printer = Printer::new(&services_config).expect("Failed to create printer");
 
-        let qdrant_service = EmbeddingService::new(services_config.embedding_service)
+        let embedding_service = EmbeddingService::new(services_config.embedding_service)
             .await
             .expect("Failed to create embedding service");
+
+        // Create dedicated database pool for plagiarism service
+        let postgres_config = config
+            .get::<crate::config::PostgresDbConfig>()
+            .expect("Failed to load postgres config");
+        
+        let db_pool = sqlx::postgres::PgPoolOptions::new()
+            .max_connections(5) // Small pool for plagiarism service
+            .connect(&postgres_config.url)
+            .await
+            .expect("Failed to create plagiarism database pool");
+
+        // Create plagiarism services
+        let plagiarism_repository = PlagiarismRepository::new(db_pool);
+        let plagiarism_service = PlagiarismDetectionService::new(
+            embedding_service.clone(),
+            plagiarism_repository,
+        );
 
         EventSubscriber {
             config: event_queue_config,
@@ -60,7 +80,8 @@ impl EventSubscriberBuilder {
             handler: Arc::new(SubscriberHandler {
                 printer,
                 mailer,
-                embedding_service: qdrant_service,
+                embedding_service,
+                plagiarism_service,
             }),
         }
     }

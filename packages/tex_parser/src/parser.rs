@@ -83,6 +83,10 @@ impl LaTexParser {
                 continue; // Skip this section but continue processing others
             }
 
+            if Self::contains_bibliography(&section.content) {
+                continue; // Skip bibliography sections
+            }
+
             let section_chunks =
                 Self::parse_section_to_chunks(&section.title, &section.content);
             chunks.extend(section_chunks);
@@ -106,13 +110,23 @@ impl LaTexParser {
         let section_id = Self::build_section_id(title, &parent_id);
         let integrated_content = Self::parse_integrated_content(content);
 
-        if integrated_content.trim().is_empty() {
+        // Filter out chunks that are too short or have empty titles
+        let cleaned_title = Self::clean_title(title);
+        let trimmed_content = integrated_content.trim();
+        
+        // Stricter validation to prevent corrupt chunks
+        if trimmed_content.is_empty() 
+            || cleaned_title.is_empty() 
+            || cleaned_title.trim().is_empty()
+            || trimmed_content.len() < 100  // Increased minimum for better quality
+            || cleaned_title == "Sección sin título"
+            || cleaned_title.chars().all(|c| !c.is_alphanumeric()) {
             return Vec::new();
         }
 
         vec![TextChunk {
             id: section_id,
-            title: Self::clean_title(title),
+            title: cleaned_title,
             content: integrated_content,
             level,
             parent_id,
@@ -274,7 +288,8 @@ impl LaTexParser {
         cleaned = REFERENCE_RE.replace_all(&cleaned, "referencia").to_string();
         cleaned = URL_RE.replace_all(&cleaned, "enlace web").to_string();
         cleaned = TEXT_FORMAT_RE.replace_all(&cleaned, "$2").to_string();
-        cleaned = COMMENT_RE.replace_all(&cleaned, "").to_string();
+        // NOTE: COMMENT_RE removal is now done in strip_comments() at the start of parsing
+        // Doing it here again would incorrectly truncate content at escaped percentages (\%)
 
         cleaned
     }
@@ -321,7 +336,8 @@ impl LaTexParser {
             let replacement = if formatted_items.is_empty() {
                 String::new()
             } else {
-                format!("\n{}\n", formatted_items.join("\n"))
+                // Join with spaces instead of newlines for better consistency
+                format!(" {} ", formatted_items.join(". "))
             };
 
             result = result.replace(full_match, &replacement);
@@ -369,17 +385,26 @@ impl LaTexParser {
             }
 
             // Buscar comentarios, pero evitar % escapado (\%)
+            // Check if line contains % and if it's escaped
+            let mut line_to_add = line;
             if let Some(pos) = line.find('%') {
-                // Verificar si el % está escapado
-                if pos > 0 && line.chars().nth(pos - 1) == Some('\\') {
-                    cleaned.push_str(line);
+                // Check if % is escaped by looking at the byte before
+                let is_escaped = if pos > 0 {
+                    // Get bytes to check for backslash
+                    let bytes = line.as_bytes();
+                    bytes.get(pos.saturating_sub(1)) == Some(&b'\\')
                 } else {
-                    cleaned.push_str(&line[..pos]);
+                    false
+                };
+                
+                if is_escaped {
+                    line_to_add = line;  // Keep full line with \%
+                } else {
+                    line_to_add = &line[..pos];  // Truncate at %
                 }
-            } else {
-                cleaned.push_str(line);
             }
-
+            
+            cleaned.push_str(line_to_add);
             cleaned.push('\n');
         }
 
@@ -388,12 +413,31 @@ impl LaTexParser {
 
     /// Final text cleanup and normalization.
     fn clean_content(text: &str) -> String {
-        let cleaned = CLEAN_RE.replace_all(text, "");
-        cleaned
-            .replace('\\', "")
-            .replace("\n\n", " ")
-            .trim()
-            .to_string()
+        let mut cleaned = CLEAN_RE.replace_all(text, "").to_string();
+
+        // Preserve escaped percentages before removing backslashes
+        cleaned = cleaned.replace("\\%", "PERCENT_PLACEHOLDER");
+        
+        // Remove remaining LaTeX artifacts
+        cleaned = cleaned.replace('\\', "");
+        cleaned = cleaned.replace('{', "");
+        cleaned = cleaned.replace('}', "");
+        
+        // Restore percentages
+        cleaned = cleaned.replace("PERCENT_PLACEHOLDER", "%");
+
+        // Normalize whitespace consistently
+        cleaned = cleaned.replace("\n\n", " ");
+        cleaned = cleaned.replace("\n", " ");
+        cleaned = cleaned.replace("\t", " ");
+
+        // Remove multiple spaces
+        while cleaned.contains("  ") {
+            cleaned = cleaned.replace("  ", " ");
+        }
+
+        // Final cleanup
+        cleaned.trim().to_string()
     }
 
     /// Extracts section titles handling nested LaTeX commands.
@@ -447,6 +491,13 @@ impl LaTexParser {
         }
 
         None // Llaves no balanceadas
+    }
+
+
+
+    /// Checks if section content contains bibliography markers.
+    fn contains_bibliography(content: &str) -> bool {
+        content.contains("\\printbibliography")
     }
 
     /// Determines if section corresponds to appendices or non-relevant content.

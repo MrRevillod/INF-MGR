@@ -7,6 +7,7 @@ pub use models::*;
 pub use qdrant::*;
 
 use crate::{EmbeddingServiceError, config::EmbeddingServiceConfig};
+use uuid::Uuid;
 
 #[derive(Clone)]
 pub struct EmbeddingService {
@@ -39,6 +40,20 @@ impl EmbeddingService {
         chunk: EmbeddingChunk,
     ) -> Result<(), EmbeddingServiceError> {
         let embedding = self.embed_text(&chunk.content.clone()).await?;
+
         self.qdrant_service.save_chunk(chunk, embedding).await
+    }
+
+    pub async fn find_similar_chunks(
+        &self,
+        content: &str,
+        exclude_practice_id: Uuid,
+        limit: usize,
+        threshold: f32,
+    ) -> Result<SearchResult, EmbeddingServiceError> {
+        let embedding = self.embed_text(content).await?;
+        self.qdrant_service
+            .find_similar_chunks(embedding, exclude_practice_id, limit, threshold)
+            .await
     }
 }

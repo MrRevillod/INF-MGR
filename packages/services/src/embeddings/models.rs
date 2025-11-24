@@ -35,6 +35,17 @@ pub struct EmbeddingResponse {
     pub data: Vec<Embedding>,
 }
 
+#[derive(Debug, Clone)]
+pub struct SimilarChunk {
+    pub chunk: EmbeddingChunk,
+    pub similarity_score: f32,
+}
+
+#[derive(Debug, Clone)]
+pub struct SearchResult {
+    pub similar_chunks: Vec<SimilarChunk>,
+}
+
 impl From<EmbeddingChunk> for ChunkPayload {
     fn from(chunk: EmbeddingChunk) -> Self {
         ChunkPayload {

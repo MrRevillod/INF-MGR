@@ -1,11 +1,20 @@
 [application]
 port = 8000
 host = "0.0.0.0"
-body_limit = "5MB"
-request_timeout_seconds = 15
 
 client_app_url = "${PUBLIC_URL:http://localhost:3000}"
 documents_dir = "${DOCUMENTS_DIR:./documents}"
+
+[middlewares]
+compression = { enabled = false }
+body_limit = { enabled = true, max_size = "5MB", display = true }
+request_timeout = { enabled = true, duration = "15s", display = true }
+
+[middlewares.cors]
+enabled = true
+allow_credentials = false
+allow_methods = ["GET", "POST", "PUT", "PATCH", "DELETE"]
+allow_headers = ["Content-Type", "Authorization"]
 
 [event-queue]
 buffer_size = 100
@@ -38,10 +47,6 @@ google_redirect_url = "${GOOGLE_REDIRECT_URL}"
 calendar_id = "${GOOGLE_CALENDAR_ID}"
 service_account_path = "${GOOGLE_SERVICE_ACCOUNT_PATH}"
 
-[cors]
-allow_credentials = false
-allow_methods = ["GET", "POST", "PUT", "PATCH", "DELETE"]
-allow_headers = ["Content-Type", "Authorization"]
 
 [services-config]
 

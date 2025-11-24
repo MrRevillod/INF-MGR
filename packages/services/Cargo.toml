@@ -17,6 +17,16 @@ sword = { git = "https://github.com/MrRevillod/sword.git", branch = "main", feat
     "validator",
 ] }
 
+sqlx = { version = "0.8.6", default-features = false, features = [
+    "runtime-tokio",
+    "postgres",
+    "chrono",
+    "uuid",
+    "derive",
+    "migrate",
+    "macros",
+] }
+
 thiserror = "2.0.17"
 tera = "1.20.0"
 uuid = { version = "1.17.0", features = ["serde", "v4"] }
