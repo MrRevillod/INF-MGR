@@ -80,11 +80,15 @@ impl LaTexParser {
 
         for section in sections {
             if Self::is_appendix_section(&section.title) {
-                continue; // Skip this section but continue processing others
+                continue; // Skip appendix sections
             }
 
             if Self::contains_bibliography(&section.content) {
                 continue; // Skip bibliography sections
+            }
+
+            if Self::is_excluded_section(&section.title) {
+                continue; // Skip excluded template sections
             }
 
             let section_chunks =
@@ -97,7 +101,7 @@ impl LaTexParser {
 
     /// Parses section and subsections into flat chunk structure.
     fn parse_section_to_chunks(title: &str, content: &str) -> Vec<TextChunk> {
-        Self::parse_section_recursive(title, content, 1, None)
+        Self::parse_section_recursive(title, content, 1, None, None)
     }
 
     /// Creates a leaf chunk (no subsections).
@@ -106,8 +110,17 @@ impl LaTexParser {
         content: &str,
         level: u8,
         parent_id: Option<String>,
+        root_section_id: Option<String>,
     ) -> Vec<TextChunk> {
         let section_id = Self::build_section_id(title, &parent_id);
+        
+        // Determine root_section
+        let current_root_section = if level == 1 {
+            section_id.clone()
+        } else {
+            root_section_id.unwrap_or_else(|| section_id.clone())
+        };
+        
         let integrated_content = Self::parse_integrated_content(content);
 
         // Filter out chunks that are too short or have empty titles
@@ -130,6 +143,7 @@ impl LaTexParser {
             content: integrated_content,
             level,
             parent_id,
+            root_section: current_root_section,
         }]
     }
 
@@ -152,6 +166,7 @@ impl LaTexParser {
         content: &str,
         level: u8,
         parent_id: Option<String>,
+        root_section_id: Option<String>,
     ) -> Vec<TextChunk> {
         let mut chunks = Vec::new();
 
@@ -161,7 +176,7 @@ impl LaTexParser {
             2 => ("\\subsubsection", 3),
             3 => {
                 // Nivel 3: Solo procesar contenido, no buscar más sub-niveles
-                return Self::create_leaf_chunk(title, content, level, parent_id);
+                return Self::create_leaf_chunk(title, content, level, parent_id, root_section_id);
             }
             _ => return chunks, // No procesar más de 3 niveles
         };
@@ -203,6 +218,13 @@ impl LaTexParser {
         // Generar ID para esta sección
         let section_id = Self::build_section_id(title, &parent_id);
 
+        // Determinar root_section: si es nivel 1, este es el root; si no, usar el que viene de arriba
+        let current_root_section = if level == 1 {
+            section_id.clone()
+        } else {
+            root_section_id.clone().unwrap_or_else(|| section_id.clone())
+        };
+
         // Procesar contenido principal de esta sección
         let main_content = sub_parts[0].to_string();
 
@@ -222,6 +244,7 @@ impl LaTexParser {
                 content: processed_content,
                 level,
                 parent_id: parent_id.clone(),
+                root_section: current_root_section.clone(),
             });
         }
 
@@ -238,6 +261,7 @@ impl LaTexParser {
                 sub_content,
                 next_level,
                 Some(section_id.clone()),
+                Some(current_root_section.clone()),
             );
             chunks.extend(sub_chunks);
         }
@@ -529,6 +553,36 @@ impl LaTexParser {
         appendix_keywords.iter().any(|&keyword| {
             normalized_title.contains(keyword) || normalized_title == keyword
         })
+    }
+
+    /// Checks if a section should be excluded from plagiarism analysis
+    /// (mandatory template sections like company description and organizational chart).
+    fn is_excluded_section(title: &str) -> bool {
+        let normalized_title = title
+            .trim()
+            .to_lowercase()
+            .replace("á", "a")
+            .replace("é", "e")
+            .replace("í", "i")
+            .replace("ó", "o")
+            .replace("ú", "u")
+            .replace("ñ", "n");
+
+        // List of excluded section keywords (template sections)
+        let excluded_keywords = [
+            "descripcion de la empresa",
+            "organigrama de la empresa",
+            "organigrama",
+        ];
+
+        // Check for exact match or substring match
+        for &keyword in &excluded_keywords {
+            if normalized_title.contains(keyword) || normalized_title == keyword {
+                return true;
+            }
+        }
+
+        false
     }
 
     /// Cleans LaTeX commands from section titles.

@@ -2,7 +2,7 @@ pub mod config;
 pub mod embeddings;
 pub mod file_manager;
 pub mod mailer;
-pub mod plagiarism;
+pub mod plagiarism_new;
 
 mod errors;
 

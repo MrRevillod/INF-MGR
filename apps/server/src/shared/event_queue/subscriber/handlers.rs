@@ -2,12 +2,8 @@ use super::events::*;
 use crate::{imports::ImportedStudent, send_emails, template_ctx};
 
 use services::{
-    ServiceResult,
-    embeddings::{EmbeddingService},
-    mailer::*,
-    plagiarism::{PlagiarismDetectionService},
-    printer::*,
-    types::*,
+    ServiceResult, embeddings::EmbeddingService, mailer::*,
+    plagiarism_new::PlagiarismDetectionService, printer::*, types::*,
 };
 
 #[derive(Clone)]
@@ -390,30 +386,71 @@ impl SubscriberHandler {
     ) -> ServiceResult<()> {
         let (practice_id, parsed_tex) = event;
 
-        println!("🔍 Iniciando análisis de plagio para práctica: {}", practice_id);
+        println!("\n🔍 ===== ANÁLISIS DE PLAGIO =====");
+        println!("Práctica ID: {}", practice_id);
 
-        // Analyze the document for plagiarism
-        match self.plagiarism_service.analyze_document(practice_id, parsed_tex).await {
-            Ok(report) => {
-                println!("✅ Análisis de plagio completado:");
-                println!("   - Chunks analizados: {}", report.total_chunks_analyzed);
-                println!("   - Coincidencias encontradas: {}", report.total_matches_found);
-                println!("   - Puntuación de similitud: {:.2}%", report.overall_similarity_score * 100.0);
-                println!("   - ¿Hay plagio?: {}", if report.has_plagiarism { "SÍ" } else { "NO" });
-
-                if report.has_plagiarism && !report.matches.is_empty() {
-                    println!("⚠️  Coincidencias detectadas:");
-                    for (i, m) in report.matches.iter().take(3).enumerate() {
-                        println!("   {}. Sección '{}' - Similitud: {:.2}% (Práctica: {})", 
-                                i + 1, 
-                                m.source_section, 
-                                m.similarity_score * 100.0,
-                                m.matched_practice_id);
+        // Analyze the document for plagiarism using the new service
+        match self
+            .plagiarism_service
+            .analyze_document(practice_id, parsed_tex)
+            .await
+        {
+            Ok(result) => {
+                println!("\n✅ Análisis completado:");
+                println!("   • Chunks analizados: {}", result.total_chunks_analyzed);
+                println!("   • Matches encontrados: {}", result.total_matches_found);
+                println!(
+                    "   • Similitud máxima: {:.1}%",
+                    result.max_similarity_score * 100.0
+                );
+                println!(
+                    "   • Plagio significativo: {}",
+                    if result.has_significant_plagiarism {
+                        "SÍ ⚠️"
+                    } else {
+                        "NO ✓"
                     }
-                    if report.matches.len() > 3 {
-                        println!("   ... y {} coincidencias más", report.matches.len() - 3);
+                );
+
+                if !result.practice_summaries.is_empty() {
+                    println!("\n📊 Top 3 prácticas más similares:");
+                    for (i, summary) in
+                        result.practice_summaries.iter().take(3).enumerate()
+                    {
+                        println!(
+                            "   {}. Práctica {}: {} matches, avg={:.1}%, max={:.1}%, cobertura={:.1}%",
+                            i + 1,
+                            summary.practice_id,
+                            summary.match_count,
+                            summary.avg_similarity * 100.0,
+                            summary.max_similarity * 100.0,
+                            summary.coverage_percentage
+                        );
                     }
                 }
+
+                if result.has_significant_plagiarism && !result.matches.is_empty() {
+                    println!("\n⚠️  Matches de alta similitud:");
+                    let high_similarity_matches: Vec<_> = result
+                        .matches
+                        .iter()
+                        .filter(|m| m.similarity_score >= 0.90)
+                        .take(5)
+                        .collect();
+
+                    for (i, m) in high_similarity_matches.iter().enumerate() {
+                        println!(
+                            "   {}. '{}' vs '{}' - {:.1}% (Práctica: {})",
+                            i + 1,
+                            m.source_section,
+                            m.matched_section,
+                            m.similarity_score * 100.0,
+                            m.matched_practice_id
+                        );
+                    }
+                }
+
+                println!("\n===== FIN ANÁLISIS =====\n");
             }
             Err(e) => {
                 println!("❌ Error en análisis de plagio: {}", e);

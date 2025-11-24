@@ -64,7 +64,7 @@ impl From<(&Uuid, TextChunk)> for EmbeddingChunk {
         EmbeddingChunk {
             id: Uuid::new_v4(),
             practice_id: *practice_id,
-            root_section: chunk.parent_id.clone().unwrap_or_default(),
+            root_section: chunk.root_section,
             chunk_id: chunk.id,
             title: chunk.title,
             level: chunk.level,

@@ -102,6 +102,7 @@ impl QdrantService {
     pub async fn find_similar_chunks(
         &self,
         embedding: Embedding,
+        root_section: &str,
         exclude_practice_id: Uuid,
         limit: usize,
         score_threshold: f32,
@@ -155,6 +156,13 @@ impl QdrantService {
 
                 // Skip if same practice
                 if practice_id_str == &exclude_practice_id.to_string() {
+                    return None;
+                }
+
+                // CRITICAL: Only compare chunks from the same root_section
+                // This prevents comparing "pears with apples" (e.g., Frontend from tecnologías_aplicadas
+                // should only match against other tecnologías_aplicadas chunks, not actividades_encomendadas)
+                if point_root_section != root_section {
                     return None;
                 }
 

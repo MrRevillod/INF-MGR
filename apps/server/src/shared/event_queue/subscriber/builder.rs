@@ -5,8 +5,7 @@ use crate::{
 
 use services::{
     config::ServicesConfig, embeddings::EmbeddingService, mailer::Mailer,
-    plagiarism::{PlagiarismDetectionService, PlagiarismRepository},
-    printer::Printer,
+    plagiarism_new::PlagiarismDetectionService, printer::Printer,
 };
 
 use std::sync::Arc;
@@ -57,22 +56,9 @@ impl EventSubscriberBuilder {
             .expect("Failed to create embedding service");
 
         // Create dedicated database pool for plagiarism service
-        let postgres_config = config
-            .get::<crate::config::PostgresDbConfig>()
-            .expect("Failed to load postgres config");
-        
-        let db_pool = sqlx::postgres::PgPoolOptions::new()
-            .max_connections(5) // Small pool for plagiarism service
-            .connect(&postgres_config.url)
-            .await
-            .expect("Failed to create plagiarism database pool");
-
-        // Create plagiarism services
-        let plagiarism_repository = PlagiarismRepository::new(db_pool);
-        let plagiarism_service = PlagiarismDetectionService::new(
-            embedding_service.clone(),
-            plagiarism_repository,
-        );
+        // Create plagiarism detection service (new clean version)
+        let plagiarism_service =
+            PlagiarismDetectionService::new(embedding_service.clone());
 
         EventSubscriber {
             config: event_queue_config,

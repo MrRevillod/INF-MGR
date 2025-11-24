@@ -47,13 +47,20 @@ impl EmbeddingService {
     pub async fn find_similar_chunks(
         &self,
         content: &str,
+        root_section: &str,
         exclude_practice_id: Uuid,
         limit: usize,
         threshold: f32,
     ) -> Result<SearchResult, EmbeddingServiceError> {
         let embedding = self.embed_text(content).await?;
         self.qdrant_service
-            .find_similar_chunks(embedding, exclude_practice_id, limit, threshold)
+            .find_similar_chunks(
+                embedding,
+                root_section,
+                exclude_practice_id,
+                limit,
+                threshold,
+            )
             .await
     }
 }
