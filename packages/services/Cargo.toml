@@ -31,9 +31,4 @@ thiserror = "2.0.17"
 tera = "1.20.0"
 uuid = { version = "1.17.0", features = ["serde", "v4"] }
 futures = "0.3.31"
-
-qdrant-client = { version = "1.15.0", features = ["serde"] }
-reqwest = { version = "0.12.24", features = ["json"] }
 chrono = { version = "0.4.42", features = ["serde"] }
-serde_json = "1.0.145"
-tracing = "0.1.41"
