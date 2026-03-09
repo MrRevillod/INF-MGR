@@ -11,19 +11,9 @@ x-healthcheck-redis: &healthcheck-redis
   timeout: 3s
   retries: 5
 
-x-healthcheck-qdrant: &healthcheck-qdrant
-  test: ["CMD-SHELL", "timeout 1 bash -c '</dev/tcp/localhost/6333' || exit 1"]
-  interval: 10s
-  timeout: 5s
-  retries: 3
-  start_period: 10s
-
 services:
   inf_mgr_postgres:
     healthcheck: *healthcheck-postgres
     
   inf_mgr_redis:
     healthcheck: *healthcheck-redis
-    
-  inf_mgr_qdrant:
-    healthcheck: *healthcheck-qdrant

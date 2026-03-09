@@ -3,10 +3,7 @@ use crate::{
     shared::event_queue::{Event, EventSubscriber, SubscriberHandler},
 };
 
-use services::{
-    config::ServicesConfig, embeddings::EmbeddingService, mailer::Mailer,
-    plagiarism_new::PlagiarismDetectionService, printer::Printer,
-};
+use services::{config::ServicesConfig, mailer::Mailer, printer::Printer};
 
 use std::sync::Arc;
 use sword::core::Config;
@@ -51,24 +48,10 @@ impl EventSubscriberBuilder {
         let mailer = Mailer::new(&services_config).expect("Failed to create mailer");
         let printer = Printer::new(&services_config).expect("Failed to create printer");
 
-        let embedding_service = EmbeddingService::new(services_config.embedding_service)
-            .await
-            .expect("Failed to create embedding service");
-
-        // Create dedicated database pool for plagiarism service
-        // Create plagiarism detection service (new clean version)
-        let plagiarism_service =
-            PlagiarismDetectionService::new(embedding_service.clone());
-
         EventSubscriber {
             config: event_queue_config,
             receiver: Arc::new(Mutex::new(rx)),
-            handler: Arc::new(SubscriberHandler {
-                printer,
-                mailer,
-                embedding_service,
-                plagiarism_service,
-            }),
+            handler: Arc::new(SubscriberHandler { printer, mailer }),
         }
     }
 }

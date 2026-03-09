@@ -5,10 +5,7 @@ use sword::core::injectable;
 use tex_parser::{LaTexParser, ParsedTex};
 
 use crate::{
-    shared::{
-        AppResult, ValidationError,
-        event_queue::{Event, EventQueue},
-    },
+    shared::{AppResult, ValidationError, event_queue::EventQueue},
     types::*,
 };
 
@@ -41,12 +38,6 @@ impl PracticeReportService {
         let parsed = LaTexParser::parse(&main_tex_content);
 
         self.validate_tex_structure(&parsed)?;
-
-        let event_data = (practice_id.clone(), parsed);
-
-        self.event_queue
-            .publish(Event::InitializePlagiarismCheck(event_data))
-            .await;
 
         Ok(())
     }
