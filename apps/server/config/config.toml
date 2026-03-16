@@ -67,9 +67,3 @@ documents_dir = "${DOCUMENTS_DIR:./documents}"
 
 [services-config.file_manager]
 documents_dir = "${DOCUMENTS_DIR:./documents}"
-
-[services-config.embedding_service]
-qdrant_url = "${QDRANT_DB_URL:http://inf_mgr_qdrant:6333}"
-embeddings_model_url = "${EMBEDDINGS_MODEL_URL}"
-collection_name = "practice_reports"
-embeddings_model_name = "${EMBEDDINGS_MODEL_NAME}"
