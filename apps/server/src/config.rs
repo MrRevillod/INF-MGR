@@ -10,13 +10,6 @@ pub struct ServerConfig {
     pub documents_dir: String,
 }
 
-#[derive(Clone, Debug, Deserialize, Default)]
-#[config(key = "google-calendar")]
-pub struct GoogleCalendarConfig {
-    pub calendar_id: String,
-    pub service_account_path: String,
-}
-
 #[derive(Clone, Debug, Deserialize)]
 #[config(key = "event-queue")]
 pub struct EventQueueConfig {

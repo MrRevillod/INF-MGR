@@ -14,12 +14,6 @@ pub enum NotFoundError {
 
     #[error("Practice with id {id} not found")]
     Practice { id: Uuid },
-
-    #[error("Meeting with id {id} not found")]
-    Meeting { id: Uuid },
-
-    #[error("Meeting request with id {id} not found")]
-    MeetingRequest { id: Uuid },
 }
 
 impl NotFoundError {
@@ -37,13 +31,5 @@ impl NotFoundError {
 
     pub fn practice(id: Uuid) -> Self {
         Self::Practice { id }
-    }
-
-    pub fn meeting(id: Uuid) -> Self {
-        Self::Meeting { id }
-    }
-
-    pub fn meeting_request(id: Uuid) -> Self {
-        Self::MeetingRequest { id }
     }
 }

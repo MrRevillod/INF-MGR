@@ -21,10 +21,27 @@ async fn main() -> Result<(), sqlx::Error> {
         .connect(&db_uri)
         .await?;
 
-    sqlx::query("TRUNCATE TABLE users, courses, enrollments, practices, meeting_requests, meetings CASCADE")
+    println!("🔗 Conectado a la base de datos");
+    println!("🔌 Terminando otras conexiones...");
+
+    sqlx::query(
+        "SELECT pg_terminate_backend(pid) FROM pg_stat_activity
+         WHERE datname = current_database() AND pid <> pg_backend_pid()",
+    )
+    .execute(&pool)
+    .await?;
+
+    println!("🗑️  Eliminando tablas...");
+
+    sqlx::query("DROP TABLE IF EXISTS enrollments, practices, courses, users CASCADE")
         .execute(&pool)
         .await?;
 
+    sqlx::query("TRUNCATE TABLE _sqlx_migrations")
+        .execute(&pool)
+        .await?;
+
+    println!("📦 Ejecutando migraciones...");
     sqlx::migrate!("./config/migrations").run(&pool).await?;
 
     let teachers = teachers();

@@ -27,20 +27,6 @@ macro_rules! course_filter {
 }
 
 #[macro_export]
-macro_rules! meeting_filter {
-    ($($field:ident $(: $value:expr)?),* $(,)?) => {
-        ::filterstruct::filter!(MeetingFilter, { $($field $(: $value)?),* })
-    };
-}
-
-#[macro_export]
-macro_rules! meeting_req_filter {
-    ($($field:ident $(: $value:expr)?),* $(,)?) => {
-        ::filterstruct::filter!(MeetingReqFilter, { $($field $(: $value)?),* })
-    };
-}
-
-#[macro_export]
 macro_rules! template_ctx {
     ($($key:expr => $value:expr),* $(,)?) => {
         {
