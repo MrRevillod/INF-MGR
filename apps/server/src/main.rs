@@ -9,7 +9,6 @@ use server::{
     enrollments::EnrollmentsModule,
     imports::ImportsModule,
     logger::LoggerLayer,
-    meetings::MeetingsModule,
     practices::PracticesModule,
     shared::{SharedModule, event_queue::*},
     users::UsersModule,
@@ -43,7 +42,6 @@ async fn main() {
         .with_module::<EnrollmentsModule>()
         .with_module::<ImportsModule>()
         .with_module::<AuthModule>()
-        .with_module::<MeetingsModule>()
         .with_module::<PracticesModule>();
 
     app = app.with_layer(LoggerLayer()).with_layer(

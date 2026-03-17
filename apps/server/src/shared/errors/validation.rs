@@ -9,9 +9,6 @@ pub enum ValidationError {
     #[error("Invalid course status: '{value}' (expected: active, completed)")]
     InvalidCourseStatus { value: String },
 
-    #[error("Invalid MeetingStatus: {0}")]
-    InvalidMeetingStatus(String),
-
     #[error("Invalid datetime: {0}")]
     InvalidDatetime(String),
 
@@ -30,9 +27,6 @@ pub enum ValidationError {
 
     #[error("Final report upload period has expired")]
     FinalReportUploadExpired,
-
-    #[error("Cannot create meeting request with less than 2 attendees")]
-    NotEnoughAttendees,
 
     #[error(
         "Cannot add a practice because the student already has an practice registered"

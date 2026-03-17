@@ -38,8 +38,6 @@ fn handle_not_found_error(error: NotFoundError) -> HttpResponse {
         NotFoundError::Course { id } => ("Course", id.to_string()),
         NotFoundError::Enrollment { id } => ("Enrollment", id.to_string()),
         NotFoundError::Practice { id } => ("Practice", id.to_string()),
-        NotFoundError::Meeting { id } => ("Meeting", id.to_string()),
-        NotFoundError::MeetingRequest { id } => ("MeetingRequest", id.to_string()),
     };
 
     HttpResponse::NotFound().message(format!(
@@ -55,16 +53,6 @@ fn handle_validation_error(error: ValidationError) -> HttpResponse {
         ValidationError::InvalidCourseStatus { value } => {
             ("status", format!("Estado de curso '{value}' inválido."))
         }
-
-        ValidationError::InvalidMeetingStatus(value) => {
-            ("status", format!("Estado de reunión '{value}' inválido."))
-        }
-
-        ValidationError::NotEnoughAttendees => (
-            "attendees",
-            "Se requieren al menos 2 asistentes para crear una solicitud de reunión"
-                .into(),
-        ),
 
         ValidationError::NotAStudent { .. } => {
             ("studentId", "El usuario no es un estudiante".into())
