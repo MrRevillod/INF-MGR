@@ -1,79 +1,58 @@
-use sword::prelude::Application;
+use helmet::*;
+use sword::prelude::*;
 use tokio::sync::mpsc;
 
 use server::{
-    courses::CoursesController,
-    enrollments::EnrollmentsController,
-    shared::{
-        database::PostgresDatabase,
-        layers::{setup_cors, HttpLogger},
-    },
-    users::UsersController,
+    auth::AuthModule,
+    config::*,
+    courses::CoursesModule,
+    enrollments::EnrollmentsModule,
+    imports::ImportsModule,
+    logger::LoggerLayer,
+    practices::PracticesModule,
+    shared::{SharedModule, event_queue::*},
+    users::UsersModule,
 };
 
-use services::{
-    event_queue::{EventSubscriber, SubscriberServices, TokioEventSender},
-    mailer::{Mailer, MailerConfig},
-    printer::Printer,
-    templates::TemplateConfig,
-};
+#[sword::main]
+async fn main() {
+    let mut app = Application::builder();
 
-use server::config::{CorsConfig, PostgresDbConfig};
-use server::container::DependencyContainer;
+    let event_queue_config = app
+        .config
+        .get::<EventQueueConfig>()
+        .expect("Failed to load EventQueueConfig");
 
-pub const DEFAULT_PAGE_SIZE: usize = 10;
+    let (tx, rx) = mpsc::channel(event_queue_config.buffer_size);
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let app = Application::builder()?;
+    let event_queue = EventQueue::new(tx);
+    let event_subscriber = EventSubscriber::builder()
+        .with_receiver(rx)
+        .with_config(app.config.clone())
+        .build()
+        .await;
 
-    let cors_config = app.config.get::<CorsConfig>()?;
-    let pg_db_config = app.config.get::<PostgresDbConfig>()?;
-    let mailer_config = app.config.get::<MailerConfig>()?;
-    let template_config = app.config.get::<TemplateConfig>()?;
+    event_subscriber.run();
 
-    let (db, mailer, printer) = {
-        let db = PostgresDatabase::new(&pg_db_config)
-            .await
-            .expect("Failed to create database connection");
+    app = app
+        .with_provider(event_queue)
+        .with_module::<SharedModule>()
+        .with_module::<UsersModule>()
+        .with_module::<CoursesModule>()
+        .with_module::<EnrollmentsModule>()
+        .with_module::<ImportsModule>()
+        .with_module::<AuthModule>()
+        .with_module::<PracticesModule>();
 
-        db.migrate()
-            .await
-            .expect("Failed to create database connection");
+    app = app.with_layer(LoggerLayer()).with_layer(
+        Helmet::builder()
+            .with_header(XContentTypeOptions::nosniff())
+            .with_header(XFrameOptions::same_origin())
+            .with_header(StrictTransportSecurity::new().max_age(31_536_000))
+            .with_header(CrossOriginResourcePolicy::same_origin())
+            .with_header(ReferrerPolicy::strict_origin_when_cross_origin())
+            .build(),
+    );
 
-        let mailer = Mailer::new(&mailer_config, &template_config)
-            .expect("Failed to create mailer");
-
-        let printer =
-            Printer::new(&template_config).expect("Failed to create printer");
-
-        (db, mailer, printer)
-    };
-
-    let (tx, rx) = mpsc::channel(100);
-
-    let publisher = TokioEventSender::new(tx);
-    let dependency_container = DependencyContainer::new(db, publisher);
-
-    let sub_queue = EventSubscriber::new(rx, SubscriberServices { mailer, printer });
-
-    tokio::spawn(async move {
-        if let Err(e) = sub_queue.subscribe().await {
-            eprintln!("Error in event subscriber: {}", e);
-        }
-    });
-
-    let http_logger = HttpLogger::new();
-    let cors_layer = setup_cors(&cors_config);
-
-    app.di_module(dependency_container.module)?
-        .controller::<UsersController>()
-        .controller::<CoursesController>()
-        .controller::<EnrollmentsController>()
-        .layer(http_logger.layer)
-        .layer(cors_layer)
-        .run()
-        .await?;
-
-    Ok(())
+    app.build().run().await;
 }

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}{{ course_code }} - Práctica Evaluada{% endblock %}
+
+{% block greeting_text %}Estimado(a) Profesor(a){% endblock %}
+
+{% block main_content %}
+<p>
+    Junto con saludar, le informamos que la práctica del estudiante 
+    <strong>{{ student_name }}</strong> en la empresa <strong>{{ enterprise_name }}</strong> 
+    ha sido evaluada por el supervisor <strong>{{ supervisor_name }}</strong>.
+</p>
+
+<p>
+    Puede acceder a toda la información detallada de la práctica y su evaluación 
+    a través de la plataforma de gestión.
+</p>
+{% endblock %}

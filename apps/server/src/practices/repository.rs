@@ -1,74 +1,68 @@
-use std::sync::Arc;
-
-use async_trait::async_trait;
-use shaku::{Component, Interface};
-use uuid::Uuid;
+use sword::core::injectable;
 
 use crate::{
     practices::entity::Practice,
-    shared::{database::DatabaseConnection, errors::AppError},
+    shared::{AppResult, PostgresDatabase},
+    types::*,
 };
 
-#[derive(Component)]
-#[shaku(interface = PracticeRepository)]
-pub struct PostgresPracticeRepository {
-    #[shaku(inject)]
-    pub db_connection: Arc<dyn DatabaseConnection>,
+#[injectable]
+pub struct PracticeRepository {
+    pub db_connection: Arc<PostgresDatabase>,
 }
 
-#[async_trait]
-pub trait PracticeRepository: Interface {
-    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Practice>, AppError>;
-    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Practice>, AppError>;
-    async fn save(&self, practice: Practice) -> Result<Practice, AppError>;
-    async fn delete(&self, id: &Uuid) -> Result<(), AppError>;
+#[derive(Debug, Clone, Default)]
+pub struct PracticeFilter {
+    pub ids: Option<Vec<Uuid>>,
 }
 
-#[async_trait]
-impl PracticeRepository for PostgresPracticeRepository {
-    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Practice>, AppError> {
-        let query = "SELECT * FROM practices WHERE id = $1";
-        let practice = sqlx::query_as::<_, Practice>(query)
-            .bind(id)
-            .fetch_optional(self.db_connection.get_pool())
-            .await?;
+impl PracticeRepository {
+    pub async fn find_many(&self, filter: PracticeFilter) -> AppResult<Vec<Practice>> {
+        let mut query = QueryBuilder::new("SELECT * FROM practices WHERE 1=1");
 
-        Ok(practice)
-    }
-
-    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<Practice>, AppError> {
-        if ids.is_empty() {
-            return Ok(vec![]);
+        if let Some(ids) = &filter.ids
+            && !ids.is_empty()
+        {
+            query.push(" AND id = ANY(");
+            query.push_bind(ids);
+            query.push(")");
         }
 
-        let query = "SELECT * FROM practices WHERE id = ANY($1)";
-        let practices = sqlx::query_as::<_, Practice>(query)
-            .bind(ids)
+        let practices = query
+            .build_query_as::<Practice>()
             .fetch_all(self.db_connection.get_pool())
             .await?;
 
         Ok(practices)
     }
 
-    async fn save(&self, practice: Practice) -> Result<Practice, AppError> {
-        let query = "
-            INSERT INTO practices (
-                id, enterprise_name, location,
-                description, supervisor_name, supervisor_email, supervisor_phone,
-                start_date, end_date, is_approved
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-            ON CONFLICT (id) DO UPDATE SET
+    pub async fn find_by_id(&self, id: &Uuid) -> AppResult<Option<Practice>> {
+        let r = sqlx::query_as::<_, Practice>("SELECT * FROM practices WHERE id = $1")
+            .bind(id)
+            .fetch_optional(self.db_connection.get_pool())
+            .await?;
+
+        Ok(r)
+    }
+
+    pub async fn save(&self, practice: Practice) -> AppResult<Practice> {
+        let query = r"
+            INSERT INTO practices (id, enterprise_name,location, description, supervisor_name, supervisor_email, supervisor_phone, start_date, end_date, practice_status)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            ON CONFLICT (id) DO UPDATE SET 
                 enterprise_name = EXCLUDED.enterprise_name,
                 location = EXCLUDED.location,
                 description = EXCLUDED.description,
                 supervisor_name = EXCLUDED.supervisor_name,
                 supervisor_email = EXCLUDED.supervisor_email,
+                supervisor_phone = EXCLUDED.supervisor_phone,
                 start_date = EXCLUDED.start_date,
                 end_date = EXCLUDED.end_date,
-                is_approved = EXCLUDED.is_approved
-            RETURNING *";
+                practice_status = EXCLUDED.practice_status
+            RETURNING *
+        ";
 
-        let saved_practice = sqlx::query_as::<_, Practice>(query)
+        let result = sqlx::query_as::<_, Practice>(query)
             .bind(practice.id)
             .bind(practice.enterprise_name)
             .bind(practice.location)
@@ -78,14 +72,13 @@ impl PracticeRepository for PostgresPracticeRepository {
             .bind(practice.supervisor_phone)
             .bind(practice.start_date)
             .bind(practice.end_date)
-            .bind(practice.is_approved)
+            .bind(practice.practice_status)
             .fetch_one(self.db_connection.get_pool())
             .await?;
-
-        Ok(saved_practice)
+        Ok(result)
     }
 
-    async fn delete(&self, id: &Uuid) -> Result<(), AppError> {
+    pub async fn delete(&self, id: &Uuid) -> AppResult<()> {
         sqlx::query("DELETE FROM practices WHERE id = $1")
             .bind(id)
             .execute(self.db_connection.get_pool())

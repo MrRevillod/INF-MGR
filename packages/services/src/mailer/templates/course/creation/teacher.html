@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}{{ course_code }} - Inscripción de Curso{% endblock %}
+
+{% block greeting_text %}Estimado(a) Profesor(a){% endblock %}
+
+{% block main_content %}
+<p>
+    Junto con saludar, le informamos que ha sido registrado (a) como docente encargado del curso
+    <strong>{{ course_code }} - {{ course_name }}</strong>.
+</p>
+
+<p>
+    Si tiene alguna duda o necesita más información, 
+    por favor acerquese a la oficina de secretaría de la carrera.
+</p>
+{% endblock %}

@@ -2,21 +2,13 @@ use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Type};
 use uuid::Uuid;
 
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+#[derive(Clone, Debug, Serialize, Deserialize, FromRow)]
 #[serde(rename_all = "camelCase")]
 pub struct Enrollment {
     pub id: Uuid,
-
-    #[sqlx(rename = "student_id")]
     pub student_id: Uuid,
-
-    #[sqlx(rename = "course_id")]
     pub course_id: Uuid,
-
-    #[sqlx(rename = "practice_id")]
     pub practice_id: Option<Uuid>,
-
-    #[sqlx(rename = "student_scores")]
     pub student_scores: Vec<StudentScore>,
 }
 

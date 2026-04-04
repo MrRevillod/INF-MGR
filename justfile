@@ -1,14 +1,17 @@
-
 PROJECT_NAME := "INF_MGR"
-TEST_ARGS := "-- --nocapture --test-threads=1"
-COMPOSE_TEST_FILE := "docker-compose.test.yml"
 
 run DOCKERARGS="":
-	docker compose up {{DOCKERARGS}}
+	docker compose --profile dev -f docker-compose.yml -f healthchecks.yml up {{DOCKERARGS}}
+
+down DOCKERARGS="":
+	docker compose --profile dev -f docker-compose.yml -f healthchecks.yml down {{DOCKERARGS}}
+
+db:
+	pgcli postgres://user:password@localhost:5433/inf_mgr_db
 
 lint:
 	cargo clippy --all-features -- -D warnings && \
-	cd apps/client && npm run lint && cd ../..
+	cd apps/client && npm run lint && cd ../.. 
 
 fmt:
 	cargo fmt --verbose && \
@@ -18,8 +21,15 @@ fmt-check:
 	cargo fmt --check && \
 	cd apps/client && npm run format && cd ../..
 
+check:
+	cargo check --all-features
+	cd apps/client && npm run check && cd ../..
+
+nurse:
+	cargo clippy --all-features -- -D warnings -W clippy::pedantic -W clippy::nursery
+
 db-seed:
-	docker exec inf_mgr_server_dev cargo run -p server --bin seeder --features seeder
+	docker exec inf_mgr_server cargo run -p server --bin seeder --features seeder
 
 web-install package="":
 	cd apps/client && npm install {{package}} && cd ../..
@@ -28,21 +38,3 @@ web-install package="":
 web-install-dev package:
 	cd apps/client && npm install --save-dev {{package}} && cd ../..
 	docker exec inf_mgr_client_dev npm install --save-dev {{package}}
-
-# Testing commands
-
-_ensure-test-service:
-	@docker compose -f {{COMPOSE_TEST_FILE}} up -d backend_test postgres_test
-
-test entity="":
-    just _ensure-test-service
-    docker compose -f {{COMPOSE_TEST_FILE}} exec backend_test sh -c "cd lib/tests && cargo test {{entity}} {{TEST_ARGS}}"
-
-test-watch entity="":
-	just _ensure-test-service
-	docker compose -f {{COMPOSE_TEST_FILE}} exec backend_test sh -c "cd lib/tests && cargo watch -x test {{entity}} {{TEST_ARGS}} -w src"
-
-test-clean:
-	docker compose -f {{COMPOSE_TEST_FILE}} down -v
-	docker volume rm inf-mgr_rust_target_cache inf-mgr_cargo_cache 2>/dev/null || true
-	rm -f lib/tests/config lib/tests/tools apps/server/tools/tools apps/server/config/config

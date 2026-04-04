@@ -1,14 +1,12 @@
+use chrono::{Datelike, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::prelude::FromRow;
+use sqlx::FromRow;
 use uuid::Uuid;
 use validator::Validate;
 
 use crate::{
     courses::{Course, CourseEvaluation, CourseStatus},
-    shared::{
-        errors::{AppError, Input},
-        validators::validate_uuid,
-    },
+    shared::{AppError, ValidationError as AppValidationError, validate_uuid},
     users::User,
 };
 
@@ -19,11 +17,7 @@ use crate::{
 #[derive(Serialize, Deserialize, Debug, Clone, Validate)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateCourseDto {
-    #[validate(range(
-        min = 2000,
-        max = 2100,
-        message = "El año debe tener 4 dígitos."
-    ))]
+    #[validate(custom(function = validate_course_year))]
     pub year: i32,
 
     #[validate(
@@ -106,11 +100,7 @@ impl FromStr for CourseStatus {
         match s {
             "active" => Ok(CourseStatus::Active),
             "completed" => Ok(CourseStatus::Completed),
-            _ => Err(AppError::InvalidInput(Input {
-                field: "status".to_string(),
-                message: "El estado debe ser 'active' o 'completed'.".to_string(),
-                value: s.to_string(),
-            })),
+            _ => Err(AppValidationError::invalid_course_status(s.to_string()))?,
         }
     }
 }
@@ -129,8 +119,43 @@ pub struct UpdateCourseDto {
         custom(function = validate_course_status)
     )]
     pub status: Option<String>,
+
+    #[validate(
+        nested,
+        custom(function = validate_update_evaluation_weights)
+    )]
+    pub evaluations: Option<Vec<UpdateEvaluationDto>>,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, Validate)]
+pub struct UpdateEvaluationDto {
+    #[validate(custom(function = validate_uuid))]
+    pub id: Option<String>,
+
+    #[validate(length(
+        min = 1,
+        max = 100,
+        message = "El nombre de la evaluación debe tener entre 1 y 100 caracteres."
+    ))]
+    pub name: String,
+
+    #[validate(range(
+        min = 1,
+        max = 100,
+        message = "El porcentaje de la evaluación debe estar entre 1 y 100%."
+    ))]
+    pub weight: i32,
+}
+
+impl From<UpdateEvaluationDto> for CourseEvaluation {
+    fn from(dto: UpdateEvaluationDto) -> Self {
+        CourseEvaluation {
+            id: Uuid::new_v4(),
+            name: dto.name,
+            weight: dto.weight,
+        }
+    }
+}
 // ============================================================================
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>> COURSE RESPONSE DTO <<<<<<<<<<<<<<<<<<<<<<<<<<<
 // ============================================================================
@@ -176,26 +201,51 @@ use validator::ValidationError;
 static ASIGNATURE_CODE_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^INFO\d{4}$").unwrap());
 
-fn validate_evaluation_weights(
-    evaluations: &Vec<CourseEvaluationDto>,
-) -> Result<(), ValidationError> {
-    let mut total_weight = 0;
+fn validate_weights(weights: &[i32]) -> Result<(), ValidationError> {
+    let total: i32 = weights.iter().sum();
 
-    for evaluation in evaluations {
-        total_weight += evaluation.weight;
-    }
-
-    if total_weight != 100 {
+    if total != 100 {
         return Err(ValidationError::new("Las evaluaciones deben sumar 100%."));
     }
 
     Ok(())
 }
 
+fn validate_evaluation_weights(
+    evaluations: &[CourseEvaluationDto],
+) -> Result<(), ValidationError> {
+    if evaluations.is_empty() {
+        return Err(ValidationError::new("Debe haber al menos una evaluación."));
+    }
+
+    let weights: Vec<i32> = evaluations.iter().map(|e| e.weight).collect();
+    validate_weights(&weights)
+}
+
+fn validate_update_evaluation_weights(
+    evaluations: &[UpdateEvaluationDto],
+) -> Result<(), ValidationError> {
+    let weights: Vec<i32> = evaluations.iter().map(|e| e.weight).collect();
+
+    validate_weights(&weights)
+}
+
 fn validate_course_status(status: &String) -> Result<(), ValidationError> {
     if status != "active" && status != "completed" {
         return Err(ValidationError::new(
             "El estado de la asignatura debe ser 'active' o 'completed'.",
+        ));
+    }
+
+    Ok(())
+}
+
+fn validate_course_year(year: i32) -> Result<(), ValidationError> {
+    let current_year = Utc::now().year();
+
+    if year < current_year || year > current_year + 1 {
+        return Err(ValidationError::new(
+            "El año de la asignatura debe ser el año actual o el siguiente.",
         ));
     }
 

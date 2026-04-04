@@ -1,7 +1,24 @@
 use serde::Deserialize;
-use sword::prelude::config;
+use sword::core::config;
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
+#[config(key = "application")]
+pub struct ServerConfig {
+    pub port: u16,
+    pub host: String,
+    pub client_app_url: String,
+    pub documents_dir: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[config(key = "event-queue")]
+pub struct EventQueueConfig {
+    pub buffer_size: usize,
+    pub num_of_event_retry: u8,
+    pub delay_between_event_retry_ms: u64,
+}
+
+#[derive(Clone, Debug, Deserialize)]
 #[config(key = "postgres-db")]
 pub struct PostgresDbConfig {
     pub url: String,
@@ -11,19 +28,24 @@ pub struct PostgresDbConfig {
     pub acquire_timeout_ms: u64,
 }
 
-// #[derive(Debug, Deserialize)]
-// #[config(key = "auth")]
-// pub struct AuthConfig {
-//     pub session_jwt_secret: String,
-//     pub session_jwt_exp_ms: u32,
-//     pub refresh_jwt_secret: String,
-//     pub refresh_jwt_exp_ms: u32,
-// }
+#[derive(Clone, Debug, Deserialize)]
+#[config(key = "redis")]
+pub struct RedisConfig {
+    pub url: String,
+}
 
-#[derive(Debug, Deserialize)]
-#[config(key = "cors")]
-pub struct CorsConfig {
-    pub allow_credentials: bool,
-    pub allowed_http_methods: Vec<String>,
-    pub allowed_http_headers: Vec<String>,
+#[derive(Clone, Deserialize, Default)]
+#[config(key = "auth")]
+pub struct AuthConfig {
+    pub access_jwt_secret: String,
+    pub refresh_jwt_secret: String,
+
+    pub access_exp_ms: usize,
+    pub refresh_exp_ms: usize,
+
+    pub session_ttl_seconds: u64,
+
+    pub google_client_id: String,
+    pub google_client_secret: String,
+    pub google_redirect_url: String,
 }

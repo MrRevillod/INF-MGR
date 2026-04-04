@@ -4,6 +4,16 @@ target
 .svelte-kit
 /build
 
+apps/server/.fastembed_cache
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.ruff_cache/
+.pytest_cache/
+*.egg-info/
+
 logs
 *.log
 npm-debug.log*
@@ -26,3 +36,16 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
 documents/*
+tests/files/*
+
+tests/config
+apps/server/config/*
+!apps/server/config/migrations/
+!apps/server/config/vpn.sh
+!apps/server/config/entrypoint.sh
+
+packages/services/src/printer/templates
+!packages/services/src/printer/templates/authorization.typ
+!packages/services/src/printer/templates/logo.png
+
+service-account.json

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}{{ course_code }} - Confirmación de Práctica{% endblock %}
+
+{% block recipient_name %}{{ student_name }}{% endblock %}
+
+{% block main_content %}
+<p>
+    Junto con saludar, le informamos que la solicitud de inscripción de práctica 
+    en la empresa <strong>{{ enterprise_name }}</strong> ha sido confirmada exitosamente.
+    El supervisor, <strong>{{ supervisor_name }}</strong>, ha revisado y aprobado la información ingresada.
+</p>
+
+<p>
+    En la plataforma podrá encontrar los documentos e información relacionada.
+</p>
+{% endblock %}

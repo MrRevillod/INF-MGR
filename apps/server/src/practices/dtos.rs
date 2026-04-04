@@ -3,7 +3,13 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use validator::{Validate, ValidationError};
 
-use crate::practices::Practice;
+use regex::Regex;
+use std::sync::LazyLock;
+
+use crate::{
+    enrollments::{StudentScore, StudentScoreDto},
+    practices::{Practice, entity::PracticeStatus},
+};
 
 #[derive(Serialize, Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
@@ -42,10 +48,14 @@ pub struct CreatePracticeDto {
     ))]
     pub supervisor_email: String,
 
+    #[validate(regex(
+        path = *PHONE_REGEX,
+        message = "El teléfono del supervisor debe ser un número válido."
+    ))]
     pub supervisor_phone: String,
 
-    pub start_date: Option<DateTime<Utc>>,
-    pub end_date: Option<DateTime<Utc>>,
+    pub start_date: DateTime<Utc>,
+    pub end_date: DateTime<Utc>,
 }
 
 impl From<CreatePracticeDto> for Practice {
@@ -58,9 +68,9 @@ impl From<CreatePracticeDto> for Practice {
             supervisor_name: dto.supervisor_name,
             supervisor_email: dto.supervisor_email,
             supervisor_phone: dto.supervisor_phone,
-            start_date: dto.start_date,
-            end_date: dto.end_date,
-            is_approved: false,
+            start_date: Some(dto.start_date),
+            end_date: Some(dto.end_date),
+            practice_status: PracticeStatus::Pending,
         }
     }
 }
@@ -106,10 +116,32 @@ pub struct UpdatePracticeDto {
     pub end_date: Option<DateTime<Utc>>,
 }
 
+#[derive(Serialize, Deserialize, Validate)]
+#[serde(rename_all = "camelCase")]
+pub struct EvaluatePracticeDto {
+    #[validate(custom(
+        function = "validate_score",
+        message = "La puntuación debe estar entre 1.0 y 7.0, no ser negativa y tener máximo 1 decimal"
+    ))]
+    pub score: f64,
+}
+
+impl From<StudentScore> for StudentScoreDto {
+    fn from(dto: StudentScore) -> Self {
+        StudentScoreDto {
+            evaluation_id: dto.evaluation_id.to_string(),
+            score: dto.score,
+        }
+    }
+}
+
+static PHONE_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^(?:\+56)?\s?(?:9\d{8}|\d{1}\d{8})$").unwrap());
+
 fn validate_create_practice_dates(
     schema: &CreatePracticeDto,
 ) -> Result<(), ValidationError> {
-    validate_dates(schema.start_date, schema.end_date)
+    validate_dates(Some(schema.start_date), Some(schema.end_date))
 }
 
 fn validate_update_practice_dates(
@@ -140,6 +172,36 @@ fn validate_dates(
                 "La fecha de inicio no puede ser posterior a la fecha de finalización.",
             ));
         }
+
+        if start == end {
+            return Err(ValidationError::new(
+                "La fecha de inicio no puede ser igual a la fecha de finalización.",
+            ));
+        }
+    }
+
+    Ok(())
+}
+
+fn validate_score(score: f64) -> Result<(), ValidationError> {
+    if score < 0.0 {
+        return Err(ValidationError::new("La puntuación no puede ser negativa"));
+    }
+
+    if !(1.0..=7.0).contains(&score) {
+        return Err(ValidationError::new(
+            "La puntuación debe estar entre 1.0 y 7.0",
+        ));
+    }
+
+    let score_str = score.to_string();
+
+    if let Some(decimal_part) = score_str.split('.').nth(1)
+        && decimal_part.len() > 1
+    {
+        return Err(ValidationError::new(
+            "La puntuación debe tener máximo 1 decimal",
+        ));
     }
 
     Ok(())

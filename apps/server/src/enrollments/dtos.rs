@@ -3,14 +3,12 @@ use uuid::Uuid;
 use validator::Validate;
 
 use crate::{
-    enrollments::{Enrollment, EnrollmentFilter, StudentScore},
-    practices::Practice,
-    shared::validators::validate_uuid,
+    courses::Course, enrollments::*, practices::Practice, shared::validate_uuid,
     users::User,
 };
 
 // ============================================================================
-// >>>>>>>>>>>>>>>>>>>>>>>>>> GET INSCRIPTIONS DTO <<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// >>>>>>>>>>>>>>>>>>>>>>>>>> GET ENROLLMENTS DTO <<<<<<<<<<<<<<<<<<<<<<<<<<<<
 // ============================================================================
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate, Default)]
@@ -74,6 +72,9 @@ impl From<CreateEnrollmentDto> for Enrollment {
 pub struct UpdateEnrollmentDto {
     #[validate(nested)]
     pub student_scores: Option<Vec<StudentScoreDto>>,
+
+    #[validate(custom(function = validate_uuid))]
+    pub practice_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
@@ -114,15 +115,17 @@ pub struct EnrollmentResponse {
     pub student_scores: Vec<StudentScore>,
     pub practice_id: Option<String>,
 
+    pub course: Course,
     pub student: User,
     pub practice: Option<Practice>,
 }
 
-pub type EnrollmentWithStudentAndPractice = (Enrollment, User, Option<Practice>);
+pub type EnrollmentWithStudentAndPracticeAndCourse =
+    (Enrollment, User, Option<Practice>, Course);
 
-impl From<EnrollmentWithStudentAndPractice> for EnrollmentResponse {
+impl From<EnrollmentWithStudentAndPracticeAndCourse> for EnrollmentResponse {
     fn from(
-        (enrollment, student, practice): EnrollmentWithStudentAndPractice,
+        (enrollment, student, practice, course): EnrollmentWithStudentAndPracticeAndCourse,
     ) -> Self {
         EnrollmentResponse {
             id: enrollment.id.to_string(),
@@ -132,6 +135,7 @@ impl From<EnrollmentWithStudentAndPractice> for EnrollmentResponse {
             practice_id: enrollment.practice_id.map(|id| id.to_string()),
             student,
             practice,
+            course,
         }
     }
 }

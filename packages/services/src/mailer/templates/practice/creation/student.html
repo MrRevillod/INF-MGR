@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}{{ course_code }} - Inscripción de Práctica Inicial{% endblock %}
+
+{% block recipient_name %}{{ student_name }}{% endblock %}
+
+{% block main_content %}
+<p>
+    Junto con saludar, le informamos que su inscripción de práctica en la empresa <strong>{{ enterprise_name }}</strong> para el curso
+    <strong>{{ course_name }}</strong> ha sido registrada exitosamente.
+</p>
+
+<p>
+    El supervisor, <strong>{{ supervisor_name }}</strong>, ha sido notificado y podrá revisar la información ingresada.
+    Una vez que su supervisor apruebe la práctica, recibirá un correo con los detalles de la práctica y los documentos oficiales del proceso.
+</p>
+{% endblock %}

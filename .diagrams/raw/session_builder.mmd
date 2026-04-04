@@ -1,0 +1,33 @@
+classDiagram
+    direction LR
+    
+    class Session {
+        -Uuid id
+        -String access_token
+        -String refresh_token
+        -String user_id
+        -String google_access_token
+        -String google_refresh_token
+        -DateTime~Utc~ created_at
+        +builder() SessionBuilder
+    }
+    
+    class SessionBuilder {
+        -Option~Uuid~ id
+        -Option~String~ access_token
+        -Option~String~ refresh_token
+        -Option~String~ user_id
+        -Option~String~ google_access_token
+        -Option~String~ google_refresh_token
+        +new() SessionBuilder
+        +session_id(id Uuid) SessionBuilder
+        +access_token(token String) SessionBuilder
+        +refresh_token(token String) SessionBuilder
+        +user_id(user_id String) SessionBuilder
+        +google_access_token(token String) SessionBuilder
+        +google_refresh_token(token String) SessionBuilder
+        +build() Session
+    }
+    
+    Session --> SessionBuilder : creates
+    SessionBuilder --> Session : builds

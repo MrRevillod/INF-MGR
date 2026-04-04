@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Denegación de Solicitud de Práctica{% endblock %}
+
+{% block recipient_name %}{{ supervisor_name }}{% endblock %}
+
+{% block main_content %}
+<p>
+    Junto con saludar, le confirmamos que la solicitud de práctica del estudiante 
+    <strong>{{ student_name }}</strong> de la carrera de Ingeniería Civil en Informática 
+    ha sido denegada.
+</p>
+
+<h2>Detalles de la Solicitud Denegada:</h2>
+<div class="info-box">
+    <p>
+        <strong>Estudiante:</strong> {{ student_name }}<br>
+        <strong>Curso:</strong> {{ course_name }} ({{ course_code }})<br>
+        <strong>Empresa:</strong> {{ enterprise_name }}<br>
+        <strong>Ubicación:</strong> {{ location }}
+    </p>
+</div>
+
+<p>
+    El estudiante y personal académico han sido notificados de esta decisión.
+    Ante cualquier consulta, puede contactar con secretaría de la carrera 
+    al correo: <strong>{{ secretary_email }}</strong>. O bien, con el profesor guía 
+    al correo: <strong>{{ teacher_email }}</strong>.
+</p>
+{% endblock %}

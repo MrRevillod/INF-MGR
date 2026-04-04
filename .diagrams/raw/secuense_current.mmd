@@ -1,0 +1,39 @@
+---
+config:
+  theme: redux
+---
+sequenceDiagram
+    participant E as Estudiante
+    participant C as Coordinador
+    participant S as Secretaría
+    participant P as Profesor
+    participant Em as Empresa
+    E->>E: 1. Inscripción del curso
+    Note over E: Portal del estudiante
+    E->>C: 2. Solicitud reunión (email)
+    Note over E,C: Una vez encontrada empresa
+    C->>E: 3. Sesión introductoria + documentos (email)
+    Note over C: Entrega formatos y pautas
+    E->>Em: 4. Comunicación para obtener datos empresa
+    Note over E,Em: Coordinación detalles práctica
+    Em->>E: Información empresa + confirmación
+    E->>C: 5. Entrega documentos iniciales (email)
+    Note over E,C: Documentos con datos de empresa
+    C->>S: Copia documentos (email)
+    C->>P: Copia documentos (email)
+    Note over Em: Autorización firmada y timbrada
+    opt Comunicación opcional
+        Em->>S: Consultas administrativas (email)
+        S->>Em: Respuesta consultas (email)
+    end
+    loop Duración de la práctica
+        E->>E: 6. Redactar bitácoras semanales
+    end
+    E->>C: 7. Informe final (email)
+    Note over E,C: Plazo: 2 semanas post-práctica
+    C->>C: 8. Evaluación académica
+    Note over C: Revisión según rúbricas
+    Em->>S: 9. Evaluación empresa (email)
+    Em->>C: Copia evaluación (email)
+    C->>P: 10. Informar nota final
+    P->>P: 11. Ingreso nota portal académico

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Documentos de práctica{% endblock %}
+
+{% block recipient_name %}{{ supervisor_name }}{% endblock %}
+
+{% block main_content %}
+<p>
+    Junto con saludar, le informamos que la práctica del estudiante <strong>{{ student_name }}</strong> 
+    en la empresa <strong>{{ enterprise_name }}</strong> ha sido confirmada exitosamente.
+</p>
+
+<p>
+    A continuación encontrará un enlace para descargar los documentos necesarios:
+</p>
+
+<div class="info-box">
+    <p><strong>Autorización de Práctica:</strong></p>
+    <p>
+        <a href="{{ public_url }}/api{{ practice_auth_doc_url }}" class="link">
+            Documento de autorización de práctica (PDF)
+        </a>
+    </p>
+    <p>
+        Este documento debe ser impreso, firmado, timbrado y posteriormente 
+        enviado a través del formulario en el siguiente enlace:
+    </p>
+    <p>
+        <a href="{{ public_url }}{{ practice_auth_form_url }}" class="link">
+            Formulario de envío de autorización de práctica
+        </a>
+    </p>
+</div>
+
+<div class="info-box">
+    <p><strong>Evaluación del estudiante por la empresa:</strong></p>
+    <p>
+        <a href="{{ public_url }}{{ practice_evaluation_form_url }}" class="link">Formulario y pauta de evaluación</a>
+    </p>
+    <p>
+        Este formulario debe ser completado por usted al finalizar la práctica.<br/>
+        Tenga en cuenta que el formulario es válido por una sola vez, por lo tanto, al 
+        enviar los resultados, el enlace expirará.
+    </p>
+</div>
+
+<p>
+    Ante cualquier duda, por favor contáctese con secretaría de la carrera: <strong>{{ secretary_email }}</strong>.
+</p>
+{% endblock %}

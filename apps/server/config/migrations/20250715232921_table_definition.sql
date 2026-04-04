@@ -3,14 +3,14 @@ CREATE TABLE IF NOT EXISTS users (
     rut TEXT NOT NULL,
     name TEXT NOT NULL,
     email TEXT NOT NULL UNIQUE,
-    password TEXT NOT NULL,
-    roles user_role[] NOT NULL,
+    google_id TEXT UNIQUE,
+    role user_role NOT NULL,
+    register TEXT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     deleted_at TIMESTAMP WITH TIME ZONE NULL
 );
 
 CREATE INDEX IF NOT EXISTS users_rut_idx ON users(rut);
-CREATE INDEX IF NOT EXISTS users_roles_deleted_at_idx ON users USING GIN(roles) WHERE deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS users_created_at_idx ON users(created_at DESC);
 
 CREATE TABLE IF NOT EXISTS courses (
@@ -18,9 +18,9 @@ CREATE TABLE IF NOT EXISTS courses (
     year INTEGER NOT NULL,
     code TEXT NOT NULL,
     name TEXT NOT NULL,
+    course_status course_status NOT NULL DEFAULT 'active',
     evaluations course_evaluation[] NOT NULL,
-    teacher_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
-    course_status course_status NOT NULL DEFAULT 'active'
+    teacher_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT
 );
 
 CREATE INDEX IF NOT EXISTS courses_teacher_id_idx ON courses(teacher_id);
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS practices (
     start_date TIMESTAMP WITH TIME ZONE,
     end_date TIMESTAMP WITH TIME ZONE,
 
-    is_approved BOOLEAN NOT NULL DEFAULT FALSE
+    practice_status practice_status NOT NULL DEFAULT 'pending'
 );
 
 CREATE TABLE IF NOT EXISTS enrollments (
@@ -56,4 +56,3 @@ CREATE TABLE IF NOT EXISTS enrollments (
 CREATE INDEX IF NOT EXISTS enrollments_student_id_idx ON enrollments(student_id);
 CREATE INDEX IF NOT EXISTS enrollments_course_id_idx ON enrollments(course_id);
 CREATE INDEX IF NOT EXISTS enrollments_practice_id_idx ON enrollments(practice_id) WHERE practice_id IS NOT NULL;
-

@@ -2,9 +2,24 @@
 port = 8000
 host = "0.0.0.0"
 
-[career]
-career_name = "${CAREER_NAME:Ingeniería en Informática}"
-career_manager = "${CAREER_MANAGER:Director de Carrera}"
+client_app_url = "${PUBLIC_URL:http://localhost:3000}"
+documents_dir = "${DOCUMENTS_DIR:./documents}"
+
+[middlewares]
+compression = { enabled = false }
+body_limit = { enabled = true, max_size = "5MB", display = true }
+request_timeout = { enabled = true, duration = "15s", display = true }
+
+[middlewares.cors]
+enabled = true
+allow_credentials = false
+allow_methods = ["GET", "POST", "PUT", "PATCH", "DELETE"]
+allow_headers = ["Content-Type", "Authorization"]
+
+[event-queue]
+buffer_size = 100
+num_of_event_retry = 2
+delay_between_event_retry_ms = 2000
 
 [postgres-db]
 url = "${POSTGRES_DATABASE_URL:postgres://localhost:5432/inf_mgr}"
@@ -13,26 +28,38 @@ min_connections = 1
 max_connections = 10
 acquire_timeout_ms = 5000
 
+[redis]
+url = "${REDIS_DATABASE_URL}"
+
 [auth]
-session_jwt_secret = "${SESSION_JWT_SECRET}"
-session_jwt_exp_ms = 900000                  # 15 minutes
-
+access_jwt_secret = "${ACCESS_JWT_SECRET}"
 refresh_jwt_secret = "${REFRESH_JWT_SECRET}"
-refresh_jwt_exp_ms = 604800000               # 7 days
 
-[cors]
-allow_credentials = false
-allowed_http_methods = ["GET", "POST", "PUT", "PATCH", "DELETE"]
-allowed_http_headers = ["Content-Type", "Authorization"]
+access_exp_ms = 900000       # 15 minutes
+refresh_exp_ms = 604800000   # 7 days
+session_ttl_seconds = 604800 # 7 days
 
-[mailer]
+google_client_id = "${GOOGLE_CLIENT_ID}"
+google_client_secret = "${GOOGLE_CLIENT_SECRET}"
+google_redirect_url = "${GOOGLE_REDIRECT_URL}"
+
+
+[services-config]
+
+[services-config.mailer]
 smtp_host = "${SMTP_HOST:localhost}"
 smtp_port = "${SMTP_PORT}"
 smtp_username = "${SMTP_USERNAME}"
 smtp_password = "${SMTP_PASSWORD}"
 
-[template-context]
+[services-config.templates]
 public_url = "${PUBLIC_URL:http://localhost:8000}"
 career_name = "${CAREER_NAME:Ingeniería en Informática}"
 career_manager = "${CAREER_MANAGER:Director de Carrera}"
 secretary_email = "${SECRETARY_EMAIL}"
+
+[services-config.printer]
+documents_dir = "${DOCUMENTS_DIR:./documents}"
+
+[services-config.file_manager]
+documents_dir = "${DOCUMENTS_DIR:./documents}"

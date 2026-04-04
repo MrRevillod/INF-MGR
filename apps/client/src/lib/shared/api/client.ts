@@ -1,35 +1,98 @@
 import axios from "axios"
+import { goto } from "$app/navigation"
+import { auth } from "$lib/auth/store.svelte"
 
 const axiosOpts = {
 	baseURL: "/api",
-	withCredentials: true, // Sends cookies automatically
+	withCredentials: false,
 }
 
-// Axios instance for unprotected (public) server routes
+// Cliente público (sin autenticación)
 export const api = axios.create({ ...axiosOpts })
 
-// Axios instance for protected server routes
-// Includes a response interceptor to automatically refresh the session when it expires
-// export const protectedApi = axios.create({ ...axiosOpts })
+// Cliente protegido (con Bearer tokens)
+export const protectedApi = axios.create({ ...axiosOpts })
 
-// protectedApi.interceptors.response.use(
-// 	async response => response,
-// 	async error => {
-// 		// If the error is not a 401 (unauthorized), reject the promise
-// 		if (error?.response?.status !== 401) {
-// 			return Promise.reject(error)
-// 		}
+/**
+ * Request interceptor: Añade tokens a cada petición
+ */
+protectedApi.interceptors.request.use(
+	config => {
+		const tokens = auth.getTokens()
 
-// 		// If the error is 401, the session maybe have expired
-// 		const originalRequest = error.config
+		if (tokens) {
+			if (!config.headers) config.headers = {}
+			config.headers["Authorization"] =
+				`Bearer ${tokens.accessToken},${tokens.refreshToken}`
+		}
 
-// 		// So We can try to refresh the session making a req to "/auth/refresh"
-// 		// if the refresh req is successfull, retry the original request
-// 		return api
-// 			.post("/auth/refresh")
-// 			.then(response => {
-// 				if (response.status === 200) return protectedApi(originalRequest)
-// 			})
-// 			.catch(error => Promise.reject(error))
-// 	}
-// )
+		return config
+	},
+	error => Promise.reject(error)
+)
+
+/**
+ * Response interceptor: Maneja refresh automático en 401
+ */
+protectedApi.interceptors.response.use(
+	response => response,
+	async error => {
+		// Si no es 401, rechazar directamente
+		if (error?.response?.status !== 401) {
+			return Promise.reject(error)
+		}
+
+		const originalReq = error.config
+
+		// Si ya intentamos hacer refresh, logout
+		if (originalReq._retry) {
+			auth.reset()
+			goto("/auth/login")
+			return Promise.reject(error)
+		}
+
+		originalReq._retry = true
+
+		try {
+			const tokens = auth.getTokens()
+
+			if (!tokens) {
+				throw new Error("No tokens available")
+			}
+
+			// Intentar refrescar la sesión
+			const response = await api.post(
+				"/auth/refresh",
+				{},
+				{
+					headers: {
+						Authorization: `Bearer ${tokens.accessToken},${tokens.refreshToken}`,
+					},
+				}
+			)
+
+			const { access_token, refresh_token } = response.data.data
+
+			if (!access_token || !refresh_token) {
+				throw new Error("Invalid refresh response")
+			}
+
+			// Guardar nuevos tokens
+			auth.setTokens({
+				accessToken: access_token,
+				refreshToken: refresh_token,
+			})
+
+			// Reintentar la petición original con nuevos tokens
+			originalReq.headers["Authorization"] =
+				`Bearer ${access_token},${refresh_token}`
+
+			return protectedApi(originalReq)
+		} catch (refreshError) {
+			console.error("Refresh failed:", refreshError)
+			auth.reset()
+			goto("/auth/login")
+			return Promise.reject(refreshError)
+		}
+	}
+)

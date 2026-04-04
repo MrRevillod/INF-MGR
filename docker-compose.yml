@@ -1,74 +1,114 @@
 services:
-  server_dev:
-    container_name: inf_mgr_server_dev
-    extends:
-      file: docker-compose.base.yml
-      service: server_base
+  inf_mgr_server:
+    container_name: inf_mgr_server
     build:
+      context: .
+      dockerfile: ./apps/server/Dockerfile
       target: dev
     env_file:
       - .env
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    privileged: false
     depends_on:
-      - postgres_dev
-    volumes:
-      - documents_volume:/app/documents
+      inf_mgr_postgres:
+        condition: service_healthy
+      inf_mgr_redis:
+        condition: service_healthy
     environment:
       - DOCUMENTS_DIR=/app/documents
+    ports:
+      - "8000:8000"
+    networks:
+      - inf_mgr_network
+    volumes:
+      - ./documents:/app/documents
+      - ./apps/server:/app/apps/server
+      - ./packages:/app/packages
+      - ./Cargo.toml:/app/Cargo.toml
+      - ./Cargo.lock:/app/Cargo.lock
+      - ./config/logo.png:/app/logo.png:ro
+      - ./apps/server/config:/app/apps/server/config
+      - cargo_cache:/usr/local/cargo/registry
+      - server_target:/app/target
 
-  client_dev:
-    container_name: inf_mgr_client_dev
-    extends:
-      file: docker-compose.base.yml
-      service: client_base
+  inf_mgr_client:
+    container_name: inf_mgr_client
+    build:
+      context: .
+      target: dev
+      dockerfile: ./apps/client/Dockerfile
+    volumes:
+      - ./apps/client:/app
+      - client_node_modules:/app/node_modules
     env_file:
       - .env
-    build:
-      target: dev
     ports:
       - "5173:5173"
     environment:
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
+    networks:
+      - inf_mgr_network
 
-  nginx_dev:
-    container_name: inf_mgr_nginx_dev
-    extends:
-      file: docker-compose.base.yml
-      service: nginx_base
+  inf_mgr_nginx:
+    container_name: inf_mgr_nginx
+    image: nginx:alpine
+    ports:
+      - "80:80"
     volumes:
       - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
-      - server_dev
-      - client_dev
+      - inf_mgr_server
+      - inf_mgr_client
     networks:
-      - my_networks
+      - inf_mgr_network
 
-  postgres_dev:
-    container_name: inf_mgr_postgres_dev
+  inf_mgr_postgres:
+    image: postgres:15
+    container_name: inf_mgr_postgres
+    command: postgres -c log_statement=none -c log_duration=off -c log_min_duration_statement=-1
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    env_file:
+      - .env
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB_NAME}
-    extends:
-      file: docker-compose.base.yml
-      service: postgres_base
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data_dev:/var/lib/postgresql/data
-    env_file:
-      - .env
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB_NAME}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
-      - my_networks
+      - inf_mgr_network
+
+  inf_mgr_redis:
+    container_name: inf_mgr_redis
+    image: redis:7.4-alpine
+    command: redis-server --appendonly yes --loglevel warning
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./config/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - inf_mgr_network
 
 networks:
-  my_networks:
+  inf_mgr_network:
     driver: bridge
 
 volumes:
-  postgres_data_dev:
+  postgres_data:
   server_target:
   cargo_cache:
   client_node_modules:
-  documents_volume:
-    driver: local

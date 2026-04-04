@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}{{ course_code }} - Denegación de Solicitud de Práctica{% endblock %}
+
+{% block greeting_text %}Estimado(a) Profesor(a){% endblock %}
+
+{% block main_content %}
+<p>
+    Junto con saludar, le informamos que la práctica del estudiante <strong>{{ student_name }}</strong> 
+    en la empresa <strong>{{ enterprise_name }}</strong> ha sido rechazada.
+
+    El supervisor, <strong>{{ supervisor_name }}</strong>, email: {{ supervisor_email }} ha revisado y denegado la información ingresada.
+</p>
+
+<p>
+    Secretaría ha sido notificada de esta decisión.
+    Ante cualquier duda, recomendamos contactar directamente al supervisor o al estudiante.
+</p>
+{% endblock %}

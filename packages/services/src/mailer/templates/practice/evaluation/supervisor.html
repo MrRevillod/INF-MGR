@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Evaluación de Práctica Completada{% endblock %}
+
+{% block recipient_name %}{{ supervisor_name }}{% endblock %}
+
+{% block main_content %}
+<p>
+    Junto con saludar, le confirmamos que la evaluación de la práctica del estudiante 
+    <strong>{{ student_name }}</strong> en <strong>{{ enterprise_name }}</strong> 
+    ha sido registrada exitosamente en nuestro sistema.
+</p>
+
+<p>
+    La evaluación ha sido procesada y se ha notificado al profesor guía correspondiente. 
+    Agradecemos su tiempo y dedicación en la supervisión y evaluación del estudiante.
+</p>
+{% endblock %}

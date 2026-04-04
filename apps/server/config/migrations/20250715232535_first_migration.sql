@@ -27,3 +27,10 @@ CREATE TYPE student_score AS (
     evaluation_id UUID,
     score FLOAT
 );
+
+DROP TYPE IF EXISTS practice_status CASCADE;
+CREATE TYPE practice_status AS ENUM (
+    'pending',
+    'approved',
+    'declined'
+);
