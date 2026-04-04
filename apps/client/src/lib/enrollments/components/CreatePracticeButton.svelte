@@ -5,6 +5,7 @@
 	import { createForm, Field, validate } from "@formisch/svelte"
 	import { toast } from "svelte-sonner"
 	import Button from "$lib/shared/components/ui/Button.svelte"
+	import Modal from "$lib/shared/components/Modal.svelte"
 
 	interface Props {
 		enrollment: Enrollment
@@ -102,249 +103,211 @@
 	Inscribir Práctica
 </button>
 
-{#if isOpen}
-	<!-- svelte-ignore a11y_click_events_have_key_events -->
-	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div
-		class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 p-4"
-		style="z-index: 9999;"
-		onclick={closeModal}
-	>
-		<!-- svelte-ignore a11y_click_events_have_key_events -->
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div
-			class="w-full max-w-xl rounded-lg bg-white p-6 shadow-xl"
-			onclick={e => e.stopPropagation()}
-		>
-			<div class="mb-4 flex items-center justify-between">
-				<h3 class="text-lg font-semibold text-gray-900">Inscribir Práctica</h3>
-				<button
-					type="button"
-					onclick={closeModal}
-					class="text-gray-400 hover:text-gray-500"
-					aria-label="Cerrar modal"
-				>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						class="h-5 w-5"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M6 18L18 6M6 6l12 12"
-						/>
-					</svg>
-				</button>
+<Modal bind:isOpen onClose={closeModal} title="Inscribir Práctica">
+	{#snippet children()}
+		<form onsubmit={handleFormSubmit} class="space-y-3">
+			<div class="grid grid-cols-2 gap-3">
+				<Field of={form} path={["enterpriseName"]}>
+					{#snippet children(field)}
+						<div class="col-span-2">
+							<label
+								for="enterpriseName"
+								class="mb-1 block text-sm font-medium text-gray-700"
+							>
+								Empresa *
+							</label>
+							<input
+								type="text"
+								id="enterpriseName"
+								value={field.input ?? ""}
+								{...field.props}
+								class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+								placeholder="Nombre de la empresa"
+							/>
+							{#if field.errors}
+								<p class="mt-1 text-xs text-red-600">{field.errors[0]}</p>
+							{/if}
+						</div>
+					{/snippet}
+				</Field>
+
+				<Field of={form} path={["description"]}>
+					{#snippet children(field)}
+						<div class="col-span-2">
+							<label
+								for="description"
+								class="mb-1 block text-sm font-medium text-gray-700"
+							>
+								Descripción *
+							</label>
+							<textarea
+								id="description"
+								value={field.input ?? ""}
+								{...field.props}
+								rows="2"
+								class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+								placeholder="Descripción de la práctica"
+							></textarea>
+							{#if field.errors}
+								<p class="mt-1 text-xs text-red-600">{field.errors[0]}</p>
+							{/if}
+						</div>
+					{/snippet}
+				</Field>
+
+				<Field of={form} path={["location"]}>
+					{#snippet children(field)}
+						<div class="col-span-2">
+							<label
+								for="location"
+								class="mb-1 block text-sm font-medium text-gray-700"
+							>
+								Ubicación *
+							</label>
+							<input
+								type="text"
+								id="location"
+								value={field.input ?? ""}
+								{...field.props}
+								class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+								placeholder="Santiago, Chile"
+							/>
+							{#if field.errors}
+								<p class="mt-1 text-xs text-red-600">{field.errors[0]}</p>
+							{/if}
+						</div>
+					{/snippet}
+				</Field>
+
+				<Field of={form} path={["supervisorName"]}>
+					{#snippet children(field)}
+						<div class="col-span-2">
+							<label
+								for="supervisorName"
+								class="mb-1 block text-sm font-medium text-gray-700"
+							>
+								Nombre Supervisor *
+							</label>
+							<input
+								type="text"
+								id="supervisorName"
+								value={field.input ?? ""}
+								{...field.props}
+								class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+								placeholder="Juan Pérez"
+							/>
+							{#if field.errors}
+								<p class="mt-1 text-xs text-red-600">{field.errors[0]}</p>
+							{/if}
+						</div>
+					{/snippet}
+				</Field>
+
+				<Field of={form} path={["supervisorEmail"]}>
+					{#snippet children(field)}
+						<div class="col-span-2">
+							<label
+								for="supervisorEmail"
+								class="mb-1 block text-sm font-medium text-gray-700"
+							>
+								Email Supervisor *
+							</label>
+							<input
+								type="email"
+								id="supervisorEmail"
+								value={field.input ?? ""}
+								{...field.props}
+								class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+								placeholder="supervisor@empresa.com"
+							/>
+							{#if field.errors}
+								<p class="mt-1 text-xs text-red-600">{field.errors[0]}</p>
+							{/if}
+						</div>
+					{/snippet}
+				</Field>
+
+				<Field of={form} path={["supervisorPhone"]}>
+					{#snippet children(field)}
+						<div class="col-span-2">
+							<label
+								for="supervisorPhone"
+								class="mb-1 block text-sm font-medium text-gray-700"
+							>
+								Teléfono Supervisor *
+							</label>
+							<input
+								type="tel"
+								id="supervisorPhone"
+								value={field.input ?? ""}
+								{...field.props}
+								class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+								placeholder="+56912345678"
+							/>
+							{#if field.errors}
+								<p class="mt-1 text-xs text-red-600">{field.errors[0]}</p>
+							{/if}
+						</div>
+					{/snippet}
+				</Field>
+
+				<Field of={form} path={["startDate"]}>
+					{#snippet children(field)}
+						<div>
+							<label
+								for="startDate"
+								class="mb-1 block text-sm font-medium text-gray-700"
+							>
+								Fecha Inicio *
+							</label>
+							<input
+								type="date"
+								id="startDate"
+								value={field.input ?? ""}
+								{...field.props}
+								class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+							/>
+							{#if field.errors}
+								<p class="mt-1 text-xs text-red-600">{field.errors[0]}</p>
+							{/if}
+						</div>
+					{/snippet}
+				</Field>
+
+				<Field of={form} path={["endDate"]}>
+					{#snippet children(field)}
+						<div>
+							<label
+								for="endDate"
+								class="mb-1 block text-sm font-medium text-gray-700"
+							>
+								Fecha Fin *
+							</label>
+							<input
+								type="date"
+								id="endDate"
+								value={field.input ?? ""}
+								{...field.props}
+								class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+							/>
+							{#if field.errors}
+								<p class="mt-1 text-xs text-red-600">{field.errors[0]}</p>
+							{/if}
+						</div>
+					{/snippet}
+				</Field>
 			</div>
 
-			<form onsubmit={handleFormSubmit} class="space-y-3">
-				<div class="grid grid-cols-2 gap-3">
-					<Field of={form} path={["enterpriseName"]}>
-						{#snippet children(field)}
-							<div class="col-span-2">
-								<label
-									for="enterpriseName"
-									class="mb-1 block text-sm font-medium text-gray-700"
-								>
-									Empresa *
-								</label>
-								<input
-									type="text"
-									id="enterpriseName"
-									value={field.input ?? ""}
-									{...field.props}
-									class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-									placeholder="Nombre de la empresa"
-								/>
-								{#if field.errors}
-									<p class="mt-1 text-xs text-red-600">{field.errors[0]}</p>
-								{/if}
-							</div>
-						{/snippet}
-					</Field>
-
-					<Field of={form} path={["description"]}>
-						{#snippet children(field)}
-							<div class="col-span-2">
-								<label
-									for="description"
-									class="mb-1 block text-sm font-medium text-gray-700"
-								>
-									Descripción *
-								</label>
-								<textarea
-									id="description"
-									value={field.input ?? ""}
-									{...field.props}
-									rows="2"
-									class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-									placeholder="Descripción de la práctica"
-								></textarea>
-								{#if field.errors}
-									<p class="mt-1 text-xs text-red-600">{field.errors[0]}</p>
-								{/if}
-							</div>
-						{/snippet}
-					</Field>
-
-					<Field of={form} path={["location"]}>
-						{#snippet children(field)}
-							<div class="col-span-2">
-								<label
-									for="location"
-									class="mb-1 block text-sm font-medium text-gray-700"
-								>
-									Ubicación *
-								</label>
-								<input
-									type="text"
-									id="location"
-									value={field.input ?? ""}
-									{...field.props}
-									class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-									placeholder="Santiago, Chile"
-								/>
-								{#if field.errors}
-									<p class="mt-1 text-xs text-red-600">{field.errors[0]}</p>
-								{/if}
-							</div>
-						{/snippet}
-					</Field>
-
-					<Field of={form} path={["supervisorName"]}>
-						{#snippet children(field)}
-							<div class="col-span-2">
-								<label
-									for="supervisorName"
-									class="mb-1 block text-sm font-medium text-gray-700"
-								>
-									Nombre Supervisor *
-								</label>
-								<input
-									type="text"
-									id="supervisorName"
-									value={field.input ?? ""}
-									{...field.props}
-									class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-									placeholder="Juan Pérez"
-								/>
-								{#if field.errors}
-									<p class="mt-1 text-xs text-red-600">{field.errors[0]}</p>
-								{/if}
-							</div>
-						{/snippet}
-					</Field>
-
-					<Field of={form} path={["supervisorEmail"]}>
-						{#snippet children(field)}
-							<div class="col-span-2">
-								<label
-									for="supervisorEmail"
-									class="mb-1 block text-sm font-medium text-gray-700"
-								>
-									Email Supervisor *
-								</label>
-								<input
-									type="email"
-									id="supervisorEmail"
-									value={field.input ?? ""}
-									{...field.props}
-									class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-									placeholder="supervisor@empresa.com"
-								/>
-								{#if field.errors}
-									<p class="mt-1 text-xs text-red-600">{field.errors[0]}</p>
-								{/if}
-							</div>
-						{/snippet}
-					</Field>
-
-					<Field of={form} path={["supervisorPhone"]}>
-						{#snippet children(field)}
-							<div class="col-span-2">
-								<label
-									for="supervisorPhone"
-									class="mb-1 block text-sm font-medium text-gray-700"
-								>
-									Teléfono Supervisor *
-								</label>
-								<input
-									type="tel"
-									id="supervisorPhone"
-									value={field.input ?? ""}
-									{...field.props}
-									class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-									placeholder="+56912345678"
-								/>
-								{#if field.errors}
-									<p class="mt-1 text-xs text-red-600">{field.errors[0]}</p>
-								{/if}
-							</div>
-						{/snippet}
-					</Field>
-
-					<Field of={form} path={["startDate"]}>
-						{#snippet children(field)}
-							<div>
-								<label
-									for="startDate"
-									class="mb-1 block text-sm font-medium text-gray-700"
-								>
-									Fecha Inicio *
-								</label>
-								<input
-									type="date"
-									id="startDate"
-									value={field.input ?? ""}
-									{...field.props}
-									class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-								/>
-								{#if field.errors}
-									<p class="mt-1 text-xs text-red-600">{field.errors[0]}</p>
-								{/if}
-							</div>
-						{/snippet}
-					</Field>
-
-					<Field of={form} path={["endDate"]}>
-						{#snippet children(field)}
-							<div>
-								<label
-									for="endDate"
-									class="mb-1 block text-sm font-medium text-gray-700"
-								>
-									Fecha Fin *
-								</label>
-								<input
-									type="date"
-									id="endDate"
-									value={field.input ?? ""}
-									{...field.props}
-									class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-								/>
-								{#if field.errors}
-									<p class="mt-1 text-xs text-red-600">{field.errors[0]}</p>
-								{/if}
-							</div>
-						{/snippet}
-					</Field>
-				</div>
-
-				<div class="flex justify-end gap-2 pt-2">
-					<Button variant="secondary" onclick={closeModal} text="Cancelar" />
-					<button
-						type="submit"
-						disabled={form.isSubmitting}
-						class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
-					>
-						{form.isSubmitting ? "Inscribiendo..." : "Inscribir"}
-					</button>
-				</div>
-			</form>
-		</div>
-	</div>
-{/if}
+			<div class="flex justify-end gap-2 pt-2">
+				<Button variant="secondary" onclick={closeModal} text="Cancelar" />
+				<button
+					type="submit"
+					disabled={form.isSubmitting}
+					class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+				>
+					{form.isSubmitting ? "Inscribiendo..." : "Inscribir"}
+				</button>
+			</div>
+		</form>
+	{/snippet}
+</Modal>
