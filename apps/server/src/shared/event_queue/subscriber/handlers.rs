@@ -36,8 +36,7 @@ impl SubscriberHandler {
         };
 
         let practice_static_dir = format!("practices/{}", practice.id);
-        let practice_auth_doc =
-            format!("/static/{practice_static_dir}/authorization.pdf");
+        let practice_auth_doc = format!("/enrollments/practice/{}/docs", practice.id);
 
         let print_opts = PrintOptions {
             static_path: format!("{practice_static_dir}/authorization.pdf"),
@@ -56,13 +55,21 @@ impl SubscriberHandler {
             ),
         ));
 
-        template_ctx.push((
-            "practice_evaluation_form_url",
+        // Get first evaluation_id from student_scores, or use a placeholder
+        let evaluation_url = if let Some(score) = enrollment.student_scores.first() {
+            format!(
+                "/enrollments/{}/practice/{}/evaluate/{}",
+                enrollment.id, practice.id, score.evaluation_id
+            )
+        } else {
+            // If no evaluation exists yet, create a placeholder
             format!(
                 "/enrollments/{}/practice/{}/evaluate",
                 enrollment.id, practice.id
-            ),
-        ));
+            )
+        };
+
+        template_ctx.push(("practice_evaluation_form_url", evaluation_url));
 
         send_emails! {
             &self.mailer,

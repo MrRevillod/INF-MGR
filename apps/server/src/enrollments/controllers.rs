@@ -114,8 +114,7 @@ impl EnrollmentsController {
     }
 
     #[get("/practice/{practice_id}/docs")]
-    #[uses(Authentication)]
-    #[doc = "Obtener el documento de autorización de una práctica"]
+    #[doc = "Obtener el documento de autorización de una práctica (público para supervisores)"]
     async fn practice_docs(&self, req: Request) -> FileResult {
         let practice_id = req.param::<Uuid>("practice_id")?;
 
