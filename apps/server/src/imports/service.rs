@@ -4,10 +4,10 @@ use uuid::Uuid;
 
 use crate::{
     courses::CourseRepository,
-    enrollments::{Enrollment, EnrollmentRepository},
+    enrollments::{Enrollment, EnrollmentRepository, StudentScore},
     imports::ImportedStudent,
     shared::{
-        AppError,
+        AppError, NotFoundError,
         event_queue::{Event, EventQueue},
     },
     users::*,
@@ -27,6 +27,12 @@ impl ImportService {
         course_id: &Uuid,
         students: Vec<ImportedStudent>,
     ) -> Result<(), AppError> {
+        let course = self
+            .courses
+            .find_by_id(course_id)
+            .await?
+            .ok_or(NotFoundError::course(*course_id))?;
+
         let (imported_students, existing_students) =
             self.classify_imported_students(students).await?;
 
@@ -61,7 +67,14 @@ impl ImportService {
             .map(|student| Enrollment {
                 id: Uuid::new_v4(),
                 course_id: *course_id,
-                student_scores: vec![],
+                student_scores: course
+                    .evaluations
+                    .iter()
+                    .map(|evaluation| StudentScore {
+                        evaluation_id: evaluation.id,
+                        score: 0.0,
+                    })
+                    .collect(),
                 student_id: student.id,
                 practice_id: None,
             })

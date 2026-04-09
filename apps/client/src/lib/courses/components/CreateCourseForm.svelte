@@ -20,6 +20,7 @@
 
 	// Estado local para las evaluaciones (temporal)
 	let evaluations = $state<CreateEvaluation[]>([{ name: "", weight: 0 }])
+	let supervisorEvaluationIndex = $state(0)
 
 	const form = createForm({
 		schema: CreateCourseFormSchema,
@@ -38,6 +39,25 @@
 
 	function removeEvaluation(index: number) {
 		evaluations = evaluations.filter((_: any, i: number) => i !== index)
+
+		if (supervisorEvaluationIndex >= evaluations.length) {
+			supervisorEvaluationIndex = Math.max(0, evaluations.length - 1)
+		}
+	}
+
+	function orderedEvaluationsForSubmit(): CreateEvaluation[] {
+		if (
+			supervisorEvaluationIndex < 0 ||
+			supervisorEvaluationIndex >= evaluations.length
+		) {
+			return $state.snapshot(evaluations)
+		}
+
+		const snapshot = $state.snapshot(evaluations)
+		const selected = snapshot[supervisorEvaluationIndex]
+		const others = snapshot.filter((_, idx) => idx !== supervisorEvaluationIndex)
+
+		return [selected, ...others]
 	}
 
 	// Calcular total de porcentajes
@@ -60,7 +80,7 @@
 		// Combinar los datos del formulario con las evaluaciones locales
 		const formData = {
 			...formResult.output,
-			evaluations: $state.snapshot(evaluations),
+			evaluations: orderedEvaluationsForSubmit(),
 		}
 
 		// Validar todo junto con el schema completo
@@ -191,7 +211,12 @@
 		<!-- Sección de Evaluaciones -->
 		<div class="space-y-3 rounded-lg border border-gray-200 p-4">
 			<div class="flex items-center justify-between">
-				<h3 class="text-sm font-medium text-gray-900">Evaluaciones *</h3>
+				<div>
+					<h3 class="text-sm font-medium text-gray-900">Evaluaciones *</h3>
+					<p class="text-xs text-gray-500">
+						La evaluacion marcada para supervisor se usara en el correo de practica.
+					</p>
+				</div>
 				<button
 					type="button"
 					onclick={addEvaluation}
@@ -232,6 +257,27 @@
 								placeholder="Ej: Prueba 1"
 								class="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
 							/>
+						</div>
+					</div>
+
+					<div class="w-44">
+						<div>
+							<label
+								for="eval-supervisor-{index}"
+								class="block text-xs font-medium text-gray-700"
+							>
+								Evaluacion supervisor
+							</label>
+							<div class="mt-2 flex items-center gap-2">
+								<input
+									id="eval-supervisor-{index}"
+									type="radio"
+									name="supervisorEvaluation"
+									checked={supervisorEvaluationIndex === index}
+									onchange={() => (supervisorEvaluationIndex = index)}
+								/>
+								<span class="text-xs text-gray-600">Usar esta</span>
+							</div>
 						</div>
 					</div>
 

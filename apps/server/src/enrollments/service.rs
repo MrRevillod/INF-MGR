@@ -104,7 +104,7 @@ impl EnrollmentService {
     }
 
     pub async fn create(&self, input: CreateEnrollmentDto) -> AppResult<Enrollment> {
-        let enrollment = Enrollment::from(input);
+        let mut enrollment = Enrollment::from(input);
 
         let filter = enrollment_filter! {
             student_id: enrollment.student_id,
@@ -131,13 +131,22 @@ impl EnrollmentService {
             return Err(NotFoundError::user(enrollment.student_id))?;
         };
 
-        if course_exists.is_none() {
+        let Some(course) = course_exists else {
             return Err(NotFoundError::course(enrollment.course_id))?;
         };
 
         if !student.is_student() {
             return Err(ValidationError::not_a_student(student.id))?;
         }
+
+        enrollment.student_scores = course
+            .evaluations
+            .iter()
+            .map(|evaluation| StudentScore {
+                evaluation_id: evaluation.id,
+                score: 0.0,
+            })
+            .collect();
 
         self.enrollments.save(enrollment).await
     }

@@ -163,6 +163,73 @@ impl EnrollmentsController {
 
         let dto = req.body_validator::<EvaluatePracticeDto>()?;
 
+        let (enrollment, _, _, _) = self.enrollments.get_by_id(&enrollment_id).await?;
+
+        if enrollment.practice_id != Some(practice_id) {
+            return Err(HttpResponse::BadRequest()
+                .message("La práctica no está asociada a esta inscripción"));
+        }
+
+        let (course, _) = self.courses.get_by_id(&enrollment.course_id).await?;
+
+        let supervisor_evaluation_id = course
+            .evaluations
+            .iter()
+            .find(|evaluation| evaluation.name.to_lowercase().contains("supervisor"))
+            .map(|evaluation| evaluation.id);
+
+        let target_evaluation_id = supervisor_evaluation_id.unwrap_or(evaluation_id);
+
+        if !course
+            .evaluations
+            .iter()
+            .any(|evaluation| evaluation.id == target_evaluation_id)
+        {
+            return Err(HttpResponse::BadRequest()
+                .message("La evaluación no existe para esta inscripción"));
+        }
+
+        self.practices
+            .evaluate(&enrollment_id, &practice_id, &target_evaluation_id, dto)
+            .await?;
+
+        Ok(HttpResponse::Ok())
+    }
+
+    #[post("/{id}/practice/{practice_id}/evaluate")]
+    async fn evaluate_from_enterprise_default(&self, req: Request) -> HttpResult {
+        let practice_id = req.param::<Uuid>("practice_id")?;
+        let enrollment_id = req.param::<Uuid>("id")?;
+
+        let dto = req.body_validator::<EvaluatePracticeDto>()?;
+
+        let (enrollment, _, _, _) = self.enrollments.get_by_id(&enrollment_id).await?;
+
+        if enrollment.practice_id != Some(practice_id) {
+            return Err(HttpResponse::BadRequest()
+                .message("La práctica no está asociada a esta inscripción"));
+        }
+
+        let (course, _) = self.courses.get_by_id(&enrollment.course_id).await?;
+
+        let evaluation_id = course
+            .evaluations
+            .iter()
+            .find(|evaluation| evaluation.name.to_lowercase().contains("supervisor"))
+            .map(|evaluation| evaluation.id)
+            .or_else(|| {
+                enrollment
+                    .student_scores
+                    .first()
+                    .map(|score| score.evaluation_id)
+            })
+            .or_else(|| course.evaluations.first().map(|evaluation| evaluation.id));
+
+        let Some(evaluation_id) = evaluation_id else {
+            return Err(HttpResponse::BadRequest()
+                .message("No hay evaluaciones configuradas para este curso"));
+        };
+
         self.practices
             .evaluate(&enrollment_id, &practice_id, &evaluation_id, dto)
             .await?;

@@ -196,6 +196,11 @@ impl PracticeService {
 
         if let Some(evaluation) = updated_evaluation {
             evaluation.score = input.score;
+        } else {
+            enrollment.student_scores.push(StudentScore {
+                evaluation_id: *evaluation_id,
+                score: input.score,
+            });
         }
 
         let student_scores_dto = enrollment
