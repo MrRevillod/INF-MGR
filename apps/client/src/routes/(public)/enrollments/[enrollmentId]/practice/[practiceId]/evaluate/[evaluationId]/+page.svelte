@@ -36,7 +36,7 @@
 
 		try {
 			const response = await fetch(
-				`/api/enrollments/${data.enrollmentId}/practice/${data.practiceId}/evaluate`,
+				`/api/enrollments/${data.enrollmentId}/practice/${data.practiceId}/evaluate/${data.evaluationId}`,
 				{
 					method: "POST",
 					headers: {

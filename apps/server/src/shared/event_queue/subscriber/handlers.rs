@@ -55,14 +55,24 @@ impl SubscriberHandler {
             ),
         ));
 
-        // Get first evaluation_id from student_scores, or use a placeholder
-        let evaluation_url = if let Some(score) = enrollment.student_scores.first() {
+        let supervisor_evaluation_id = course
+            .evaluations
+            .iter()
+            .find(|evaluation| evaluation.name.to_lowercase().contains("supervisor"))
+            .map(|evaluation| evaluation.id)
+            .or_else(|| {
+                enrollment
+                    .student_scores
+                    .first()
+                    .map(|score| score.evaluation_id)
+            });
+
+        let evaluation_url = if let Some(evaluation_id) = supervisor_evaluation_id {
             format!(
                 "/enrollments/{}/practice/{}/evaluate/{}",
-                enrollment.id, practice.id, score.evaluation_id
+                enrollment.id, practice.id, evaluation_id
             )
         } else {
-            // If no evaluation exists yet, create a placeholder
             format!(
                 "/enrollments/{}/practice/{}/evaluate",
                 enrollment.id, practice.id
