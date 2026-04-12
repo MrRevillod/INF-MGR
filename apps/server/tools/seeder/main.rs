@@ -66,7 +66,7 @@ async fn main() -> Result<(), sqlx::Error> {
 
     // Asociar prácticas a diferentes estudiantes en diferentes cursos
     // Estudiante 0 - Curso 0 (INF-101)
-    if let Some(student) = students.get(0) {
+    /* if let Some(student) = students.get(0) {
         if let Some(course) = extra_courses.get(0) {
             if let Some(practice) = practices.get(0) {
                 let practice_id = create_practice(&pool, practice.clone()).await;
@@ -82,9 +82,9 @@ async fn main() -> Result<(), sqlx::Error> {
                 }
             }
         }
-    }
+    } */
 
-    // Estudiante 1 - Curso 1 (INF-201)
+    /* // Estudiante 1 - Curso 1 (INF-201)
     if let Some(student) = students.get(1) {
         if let Some(course) = extra_courses.get(1) {
             if let Some(practice) = practices.get(1) {
@@ -101,7 +101,7 @@ async fn main() -> Result<(), sqlx::Error> {
                 }
             }
         }
-    }
+    } */
 
     // Estudiante 2 - Curso 2 (INF-202)
     if let Some(student) = students.get(2) {
@@ -122,7 +122,7 @@ async fn main() -> Result<(), sqlx::Error> {
         }
     }
 
-    // Estudiante 3 - Curso 0 (INF-101)
+    /* // Estudiante 3 - Curso 0 (INF-101)
     if let Some(student) = students.get(3) {
         if let Some(course) = extra_courses.get(0) {
             if let Some(practice) = practices.get(3) {
@@ -139,10 +139,10 @@ async fn main() -> Result<(), sqlx::Error> {
                 }
             }
         }
-    }
+    } */
 
     // Estudiante 4 - Curso 1 (INF-201) - Práctica Pendiente
-    if let Some(student) = students.get(4) {
+    /* if let Some(student) = students.get(4) {
         if let Some(course) = extra_courses.get(1) {
             if let Some(practice) = practices.get(4) {
                 let practice_id = create_practice(&pool, practice.clone()).await;
@@ -158,7 +158,7 @@ async fn main() -> Result<(), sqlx::Error> {
                 }
             }
         }
-    }
+    } */
 
     // Estudiante 5 - Curso 2 (INF-202)
     if let Some(student) = students.get(5) {
